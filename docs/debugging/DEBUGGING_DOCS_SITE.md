@@ -384,7 +384,7 @@ curl http://localhost:6333/collections/platform_docs
 3. Check embedding script output:
 
 ```bash
-cd /home/asimo/VoiceAssist
+# From project root
 python scripts/embed-docs.py --dry-run
 # Shows which docs would be embedded
 ```

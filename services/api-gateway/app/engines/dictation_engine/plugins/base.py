@@ -10,6 +10,8 @@ Phase 4 Enhancements:
 - Specialty-specific validation hooks
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass, field

@@ -1403,7 +1403,10 @@ export interface SoftBargePattern {
 
 export const BACKCHANNEL_PATTERNS: Record<SupportedLanguage, BackchannelPattern[]> = {
   en: [
-    { phrases: ["uh huh", "uh-huh", "uhuh", "mm hmm", "mmhmm", "mhm"], maxDuration: 600 },
+    {
+      phrases: ["uh huh", "uh-huh", "uhuh", "mm hmm", "mmhmm", "mhm"],
+      maxDuration: 600,
+    },
     { phrases: ["yeah", "yep", "yes", "yea", "ya"], maxDuration: 400 },
     { phrases: ["okay", "ok", "k", "kay"], maxDuration: 400 },
     { phrases: ["right", "right right"], maxDuration: 500 },
@@ -1474,7 +1477,10 @@ export const BACKCHANNEL_PATTERNS: Record<SupportedLanguage, BackchannelPattern[
 
 export const SOFT_BARGE_PATTERNS: Record<SupportedLanguage, SoftBargePattern[]> = {
   en: [
-    { phrases: ["wait", "hold on", "hang on", "one moment"], requiresFollowUp: true },
+    {
+      phrases: ["wait", "hold on", "hang on", "one moment"],
+      requiresFollowUp: true,
+    },
     { phrases: ["actually", "but", "well", "um"], requiresFollowUp: true },
     { phrases: ["let me", "can I", "I want to"], requiresFollowUp: true },
   ],
@@ -1487,11 +1493,17 @@ export const SOFT_BARGE_PATTERNS: Record<SupportedLanguage, SoftBargePattern[]> 
     { phrases: ["pero", "en realidad", "bueno"], requiresFollowUp: true },
   ],
   fr: [
-    { phrases: ["attends", "un moment", "une seconde"], requiresFollowUp: true },
+    {
+      phrases: ["attends", "un moment", "une seconde"],
+      requiresFollowUp: true,
+    },
     { phrases: ["mais", "en fait", "euh"], requiresFollowUp: true },
   ],
   de: [
-    { phrases: ["warte", "moment", "einen Augenblick"], requiresFollowUp: true },
+    {
+      phrases: ["warte", "moment", "einen Augenblick"],
+      requiresFollowUp: true,
+    },
     { phrases: ["aber", "eigentlich", "also"], requiresFollowUp: true },
   ],
   zh: [
@@ -2090,7 +2102,10 @@ import { SupportedLanguage } from "../types";
 export interface LanguageDetectionResult {
   detectedLanguage: SupportedLanguage;
   confidence: number;
-  alternativeLanguages: Array<{ language: SupportedLanguage; confidence: number }>;
+  alternativeLanguages: Array<{
+    language: SupportedLanguage;
+    confidence: number;
+  }>;
 }
 
 export class LanguageDetector {
@@ -2157,7 +2172,10 @@ export class LanguageDetector {
     };
   }
 
-  private detectLatinLanguage(transcript: string): { language: SupportedLanguage; confidence: number } {
+  private detectLatinLanguage(transcript: string): {
+    language: SupportedLanguage;
+    confidence: number;
+  } {
     // Simple keyword-based detection for Latin-script languages
     const normalizedText = transcript.toLowerCase();
 
@@ -2900,8 +2918,12 @@ export class TTSCacheManager {
 export function useThinkerTalkerSession(options: SessionOptions) {
   const { useOfflineVAD: enableOfflineFallback = true } = options;
 
-  const neuralVAD = useNeuralVAD({ enabled: !enableOfflineFallback || isOnline });
-  const offlineVAD = useOfflineVAD({ enabled: enableOfflineFallback && !isOnline });
+  const neuralVAD = useNeuralVAD({
+    enabled: !enableOfflineFallback || isOnline,
+  });
+  const offlineVAD = useOfflineVAD({
+    enabled: enableOfflineFallback && !isOnline,
+  });
 
   // Use the active VAD based on network status
   const activeVAD = isOnline ? neuralVAD : offlineVAD;
@@ -3005,7 +3027,12 @@ export class ConversationManager {
 
   private createInitialState(): ConversationState {
     return {
-      sentiment: { sentiment: "neutral", confidence: 0, valence: 0, arousal: 0 },
+      sentiment: {
+        sentiment: "neutral",
+        confidence: 0,
+        valence: 0,
+        arousal: 0,
+      },
       discourse: { topic: null, phase: "opening", coherence: 1.0 },
       activeToolCalls: [],
       turnCount: 0,
@@ -3229,7 +3256,10 @@ export class ToolCallHandler {
     }
   }
 
-  getPendingInterruptions(): Array<{ bargeIn: BargeInEvent; toolCallId: string }> {
+  getPendingInterruptions(): Array<{
+    bargeIn: BargeInEvent;
+    toolCallId: string;
+  }> {
     return [...this.pendingInterruptions];
   }
 
@@ -3598,7 +3628,10 @@ export class ModelUpdater {
     }
   }
 
-  async checkForUpdates(): Promise<{ hasUpdate: boolean; newVersion?: string }> {
+  async checkForUpdates(): Promise<{
+    hasUpdate: boolean;
+    newVersion?: string;
+  }> {
     try {
       const response = await fetch(`${this.config.updateEndpoint}/version`);
       const data = await response.json();
@@ -4115,7 +4148,7 @@ To begin implementation:
 - [ONNX Runtime Web](https://onnxruntime.ai/docs/get-started/with-javascript.html)
 - [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
 - [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)
-- [NLMS Algorithm](<https://en.wikipedia.org/wiki/Least_mean_squares_filter#Normalized_least_mean_squares_filter_(NLMS)>)
+- [NLMS Algorithm](https://en.wikipedia.org/wiki/Least_mean_squares_filter#Normalized_least_mean_squares_filter_%28NLMS%29)
 - [WebRTC VAD](https://webrtc.org/)
 - [GDPR Compliance](https://gdpr.eu/)
 - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)

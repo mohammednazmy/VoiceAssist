@@ -23,13 +23,25 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from app.core.event_bus import VoiceEventBus, get_event_bus
 from app.core.logging import get_logger
-from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT
+from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT, DEFAULT_VOICE_ID
 from app.services.backchannel_service import (
     BackchannelAudio,
     BackchannelService,
     BackchannelSession,
     backchannel_service,
+)
+
+# Natural Conversation Flow: Phase 3 - Barge-In Classification
+from app.services.barge_in_classifier import BargeInClassifier, ClassificationResult, create_barge_in_classifier
+
+# Natural Conversation Flow: Phase 2 - Continuation Detection
+from app.services.continuation_detector import (
+    ContinuationAnalysis,
+    ContinuationDetector,
+    ProsodyHints,
+    get_continuation_detector,
 )
 from app.services.dictation_phi_monitor import DictationPHIMonitor, PatientPHIContext, dictation_phi_monitor
 from app.services.dictation_service import (
@@ -45,7 +57,11 @@ from app.services.emotion_detection_service import (
     EmotionResult,
     emotion_detection_service,
 )
+from app.services.feature_flags import feature_flag_service
 from app.services.feedback_service import FeedbackService, feedback_service
+
+# Natural Conversation Flow: Phase 3 - Hybrid VAD Fusion
+from app.services.hybrid_vad_decider import DeepgramEvent, HybridVADDecider, VADState, create_hybrid_vad_decider
 from app.services.medical_vocabulary_service import MedicalSpecialty
 from app.services.memory_context_service import ConversationMemoryManager, MemoryType, memory_context_service
 from app.services.note_formatter_service import FormattingConfig, FormattingLevel, note_formatter_service
@@ -65,6 +81,18 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
+
+# Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+from app.services.transcript_sync_service import TranscriptSyncService, TruncationResult, get_transcript_sync_service
+
+# Natural Conversation Flow: Phase 3 - Utterance Aggregation
+from app.services.utterance_aggregator import (
+    AggregatedUtterance,
+    AggregatorConfig,
+    UtteranceAggregator,
+    get_utterance_aggregator,
+    remove_utterance_aggregator,
+)
 from app.services.voice_command_service import voice_command_service
 
 logger = get_logger(__name__)
@@ -327,6 +355,26 @@ class PipelineConfig:
     enable_phi_monitoring: bool = True  # Enable real-time PHI detection
     enable_patient_context: bool = True  # Enable patient context retrieval
 
+    # Natural Conversation Flow: Continuation Detection
+    # When enabled, analyzes transcripts for continuation signals before processing
+    enable_continuation_detection: bool = True
+    # Maximum additional wait time (ms) when continuation is detected
+    continuation_max_wait_ms: int = 3000
+    # Minimum confidence threshold to trigger continuation wait
+    continuation_confidence_threshold: float = 0.4
+
+    # Natural Conversation Flow: Utterance Aggregation
+    # When enabled, merges speech segments within a time window
+    enable_utterance_aggregation: bool = True
+    # Maximum time to wait for additional segments (ms)
+    utterance_aggregation_window_ms: int = 3000
+    # Maximum segments to aggregate before forcing processing
+    utterance_max_segments: int = 5
+
+    # Natural Conversation Flow: Pre-emptive Listening
+    # When enabled, keeps STT active during AI speech for faster barge-in
+    enable_preemptive_listening: bool = True
+
 
 @dataclass
 class PipelineMessage:
@@ -355,6 +403,10 @@ class PipelineMetrics:
     audio_chunks_sent: int = 0
     tokens_generated: int = 0
     tool_calls_count: int = 0
+
+    # Natural Conversation Flow: Phase 2.4 - Barge-in metrics
+    barge_in_count: int = 0
+    barge_in_misfires: int = 0
 
     # State
     cancelled: bool = False
@@ -430,6 +482,7 @@ class VoicePipelineSession:
         # State
         self._state = PipelineState.IDLE
         self._cancelled = False
+        self._deepgram_vad_active: bool = False
 
         # Transcript accumulation
         self._partial_transcript = ""
@@ -452,6 +505,66 @@ class VoicePipelineSession:
 
         # Locks for thread safety
         self._state_lock = asyncio.Lock()
+
+        # Event bus for cross-engine communication (Issue 3: Turn management)
+        self._event_bus: VoiceEventBus = get_event_bus()
+
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        self._continuation_detector: ContinuationDetector = get_continuation_detector()
+        self._continuation_wait_task: Optional[asyncio.Task] = None
+        self._pending_continuation: bool = False
+        self._continuation_analysis: Optional[ContinuationAnalysis] = None
+
+        # Natural Conversation Flow: Phase 3 - Barge-In Classification
+        # Classifies interruptions as backchannel, soft_barge, or hard_barge
+        self._barge_in_classifier: BargeInClassifier = create_barge_in_classifier(
+            language=self.config.language if hasattr(self.config, "language") else "en"
+        )
+        self._last_classification: Optional[ClassificationResult] = None
+        self._barge_in_start_time: Optional[float] = None
+
+        # Natural Conversation Flow: Phase 3 - Hybrid VAD Fusion
+        # Combines frontend Silero VAD with backend Deepgram VAD for optimal barge-in detection
+        self._hybrid_vad_decider: HybridVADDecider = create_hybrid_vad_decider()
+        self._hybrid_vad_enabled: bool = False  # Set based on feature flag at start
+
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        self._utterance_aggregator: Optional[UtteranceAggregator] = None
+        if self.config.enable_utterance_aggregation:
+            aggregator_config = AggregatorConfig(
+                window_duration_ms=self.config.utterance_aggregation_window_ms,
+                max_segments_per_window=self.config.utterance_max_segments,
+            )
+            self._utterance_aggregator = get_utterance_aggregator(
+                session_id=session_id,
+                config=aggregator_config,
+                on_utterance_ready=self._handle_aggregated_utterance,
+            )
+
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # Buffer transcripts captured during AI speech for immediate use on barge-in
+        self._preemptive_transcript_buffer: str = ""
+        self._preemptive_listening_active: bool = False
+
+        # Phase 2: VAD Confidence Sharing - Store frontend Silero VAD state
+        self._frontend_vad_state: Optional[Dict[str, Any]] = None
+        self._frontend_vad_update_time: float = 0.0
+
+        # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+        # Tracks AI response text for word-accurate truncation during barge-in
+        self._transcript_sync: TranscriptSyncService = get_transcript_sync_service()
+        self._transcript_sync.create_session(session_id)
+        self._current_response_text: str = ""
+        self._current_response_chunk_idx: int = 0
+        self._word_timestamps_enabled: bool = False  # Set based on feature flag at start
+        self._tts_playback_start_time: Optional[float] = None
+        self._last_truncation_result: Optional[TruncationResult] = None
+
+        # Natural Conversation Flow: Phase 2.4 - Misfire Rollback
+        # Stores state for potential rollback if barge-in is a false positive
+        self._barge_in_interrupted_response: str = ""
+        self._barge_in_playback_position_ms: int = 0
+        self._misfire_check_task: Optional[asyncio.Task] = None
 
     @property
     def state(self) -> PipelineState:
@@ -505,7 +618,7 @@ class VoicePipelineSession:
                     logger.info(f"Emotion detection enabled for session: {self.session_id}")
 
                 # Create backchannel session for natural verbal cues
-                if self._backchannel_service and self._backchannel_service.is_enabled():
+                if self._backchannel_service and await self._backchannel_service.is_enabled():
                     self._backchannel_session = await self._backchannel_service.create_session(
                         session_id=self.session_id,
                         voice_id=self.config.voice_id,
@@ -632,6 +745,14 @@ class VoicePipelineSession:
                 self._analytics_service.set_session_active(self.session_id)
                 logger.info(f"Analytics session created: {self.session_id}, mode={pipeline_mode}")
 
+                # Natural Conversation Flow: Phase 1 - Check word timestamps feature flag
+                self._word_timestamps_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_word_timestamps",
+                    default=False,
+                )
+                if self._word_timestamps_enabled:
+                    logger.info(f"Word timestamps enabled for session: {self.session_id}")
+
                 self._state = PipelineState.LISTENING
 
                 # Notify client
@@ -653,31 +774,45 @@ class VoicePipelineSession:
         Args:
             audio_data: Raw PCM16 audio bytes
         """
-        if self._cancelled or self._state not in (
-            PipelineState.LISTENING,
-            PipelineState.IDLE,
-        ):
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # When enabled, continue sending audio to STT during SPEAKING state
+        # This allows faster barge-in detection with ready transcript
+        is_preemptive = self.config.enable_preemptive_listening and self._state == PipelineState.SPEAKING
+
+        if self._cancelled:
             if self._metrics.audio_chunks_received == 0:
-                logger.warning(f"Dropping audio - state: {self._state}, cancelled: {self._cancelled}")
+                logger.warning(f"Dropping audio - cancelled: {self._cancelled}")
             return
+
+        if self._state not in (PipelineState.LISTENING, PipelineState.IDLE):
+            if not is_preemptive:
+                if self._metrics.audio_chunks_received == 0:
+                    logger.warning(f"Dropping audio - state: {self._state}")
+                return
+            # Pre-emptive listening: mark that we're actively listening during speech
+            if not self._preemptive_listening_active:
+                self._preemptive_listening_active = True
+                self._preemptive_transcript_buffer = ""
+                logger.debug("[Pipeline] Pre-emptive listening activated during AI speech")
 
         self._metrics.audio_chunks_received += 1
 
         # Log every 100 chunks to confirm audio flow
         if self._metrics.audio_chunks_received % 100 == 0:
-            logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes")
+            mode = "preemptive" if is_preemptive else "normal"
+            logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes ({mode})")
 
         # Send to STT
         if self._stt_session:
             await self._stt_session.send_audio(audio_data)
 
-        # Send to emotion detection (parallel, non-blocking)
-        if self._emotion_session:
+        # Send to emotion detection (parallel, non-blocking) - only during normal listening
+        if self._emotion_session and not is_preemptive:
             await self._emotion_session.add_audio(audio_data, sample_rate=self.config.stt_sample_rate)
 
-        # Track speech duration for backchanneling
+        # Track speech duration for backchanneling - only during normal listening
         current_time = time.time()
-        if self._backchannel_session and self._speech_start_time:
+        if self._backchannel_session and self._speech_start_time and not is_preemptive:
             speech_duration_ms = int((current_time - self._speech_start_time) * 1000)
             await self._backchannel_session.on_speech_continue(speech_duration_ms)
 
@@ -727,31 +862,169 @@ class VoicePipelineSession:
                 self._final_transcript = final
             await self._process_transcript()
 
-    async def barge_in(self) -> None:
+    async def barge_in(
+        self,
+        transcript: Optional[str] = None,
+        duration_ms: int = 0,
+        vad_probability: float = 0.8,
+    ) -> None:
         """
         Handle barge-in (user interrupts AI).
 
-        Cancels current TTS and prepares for new input.
+        Phase 3: Intelligent Barge-In Classification
+        - Classifies the interruption as backchannel, soft_barge, or hard_barge
+        - Backchannel: Continue AI speech (don't interrupt)
+        - Soft barge: Pause AI at reduced volume, wait for user
+        - Hard barge: Full stop and process new query
+
+        Phase 4: Barge-in Latency Optimization
+        - Sends immediate `barge_in.initiated` signal before any async operations
+        - This allows frontend to optimistically transition to listening state
+        - Target: <50ms from frontend trigger to audio stop
+
+        Args:
+            transcript: User's transcribed speech (for classification)
+            duration_ms: Duration of the utterance in milliseconds
+            vad_probability: VAD confidence from frontend (0-1)
         """
         if not self.config.barge_in_enabled:
             return
 
-        logger.info(f"Barge-in triggered: {self.session_id}")
+        self._barge_in_start_time = time.time()
+
+        # Get transcript for classification (use provided or buffered)
+        classification_transcript = transcript or ""
+        if not classification_transcript and self._preemptive_transcript_buffer:
+            classification_transcript = self._preemptive_transcript_buffer
+        if not classification_transcript and self._partial_transcript:
+            classification_transcript = self._partial_transcript
+
+        # Get VAD probability from frontend state if available
+        effective_vad_prob = vad_probability
+        if self._frontend_vad_state:
+            effective_vad_prob = self._frontend_vad_state.get("silero_confidence", vad_probability)
+
+        # Check if barge-in classification is enabled via feature flag
+        classifier_enabled = await feature_flag_service.is_enabled(
+            "backend.voice_barge_in_classifier_enabled", default=False
+        )
+
+        # Classify the barge-in event
+        classification: Optional[ClassificationResult] = None
+        if classifier_enabled and classification_transcript:
+            classification = self._barge_in_classifier.classify(
+                transcript=classification_transcript,
+                duration_ms=duration_ms,
+                vad_probability=effective_vad_prob,
+                during_ai_speech=self._state == PipelineState.SPEAKING,
+                time_since_last_utterance_ms=(
+                    int((time.time() - self._last_transcript_time) * 1000) if self._last_transcript_time else 0
+                ),
+            )
+            self._last_classification = classification
+
+            logger.info(
+                "[Pipeline] Barge-in classified",
+                extra={
+                    "session_id": self.session_id,
+                    "classification": classification.classification,
+                    "intent": classification.intent,
+                    "confidence": classification.confidence,
+                    "transcript": classification_transcript[:50],
+                    "action": classification.action.type,
+                },
+            )
+
+            # Handle backchannel - don't interrupt AI
+            if classification.classification == "backchannel":
+                await self._on_message(
+                    PipelineMessage(
+                        type="barge_in.classified",
+                        data={
+                            "classification": "backchannel",
+                            "intent": classification.intent,
+                            "confidence": classification.confidence,
+                            "action": "continue",
+                            "transcript": classification_transcript,
+                            "timestamp": time.time(),
+                        },
+                    )
+                )
+                logger.info(f"[Pipeline] Backchannel detected, AI continues: '{classification_transcript}'")
+                return  # Don't actually barge in
+
+            # Handle soft barge - pause AI, wait for user
+            if classification.classification == "soft_barge":
+                await self._handle_soft_barge(classification, classification_transcript)
+                return
+
+        # Hard barge or unknown - proceed with full interruption
+        logger.info(f"Barge-in triggered (hard): {self.session_id}")
+
+        # Phase 4: Send immediate confirmation before any async operations
+        # This allows frontend to optimistically stop audio playback
+        await self._on_message(
+            PipelineMessage(
+                type="barge_in.initiated",
+                data={
+                    "timestamp": time.time(),
+                    "session_id": self.session_id,
+                    "classification": classification.classification if classification else "hard_barge",
+                    "intent": classification.intent if classification else "stop",
+                    "confidence": classification.confidence if classification else 0.5,
+                },
+            )
+        )
+
+        # Natural Conversation Flow: Phase 2.4 - Start misfire rollback timer
+        # If no valid transcript within 500ms, this was a false positive
+        if self._hybrid_vad_enabled:
+            self._hybrid_vad_decider.start_misfire_timer()
+            self._barge_in_interrupted_response = self._current_response_text
+            self._barge_in_playback_position_ms = (
+                int((time.time() - self._tts_playback_start_time) * 1000) if self._tts_playback_start_time else 0
+            )
+            # Start background task to check for misfire after 500ms
+            if self._misfire_check_task:
+                self._misfire_check_task.cancel()
+            self._misfire_check_task = asyncio.create_task(self._start_misfire_check())
 
         async with self._state_lock:
             self._metrics.cancelled = True
+            # CRITICAL FIX: Set _cancelled to stop _handle_audio_chunk from sending
+            # stale audio chunks that were already generated before barge-in
+            self._cancelled = True
 
             # Cancel Talker if speaking
             if self._talker_session:
                 await self._talker_session.cancel()
 
-            # Cancel Thinker if processing
+            # Cancel Thinker if processing and recreate for new utterance
+            # CRITICAL: Must recreate the session because the cancelled session
+            # cannot be reused for think() calls
             if self._thinker_session:
                 await self._thinker_session.cancel()
+                self._thinker_session = self._thinker_service.create_session(
+                    conversation_id=self.conversation_id,
+                    on_token=self._handle_llm_token,
+                    on_tool_call=self._handle_tool_call,
+                    on_tool_result=self._handle_tool_result,
+                    user_id=self.user_id,
+                )
+                logger.debug("[Pipeline] Recreated Thinker session for new input after barge-in")
+
+            # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+            # Use the pre-emptive transcript buffer if available
+            preemptive_transcript = ""
+            if self._preemptive_listening_active and self._preemptive_transcript_buffer:
+                preemptive_transcript = self._preemptive_transcript_buffer
+                logger.info(f"[Pipeline] Using pre-emptive buffer for barge-in: '{preemptive_transcript}'")
+            self._preemptive_listening_active = False
+            self._preemptive_transcript_buffer = ""
 
             # Reset to listening state
             self._state = PipelineState.LISTENING
-            self._partial_transcript = ""
+            self._partial_transcript = preemptive_transcript  # Start with buffered text
             self._final_transcript = ""
             self._transcript_confidence = 1.0  # Phase 7: Reset confidence
 
@@ -769,6 +1042,335 @@ class VoicePipelineSession:
 
             # Send barge_in reason so frontend knows to stop audio playback
             await self._send_state_update(reason="barge_in")
+            # Issue 3: Publish turn.yielded when user interrupts
+            await self._publish_turn_yielded("user_barge_in")
+
+            # Send classification result to frontend
+            if classification:
+                await self._on_message(
+                    PipelineMessage(
+                        type="barge_in.classified",
+                        data={
+                            "classification": classification.classification,
+                            "intent": classification.intent,
+                            "confidence": classification.confidence,
+                            "action": classification.action.type,
+                            "priority": classification.priority,
+                            "transcript": classification_transcript,
+                            "latency_ms": int((time.time() - self._barge_in_start_time) * 1000),
+                        },
+                    )
+                )
+
+            # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
+            # Truncate the AI response at the word boundary where playback stopped
+            if self._word_timestamps_enabled and self._current_response_text:
+                await self._perform_transcript_truncation()
+
+    async def _perform_transcript_truncation(self) -> None:
+        """
+        Truncate the AI response transcript at the current playback position.
+
+        Uses word-boundary estimation to find the last complete word spoken
+        before the barge-in, and sends a truncation event to the frontend.
+        """
+        # Calculate playback position (time since TTS started)
+        if self._tts_playback_start_time:
+            playback_position_ms = int((time.time() - self._tts_playback_start_time) * 1000)
+        else:
+            playback_position_ms = 0
+
+        # Add the current response as a chunk for truncation calculation
+        # Estimate duration: 150 WPM average = 2.5 words/second
+        # Average 5 chars per word = ~40ms per character (rough estimate)
+        estimated_duration_ms = len(self._current_response_text) * 40
+
+        self._transcript_sync.add_chunk(
+            session_id=self.session_id,
+            text=self._current_response_text,
+            chunk_index=0,
+            duration_ms=estimated_duration_ms,
+        )
+
+        # Truncate at playback position
+        truncation_result = self._transcript_sync.truncate_at_position(
+            session_id=self.session_id,
+            interrupted_at_ms=playback_position_ms,
+        )
+
+        if truncation_result:
+            self._last_truncation_result = truncation_result
+
+            # Send truncation event to frontend
+            truncation_event = self._transcript_sync.get_truncation_event_data(self.session_id)
+            if truncation_event:
+                await self._on_message(
+                    PipelineMessage(
+                        type="transcript.truncated",
+                        data=truncation_event,
+                    )
+                )
+
+            logger.info(
+                "[Pipeline] Transcript truncated at word boundary",
+                extra={
+                    "session_id": self.session_id,
+                    "playback_position_ms": playback_position_ms,
+                    "words_spoken": truncation_result.words_spoken,
+                    "words_remaining": truncation_result.words_remaining,
+                    "last_word": truncation_result.last_complete_word,
+                },
+            )
+
+        # Reset for next response
+        self._current_response_text = ""
+        self._tts_playback_start_time = None
+
+    async def _start_misfire_check(self) -> None:
+        """
+        Start a background task to check for misfire after 500ms.
+
+        Natural Conversation Flow: Phase 2.4 - Misfire Rollback
+        If no valid transcript is received within 500ms, rollback the barge-in.
+        """
+        try:
+            # Wait for the misfire timeout
+            await asyncio.sleep(0.5)  # 500ms
+
+            # Check if we should rollback
+            if self._hybrid_vad_decider.check_misfire_rollback(""):
+                await self._handle_misfire_rollback()
+        except asyncio.CancelledError:
+            # Timer was cancelled (valid transcript received)
+            pass
+
+    async def _handle_misfire_rollback(self) -> None:
+        """
+        Handle misfire rollback: Resume previous playback state.
+
+        Called when barge-in triggered but no valid speech was detected.
+        """
+        logger.info(
+            "[Pipeline] Misfire rollback triggered - no valid transcript",
+            extra={
+                "session_id": self.session_id,
+                "interrupted_response_length": len(self._barge_in_interrupted_response),
+                "playback_position_ms": self._barge_in_playback_position_ms,
+            },
+        )
+
+        # Send rollback event to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="barge_in.rollback",
+                data={
+                    "reason": "no_transcript",
+                    "playback_position_ms": self._barge_in_playback_position_ms,
+                    "can_resume": bool(self._barge_in_interrupted_response),
+                    "timestamp": time.time(),
+                },
+            )
+        )
+
+        # If there's interrupted response, tell frontend to resume audio
+        # The frontend can resume from the buffered position
+        if self._barge_in_interrupted_response:
+            await self._on_message(
+                PipelineMessage(
+                    type="audio.resume",
+                    data={
+                        "resume_from_ms": self._barge_in_playback_position_ms,
+                        "timestamp": time.time(),
+                    },
+                )
+            )
+
+        # Reset misfire state
+        self._barge_in_interrupted_response = ""
+        self._barge_in_playback_position_ms = 0
+
+        # Update metrics
+        self._metrics.barge_in_misfires = getattr(self._metrics, "barge_in_misfires", 0) + 1
+
+    def _cancel_misfire_timer(self) -> None:
+        """Cancel the misfire rollback timer when valid transcript is received."""
+        if self._misfire_check_task and not self._misfire_check_task.done():
+            self._misfire_check_task.cancel()
+            self._misfire_check_task = None
+        if hasattr(self, "_hybrid_vad_decider"):
+            self._hybrid_vad_decider.cancel_misfire_timer()
+        # Clear the interrupted response since barge-in is confirmed
+        self._barge_in_interrupted_response = ""
+        self._barge_in_playback_position_ms = 0
+
+    async def _handle_soft_barge(
+        self,
+        classification: ClassificationResult,
+        transcript: str,
+    ) -> None:
+        """
+        Handle soft barge-in: Pause AI at reduced volume, wait for user to continue.
+
+        Soft barges occur when the user says something like "wait", "hold on", etc.
+        The AI pauses and waits for the user to provide more input.
+        """
+        logger.info(f"[Pipeline] Soft barge detected: '{transcript}'")
+
+        # Send soft_barge notification to frontend
+        await self._on_message(
+            PipelineMessage(
+                type="barge_in.classified",
+                data={
+                    "classification": "soft_barge",
+                    "intent": classification.intent,
+                    "confidence": classification.confidence,
+                    "action": "pause",
+                    "transcript": transcript,
+                    "pause_duration_ms": classification.action.pause_duration_ms or 2000,
+                    "timestamp": time.time(),
+                },
+            )
+        )
+
+        async with self._state_lock:
+            # Pause Talker (reduce volume, don't cancel)
+            if self._talker_session:
+                # Note: TalkerSession may need a pause() method added
+                # For now, we'll cancel but frontend will handle the soft pause
+                await self._talker_session.cancel()
+
+            # Set state to soft_paused (or use LISTENING for now)
+            self._state = PipelineState.LISTENING
+            self._partial_transcript = ""
+            self._final_transcript = ""
+
+            # Restart STT for new input
+            if self._stt_session:
+                await self._stt_session.stop()
+
+            self._stt_session = await self._stt_service.create_session(
+                on_partial=self._handle_partial_transcript,
+                on_final=self._handle_final_transcript,
+                on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
+            )
+            await self._stt_session.start()
+
+            await self._send_state_update(reason="soft_barge")
+
+    async def update_frontend_vad_state(
+        self,
+        silero_confidence: float,
+        is_speaking: bool,
+        speech_duration_ms: int,
+        is_playback_active: bool,
+    ) -> None:
+        """
+        Phase 2: VAD Confidence Sharing - Update frontend Silero VAD state.
+
+        This method receives periodic VAD state updates from the frontend
+        Silero VAD and stores them for hybrid VAD decision making.
+
+        Phase 3: Hybrid VAD Fusion - Uses HybridVADDecider for weighted voting.
+
+        Args:
+            silero_confidence: Speech probability from Silero VAD (0-1)
+            is_speaking: Whether frontend VAD thinks user is speaking
+            speech_duration_ms: Duration of current speech in milliseconds
+            is_playback_active: Whether AI audio playback is active
+        """
+        share_enabled = await feature_flag_service.is_enabled(
+            "backend.voice_silero_vad_confidence_sharing",
+            default=True,
+        )
+        if not share_enabled:
+            return
+
+        self._frontend_vad_state = {
+            "silero_confidence": silero_confidence,
+            "is_speaking": is_speaking,
+            "speech_duration_ms": speech_duration_ms,
+            "is_playback_active": is_playback_active,
+        }
+        self._frontend_vad_update_time = time.time()
+
+        # Check if hybrid VAD fusion is enabled
+        hybrid_vad_enabled = await feature_flag_service.is_enabled(
+            "backend.voice_hybrid_vad_fusion",
+            default=False,
+        )
+
+        # Update hybrid VAD decider state
+        self._hybrid_vad_decider.set_tts_playing(is_playback_active)
+        silero_state = VADState(
+            confidence=silero_confidence,
+            is_speaking=is_speaking,
+            speech_duration_ms=speech_duration_ms,
+        )
+        self._hybrid_vad_decider.update_silero_state(silero_state)
+
+        # Create Deepgram event from current state
+        deepgram_event = DeepgramEvent(
+            is_speech_started=self._deepgram_vad_active,
+            is_speech_ended=False,
+            confidence=1.0 if self._deepgram_vad_active else 0.0,
+        )
+        self._hybrid_vad_decider.update_deepgram_event(deepgram_event)
+
+        # Use hybrid VAD decider if enabled, otherwise fall back to legacy logic
+        if hybrid_vad_enabled and self._state == PipelineState.SPEAKING:
+            decision = self._hybrid_vad_decider.decide_barge_in()
+
+            if decision.trigger:
+                logger.info(
+                    "[Pipeline] Hybrid VAD: Triggering barge-in",
+                    extra={
+                        "source": decision.source,
+                        "confidence": decision.confidence,
+                        "silero_weight": decision.silero_weight,
+                        "deepgram_weight": decision.deepgram_weight,
+                        "reason": decision.reason,
+                        "silero_confidence": silero_confidence,
+                        "speech_duration_ms": speech_duration_ms,
+                        "deepgram_active": self._deepgram_vad_active,
+                    },
+                )
+                # Start misfire timer for rollback
+                self._hybrid_vad_decider.start_misfire_timer()
+                # Don't await - let it run async to avoid blocking VAD stream
+                asyncio.create_task(
+                    self.barge_in(
+                        transcript=self._preemptive_transcript_buffer or self._partial_transcript,
+                        duration_ms=speech_duration_ms,
+                        vad_probability=silero_confidence,
+                    )
+                )
+        else:
+            # Legacy hybrid VAD logic (fallback when feature flag disabled)
+            hybrid_should_barge = False
+            if self._state == PipelineState.SPEAKING and is_speaking:
+                # If Deepgram and Silero agree, act immediately
+                if self._deepgram_vad_active and silero_confidence >= 0.55:
+                    hybrid_should_barge = True
+                else:
+                    # Weighted score gives Deepgram credit when active
+                    deepgram_weight = 0.4 if self._deepgram_vad_active else 0.0
+                    hybrid_score = silero_confidence * 0.6 + deepgram_weight
+
+                    # Require stronger evidence when Deepgram is not detecting speech yet
+                    if silero_confidence >= 0.8 and speech_duration_ms >= 200:
+                        hybrid_should_barge = True
+                    elif hybrid_score >= 0.75 and speech_duration_ms >= 150:
+                        hybrid_should_barge = True
+
+            if hybrid_should_barge:
+                logger.info(
+                    f"[Pipeline] Legacy Hybrid VAD: Triggering barge-in "
+                    f"(conf={silero_confidence:.2f}, duration={speech_duration_ms}ms, "
+                    f"deepgram_active={self._deepgram_vad_active})"
+                )
+                # Don't await - let it run async to avoid blocking VAD stream
+                asyncio.create_task(self.barge_in())
 
     async def stop(self) -> PipelineMetrics:
         """
@@ -824,6 +1426,17 @@ class VoicePipelineSession:
         if self._phi_monitor:
             self._phi_monitor.clear_patient_context()
             logger.debug(f"PHI monitor context cleared for session: {self.session_id}")
+
+        # Natural Conversation Flow: Phase 3 - Clean up utterance aggregator
+        if self._utterance_aggregator:
+            await self._utterance_aggregator.cancel()
+            remove_utterance_aggregator(self.session_id)
+            self._utterance_aggregator = None
+            logger.debug(f"Utterance aggregator cleaned up for session: {self.session_id}")
+
+        # Natural Conversation Flow: Phase 1 - Clean up transcript sync session
+        self._transcript_sync.remove_session(self.session_id)
+        logger.debug(f"Transcript sync session cleaned up for session: {self.session_id}")
 
         # Phase 8: Clean up dictation session
         if self._dictation_session:
@@ -1088,6 +1701,17 @@ class VoicePipelineSession:
         self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
         self._last_transcript_time = time.time()  # Track for pause detection
 
+        # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on valid transcript
+        # If we received a substantial transcript, the barge-in is confirmed
+        if text.strip() and len(text.strip()) > 2:
+            self._cancel_misfire_timer()
+
+        # Natural Conversation Flow: Phase 4 - Pre-emptive Listening
+        # Buffer transcripts during AI speech for instant availability on barge-in
+        if self._preemptive_listening_active and self._state == PipelineState.SPEAKING:
+            self._preemptive_transcript_buffer = text
+            logger.debug(f"[Pipeline] Pre-emptive buffer updated: '{text}'")
+
         # Trigger barge-in if AI is speaking and we got substantial speech
         # Requires multiple words or a command word to avoid false positives from noise
         # Also requires confidence above threshold based on VAD sensitivity
@@ -1096,14 +1720,16 @@ class VoicePipelineSession:
             if confidence >= threshold:
                 logger.info(
                     f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): "
-                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
                 await self.barge_in()
                 return  # Don't send transcript delta after barge-in
             else:
                 logger.info(
                     f"[Pipeline] Skipping barge-in (confidence too low): '{text}' "
-                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, vad_sensitivity={self.config.vad_sensitivity})"
+                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, "
+                    f"vad_sensitivity={self.config.vad_sensitivity})"
                 )
 
         await self._on_message(
@@ -1121,6 +1747,10 @@ class VoicePipelineSession:
         """Handle final transcript segment from STT."""
         logger.info(f"[Pipeline] Final transcript received: '{text}'")
 
+        # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on final transcript
+        if text.strip():
+            self._cancel_misfire_timer()
+
         # Trigger barge-in if AI is speaking and we got substantial speech
         if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):
             logger.info(f"[Pipeline] Triggering barge-in (substantial final transcript while AI speaking): '{text}'")
@@ -1129,6 +1759,23 @@ class VoicePipelineSession:
             self._final_transcript = text
             return
 
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # If aggregation is enabled, add segment to aggregator instead of
+        # directly accumulating. The aggregator will merge segments and
+        # call _handle_aggregated_utterance when ready.
+        if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+            result = await self._utterance_aggregator.add_final(
+                text=text,
+                confidence=self._transcript_confidence,
+                language=self.config.stt_language,
+            )
+            # If aggregator returned a result, it was forcefully finalized
+            # (e.g., max segments reached). The callback handles processing.
+            if result:
+                await self._handle_aggregated_utterance(result)
+            return
+
+        # Standard accumulation (aggregation disabled)
         if self._final_transcript:
             self._final_transcript += " " + text
         else:
@@ -1148,6 +1795,20 @@ class VoicePipelineSession:
         the AI is speaking. See _handle_partial_transcript() and _handle_final_transcript().
         """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
+        self._deepgram_vad_active = True
+
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        # If we're waiting for continuation and user starts speaking again, cancel the wait
+        if self._pending_continuation and self._continuation_wait_task:
+            logger.info("[Pipeline] User continued speaking - cancelling continuation wait")
+            self._continuation_wait_task.cancel()
+            self._pending_continuation = False
+            # Note: The transcript will be accumulated and speech_end will be called again
+
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # Notify aggregator that speech started (cancels its timeout)
+        if self._utterance_aggregator:
+            await self._utterance_aggregator.on_speech_start()
 
         # Track speech timing for backchannels
         self._speech_start_time = time.time()
@@ -1157,12 +1818,14 @@ class VoicePipelineSession:
             await self._backchannel_session.on_speech_start()
 
         # Notify frontend of speech start (for UI feedback only)
+        logger.info(f"[Pipeline] SENDING input_audio_buffer.speech_started to frontend (state={self._state})")
         await self._on_message(
             PipelineMessage(
                 type="input_audio_buffer.speech_started",
                 data={
                     "timestamp": time.time(),
                     "vad_confidence": 0.9,  # Deepgram VAD is high confidence
+                    "pipeline_state": self._state.value,  # Include state for debugging
                 },
             )
         )
@@ -1175,6 +1838,7 @@ class VoicePipelineSession:
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
         logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}'")
+        self._deepgram_vad_active = False
 
         # Notify backchannel session of speech end
         if self._backchannel_session:
@@ -1190,12 +1854,175 @@ class VoicePipelineSession:
                 f"pace={prosody_snapshot.pace.value}, finished={prosody_snapshot.likely_finished}"
             )
 
+        # Natural Conversation Flow: Phase 2 - Continuation Detection
+        # Check if user might continue speaking before processing
+        if self.config.enable_continuation_detection and self._final_transcript:
+            # Build prosody hints from current analysis
+            prosody_hints: Optional[ProsodyHints] = None
+            if self._current_prosody:
+                # Map WPM to speaking rate category
+                wpm = self._current_prosody.words_per_minute
+                speaking_rate = "normal"
+                if wpm < 100:
+                    speaking_rate = "slower"
+                elif wpm > 160:
+                    speaking_rate = "faster"
+
+                prosody_hints = ProsodyHints(
+                    pitch_trend="rising" if not self._current_prosody.likely_finished else "falling",
+                    speaking_rate=speaking_rate,
+                    energy_trend="stable",  # Could be enhanced with actual energy analysis
+                    preceding_pause_ms=int((time.time() - self._last_transcript_time) * 1000),
+                )
+
+            # Analyze for continuation signals
+            self._continuation_analysis = self._continuation_detector.analyze(
+                transcript=self._final_transcript,
+                language=self.config.stt_language.split("-")[0],  # Extract base language
+                prosody=prosody_hints,
+            )
+
+            analysis = self._continuation_analysis
+            logger.info(
+                f"[Pipeline] Continuation analysis: prob={analysis.continuation_probability:.2f}, "
+                f"wait={analysis.should_wait}, reason='{analysis.reason}'"
+            )
+
+            # If continuation is likely, wait for more speech instead of processing immediately
+            if (
+                self._continuation_analysis.should_wait
+                and self._continuation_analysis.continuation_probability
+                >= self.config.continuation_confidence_threshold
+            ):
+                self._pending_continuation = True
+                wait_ms = min(
+                    self._continuation_analysis.recommended_wait_ms,
+                    self.config.continuation_max_wait_ms,
+                )
+                logger.info(f"[Pipeline] Waiting {wait_ms}ms for potential continuation...")
+
+                # Send turn.continuation_expected event to frontend
+                # This allows frontend to show visual feedback that we're waiting for more input
+                await self._on_message(
+                    PipelineMessage(
+                        type="turn.continuation_expected",
+                        data={
+                            "probability": self._continuation_analysis.continuation_probability,
+                            "reason": self._continuation_analysis.reason,
+                            "signals": [s.signal_type for s in self._continuation_analysis.signals],
+                            "wait_ms": wait_ms,
+                            "transcript": self._final_transcript,
+                            "timestamp": time.time(),
+                        },
+                    )
+                )
+
+                # Cancel any existing wait task
+                if self._continuation_wait_task and not self._continuation_wait_task.done():
+                    self._continuation_wait_task.cancel()
+
+                # Schedule delayed processing
+                self._continuation_wait_task = asyncio.create_task(self._continuation_timeout_handler(wait_ms))
+                return  # Don't process yet, wait for timeout or more speech
+
+        # Natural Conversation Flow: Phase 3 - Utterance Aggregation
+        # If aggregation is enabled, let the aggregator callback (_handle_aggregated_utterance)
+        # handle processing instead of calling _finalize_and_process() here.
+        # This prevents duplicate LLM/TTS turns when aggregation is active.
+        if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+            logger.debug("[Pipeline] Deferring processing to utterance aggregator callback")
+            return
+
+        # No continuation expected and no aggregation, process immediately
+        await self._finalize_and_process()
+
+    async def _continuation_timeout_handler(self, wait_ms: int) -> None:
+        """Handle timeout for continuation waiting."""
+        try:
+            await asyncio.sleep(wait_ms / 1000.0)
+            # Timeout expired, no more speech detected
+            logger.info(f"[Pipeline] Continuation wait expired after {wait_ms}ms, processing transcript")
+            self._pending_continuation = False
+
+            # Send turn.continuation_resolved event to frontend
+            await self._on_message(
+                PipelineMessage(
+                    type="turn.continuation_resolved",
+                    data={
+                        "resolution": "timeout",
+                        "wait_ms": wait_ms,
+                        "transcript": self._final_transcript,
+                        "timestamp": time.time(),
+                    },
+                )
+            )
+
+            # If aggregation is enabled, let the aggregator callback handle processing
+            if self._utterance_aggregator and self.config.enable_utterance_aggregation:
+                logger.debug("[Pipeline] Continuation timeout: deferring to utterance aggregator")
+                return
+
+            await self._finalize_and_process()
+        except asyncio.CancelledError:
+            # More speech detected, wait was cancelled
+            logger.debug("[Pipeline] Continuation wait cancelled (more speech detected)")
+            # Send turn.continuation_resolved event with speech_detected resolution
+            await self._on_message(
+                PipelineMessage(
+                    type="turn.continuation_resolved",
+                    data={
+                        "resolution": "speech_detected",
+                        "wait_ms": wait_ms,
+                        "transcript": self._partial_transcript or self._final_transcript,
+                        "timestamp": time.time(),
+                    },
+                )
+            )
+
+    async def _finalize_and_process(self) -> None:
+        """Finalize STT session and process the transcript."""
+        self._pending_continuation = False
+
         # Get final transcript from STT
-        if self._stt_session:
+        # Note: With pre-emptive listening enabled, we DON'T stop the STT session
+        # here because we need it to keep running during TTS playback for barge-in
+        # detection. The session will be recreated in _process_transcript() before
+        # TTS starts.
+        if self._stt_session and not self.config.enable_preemptive_listening:
             final = await self._stt_session.stop()
             if final and final != self._final_transcript:
                 self._final_transcript = final
+        elif self._stt_session and self.config.enable_preemptive_listening:
+            # For pre-emptive listening, stop the current session but the new one
+            # will be created in _process_transcript() before TTS starts
+            logger.debug("[Pipeline] Stopping STT session (will restart for pre-emptive listening)")
+            await self._stt_session.stop()
+            self._stt_session = None
 
+        await self._process_transcript()
+
+    async def _handle_aggregated_utterance(self, utterance: AggregatedUtterance) -> None:
+        """
+        Handle an aggregated utterance from the UtteranceAggregator.
+
+        Called when the aggregator has collected and merged multiple speech segments
+        into a complete utterance ready for processing.
+        """
+        logger.info(
+            f"[Pipeline] Aggregated utterance ready: segments={utterance.segment_count}, "
+            f"merged={utterance.was_merged}, duration={utterance.total_duration_ms}ms"
+        )
+
+        # Use the merged text as the final transcript
+        self._final_transcript = utterance.text
+
+        # Log segment details for debugging
+        if utterance.was_merged and len(utterance.segments) > 1:
+            segment_texts = [f"'{s.text}'" for s in utterance.segments]
+            logger.debug(f"[Pipeline] Merged segments: {' + '.join(segment_texts)}")
+            logger.debug(f"[Pipeline] Result: '{utterance.text}'")
+
+        # Process the aggregated transcript
         await self._process_transcript()
 
     async def _process_transcript(self) -> None:
@@ -1233,6 +2060,10 @@ class VoicePipelineSession:
             await self._process_dictation_transcript(transcript, message_id)
             return
 
+        # Reset cancelled flag before creating new Talker session
+        # This allows audio from the NEW response to flow after a barge-in
+        self._cancelled = False
+
         # Create Talker session for TTS
         voice_config = VoiceConfig(
             voice_id=self.config.voice_id,
@@ -1244,6 +2075,30 @@ class VoicePipelineSession:
             on_audio_chunk=self._handle_audio_chunk,
             voice_config=voice_config,
         )
+
+        # CRITICAL FIX: Create STT session BEFORE TTS starts playing so that
+        # pre-emptive listening has a valid session during SPEAKING state.
+        # Without this, pre-emptive listening sends audio to a stopped session,
+        # causing "Dropping audio: running=False, ws=None" errors and barge-in failure.
+        if self.config.enable_preemptive_listening:
+            logger.info("[Pipeline] Creating STT session for pre-emptive listening")
+            self._stt_session = await self._stt_service.create_session(
+                on_partial=self._handle_partial_transcript,
+                on_final=self._handle_final_transcript,
+                on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
+                on_words=self._handle_word_data,
+                config=STTSessionConfig(
+                    language=self.config.stt_language,
+                    sample_rate=self.config.stt_sample_rate,
+                    endpointing_ms=self.config.stt_endpointing_ms,
+                    utterance_end_ms=self.config.stt_utterance_end_ms,
+                ),
+            )
+            if not await self._stt_session.start():
+                logger.error("[Pipeline] Failed to start STT session for pre-emptive listening")
+            else:
+                logger.info("[Pipeline] STT session ready for pre-emptive listening")
 
         # Build emotion context for response adaptation
         emotion_context = None
@@ -1290,7 +2145,8 @@ class VoicePipelineSession:
         query_type = classify_query_type(transcript)
         timing_config = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
         logger.debug(
-            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, filler={timing_config.use_filler}"
+            f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, "
+            f"filler={timing_config.use_filler}"
         )
 
         # Phase 3, 5 & 6: Apply combined response delay
@@ -1445,17 +2301,32 @@ class VoicePipelineSession:
         async with self._state_lock:
             self._state = PipelineState.LISTENING
 
-            # Restart STT for next input, preserving on_words callback for prosody/backchannel
-            self._stt_session = await self._stt_service.create_session(
-                on_partial=self._handle_partial_transcript,
-                on_final=self._handle_final_transcript,
-                on_endpoint=self._handle_speech_end,
-                on_speech_start=self._handle_speech_start,
-                on_words=self._handle_word_data,
-            )
-            await self._stt_session.start()
+            # If pre-emptive listening was enabled, the STT session was created
+            # before TTS started and is already running. Only create a new session
+            # if pre-emptive listening was disabled.
+            if not self.config.enable_preemptive_listening:
+                # Restart STT for next input, preserving on_words callback for prosody/backchannel
+                self._stt_session = await self._stt_service.create_session(
+                    on_partial=self._handle_partial_transcript,
+                    on_final=self._handle_final_transcript,
+                    on_endpoint=self._handle_speech_end,
+                    on_speech_start=self._handle_speech_start,
+                    on_words=self._handle_word_data,
+                    config=STTSessionConfig(
+                        language=self.config.stt_language,
+                        sample_rate=self.config.stt_sample_rate,
+                        endpointing_ms=self.config.stt_endpointing_ms,
+                        utterance_end_ms=self.config.stt_utterance_end_ms,
+                    ),
+                )
+                await self._stt_session.start()
+            else:
+                # STT session already running from pre-emptive listening
+                logger.debug("[Pipeline] Keeping existing STT session from pre-emptive listening")
 
             await self._send_state_update()
+            # Issue 3: Publish turn.yielded when AI finishes speaking
+            await self._publish_turn_yielded("ai_finished")
 
     async def _handle_llm_token(self, token: str) -> None:
         """Handle token from Thinker, feed to Talker."""
@@ -1466,6 +2337,10 @@ class VoicePipelineSession:
         if self._metrics.first_token_latency_ms == 0:
             self._metrics.first_token_latency_ms = int((time.time() - self._metrics.start_time) * 1000)
             logger.info(f"First token latency: {self._metrics.first_token_latency_ms}ms")
+
+        # Natural Conversation Flow: Phase 1 - Track response text for truncation
+        # Accumulate tokens for word-accurate transcript truncation during barge-in
+        self._current_response_text += token
 
         # Send token to client for display
         await self._on_message(
@@ -1574,7 +2449,7 @@ class VoicePipelineSession:
 
                 # If critical PHI detected outside patient context, use sanitized text
                 if phi_result.has_critical_phi:
-                    logger.warning(f"[Pipeline] Critical PHI detected - using sanitized text")
+                    logger.warning("[Pipeline] Critical PHI detected - using sanitized text")
                     text = phi_result.sanitized_text
 
         # Apply formatting if configured
@@ -1622,7 +2497,15 @@ class VoicePipelineSession:
 
     async def _handle_audio_chunk(self, chunk: AudioChunk) -> None:
         """Handle audio chunk from Talker."""
+        # Debug: Log audio chunk reception
+        logger.info(
+            f"[Pipeline] _handle_audio_chunk called: "
+            f"has_data={bool(chunk.data)}, data_len={len(chunk.data) if chunk.data else 0}, "
+            f"is_final={chunk.is_final}, cancelled={self._cancelled}"
+        )
+
         if self._cancelled:
+            logger.info("[Pipeline] Audio chunk dropped - cancelled=True")
             return
 
         self._metrics.audio_chunks_sent += 1
@@ -1630,12 +2513,23 @@ class VoicePipelineSession:
         # Track TTS latency (first audio)
         if self._metrics.tts_latency_ms == 0 and chunk.data:
             self._metrics.tts_latency_ms = int((time.time() - self._metrics.start_time) * 1000)
+            # Natural Conversation Flow: Phase 1 - Initialize playback tracking
+            self._tts_playback_start_time = time.time()
+
+        # Natural Conversation Flow: Phase 1 - Track playback position for transcript sync
+        if chunk.data and self._word_timestamps_enabled:
+            self._transcript_sync.update_playback_position(
+                self.session_id,
+                int((time.time() - getattr(self, "_tts_playback_start_time", time.time())) * 1000),
+            )
 
         # Update state to speaking
         if self._state != PipelineState.SPEAKING and chunk.data:
             async with self._state_lock:
                 self._state = PipelineState.SPEAKING
                 await self._send_state_update()
+                # Issue 3: Publish turn.taken when AI starts speaking
+                await self._publish_turn_taken("ai_speaking")
 
         # Send audio to client
         await self._on_message(
@@ -1690,6 +2584,46 @@ class VoicePipelineSession:
                 data={"state": self._state.value, "reason": reason},
             )
         )
+
+    async def _publish_turn_taken(self, reason: str = "ai_speaking") -> None:
+        """
+        Issue 3: Publish turn.taken event when AI takes the turn.
+
+        This is called when the AI starts speaking. The frontend uses this
+        to update UI state and potentially pause listening.
+        """
+        await self._event_bus.publish_event(
+            event_type="turn.taken",
+            data={
+                "reason": reason,
+                "state": self._state.value,
+                "timestamp": time.time(),
+            },
+            session_id=self.session_id,
+            source_engine="voice_pipeline",
+            priority=5,
+        )
+        logger.debug(f"[Pipeline] Published turn.taken: {reason}")
+
+    async def _publish_turn_yielded(self, reason: str = "ai_finished") -> None:
+        """
+        Issue 3: Publish turn.yielded event when AI yields the turn.
+
+        This is called when the AI finishes speaking and is ready to listen.
+        The frontend uses this to re-enable listening UI.
+        """
+        await self._event_bus.publish_event(
+            event_type="turn.yielded",
+            data={
+                "reason": reason,
+                "state": self._state.value,
+                "timestamp": time.time(),
+            },
+            session_id=self.session_id,
+            source_engine="voice_pipeline",
+            priority=5,
+        )
+        logger.debug(f"[Pipeline] Published turn.yielded: {reason}")
 
     # ==========================================================================
     # Phase 10: Analytics Methods

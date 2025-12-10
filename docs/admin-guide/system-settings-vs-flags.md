@@ -1,5 +1,6 @@
 ---
 title: System Settings vs Feature Flags
+slug: admin-guide/system-settings-vs-flags
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, admin, ai-agents]

@@ -248,12 +248,21 @@ class AudioQueue:
     - Async queue for audio chunks
     - Cancellation clears pending audio
     - Tracks queue state
+    - Natural Conversation Flow: Phase 1 - Queue metrics telemetry
     """
 
     def __init__(self, max_size: int = 50):
         self._queue: asyncio.Queue[Optional[AudioChunk]] = asyncio.Queue(maxsize=max_size)
         self._cancelled = False
         self._finished = False
+        self._max_size = max_size
+
+        # Natural Conversation Flow: Phase 1 - Queue Metrics
+        self._total_chunks_added = 0
+        self._total_chunks_dropped = 0
+        self._total_chunks_retrieved = 0
+        self._cancellation_count = 0
+        self._max_depth_seen = 0
 
     async def put(self, chunk: AudioChunk) -> bool:
         """
@@ -267,8 +276,14 @@ class AudioQueue:
 
         try:
             await asyncio.wait_for(self._queue.put(chunk), timeout=5.0)
+            self._total_chunks_added += 1
+            # Track max depth
+            current_depth = self._queue.qsize()
+            if current_depth > self._max_depth_seen:
+                self._max_depth_seen = current_depth
             return True
         except asyncio.TimeoutError:
+            self._total_chunks_dropped += 1
             logger.warning("Audio queue full, dropping chunk")
             return False
 
@@ -284,6 +299,8 @@ class AudioQueue:
 
         try:
             chunk = await asyncio.wait_for(self._queue.get(), timeout=1.0)
+            if chunk is not None:
+                self._total_chunks_retrieved += 1
             return chunk
         except asyncio.TimeoutError:
             if self._finished:
@@ -293,6 +310,7 @@ class AudioQueue:
     async def cancel(self) -> None:
         """Cancel the queue and clear pending audio."""
         self._cancelled = True
+        self._cancellation_count += 1
         # Drain the queue
         while not self._queue.empty():
             try:
@@ -316,11 +334,39 @@ class AudioQueue:
         """Reset the queue for reuse."""
         self._cancelled = False
         self._finished = False
-        while not self._queue.empty():
-            try:
-                self._queue.get_nowait()
-            except asyncio.QueueEmpty:
-                break
+
+    def get_metrics(self) -> dict:
+        """
+        Get queue metrics for telemetry.
+
+        Natural Conversation Flow: Phase 1 - Queue Metrics Telemetry
+
+        Returns:
+            Dictionary with queue performance metrics
+        """
+        return {
+            "total_chunks_added": self._total_chunks_added,
+            "total_chunks_dropped": self._total_chunks_dropped,
+            "total_chunks_retrieved": self._total_chunks_retrieved,
+            "cancellation_count": self._cancellation_count,
+            "current_depth": self._queue.qsize(),
+            "max_depth_seen": self._max_depth_seen,
+            "max_size": self._max_size,
+            "utilization_pct": round((self._max_depth_seen / self._max_size) * 100, 1) if self._max_size > 0 else 0,
+            "drop_rate_pct": (
+                round((self._total_chunks_dropped / self._total_chunks_added) * 100, 1)
+                if self._total_chunks_added > 0
+                else 0
+            ),
+        }
+
+    def reset_metrics(self) -> None:
+        """Reset queue metrics (useful for new session)."""
+        self._total_chunks_added = 0
+        self._total_chunks_dropped = 0
+        self._total_chunks_retrieved = 0
+        self._cancellation_count = 0
+        self._max_depth_seen = 0
 
 
 # ==============================================================================

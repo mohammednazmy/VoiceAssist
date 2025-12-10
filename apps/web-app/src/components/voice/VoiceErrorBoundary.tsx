@@ -107,7 +107,7 @@ export class VoiceErrorBoundary extends Component<
 
     try {
       // Stop all active media tracks
-      if (navigator.mediaDevices?.getUserMedia) {
+      if (navigator.mediaDevices) {
         // We can't directly access existing streams, but we can try to stop
         // any tracks that might be stored globally
         const globalAudioContext = (

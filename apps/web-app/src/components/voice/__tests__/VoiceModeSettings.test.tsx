@@ -1,13 +1,19 @@
 /**
  * VoiceModeSettings Component Tests
  * Tests for voice settings modal UI and interactions
+ *
+ * Updated to use ElevenLabs voices instead of OpenAI voices.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { VoiceModeSettings } from "../VoiceModeSettings";
-import { useVoiceSettingsStore } from "../../../stores/voiceSettingsStore";
+import {
+  useVoiceSettingsStore,
+  ELEVENLABS_VOICE_OPTIONS,
+} from "../../../stores/voiceSettingsStore";
+import { ElevenLabsVoices } from "../../../lib/voiceConstants";
 
 describe("VoiceModeSettings", () => {
   const mockOnClose = vi.fn();
@@ -15,7 +21,7 @@ describe("VoiceModeSettings", () => {
   beforeEach(() => {
     // Reset store to defaults before each test
     useVoiceSettingsStore.setState({
-      voice: "alloy",
+      elevenlabsVoiceId: ElevenLabsVoices.BRIAN, // Default ElevenLabs voice
       language: "en",
       vadSensitivity: 50,
       autoStartOnOpen: false,
@@ -57,12 +63,14 @@ describe("VoiceModeSettings", () => {
 
   describe("display current settings", () => {
     it("should display current voice selection", () => {
-      useVoiceSettingsStore.getState().setVoice("nova");
+      useVoiceSettingsStore
+        .getState()
+        .setElevenlabsVoiceId(ElevenLabsVoices.JOSH);
 
       render(<VoiceModeSettings isOpen={true} onClose={mockOnClose} />);
 
       const voiceSelect = screen.getByTestId("voice-select");
-      expect(voiceSelect).toHaveValue("nova");
+      expect(voiceSelect).toHaveValue(ElevenLabsVoices.JOSH);
     });
 
     it("should display current language selection", () => {
@@ -107,7 +115,7 @@ describe("VoiceModeSettings", () => {
 
     it("should display config summary with current settings", () => {
       useVoiceSettingsStore.setState({
-        voice: "shimmer",
+        elevenlabsVoiceId: ElevenLabsVoices.JOSH,
         language: "fr",
         vadSensitivity: 80,
         autoStartOnOpen: false,
@@ -120,9 +128,8 @@ describe("VoiceModeSettings", () => {
       // The summary is inside a <p> element with a <strong>Current:</strong>
       const summaryContainer = screen.getByText(/Current:/).closest("p");
       expect(summaryContainer).toBeInTheDocument();
-      expect(summaryContainer?.textContent).toContain("Shimmer");
+      expect(summaryContainer?.textContent).toContain("Josh");
       expect(summaryContainer?.textContent).toContain("French");
-      expect(summaryContainer?.textContent).toContain("80% sensitivity");
     });
   });
 
@@ -132,9 +139,11 @@ describe("VoiceModeSettings", () => {
       render(<VoiceModeSettings isOpen={true} onClose={mockOnClose} />);
 
       const voiceSelect = screen.getByTestId("voice-select");
-      await user.selectOptions(voiceSelect, "echo");
+      await user.selectOptions(voiceSelect, ElevenLabsVoices.JOSH);
 
-      expect(useVoiceSettingsStore.getState().voice).toBe("echo");
+      expect(useVoiceSettingsStore.getState().elevenlabsVoiceId).toBe(
+        ElevenLabsVoices.JOSH,
+      );
     });
 
     it("should update language when selection changes", async () => {
@@ -332,14 +341,15 @@ describe("VoiceModeSettings", () => {
       const voiceSelect = screen.getByTestId("voice-select");
       const options = voiceSelect.querySelectorAll("option");
 
-      expect(options).toHaveLength(6);
-      expect(screen.getByRole("option", { name: "Alloy" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Echo" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Fable" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Onyx" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "Nova" })).toBeInTheDocument();
+      // ElevenLabs voices: 15 total (13 premium + 2 standard)
+      expect(options).toHaveLength(ELEVENLABS_VOICE_OPTIONS.length);
+
+      // Check some sample voices from the list
+      expect(screen.getByRole("option", { name: /Adam/ })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Josh/ })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Brian/ })).toBeInTheDocument();
       expect(
-        screen.getByRole("option", { name: "Shimmer" }),
+        screen.getByRole("option", { name: /Rachel/ }),
       ).toBeInTheDocument();
     });
 

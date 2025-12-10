@@ -106,6 +106,9 @@ export class MockWebSocket {
       {}) as MockWebSocketOptions;
     MockWebSocket._pendingOptions = null;
 
+    // Track this instance for test assertions
+    MockWebSocket._instances.push(this);
+
     const {
       autoConnect = true,
       connectDelay = 0,
@@ -200,6 +203,16 @@ export class MockWebSocket {
    */
   sendPong(): void {
     this.receiveMessage({ type: "pong", timestamp: Date.now() });
+  }
+
+  /**
+   * Force-open the socket immediately (bypasses autoConnect delay)
+   */
+  forceOpen(): void {
+    if (this.readyState !== MockWebSocket.OPEN) {
+      this.readyState = MockWebSocket.OPEN;
+      this._dispatchEvent("open", new Event("open"));
+    }
   }
 
   /**
@@ -344,18 +357,5 @@ export class MockWebSocket {
       MockWebSocket;
   }
 }
-
-// Track instances
-const originalConstructor = MockWebSocket.prototype.constructor;
-MockWebSocket.prototype.constructor = function (
-  this: MockWebSocket,
-  ...args: unknown[]
-) {
-  const instance = originalConstructor.apply(this, args);
-  (MockWebSocket as unknown as { _instances: MockWebSocket[] })._instances.push(
-    instance,
-  );
-  return instance;
-};
 
 export default MockWebSocket;

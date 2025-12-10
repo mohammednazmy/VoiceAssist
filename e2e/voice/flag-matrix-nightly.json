@@ -1,0 +1,222 @@
+{
+  "name": "nightly",
+  "description": "Comprehensive flag matrix for nightly validation (~30 minutes)",
+  "timeout": 1800000,
+  "combinations": [
+    {
+      "name": "baseline",
+      "description": "All defaults - production configuration",
+      "flags": {}
+    },
+
+    {
+      "name": "silero-threshold-boost",
+      "description": "Silero VAD with threshold_boost echo suppression (default)",
+      "flags": {
+        "backend.voice_silero_vad_enabled": true,
+        "backend.voice_silero_echo_suppression_mode": "threshold_boost",
+        "backend.voice_silero_playback_threshold_boost": 0.2
+      }
+    },
+    {
+      "name": "silero-pause-mode",
+      "description": "Silero VAD paused entirely during playback",
+      "flags": {
+        "backend.voice_silero_vad_enabled": true,
+        "backend.voice_silero_echo_suppression_mode": "pause"
+      }
+    },
+    {
+      "name": "silero-no-suppression",
+      "description": "Silero VAD with no echo suppression (may false trigger)",
+      "flags": {
+        "backend.voice_silero_vad_enabled": true,
+        "backend.voice_silero_echo_suppression_mode": "none"
+      }
+    },
+    {
+      "name": "vad-disabled",
+      "description": "Silero VAD completely disabled",
+      "flags": {
+        "backend.voice_silero_vad_enabled": false
+      }
+    },
+
+    {
+      "name": "instant-barge-with-classifier",
+      "description": "Instant barge-in with intelligent classification enabled",
+      "flags": {
+        "backend.voice_instant_barge_in": true,
+        "backend.voice_intelligent_barge_in": true,
+        "backend.voice_barge_in_classifier_enabled": true
+      }
+    },
+    {
+      "name": "instant-barge-no-classifier",
+      "description": "Instant barge-in without classification (all interrupts treated as hard)",
+      "flags": {
+        "backend.voice_instant_barge_in": true,
+        "backend.voice_intelligent_barge_in": true,
+        "backend.voice_barge_in_classifier_enabled": false
+      }
+    },
+    {
+      "name": "delayed-barge",
+      "description": "No instant barge-in, wait for transcript confirmation",
+      "flags": {
+        "backend.voice_instant_barge_in": false
+      }
+    },
+    {
+      "name": "hybrid-vad-fusion",
+      "description": "Combine Silero and Deepgram VAD with weighted voting",
+      "flags": {
+        "backend.voice_silero_vad_enabled": true,
+        "backend.voice_hybrid_vad_fusion": true
+      }
+    },
+
+    {
+      "name": "queue-protection-on",
+      "description": "Both queue overflow protection and schedule watchdog enabled",
+      "flags": {
+        "backend.voice_queue_overflow_protection": true,
+        "backend.voice_schedule_watchdog": true
+      }
+    },
+    {
+      "name": "queue-protection-off",
+      "description": "Both queue overflow protection and schedule watchdog disabled",
+      "flags": {
+        "backend.voice_queue_overflow_protection": false,
+        "backend.voice_schedule_watchdog": false
+      }
+    },
+    {
+      "name": "watchdog-only",
+      "description": "Schedule watchdog without queue overflow protection",
+      "flags": {
+        "backend.voice_queue_overflow_protection": false,
+        "backend.voice_schedule_watchdog": true
+      }
+    },
+
+    {
+      "name": "threshold-0.3",
+      "description": "Very sensitive VAD threshold",
+      "flags": {
+        "backend.voice_silero_positive_threshold": 0.3
+      }
+    },
+    {
+      "name": "threshold-0.5",
+      "description": "Default VAD threshold",
+      "flags": {
+        "backend.voice_silero_positive_threshold": 0.5
+      }
+    },
+    {
+      "name": "threshold-0.7",
+      "description": "Less sensitive VAD threshold",
+      "flags": {
+        "backend.voice_silero_positive_threshold": 0.7
+      }
+    },
+    {
+      "name": "boost-0.1",
+      "description": "Minimal playback threshold boost",
+      "flags": {
+        "backend.voice_silero_playback_threshold_boost": 0.1
+      }
+    },
+    {
+      "name": "boost-0.2",
+      "description": "Default playback threshold boost",
+      "flags": {
+        "backend.voice_silero_playback_threshold_boost": 0.2
+      }
+    },
+    {
+      "name": "boost-0.3",
+      "description": "Aggressive playback threshold boost",
+      "flags": {
+        "backend.voice_silero_playback_threshold_boost": 0.3
+      }
+    },
+
+    {
+      "name": "ws-binary-audio",
+      "description": "Binary WebSocket frames for audio transmission",
+      "flags": {
+        "backend.voice_ws_binary_audio": true
+      }
+    },
+    {
+      "name": "ws-compression",
+      "description": "WebSocket permessage-deflate compression",
+      "flags": {
+        "backend.voice_ws_compression": true
+      }
+    },
+    {
+      "name": "ws-prebuffering",
+      "description": "Audio pre-buffering before playback",
+      "flags": {
+        "backend.voice_ws_audio_prebuffering": true
+      }
+    },
+    {
+      "name": "ws-adaptive-chunking",
+      "description": "Adaptive audio chunk sizing based on network",
+      "flags": {
+        "backend.voice_ws_adaptive_chunking": true
+      }
+    },
+
+    {
+      "name": "continuation-detection",
+      "description": "Full continuation detection with utterance aggregation",
+      "flags": {
+        "backend.voice_continuation_detection": true,
+        "backend.voice_utterance_aggregation": true,
+        "backend.voice_aggregation_window_ms": 3000
+      }
+    },
+    {
+      "name": "preemptive-listening",
+      "description": "Keep STT active during AI speech for faster barge-in",
+      "flags": {
+        "backend.voice_preemptive_listening": true
+      }
+    },
+
+    {
+      "name": "min-speech-short",
+      "description": "Very short minimum speech duration (fast detection)",
+      "flags": {
+        "backend.voice_silero_min_speech_ms": 50
+      }
+    },
+    {
+      "name": "min-speech-long",
+      "description": "Long minimum speech duration (fewer false positives)",
+      "flags": {
+        "backend.voice_silero_min_speech_ms": 500
+      }
+    },
+    {
+      "name": "playback-min-short",
+      "description": "Short playback minimum speech (faster barge-in during AI speech)",
+      "flags": {
+        "backend.voice_silero_playback_min_speech_ms": 100
+      }
+    },
+    {
+      "name": "playback-min-long",
+      "description": "Long playback minimum speech (fewer false barge-ins)",
+      "flags": {
+        "backend.voice_silero_playback_min_speech_ms": 500
+      }
+    }
+  ]
+}

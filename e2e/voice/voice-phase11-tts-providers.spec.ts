@@ -271,7 +271,7 @@ test.describe("Echo Cancellation - Phase 11.1", () => {
       console.log(`Echo cancellation enabled: ${isEnabled}`);
     } else {
       // Check for labeled toggle
-      const echoLabel = page.locator('text=/echo.cancellation/i, label:has-text("Echo")');
+      const echoLabel = page.locator('label:has-text("Echo"), [aria-label*="echo" i]');
       const hasLabel = await echoLabel.count() > 0;
 
       if (hasLabel) {

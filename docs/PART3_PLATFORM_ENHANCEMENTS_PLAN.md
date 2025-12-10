@@ -398,7 +398,8 @@ export const MedicationList: React.FC<MedicationListProps> = ({
               </div>
               {med.interactions?.length ? (
                 <span className="rounded-full bg-warning-100 px-2 py-0.5 text-xs font-medium text-warning-800">
-                  {med.interactions.length} interaction{med.interactions.length > 1 ? "s" : ""}
+                  {med.interactions.length} interaction
+                  {med.interactions.length > 1 ? "s" : ""}
                 </span>
               ) : null}
             </div>

@@ -297,15 +297,15 @@ A comprehensive 10-phase enhancement transforming voice mode into a human-like c
 
 Comprehensive EHR integration enabling voice-driven clinical workflows:
 
-| Component           | Capability                                                   |
-| ------------------- | ------------------------------------------------------------ |
-| Read Operations     | Patient, Observation, MedicationRequest, AllergyIntolerance  |
-| Write Operations    | MedicationRequest, ServiceRequest, DocumentReference (ETag)  |
-| Voice Commands      | "Prescribe amoxicillin 500mg twice daily", "Order CBC stat"  |
-| Order Confirmation  | Duplicate detection, conflict checks, confirmation workflow  |
-| Provider Monitoring | Circuit breaker, health checks, fallback activation          |
-| Chaos Engineering   | Resilience testing (outage simulation, latency injection)    |
-| Audit Logging       | HIPAA-compliant event capture for all EHR operations         |
+| Component           | Capability                                                  |
+| ------------------- | ----------------------------------------------------------- |
+| Read Operations     | Patient, Observation, MedicationRequest, AllergyIntolerance |
+| Write Operations    | MedicationRequest, ServiceRequest, DocumentReference (ETag) |
+| Voice Commands      | "Prescribe amoxicillin 500mg twice daily", "Order CBC stat" |
+| Order Confirmation  | Duplicate detection, conflict checks, confirmation workflow |
+| Provider Monitoring | Circuit breaker, health checks, fallback activation         |
+| Chaos Engineering   | Resilience testing (outage simulation, latency injection)   |
+| Audit Logging       | HIPAA-compliant event capture for all EHR operations        |
 
 **Documentation:** [Epic FHIR Operational Runbook](docs/operations/epic-fhir-runbook.md)
 
@@ -375,7 +375,7 @@ pnpm test           # Run all tests
 
 ### Architecture & Design
 
-- [System Architecture](docs/ARCHITECTURE_V2.md)
+- [System Architecture](docs/UNIFIED_ARCHITECTURE.md)
 - [Security & Compliance](docs/SECURITY_COMPLIANCE.md)
 - [HIPAA Compliance Matrix](docs/HIPAA_COMPLIANCE_MATRIX.md)
 

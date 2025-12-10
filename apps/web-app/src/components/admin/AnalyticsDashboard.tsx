@@ -3,7 +3,7 @@
  * Usage analytics, query trends, and cost tracking
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface AnalyticsData {
   dailyConversations: number[];
@@ -40,11 +40,7 @@ export function AnalyticsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("7d");
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [timeRange]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       // TODO: Replace with actual API call when backend is ready
       // const data = await apiClient.get(`/admin/analytics?range=${timeRange}`);
@@ -84,7 +80,11 @@ export function AnalyticsDashboard() {
       console.error("Failed to load analytics:", error);
       setIsLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   if (isLoading) {
     return (

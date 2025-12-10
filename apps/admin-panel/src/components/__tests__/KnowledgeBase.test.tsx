@@ -5,8 +5,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { KnowledgeBase } from "../KnowledgeBase";
-import { useKnowledgeDocuments } from "../../hooks/useKnowledgeDocuments";
-import { useIndexingJobs } from "../../hooks/useIndexingJobs";
+import {
+  useKnowledgeDocuments,
+  type KnowledgeDocument,
+} from "../../hooks/useKnowledgeDocuments";
+import { useIndexingJobs, type IndexingJob } from "../../hooks/useIndexingJobs";
 
 // Mock the hooks
 vi.mock("../../hooks/useKnowledgeDocuments", () => ({
@@ -17,35 +20,81 @@ vi.mock("../../hooks/useIndexingJobs", () => ({
   useIndexingJobs: vi.fn(),
 }));
 
-const mockDocs = [
+const mockDocs: KnowledgeDocument[] = [
   {
     id: "doc-1",
     name: "Medical Guidelines 2024",
-    type: "pdf",
+    type: "guideline",
     version: "1.0",
     indexed: true,
   },
   {
     id: "doc-2",
     name: "Clinical Notes Template",
-    type: "txt",
+    type: "note",
     version: "2.1",
     indexed: false,
   },
 ];
 
-const mockJobs = [
+const mockJobs: IndexingJob[] = [
   {
     id: "job-1",
     documentId: "doc-2",
-    state: "processing",
+    state: "running",
+    attempts: 1,
   },
   {
     id: "job-2",
     documentId: "doc-3",
-    state: "queued",
+    state: "pending",
+    attempts: 0,
   },
 ];
+
+// Helper to create complete mock return values
+const createDocsHookReturn = (
+  overrides: Partial<ReturnType<typeof useKnowledgeDocuments>> = {},
+) =>
+  ({
+    docs: mockDocs,
+    loading: false,
+    error: null,
+    refetch: vi.fn(),
+    deleteDocument: vi.fn().mockResolvedValue({ success: true }),
+    deleteDocuments: vi.fn().mockResolvedValue({ success: true }),
+    deleteError: null,
+    clearDeleteError: vi.fn(),
+    isDeleting: false,
+    deletingCount: 0,
+    ...overrides,
+  }) as ReturnType<typeof useKnowledgeDocuments>;
+
+const createJobsHookReturn = (
+  overrides: Partial<ReturnType<typeof useIndexingJobs>> = {},
+) =>
+  ({
+    jobs: mockJobs,
+    loading: false,
+    error: null,
+    refetch: vi.fn().mockResolvedValue(undefined),
+    silentRefresh: vi.fn().mockResolvedValue(undefined),
+    lastFetched: new Date(),
+    hasActiveJobs: false,
+    isPolling: false,
+    cancelJob: vi.fn().mockResolvedValue(undefined),
+    retryJob: vi.fn().mockResolvedValue(undefined),
+    actionError: null,
+    clearActionError: vi.fn(),
+    isActionLoading: vi.fn().mockReturnValue(false),
+    getJob: vi.fn().mockReturnValue(null),
+    getJobsByDocument: vi.fn().mockReturnValue([]),
+    activeJobs: [],
+    completedJobs: [],
+    failedJobs: [],
+    stats: { total: 0, active: 0, completed: 0, failed: 0 },
+    ...overrides,
+  }) as ReturnType<typeof useIndexingJobs>;
 
 describe("KnowledgeBase", () => {
   beforeEach(() => {
@@ -54,18 +103,8 @@ describe("KnowledgeBase", () => {
 
   describe("rendering", () => {
     it("renders section heading", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: mockDocs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: mockJobs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(createDocsHookReturn());
+      vi.mocked(useIndexingJobs).mockReturnValue(createJobsHookReturn());
 
       render(<KnowledgeBase />);
 
@@ -73,18 +112,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders description text", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -94,18 +127,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders upload button", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -115,18 +142,10 @@ describe("KnowledgeBase", () => {
 
   describe("documents section", () => {
     it("renders documents table header", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: mockDocs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(createDocsHookReturn());
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -138,18 +157,10 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders document rows", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: mockDocs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(createDocsHookReturn());
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -158,18 +169,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders indexed status badge", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [mockDocs[0]], // Only indexed doc
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [mockDocs[0]] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -177,18 +182,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders pending status badge", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [mockDocs[1]], // Only pending doc
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [mockDocs[1]] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -196,18 +195,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("shows loading indicator when loading documents", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: true,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [], loading: true }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -217,18 +210,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("shows empty message when no documents", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -240,18 +227,10 @@ describe("KnowledgeBase", () => {
 
   describe("indexing jobs section", () => {
     it("renders indexing jobs header", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: mockJobs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(createJobsHookReturn());
 
       render(<KnowledgeBase />);
 
@@ -259,18 +238,10 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders indexing job entries", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: mockJobs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(createJobsHookReturn());
 
       render(<KnowledgeBase />);
 
@@ -279,38 +250,22 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders job states", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: mockJobs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(createJobsHookReturn());
 
       render(<KnowledgeBase />);
 
-      expect(screen.getByText("processing")).toBeInTheDocument();
-      expect(screen.getByText("queued")).toBeInTheDocument();
+      expect(screen.getByText("running")).toBeInTheDocument();
+      expect(screen.getByText("pending")).toBeInTheDocument();
     });
 
     it("renders job IDs", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: mockJobs,
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(createJobsHookReturn());
 
       render(<KnowledgeBase />);
 
@@ -319,18 +274,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("shows loading indicator when loading jobs", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: true,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [], loading: true }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -339,18 +288,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("shows empty message when no jobs", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -360,18 +303,12 @@ describe("KnowledgeBase", () => {
 
   describe("layout", () => {
     it("renders as a section element with id", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       const { container } = render(<KnowledgeBase />);
 
@@ -380,18 +317,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("renders two-column grid layout", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       const { container } = render(<KnowledgeBase />);
 
@@ -402,18 +333,12 @@ describe("KnowledgeBase", () => {
 
   describe("hook integration", () => {
     it("calls useKnowledgeDocuments hook", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 
@@ -421,18 +346,12 @@ describe("KnowledgeBase", () => {
     });
 
     it("calls useIndexingJobs hook", () => {
-      vi.mocked(useKnowledgeDocuments).mockReturnValue({
-        docs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      vi.mocked(useIndexingJobs).mockReturnValue({
-        jobs: [],
-        loading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
+      vi.mocked(useKnowledgeDocuments).mockReturnValue(
+        createDocsHookReturn({ docs: [] }),
+      );
+      vi.mocked(useIndexingJobs).mockReturnValue(
+        createJobsHookReturn({ jobs: [] }),
+      );
 
       render(<KnowledgeBase />);
 

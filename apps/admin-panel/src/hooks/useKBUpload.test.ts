@@ -91,16 +91,21 @@ describe("useKBUpload", () => {
         await result.current.uploadDocument(file, "Test", "", onProgress);
       });
 
-      expect(onProgress).toHaveBeenCalledWith({
-        loaded: 50,
-        total: 100,
-        percent: 50,
-      });
-      expect(onProgress).toHaveBeenCalledWith({
-        loaded: 100,
-        total: 100,
-        percent: 100,
-      });
+      expect(onProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          loaded: 50,
+          total: 100,
+          percent: 50,
+          stage: "uploading",
+        }),
+      );
+      expect(onProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          loaded: 100,
+          total: 100,
+          percent: 100,
+        }),
+      );
     });
 
     it("should handle 415 unsupported file type error", async () => {
@@ -175,7 +180,7 @@ describe("useKBUpload", () => {
     });
 
     it("should handle generic network error", async () => {
-      mockRequest.mockRejectedValueOnce(new Error("Network error"));
+      mockRequest.mockRejectedValue(new Error("Network error"));
 
       const { result } = renderHook(() => useKBUpload());
 
@@ -189,7 +194,9 @@ describe("useKBUpload", () => {
         }
       });
 
-      expect(result.current.error).toBe("Network error");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Network error");
+      });
     });
 
     it("should set isUploading during request", async () => {
@@ -278,7 +285,7 @@ describe("useKBUpload", () => {
 
   describe("clearError", () => {
     it("should clear the error state", async () => {
-      mockRequest.mockRejectedValueOnce(new Error("Test error"));
+      mockRequest.mockRejectedValue(new Error("Test error"));
 
       const { result } = renderHook(() => useKBUpload());
 
@@ -292,7 +299,9 @@ describe("useKBUpload", () => {
         }
       });
 
-      expect(result.current.error).toBe("Test error");
+      await waitFor(() => {
+        expect(result.current.error).toBe("Test error");
+      });
 
       act(() => {
         result.current.clearError();

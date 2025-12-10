@@ -165,7 +165,8 @@ export function UnifiedChatContainer({
   const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(startVoiceMode);
+  // Voice panel should only open after conversation is ready (see effect below)
+  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState(false);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
 
   // Pagination state
@@ -467,12 +468,24 @@ export function UnifiedChatContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, apiClient]);
 
-  // Start voice mode if requested
+  // Start voice mode if requested - wait for conversation to be ready
   useEffect(() => {
-    if (startVoiceMode && loadingState === "idle" && !errorType) {
+    if (
+      startVoiceMode &&
+      loadingState === "idle" &&
+      !errorType &&
+      activeConversationId
+    ) {
       activateVoiceMode();
+      setIsVoicePanelOpen(true);
     }
-  }, [startVoiceMode, loadingState, errorType, activateVoiceMode]);
+  }, [
+    startVoiceMode,
+    loadingState,
+    errorType,
+    activateVoiceMode,
+    activeConversationId,
+  ]);
 
   // Announce voice mode changes for screen readers
   useEffect(() => {
@@ -670,6 +683,8 @@ export function UnifiedChatContainer({
   // -------------------------------------------------------------------------
 
   // Handle voice user message - add transcribed speech to chat timeline
+  // NOTE: Do NOT send to chat WebSocket - the voice pipeline handles AI response generation
+  // Sending to chat WebSocket would trigger a SECOND AI response, causing duplicates
   const handleVoiceUserMessage = useCallback(
     (content: string) => {
       if (!content.trim()) return;
@@ -677,23 +692,37 @@ export function UnifiedChatContainer({
       // Auto-title conversation if this is the first message
       autoTitleConversation(content);
 
-      // Add to unified store with voice source
+      // Create content hash for deduplication with WebSocket sync
+      const contentHash = `user:${content.slice(0, 100)}`;
+      const tempId = `voice-user-${Date.now()}`;
+
+      // Track in sync refs BEFORE adding to prevent WebSocket sync from duplicating
+      syncedContentHashes.current.set(contentHash, tempId);
+      syncedMessageIds.current.add(tempId);
+
+      // Add to unified store with voice source (for UI display only)
+      // The voice pipeline handles the AI response - we just display the transcript
       addMessage({
         role: "user",
         content,
         source: "voice" as MessageSource,
       });
-
-      // Send via WebSocket for conversation history
-      sendChatMessage(content);
     },
-    [addMessage, sendChatMessage, autoTitleConversation],
+    [addMessage, autoTitleConversation],
   );
 
   // Handle voice assistant message - add AI response to chat timeline
   const handleVoiceAssistantMessage = useCallback(
     (content: string) => {
       if (!content.trim()) return;
+
+      // Create content hash for deduplication with WebSocket sync
+      const contentHash = `assistant:${content.slice(0, 100)}`;
+      const tempId = `voice-assistant-${Date.now()}`;
+
+      // Track in sync refs BEFORE adding to prevent WebSocket sync from duplicating
+      syncedContentHashes.current.set(contentHash, tempId);
+      syncedMessageIds.current.add(tempId);
 
       addMessage({
         role: "assistant",

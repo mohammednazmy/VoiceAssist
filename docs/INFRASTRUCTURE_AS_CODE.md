@@ -14,7 +14,7 @@ tags:
   - infrastructure
   - code
 category: deployment
-component: "infra"
+component: "infra/terraform"
 relatedPaths:
   - "infrastructure/terraform"
   - "infrastructure/ansible"
@@ -415,7 +415,7 @@ terraform destroy -var-file="environments/production.tfvars"
 - [Ansible Guide](./ANSIBLE_GUIDE.md) - Detailed Ansible documentation
 - [CI/CD Guide](./CICD_GUIDE.md) - CI/CD pipeline documentation
 - [Deployment Guide](./DEPLOYMENT_GUIDE.md) - Deployment procedures
-- [Architecture](./ARCHITECTURE_V2.md) - System architecture documentation
+- [Architecture](./UNIFIED_ARCHITECTURE.md) - System architecture documentation
 - [Security](./SECURITY.md) - Security controls and compliance
 
 ## Troubleshooting

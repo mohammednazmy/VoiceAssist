@@ -52,34 +52,31 @@ This document catalogs all backend services in VoiceAssist V2. These are **logic
 ### Important Notes
 
 1. **Logical Services**: These represent service boundaries for code organization, not necessarily separate containers
-2. **Phases 0-10 (Monorepo)**: All services run in single FastAPI app (`server/`) as routers/modules
-3. **Phases 11-14 (Microservices)**: Services can be extracted to separate containers if scaling requires
+2. **Current Architecture**: All services run in single FastAPI app (`services/api-gateway/`) as routers/modules
+3. **Future Microservices**: Services can be extracted to separate containers if scaling requires
 4. **Service Boundaries**: Enforced through clear module structure even in monorepo
 5. **Independent Development**: Each service has its own tests, can be developed independently
 
 ### Implementation Strategy
 
-### Implementation Note: API Gateway Location (Phases 0–1)
+### Implementation Note: API Gateway Location
 
-For Phases 0–1, the API Gateway implementation used by Docker Compose
-lives under:
+The canonical backend implementation lives under:
 
 - `services/api-gateway/app/` – containerized FastAPI application
   built as `voiceassist-server` in `docker-compose.yml`.
 
-The `server/app/` directory hosts the logical monorepo design for
-future phases; many service modules there are stubs awaiting
-implementation and integration as the system evolves.
+> **Note:** The `server/` directory is **deprecated** and kept only for historical reference. All new development should use `services/api-gateway/`.
 
-**Phases 0-10: Monorepo (Docker Compose Development)**
+**Current: Docker Compose Development**
 
-- All services live in `server/` directory
+- All services live in `services/api-gateway/` directory
 - Single FastAPI application with multiple routers
 - Services are **logical boundaries** enforced through module structure
 - Runs in single container for rapid development
 - See [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) for structure
 
-**Phases 11-14: Microservices (Kubernetes Migration)**
+**Future: Kubernetes Migration**
 
 - Services can be extracted to separate containers
 - Each service becomes independent deployment
@@ -88,10 +85,10 @@ implementation and integration as the system evolves.
 
 **Related Documentation:**
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - Overall system architecture
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - Overall system architecture
 - [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) - Monorepo to microservices evolution
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Implementation roadmap
-- [server/README.md](../server/README.md) - Backend API details
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - Backend API details
 - [DATA_MODEL.md](DATA_MODEL.md) - Canonical data entities
 
 ---
@@ -117,25 +114,25 @@ implementation and integration as the system evolves.
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**: Not needed - single FastAPI app (`server/app/main.py`) handles all routing
-- **Phases 11-14 (Microservices)**: Extract to Kong or Nginx as separate container
+- **Current (Monorepo)**: Not needed - single FastAPI app (`services/api-gateway/app/main.py`) handles all routing
+- **Future (Microservices)**: Extract to Kong or Nginx as separate container
 
 **Purpose**: The API Gateway serves as the single entry point for all external requests to the VoiceAssist system. It handles routing, rate limiting, authentication verification, request/response transformation, and provides a unified API surface for frontend clients. Built with Kong or Nginx, it acts as a reverse proxy that shields internal microservices from direct exposure while providing cross-cutting concerns like logging, monitoring, and security enforcement.
 
 **Language/Runtime**:
 
-- Phases 0-10: N/A (FastAPI handles routing)
-- Phases 11-14: Kong Gateway (Lua/Nginx) or Nginx with OpenResty
+- Current (Monorepo): N/A (FastAPI handles routing)
+- Future (Microservices): Kong Gateway (Lua/Nginx) or Nginx with OpenResty
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8000/HTTP, 8443/HTTPS - External-facing gateway
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8000/HTTP, 8443/HTTPS - External-facing gateway
 
 **Dependencies**:
 
-- Phases 0-10: None (part of core app)
-- Phases 11-14: PostgreSQL (Kong config), Redis (rate limiting), all downstream services
+- Current: None (part of core app)
+- Future: PostgreSQL (Kong config), Redis (rate limiting), all downstream services
 
 **Key Endpoints**:
 
@@ -278,13 +275,13 @@ plugins:
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**:
+- **Current (Monorepo)**:
   - Admin KB API Router: `services/api-gateway/app/api/admin_kb.py`
   - RAG pipeline: `services/api-gateway/app/services/rag_service.py` (QueryOrchestrator)
   - Document ingestion: `services/api-gateway/app/services/kb_indexer.py` (KBIndexer)
   - Semantic search: `services/api-gateway/app/services/search_aggregator.py` (SearchAggregator)
   - LLM interface: `services/api-gateway/app/services/llm_client.py` (LLMClient)
-- **Phases 11-14 (Microservices)**: Extract to `services/kb-service/`
+- **Future (Microservices)**: Extract to `services/kb-service/`
 
 **Purpose**: The Medical Knowledge Base (KB) Service implements a sophisticated Retrieval-Augmented Generation (RAG) system for medical information. It performs semantic search across indexed medical literature (textbooks, journals, guidelines), generates context-aware responses using retrieved knowledge, integrates with external medical APIs (PubMed, UpToDate), manages document embeddings in Qdrant vector database, and orchestrates multi-hop reasoning for complex medical queries. This service ensures evidence-based responses with proper citations.
 
@@ -302,8 +299,8 @@ The orchestrator (`app/services/ai/orchestrator.py` or `app/services/rag_service
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8002/HTTP - Internal service mesh
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8002/HTTP - Internal service mesh
 
 **Dependencies**:
 
@@ -382,8 +379,8 @@ User Query → QueryOrchestrator →
 
 **Implementation Status**:
 
-- Phases 0-10: Core component in monorepo, central to all queries
-- Phases 11-14: Critical service, may need independent scaling for high query load
+- Current: Core component in monorepo, central to all queries
+- Future: Critical service, may need independent scaling for high query load
 
 ---
 
@@ -576,12 +573,12 @@ Metadata Indexing (PostgreSQL) → Completion
 
 **Implementation**:
 
-- **Phases 0-10 (Monorepo)**:
+- **Current (Monorepo)**:
   - Integration API Router: `services/api-gateway/app/api/integrations.py`
   - CalDAV Service: `services/api-gateway/app/services/caldav_service.py`
   - File Indexer: `services/api-gateway/app/services/nextcloud_file_indexer.py`
   - Email Service: `services/api-gateway/app/services/email_service.py` (skeleton)
-- **Phases 11-14 (Microservices)**: Extract to `services/integrations-service/`
+- **Future (Microservices)**: Extract to `services/integrations-service/`
 
 **Purpose**: The Calendar/Email Integration Service provides unified access to calendar and email functionality through multiple protocols. It integrates with Nextcloud Calendar via CalDAV, supports external calendar sync (Google Calendar, Outlook), connects to Nextcloud Mail or external IMAP/SMTP servers, enables voice commands for scheduling and email management, and maintains calendar event context for clinical workflows. This service allows clinicians to manage appointments and communications without leaving the VoiceAssist interface.
 
@@ -589,8 +586,8 @@ Metadata Indexing (PostgreSQL) → Completion
 
 **Main Ports**:
 
-- Dev (Phases 0-10): 8000/HTTP (shared with main FastAPI app)
-- Prod (Phases 11-14): 8006/HTTP - Internal service mesh
+- Current: 8000/HTTP (shared with main FastAPI app)
+- Future: 8006/HTTP - Internal service mesh
 
 **Dependencies**:
 
@@ -1019,11 +1016,11 @@ spec:
 
 ## Related Documentation
 
-- [ARCHITECTURE_V2.md](ARCHITECTURE_V2.md) - System architecture overview
+- [UNIFIED_ARCHITECTURE.md](UNIFIED_ARCHITECTURE.md) - System architecture overview
 - [DEVELOPMENT_PHASES_V2.md](DEVELOPMENT_PHASES_V2.md) - Implementation phases
 - [SECURITY_COMPLIANCE.md](SECURITY_COMPLIANCE.md) - HIPAA compliance details
 - [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) - Local development setup
-- [server/README.md](../server/README.md) - Backend API documentation
+- [../services/api-gateway/README.md](../services/api-gateway/README.md) - Backend API documentation
 
 ---
 

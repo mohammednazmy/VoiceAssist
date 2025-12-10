@@ -21,7 +21,7 @@ import httpx
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.core.resilience import elevenlabs_breaker
-from app.core.voice_constants import DEFAULT_VOICE_ID, DEFAULT_STABILITY, DEFAULT_SIMILARITY_BOOST, DEFAULT_STYLE
+from app.core.voice_constants import DEFAULT_VOICE_ID
 from pybreaker import CircuitBreakerError
 
 logger = get_logger(__name__)

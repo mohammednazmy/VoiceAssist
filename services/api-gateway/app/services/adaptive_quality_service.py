@@ -22,9 +22,8 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
-from app.core.config import settings
 from app.core.feature_flags import feature_flag_service
 
 logger = logging.getLogger(__name__)
@@ -315,9 +314,7 @@ class AdaptiveQualityService:
 
             try:
                 # Check feature flag
-                if not await feature_flag_service.is_enabled(
-                    "backend.voice_v4_adaptive_quality"
-                ):
+                if not await feature_flag_service.is_enabled("backend.voice_v4_adaptive_quality"):
                     logger.info("Adaptive quality feature flag is disabled")
                     # Still allow basic operation
                     self._initialized = True
@@ -349,22 +346,22 @@ class AdaptiveQualityService:
             QualityState for the session.
         """
         level = user_preference or initial_level
-        settings = QUALITY_PRESETS[level]
+        quality_settings = QUALITY_PRESETS[level]
 
         state = QualityState(
             session_id=session_id,
             current_level=level,
-            current_settings=settings,
+            current_settings=quality_settings,
             network_condition=NetworkCondition.GOOD,  # Assume good until measured
         )
 
         # Create latency budget
         budget = LatencyBudget(
-            total_budget_ms=settings.target_latency_ms,
-            stt_budget_ms=int(settings.target_latency_ms * 0.25),  # 25% for STT
-            llm_budget_ms=int(settings.target_latency_ms * 0.35),  # 35% for LLM
-            tts_budget_ms=int(settings.target_latency_ms * 0.25),  # 25% for TTS
-            network_budget_ms=int(settings.target_latency_ms * 0.15),  # 15% for network
+            total_budget_ms=quality_settings.target_latency_ms,
+            stt_budget_ms=int(quality_settings.target_latency_ms * 0.25),  # 25% for STT
+            llm_budget_ms=int(quality_settings.target_latency_ms * 0.35),  # 35% for LLM
+            tts_budget_ms=int(quality_settings.target_latency_ms * 0.25),  # 25% for TTS
+            network_budget_ms=int(quality_settings.target_latency_ms * 0.15),  # 15% for network
         )
 
         async with self._lock:
@@ -373,11 +370,11 @@ class AdaptiveQualityService:
             self._latency_budgets[session_id] = budget
 
         logger.info(
-            f"Quality session initialized",
+            "Quality session initialized",
             extra={
                 "session_id": session_id,
                 "level": level.value,
-                "target_latency_ms": settings.target_latency_ms,
+                "target_latency_ms": quality_settings.target_latency_ms,
             },
         )
 

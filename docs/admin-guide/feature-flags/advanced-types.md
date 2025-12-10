@@ -1,5 +1,6 @@
 ---
 title: Advanced Feature Flag Types
+slug: admin-guide/feature-flags/advanced-types
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, ai-agents]

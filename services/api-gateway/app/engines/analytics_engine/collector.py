@@ -4,6 +4,8 @@ Metrics Collector - Metrics Collection and Aggregation
 Collects and aggregates metrics from the voice pipeline.
 """
 
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -126,13 +128,13 @@ class MetricsCollector:
         window: str = "1m",
     ) -> Optional[float]:
         """Get rate of a counter over time window"""
-        # Parse window
+        # Parse window (reserved for future window-based rate calculation)
         if window.endswith("m"):
-            seconds = int(window[:-1]) * 60
+            _seconds = int(window[:-1]) * 60  # noqa: F841
         elif window.endswith("s"):
-            seconds = int(window[:-1])
+            _seconds = int(window[:-1])  # noqa: F841
         else:
-            seconds = 60
+            _seconds = 60  # noqa: F841
 
         counter_value = self._counters.get(name, 0.0)
 

@@ -482,6 +482,1000 @@ export const FEATURE_FLAGS = {
         otherFlags: [],
       },
     },
+
+    // -------------------------------------------------------------------------
+    // Voice Conversation Features
+    // -------------------------------------------------------------------------
+    voice_backchanneling: {
+      name: "backend.voice_backchanneling",
+      description:
+        "[Voice] Enable backchanneling/filler phrases during voice conversations. " +
+        "When enabled, the assistant will use natural verbal cues like 'Yes', 'Uh-huh', " +
+        "'I see', etc. to indicate active listening. Disable to remove filler phrases.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/backchanneling",
+      },
+      dependencies: {
+        services: ["api-gateway"],
+        components: ["BackchannelService", "VoicePipelineService"],
+        otherFlags: [],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Latency Optimization Flags
+    // -------------------------------------------------------------------------
+    voice_ws_audio_prebuffering: {
+      name: "backend.voice_ws_audio_prebuffering",
+      description:
+        "[WS Latency] Enable audio pre-buffering before playback starts. " +
+        "Buffers a minimum number of audio chunks to prevent choppy playback " +
+        "on networks with jitter. Default buffer: 3 chunks (~150ms).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useTTAudioPlayback", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    voice_ws_compression: {
+      name: "backend.voice_ws_compression",
+      description:
+        "[WS Latency] Enable WebSocket permessage-deflate compression. " +
+        "Reduces bandwidth for text messages (transcripts, events) by 15-30%. " +
+        "Note: Binary audio frames are not compressed as they are already efficient.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useThinkerTalkerSession", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    voice_ws_adaptive_chunking: {
+      name: "backend.voice_ws_adaptive_chunking",
+      description:
+        "[WS Latency] Enable adaptive audio chunk sizing based on network metrics. " +
+        "Adjusts chunk size dynamically: smaller chunks (1024 samples) for good networks " +
+        "to reduce latency, larger chunks (4096 samples) for poor networks to reduce overhead.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-latency-optimization",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useThinkerTalkerSession", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Reliability Flags - Phase 1-3
+    // -------------------------------------------------------------------------
+    voice_ws_binary_audio: {
+      name: "backend.voice_ws_binary_audio",
+      description:
+        "[WS Reliability Phase 1] Enable binary WebSocket frames for audio transmission. " +
+        "Sends audio as raw binary instead of base64-encoded JSON, reducing bandwidth by ~33% " +
+        "and CPU overhead from encoding/decoding. Includes sequence numbers for ordering.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-binary-audio",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_session_persistence: {
+      name: "backend.voice_ws_session_persistence",
+      description:
+        "[WS Reliability Phase 2] Enable Redis-backed session persistence for voice WebSocket sessions. " +
+        "Allows session state to survive brief disconnections and enables session recovery. " +
+        "Stores conversation context, audio buffer state, and pipeline configuration in Redis.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-session-persistence",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+          "RedisSessionStore",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_ws_graceful_degradation: {
+      name: "backend.voice_ws_graceful_degradation",
+      description:
+        "[WS Reliability Phase 3] Enable graceful degradation for voice WebSocket connections. " +
+        "Automatically reduces audio quality, increases buffering, or falls back to polling " +
+        "when network conditions degrade. Provides seamless experience during connectivity issues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-graceful-degradation",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "useNetworkQuality",
+          "VoicePipelineSession",
+        ],
+        otherFlags: ["backend.voice_ws_adaptive_chunking"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Error Recovery Flags
+    // -------------------------------------------------------------------------
+    ws_session_recovery: {
+      name: "backend.ws_session_recovery",
+      description:
+        "[WS Recovery] Enable WebSocket session state persistence for reconnection. " +
+        "Stores session state in Redis including pipeline state, conversation context, " +
+        "and voice settings. Allows seamless recovery after brief disconnections.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    ws_message_recovery: {
+      name: "backend.ws_message_recovery",
+      description:
+        "[WS Recovery] Enable partial message recovery after disconnects. " +
+        "Buffers recent messages on the server and replays missed messages " +
+        "to clients upon reconnection. Prevents loss of transcript/response deltas.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: ["backend.ws_session_recovery"],
+      },
+    },
+    ws_audio_checkpointing: {
+      name: "backend.ws_audio_checkpointing",
+      description:
+        "[WS Recovery] Enable audio buffer checkpointing for playback resume. " +
+        "Tracks confirmed audio sequence numbers and buffers unconfirmed chunks. " +
+        "Allows resuming audio playback from last confirmed position after reconnect.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/websocket-error-recovery",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useTTAudioPlayback", "ThinkerTalkerWebSocketHandler"],
+        otherFlags: ["backend.ws_session_recovery"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Protocol Optimization Flags
+    // -------------------------------------------------------------------------
+    ws_binary_protocol: {
+      name: "backend.ws_binary_protocol",
+      description:
+        "[WS Protocol] Enable binary WebSocket protocol for all message types. " +
+        "Uses binary framing with MessagePack serialization instead of JSON. " +
+        "Reduces message size by 20-40% and improves parsing performance.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ThinkerTalkerWebSocketHandler",
+          "useThinkerTalkerSession",
+        ],
+        otherFlags: [],
+      },
+    },
+    ws_message_batching: {
+      name: "backend.ws_message_batching",
+      description:
+        "[WS Protocol] Enable message batching for WebSocket communication. " +
+        "Groups multiple small messages into batched frames to reduce overhead. " +
+        "Configurable batch window (default 50ms) and max batch size (default 10).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ThinkerTalkerWebSocketHandler",
+          "WebSocketMessageBatcher",
+        ],
+        otherFlags: [],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // WebSocket Advanced Features - Phase: WebSocket Advanced Features
+    // -------------------------------------------------------------------------
+    ws_webrtc_fallback: {
+      name: "backend.ws_webrtc_fallback",
+      description:
+        "Enable WebRTC data channel as fallback transport for voice streaming. " +
+        "Provides 20-50ms lower latency than WebSocket for supported browsers.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager", "WebRTCTransport"],
+        otherFlags: [],
+      },
+    },
+    ws_webrtc_prefer: {
+      name: "backend.ws_webrtc_prefer",
+      description:
+        "Prefer WebRTC over WebSocket when both are available. " +
+        "Only applies when ws_webrtc_fallback is enabled.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TransportManager"],
+        otherFlags: ["backend.ws_webrtc_fallback"],
+      },
+    },
+    ws_adaptive_bitrate: {
+      name: "backend.ws_adaptive_bitrate",
+      description:
+        "Enable adaptive bitrate control based on network conditions. " +
+        "Automatically adjusts audio codec/bitrate (PCM16 → Opus 24k → Opus 12k).",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_adaptive_bitrate_aggressive: {
+      name: "backend.ws_adaptive_bitrate_aggressive",
+      description:
+        "Use aggressive bitrate switching with shorter hysteresis window. " +
+        "May cause more frequent quality changes but faster adaptation.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AdaptiveBitrateController"],
+        otherFlags: ["backend.ws_adaptive_bitrate"],
+      },
+    },
+    ws_aec_feedback: {
+      name: "backend.ws_aec_feedback",
+      description:
+        "Enable AEC (Acoustic Echo Cancellation) metrics feedback from client to server. " +
+        "Allows intelligent VAD sensitivity adjustment during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor", "VoicePipelineSession"],
+        otherFlags: [],
+      },
+    },
+    ws_aec_barge_gate: {
+      name: "backend.ws_aec_barge_gate",
+      description:
+        "Enable barge-in gating based on AEC convergence state. " +
+        "Prevents false speech detection from echo during TTS playback.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: null,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl:
+          "https://assistdocs.asimo.io/voice/websocket-advanced-features",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["AECMonitor"],
+        otherFlags: ["backend.ws_aec_feedback"],
+      },
+    },
+
+    // -------------------------------------------------------------------------
+    // Natural Conversation Flow Flags - Phase: Natural Conversation
+    // -------------------------------------------------------------------------
+    voice_queue_overflow_protection: {
+      name: "backend.voice_queue_overflow_protection",
+      description:
+        "[Natural Conversation Phase 1] Enable audio queue overflow protection. " +
+        "Enforces MAX_QUEUE_DURATION_MS (1000ms) limit on audio queue to prevent " +
+        "runaway accumulation. Automatically trims old chunks when queue exceeds limit.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: [],
+      },
+    },
+    voice_schedule_watchdog: {
+      name: "backend.voice_schedule_watchdog",
+      description:
+        "[Natural Conversation Phase 1] Enable scheduling watchdog for audio playback. " +
+        "Runs every 500ms to detect stuck schedules and queue overflow. " +
+        "Automatically resets schedule if stuck more than 2x lookahead ahead.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useTTAudioPlayback"],
+        otherFlags: ["backend.voice_queue_overflow_protection"],
+      },
+    },
+    voice_intelligent_barge_in: {
+      name: "backend.voice_intelligent_barge_in",
+      description:
+        "[Natural Conversation Phase 2] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel, soft_barge, hard_barge, or unclear. " +
+        "Supports 12 languages with fuzzy matching for STT error tolerance.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useIntelligentBargeIn",
+          "classifyBargeIn",
+          "BargeInClassifier",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_instant_barge_in: {
+      name: "backend.voice_instant_barge_in",
+      description:
+        "[Natural Conversation] Enable instant barge-in using Deepgram SpeechStarted event. " +
+        "Immediately stops AI audio on any detected speech, reducing barge-in latency from 200-300ms to <50ms. " +
+        "Uses rapid audio fade-out (50ms) for smooth transition.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "useThinkerTalkerSession",
+          "useTTAudioPlayback",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: [],
+      },
+    },
+    voice_continuation_detection: {
+      name: "backend.voice_continuation_detection",
+      description:
+        "[Natural Conversation] Enable continuation detection for natural pauses. " +
+        "Analyzes speech patterns (trailing words, filler words, prosody) to predict when " +
+        "user intends to continue speaking. Dynamically extends silence threshold for incomplete utterances.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["SilencePredictor", "ContinuationDetector"],
+        otherFlags: [],
+      },
+    },
+    voice_utterance_aggregation: {
+      name: "backend.voice_utterance_aggregation",
+      description:
+        "[Natural Conversation] Enable multi-segment utterance aggregation. " +
+        "Accumulates speech segments within a time window and merges them into coherent queries " +
+        "before sending to Thinker. Prevents loss of context when user speaks in fragments.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "UtteranceAggregator",
+          "UtteranceWindowManager",
+          "ThinkerTalkerWebSocketHandler",
+        ],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
+    voice_preemptive_listening: {
+      name: "backend.voice_preemptive_listening",
+      description:
+        "[Natural Conversation] Keep STT active during AI speech for faster barge-in. " +
+        "Buffers incoming transcripts during AI playback so transcript is immediately " +
+        "available when barge-in is confirmed. Reduces response delay after interruption.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["useThinkerTalkerSession", "VoicePipelineSession"],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_aggregation_window_ms: {
+      name: "backend.voice_aggregation_window_ms",
+      description:
+        "[Natural Conversation] Maximum time (ms) to wait for speech continuation. " +
+        "After silence is detected, waits this long for user to resume before processing. " +
+        "Longer values allow more natural pauses but increase response latency.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 3000,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 1000,
+        max: 10000,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["UtteranceAggregator"],
+        otherFlags: ["backend.voice_utterance_aggregation"],
+      },
+    },
+    voice_min_barge_in_confidence: {
+      name: "backend.voice_min_barge_in_confidence",
+      description:
+        "[Natural Conversation] Minimum VAD confidence (0-1) to trigger barge-in. " +
+        "Lower values make barge-in more sensitive (may cause false triggers). " +
+        "Higher values require stronger speech signal (may miss quiet interruptions).",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.3,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.0,
+        max: 1.0,
+        docsUrl: "https://assistdocs.asimo.io/voice/natural-conversation-flow",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["OverlapHandler", "BargeInClassifier"],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_barge_in_classifier_enabled: {
+      name: "backend.voice_barge_in_classifier_enabled",
+      description:
+        "[Natural Conversation] Enable intelligent barge-in classification. " +
+        "Classifies user interruptions as backchannel (continue AI), soft_barge (pause AI), " +
+        "or hard_barge (stop AI). Supports 12 languages with multilingual backchannel detection. " +
+        "When disabled, all barge-ins are treated as hard interruptions.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "BargeInClassifier",
+          "VoicePipelineService",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_barge_in_killswitch: {
+      name: "backend.voice_barge_in_killswitch",
+      description:
+        "[Natural Conversation] MASTER KILL SWITCH for barge-in enhancements. " +
+        "When enabled, instantly reverts to legacy simple barge-in behavior. " +
+        "Use this flag to quickly disable all barge-in classification if issues arise.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "high" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-classification",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["VoicePipelineService", "useThinkerTalkerVoiceMode"],
+        otherFlags: [],
+      },
+    },
+    voice_hybrid_vad_fusion: {
+      name: "backend.voice_hybrid_vad_fusion",
+      description:
+        "[Natural Conversation] Enable hybrid VAD fusion combining frontend Silero VAD " +
+        "with backend Deepgram VAD using weighted voting. Improves barge-in accuracy " +
+        "during AI playback by adjusting weights: Silero 0.3/Deepgram 0.7 during playback, " +
+        "Silero 0.6/Deepgram 0.4 when idle. Includes 500ms misfire rollback timer.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "HybridVADDecider",
+          "VoicePipelineService",
+          "useSileroVAD",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_word_timestamps: {
+      name: "backend.voice_word_timestamps",
+      description:
+        "[Natural Conversation] Enable word-level transcript tracking for clean truncation " +
+        "during barge-in. Tracks AI response text and estimates word boundaries to provide " +
+        "accurate text cutoff when audio is interrupted. Sends transcript.truncated events " +
+        "to frontend with truncated_text, remaining_text, and word counts.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/word-timestamps",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["TranscriptSyncService", "VoicePipelineService"],
+        otherFlags: [],
+      },
+    },
+    voice_prosody_extraction: {
+      name: "backend.voice_prosody_extraction",
+      description:
+        "[Natural Conversation] Enable frontend prosody feature extraction for turn-taking. " +
+        "Extracts pitch, energy, and speech rate from audio frames using Web Audio API. " +
+        "Features are sent to backend with audio.input.complete messages for holistic " +
+        "turn-prediction combining transcript patterns with prosodic cues.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/prosody-turn-taking",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "ProsodyExtractor",
+          "useThinkerTalkerSession",
+          "ContinuationDetector",
+        ],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
+    voice_adaptive_prebuffer: {
+      name: "backend.voice_adaptive_prebuffer",
+      description:
+        "[Natural Conversation] Enable network-adaptive audio prebuffering. " +
+        "Dynamically adjusts the audio prebuffer size based on network quality. " +
+        "Good connections (RTT < 100ms): 2-3 chunks (~150ms). " +
+        "Poor connections (RTT > 300ms): 6-8 chunks (~400ms). " +
+        "Reduces jitter and audio glitches on poor networks while minimizing " +
+        "latency on good networks.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/network-adaptive",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: [
+          "useTTAudioPlayback",
+          "useNetworkQuality",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_ws_prebuffering"],
+      },
+    },
+
+    // =========================================================================
+    // Silero VAD Enhancement Flags (Local Browser-Side VAD)
+    // =========================================================================
+    voice_silero_vad_enabled: {
+      name: "backend.voice_silero_vad_enabled",
+      description:
+        "[Silero VAD] Master toggle for local Silero VAD in browser. " +
+        "Silero VAD is a neural network-based voice activity detector that runs " +
+        "in the browser via ONNX Runtime. Provides more accurate speech detection " +
+        "than simple RMS thresholds, enabling reliable barge-in during AI speech.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD", "useThinkerTalkerVoiceMode"],
+        otherFlags: [],
+      },
+    },
+    voice_silero_echo_suppression_mode: {
+      name: "backend.voice_silero_echo_suppression_mode",
+      description:
+        "[Silero VAD] Echo suppression mode during AI playback. " +
+        "Options: 'threshold_boost' (keep VAD active with higher threshold), " +
+        "'pause' (pause VAD entirely during playback), 'none' (no suppression). " +
+        "Default: threshold_boost - keeps VAD active but requires stronger speech signal.",
+      category: "backend" as const,
+      type: "string" as const,
+      defaultValue: "threshold_boost",
+      defaultEnabled: true,
+      metadata: {
+        criticality: "medium" as const,
+        allowedValues: ["threshold_boost", "pause", "none"],
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD", "useThinkerTalkerVoiceMode"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_positive_threshold: {
+      name: "backend.voice_silero_positive_threshold",
+      description:
+        "[Silero VAD] Base probability threshold (0-1) for speech detection. " +
+        "Higher = less sensitive (fewer false positives). " +
+        "Lower = more sensitive (may detect noise as speech). " +
+        "Default: 0.5",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.5,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.1,
+        max: 0.9,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_playback_threshold_boost: {
+      name: "backend.voice_silero_playback_threshold_boost",
+      description:
+        "[Silero VAD] Amount to boost speech threshold during AI playback (0-0.5). " +
+        "Applied when echo suppression mode is 'threshold_boost'. " +
+        "Higher = more aggressive echo filtering (may miss quiet barge-ins). " +
+        "Default: 0.2 (threshold becomes 0.5 + 0.2 = 0.7 during playback)",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.2,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.0,
+        max: 0.5,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_echo_suppression_mode",
+        ],
+      },
+    },
+    voice_silero_min_speech_ms: {
+      name: "backend.voice_silero_min_speech_ms",
+      description:
+        "[Silero VAD] Minimum speech duration (ms) before triggering onSpeechStart. " +
+        "Helps filter out short noise bursts. " +
+        "Higher = fewer false positives but slower detection. " +
+        "Default: 150",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 150,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 50,
+        max: 500,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_playback_min_speech_ms: {
+      name: "backend.voice_silero_playback_min_speech_ms",
+      description:
+        "[Silero VAD] Minimum speech duration (ms) during AI playback to trigger barge-in. " +
+        "Longer duration helps filter out TTS echo bursts. " +
+        "Default: 200 (speech during playback must be at least 200ms to count)",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 200,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 100,
+        max: 500,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_echo_suppression_mode",
+        ],
+      },
+    },
+    // Phase 3: Adaptive VAD Flags
+    voice_silero_adaptive_threshold: {
+      name: "backend.voice_silero_adaptive_threshold",
+      description:
+        "[Silero VAD Phase 3] Enable adaptive VAD threshold based on ambient noise. " +
+        "When enabled, VAD monitors background noise during silence and adjusts " +
+        "the speech detection threshold dynamically for better accuracy.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
+    voice_silero_noise_calibration_ms: {
+      name: "backend.voice_silero_noise_calibration_ms",
+      description:
+        "[Silero VAD Phase 3] Duration (ms) to measure ambient noise at startup. " +
+        "Longer calibration provides more accurate noise profile but delays voice mode activation.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 1000,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 500,
+        max: 3000,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_adaptive_threshold",
+        ],
+      },
+    },
+    voice_silero_noise_adaptation_factor: {
+      name: "backend.voice_silero_noise_adaptation_factor",
+      description:
+        "[Silero VAD Phase 3] How much to adjust threshold per unit of noise (0-0.3). " +
+        "Higher values make threshold adjustment more aggressive in noisy environments.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 0.1,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 0.0,
+        max: 0.3,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app"],
+        components: ["useSileroVAD"],
+        otherFlags: [
+          "backend.voice_silero_vad_enabled",
+          "backend.voice_silero_adaptive_threshold",
+        ],
+      },
+    },
+    voice_silero_vad_confidence_sharing: {
+      name: "backend.voice_silero_vad_confidence_sharing",
+      description:
+        "[Silero VAD Phase 2] Enable frontend-to-backend VAD confidence sharing. " +
+        "When enabled, frontend streams VAD state to backend for hybrid decision making.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: true,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/silero-vad",
+      },
+      dependencies: {
+        services: ["web-app", "api-gateway"],
+        components: [
+          "useSileroVAD",
+          "useThinkerTalkerSession",
+          "voice_pipeline_service",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------

@@ -5,7 +5,7 @@
  * Phase 9.3: Enhanced Voice Features
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export interface AudioDevice {
   deviceId: string;
@@ -33,7 +33,7 @@ export function AudioDeviceSelector({
   const [devices, setDevices] = useState<AudioDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasPermission, setHasPermission] = useState(false);
+  const hasPermissionRef = useRef(false);
 
   const loadDevices = useCallback(async () => {
     setIsLoading(true);
@@ -41,13 +41,13 @@ export function AudioDeviceSelector({
 
     try {
       // First, request permission if we don't have it
-      if (!hasPermission) {
+      if (!hasPermissionRef.current) {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
         // Stop the stream immediately - we just needed permission
         stream.getTracks().forEach((track) => track.stop());
-        setHasPermission(true);
+        hasPermissionRef.current = true;
       }
 
       // Now enumerate devices
@@ -72,7 +72,7 @@ export function AudioDeviceSelector({
     } finally {
       setIsLoading(false);
     }
-  }, [hasPermission, selectedDeviceId, onDeviceSelect]);
+  }, [selectedDeviceId, onDeviceSelect]);
 
   // Load devices on mount
   useEffect(() => {

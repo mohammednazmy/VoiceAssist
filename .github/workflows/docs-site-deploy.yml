@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -88,7 +88,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
     steps:
       - name: Download static bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: artifacts
@@ -99,7 +99,7 @@ jobs:
           tar -xzf artifacts/docs-site.tar.gz -C dist
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -140,7 +140,7 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
     steps:
       - name: Download static bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: artifacts
@@ -151,7 +151,7 @@ jobs:
           tar -xzf artifacts/docs-site.tar.gz -C dist
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

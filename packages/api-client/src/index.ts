@@ -177,6 +177,9 @@ export interface FeatureFlag {
   rollout_percentage?: number;
   user_groups?: string[];
   metadata?: Record<string, unknown>;
+  flag_type?: string;
+  value?: unknown;
+  default_value?: unknown;
 }
 
 /** Request to create a new feature flag */
@@ -1472,14 +1475,14 @@ export class VoiceAssistApiClient {
 
   async getFeatureFlags(): Promise<FeatureFlag[]> {
     const response = await this.client.get<FeatureFlag[]>(
-      "/admin/feature-flags",
+      "/api/admin/feature-flags",
     );
     return response.data;
   }
 
   async getFeatureFlag(flagName: string): Promise<FeatureFlag> {
     const response = await this.client.get<FeatureFlag>(
-      `/admin/feature-flags/${flagName}`,
+      `/api/admin/feature-flags/${flagName}`,
     );
     return response.data;
   }
@@ -1488,7 +1491,7 @@ export class VoiceAssistApiClient {
     flag: CreateFeatureFlagRequest,
   ): Promise<FeatureFlag> {
     const response = await this.client.post<FeatureFlag>(
-      "/admin/feature-flags",
+      "/api/admin/feature-flags",
       flag,
     );
     return response.data;
@@ -1499,7 +1502,7 @@ export class VoiceAssistApiClient {
     updates: UpdateFeatureFlagRequest,
   ): Promise<FeatureFlag> {
     const response = await this.client.patch<FeatureFlag>(
-      `/admin/feature-flags/${flagName}`,
+      `/api/admin/feature-flags/${flagName}`,
       updates,
     );
     return response.data;

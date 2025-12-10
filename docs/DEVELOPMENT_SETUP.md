@@ -652,7 +652,7 @@ pre-commit run --all-files
 ## Additional Resources
 
 - [Contributing Guide](../CONTRIBUTING.md)
-- [Architecture Documentation](./ARCHITECTURE_V2.md)
+- [Architecture Documentation](./UNIFIED_ARCHITECTURE.md)
 - [API Documentation](http://localhost:8000/docs) (when running)
 - [Frontend Roadmap](./client-implementation/)
 - [HIPAA Compliance Matrix](./HIPAA_COMPLIANCE_MATRIX.md)

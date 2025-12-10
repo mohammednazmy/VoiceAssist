@@ -4,6 +4,8 @@ Adaptive Tuning - Feedback Loop for Pipeline Adjustments
 Automatically adjusts pipeline parameters based on metrics.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime

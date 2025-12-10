@@ -140,7 +140,7 @@ function ImagePreview({ attachment, onClick, maxHeight }: ImagePreviewProps) {
         "focus:outline-none focus:ring-2 focus:ring-primary-500",
         "transition-all duration-200",
       )}
-      style={{ maxHeight }}
+      style={{ maxHeight: `${maxHeight}px` }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       aria-label={`View ${attachment.filename}`}
@@ -188,6 +188,7 @@ function VideoEmbed({ attachment }: VideoEmbedProps) {
       <video
         src={attachment.url}
         controls
+        role="video"
         className="w-full max-h-[400px]"
         preload="metadata"
         poster={attachment.thumbnail_url}
@@ -488,7 +489,7 @@ function Lightbox({
  */
 export function MediaGallery({
   attachments,
-  layout = "masonry",
+  layout: _layout = "masonry",
   enableLightbox = true,
   maxPreviewHeight = 300,
   className,

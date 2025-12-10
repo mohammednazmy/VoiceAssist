@@ -51,6 +51,8 @@ export function AudioPlayer({
     audioUrlRef.current = url;
 
     const audio = new Audio(url);
+    // Explicitly set src to ensure metadata/loading fires in tests and browsers
+    audio.src = url;
 
     audio.addEventListener("loadedmetadata", () => {
       setDuration(audio.duration);

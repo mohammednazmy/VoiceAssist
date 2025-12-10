@@ -17,6 +17,7 @@ build/
 .env.local
 .env.*.local
 *.env
+e2e/.env*
 
 # IDEs
 .vscode/
@@ -66,6 +67,7 @@ htmlcov/
 coverage/
 playwright-report/
 test-results/
+e2e/.auth/
 
 # Docker
 *.pid

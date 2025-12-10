@@ -355,7 +355,7 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
 
 ### Component READMEs
 
-- [server/README.md](../server/README.md) - Backend server
+- [services/api-gateway/README.md](../services/api-gateway/README.md) - Backend API Gateway
 - [macos-client/README.md](../macos-client/README.md) - macOS client
 - [apps/web-app/README.md](../apps/web-app/README.md) - Web application
 - [apps/admin-panel/README.md](../apps/admin-panel/README.md) - Admin panel

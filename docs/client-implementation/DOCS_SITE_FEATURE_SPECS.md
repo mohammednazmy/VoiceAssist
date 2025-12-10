@@ -1976,7 +1976,8 @@ const [isListening, setIsListening] = useState(false)
 
 return (
 
-<VoiceWaveform isActive={isListening} color="rgb(59, 130, 246)" bars={40} />) }`}
+<VoiceWaveform isActive={isListening} color="rgb(59, 130, 246)" bars={40} />)
+}`}
 
 >
 
@@ -2774,7 +2775,11 @@ export const navigation: NavItem[] = [
       { title: "Voice Commands", href: "/docs/guides/voice-commands" },
       { title: "Speech Recognition", href: "/docs/guides/speech-recognition" },
       { title: "Text-to-Speech", href: "/docs/guides/text-to-speech" },
-      { title: "Custom Intents", href: "/docs/guides/custom-intents", badge: "new" },
+      {
+        title: "Custom Intents",
+        href: "/docs/guides/custom-intents",
+        badge: "new",
+      },
       { title: "Error Handling", href: "/docs/guides/error-handling" },
     ],
   },
@@ -2784,7 +2789,11 @@ export const navigation: NavItem[] = [
       { title: "VoiceAssist", href: "/docs/api/voiceassist" },
       { title: "SpeechRecognition", href: "/docs/api/speech-recognition" },
       { title: "TextToSpeech", href: "/docs/api/text-to-speech" },
-      { title: "IntentDetector", href: "/docs/api/intent-detector", badge: "beta" },
+      {
+        title: "IntentDetector",
+        href: "/docs/api/intent-detector",
+        badge: "beta",
+      },
       { title: "Configuration", href: "/docs/api/configuration" },
     ],
   },

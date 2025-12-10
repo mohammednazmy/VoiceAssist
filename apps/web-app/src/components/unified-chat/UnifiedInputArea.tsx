@@ -330,11 +330,13 @@ export function UnifiedInputArea({
           onClick={handleModeToggle}
           disabled={disabled}
           className={`flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-colors ${getModeToggleColor()}`}
-          aria-label={isVoiceActive ? "Close voice mode" : "Open voice mode"}
+          aria-label={
+            isVoiceActive ? "Close voice mode" : "Switch to voice mode"
+          }
           title={
             isVoiceActive
               ? "Click to close voice mode"
-              : "Click to open voice mode"
+              : "Click to switch to voice mode"
           }
           data-testid="voice-mode-toggle"
         >
@@ -384,6 +386,7 @@ export function UnifiedInputArea({
             className="p-2.5 bg-neutral-100 text-neutral-600 rounded-lg hover:bg-neutral-200 transition-colors"
             aria-label="End voice mode"
             title="End voice mode"
+            data-testid="end-voice-mode"
           >
             <Square className="w-5 h-5" />
           </button>
@@ -505,7 +508,7 @@ function VoiceInputArea({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-testid="voice-input-area">
       {/* Waveform / Status Area */}
       <div
         className={`flex items-center justify-center px-4 py-4 rounded-lg border transition-colors ${
@@ -515,10 +518,14 @@ function VoiceInputArea({
               ? "bg-secondary-50 border-secondary-200"
               : "bg-neutral-50 border-neutral-200"
         }`}
+        data-testid="voice-status-area"
       >
         {/* Waveform Visualization (placeholder) */}
         {(isListening || isSpeaking) && (
-          <div className="flex items-center gap-1 mr-4">
+          <div
+            className="flex items-center gap-1 mr-4"
+            data-testid="voice-waveform"
+          >
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}

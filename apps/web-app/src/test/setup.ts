@@ -11,6 +11,12 @@ import { afterEach, vi } from "vitest";
 import { MockWebSocket } from "./mocks/MockWebSocket";
 import { MockAudioContext } from "./mocks/MockAudioContext";
 
+// Align Vitest with Testing Library's jest timer detection utilities
+// (waitFor checks for a global jest with fake timers enabled)
+if (!(globalThis as any).jest) {
+  (globalThis as any).jest = vi;
+}
+
 // Some CI terminals report a column width of 0, which breaks Vitest's dot
 // reporter when it tries to render progress rows. Ensure a sane default so the
 // reporter can't compute Infinity rows and throw during test runs.
@@ -193,6 +199,7 @@ const mockIDBDatabase = () => ({
 // Mock navigator.mediaDevices for voice mode tests
 Object.defineProperty(global.navigator, "mediaDevices", {
   writable: true,
+  configurable: true,
   value: {
     getUserMedia: vi.fn().mockResolvedValue({
       getTracks: () => [],

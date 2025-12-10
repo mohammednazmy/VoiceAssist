@@ -7,6 +7,8 @@ Uses lightweight ONNX model (fine-tuned DistilBERT) or heuristics fallback.
 Supports A/B testing between ML and heuristic approaches.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -215,15 +217,15 @@ class QueryClassifier:
 
     async def get_ab_metrics(self) -> Dict[str, Any]:
         """Get A/B test metrics for comparison"""
-        ml_logs = [l for l in self._classification_logs if l.variant == "ml"]
-        heuristic_logs = [l for l in self._classification_logs if l.variant == "heuristic"]
+        ml_logs = [log for log in self._classification_logs if log.variant == "ml"]
+        heuristic_logs = [log for log in self._classification_logs if log.variant == "heuristic"]
 
         def compute_stats(logs: List[ClassificationLog]) -> Dict[str, Any]:
             if not logs:
                 return {"count": 0}
 
-            latencies = [l.latency_ms for l in logs]
-            confidences = [l.confidence for l in logs]
+            latencies = [log.latency_ms for log in logs]
+            confidences = [log.confidence for log in logs]
 
             return {
                 "count": len(logs),

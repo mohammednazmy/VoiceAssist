@@ -377,5 +377,5 @@ curl https://assist.asimo.io/api/admin/panel/stats
 - [Backend Architecture](../BACKEND_ARCHITECTURE.md)
 - [Frontend Architecture](../FRONTEND_ARCHITECTURE.md)
 - [AI Agent Onboarding](../ai/AGENT_ONBOARDING.md)
-- [Continuous Improvement Plan](../CONTINUOUS_IMPROVEMENT_PLAN.md)
+- [Continuous Improvement Plan](/docs/CONTINUOUS_IMPROVEMENT_PLAN)
 - [Debugging Index](../debugging/DEBUGGING_INDEX.md)

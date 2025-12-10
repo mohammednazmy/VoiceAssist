@@ -16,10 +16,10 @@ interface VoiceInfo {
   voice_id: string;
   name: string;
   provider: string; // "openai" | "elevenlabs" or other providers
-  category?: string;
-  preview_url?: string;
-  description?: string;
-  labels?: Record<string, string>;
+  category?: string | null;
+  preview_url?: string | null;
+  description?: string | null;
+  labels?: Record<string, string> | null;
 }
 
 interface _VoiceListResponse {
@@ -108,7 +108,7 @@ function VoiceCard({
           {voice.preview_url && (
             <button
               onClick={() => {
-                const audio = new Audio(voice.preview_url);
+                const audio = new Audio(voice.preview_url ?? undefined);
                 audio.play();
               }}
               className="p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-full"

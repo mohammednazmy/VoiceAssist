@@ -18,6 +18,12 @@ interface ThinkingFeedbackPanelProps {
   label?: string;
   isTTSPlaying?: boolean; // Don't clash with TTS audio
   size?: "sm" | "md" | "lg";
+  /**
+   * Source of thinking feedback (Issue 1: Unified thinking tones).
+   * When "backend", frontend audio is disabled to prevent dual tones.
+   * Visual and haptic feedback still work regardless of source.
+   */
+  thinkingSource?: "backend" | "frontend";
 }
 
 // Haptic patterns for mobile devices
@@ -80,16 +86,24 @@ export function ThinkingFeedbackPanel({
   label = "Thinking...",
   isTTSPlaying = false,
   size = "md",
+  thinkingSource = "frontend",
 }: ThinkingFeedbackPanelProps) {
   const settings = useVoiceSettingsStore();
   const isMobile = useIsMobile();
   const hapticSupported = useHapticSupport();
 
-  // Determine if audio should play (enabled and not clashing with TTS)
+  // Determine if frontend audio should play:
+  // - User has enabled thinking tones
+  // - Not clashing with TTS playback
+  // - Currently thinking
+  // - Backend is NOT handling thinking feedback (Issue 1: Unified thinking tones)
   const shouldPlayAudio =
-    settings.thinkingToneEnabled && !isTTSPlaying && isThinking;
+    settings.thinkingToneEnabled &&
+    !isTTSPlaying &&
+    isThinking &&
+    thinkingSource !== "backend";
 
-  // Audio feedback using the hook
+  // Audio feedback using the hook (disabled when backend is handling it)
   useThinkingTone(shouldPlayAudio, {
     preset: settings.thinkingTonePreset,
     volume: settings.thinkingToneVolume / 100, // Normalize to 0-1

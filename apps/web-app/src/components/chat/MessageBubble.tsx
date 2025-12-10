@@ -514,6 +514,13 @@ export const MessageBubble = memo(function MessageBubble({
               remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
+                // Pre wrapper - use div to avoid DOM nesting issues
+                // (react-markdown wraps code blocks in <pre><code>, but our code
+                // component renders its own <pre> inside Highlight)
+                pre({ children }) {
+                  return <>{children}</>;
+                },
+
                 // Code blocks with syntax highlighting
                 // In react-markdown v10+, we detect code blocks by checking if className exists
                 // (fenced code blocks have language-xxx class) or if content has newlines

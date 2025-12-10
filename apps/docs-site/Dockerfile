@@ -7,14 +7,12 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
+COPY docs ./docs
+# Build static export (Next.js output: export)
 RUN pnpm install --frozen-lockfile && pnpm --filter docs-site build
 
-FROM node:20-alpine
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /workspace/apps/docs-site/.next/standalone ./
-COPY --from=builder /workspace/apps/docs-site/.next/static ./apps/docs-site/.next/static
-COPY --from=builder /workspace/apps/docs-site/public ./apps/docs-site/public
-ENV PORT=3001
-EXPOSE 3001
-CMD ["node", "apps/docs-site/server.js"]
+FROM nginx:stable-alpine
+WORKDIR /usr/share/nginx/html
+# Serve the static export produced in /out
+COPY --from=builder /workspace/apps/docs-site/out ./
+EXPOSE 80

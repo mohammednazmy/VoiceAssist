@@ -1,5 +1,6 @@
 ---
 title: Feature Flag Naming Conventions
+slug: admin-guide/feature-flags/naming-conventions
 status: stable
 lastUpdated: 2025-12-04
 audience: [developers, ai-agents]

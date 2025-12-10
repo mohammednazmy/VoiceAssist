@@ -3,7 +3,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
 import { VoiceMonitorPage } from "./VoiceMonitorPage";
 
 // Mock hooks
@@ -273,8 +279,13 @@ describe("VoiceMonitorPage", () => {
     it("should display session types", () => {
       render(<VoiceMonitorPage />);
 
-      expect(screen.getByText("voice")).toBeInTheDocument();
-      expect(screen.getByText("realtime")).toBeInTheDocument();
+      const activeSessionsPanel = screen.getByText(/Active Sessions \(/)
+        .parentElement?.parentElement?.parentElement as HTMLElement;
+      expect(activeSessionsPanel).toBeTruthy();
+      const rows = within(activeSessionsPanel).getAllByRole("row");
+
+      expect(rows[1]).toHaveTextContent("voice");
+      expect(rows[2]).toHaveTextContent("realtime");
     });
 
     it("should display disconnect buttons for admin", () => {
@@ -331,7 +342,10 @@ describe("VoiceMonitorPage", () => {
       fireEvent.click(disconnectButtons[0]);
 
       // Click confirm in dialog
-      const confirmButton = screen.getByRole("button", { name: "Disconnect" });
+      const dialog = screen.getByRole("dialog");
+      const confirmButton = within(dialog).getByRole("button", {
+        name: "Disconnect",
+      });
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
@@ -391,8 +405,14 @@ describe("VoiceMonitorPage", () => {
       fireEvent.click(screen.getByText("TT Pipeline"));
 
       await waitFor(() => {
-        expect(screen.getByText("gpt-4")).toBeInTheDocument();
-        expect(screen.getByText("alloy")).toBeInTheDocument();
+        const ttPanel = screen.getByText(/Thinker-Talker Sessions/)
+          .parentElement?.parentElement?.parentElement;
+        expect(ttPanel).toBeTruthy();
+        if (ttPanel) {
+          const table = within(ttPanel).getByRole("table");
+          expect(within(table).getByText("gpt-4")).toBeInTheDocument();
+          expect(within(table).getByText("alloy")).toBeInTheDocument();
+        }
       });
     });
 
@@ -471,9 +491,24 @@ describe("VoiceMonitorPage", () => {
       fireEvent.click(screen.getByText("Analytics"));
 
       await waitFor(() => {
-        expect(screen.getByText("250")).toBeInTheDocument(); // total tool calls
-        expect(screen.getByText("120 ms")).toBeInTheDocument(); // avg tool latency
-        expect(screen.getByText("97.0%")).toBeInTheDocument(); // success rate
+        const toolCallsCard =
+          screen.getByText("Tool Calls (24h)").parentElement?.parentElement;
+        expect(toolCallsCard).toBeTruthy();
+        if (toolCallsCard) {
+          expect(within(toolCallsCard).getByText("250")).toBeInTheDocument();
+        }
+
+        const avgLatencyCard =
+          screen.getByText("Avg Tool Latency").parentElement?.parentElement;
+        expect(avgLatencyCard).toBeTruthy();
+        if (avgLatencyCard) {
+          expect(
+            within(avgLatencyCard).getAllByText("120 ms")[0],
+          ).toBeInTheDocument();
+        }
+
+        expect(screen.getByText("Tool Success Rate")).toBeInTheDocument();
+        expect(screen.getAllByText("97.0%").length).toBeGreaterThan(0);
       });
     });
 
@@ -483,9 +518,14 @@ describe("VoiceMonitorPage", () => {
       fireEvent.click(screen.getByText("Analytics"));
 
       await waitFor(() => {
-        expect(screen.getByText("KB Performance")).toBeInTheDocument();
-        expect(screen.getByText("150")).toBeInTheDocument(); // KB calls
-        expect(screen.getByText("85 ms")).toBeInTheDocument(); // KB latency
+        const kbHeader = screen.getByText("KB Performance");
+        const kbPanel = kbHeader.parentElement?.parentElement?.parentElement;
+        expect(kbPanel).toBeTruthy();
+        if (kbPanel) {
+          expect(within(kbPanel).getByText("Calls (24h)")).toBeInTheDocument();
+          expect(within(kbPanel).getByText("150")).toBeInTheDocument();
+          expect(within(kbPanel).getByText("85 ms")).toBeInTheDocument();
+        }
       });
     });
 

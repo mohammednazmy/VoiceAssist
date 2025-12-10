@@ -25,6 +25,44 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Service Worker cleanup for stale dev workers - v2025.12.07b -->
+    <script>
+      (function() {
+        // One-time cleanup for stale dev service workers causing module load errors
+        var CLEANUP_VERSION = '20251207i';
+        var lastCleanup = localStorage.getItem('sw-cleanup-version');
+
+        if ('serviceWorker' in navigator && lastCleanup !== CLEANUP_VERSION) {
+          console.log('[SW Cleanup] Running cleanup v' + CLEANUP_VERSION);
+
+          // Unregister ALL service workers to ensure clean state
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            var promises = registrations.map(function(registration) {
+              console.log('[SW Cleanup] Unregistering:', registration.scope);
+              return registration.unregister();
+            });
+            return Promise.all(promises);
+          }).then(function() {
+            // Clear ALL caches
+            if ('caches' in window) {
+              return caches.keys().then(function(names) {
+                return Promise.all(names.map(function(name) {
+                  console.log('[SW Cleanup] Deleting cache:', name);
+                  return caches.delete(name);
+                }));
+              });
+            }
+          }).then(function() {
+            localStorage.setItem('sw-cleanup-version', CLEANUP_VERSION);
+            console.log('[SW Cleanup] Complete. Reloading...');
+            window.location.reload();
+          }).catch(function(err) {
+            console.error('[SW Cleanup] Error:', err);
+            localStorage.setItem('sw-cleanup-version', CLEANUP_VERSION);
+          });
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

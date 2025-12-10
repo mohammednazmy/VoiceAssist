@@ -753,7 +753,8 @@ export const useVoiceSettingsStore = create<VoiceSettingsState>()(
         voice: state.voice,
         language: state.language,
         vadSensitivity: state.vadSensitivity,
-        autoStartOnOpen: state.autoStartOnOpen,
+        // Note: autoStartOnOpen is intentionally NOT persisted
+        // It should always default to false to prevent unexpected auto-starts
         showStatusHints: state.showStatusHints,
         // Phase 9.3 additions
         selectedAudioDeviceId: state.selectedAudioDeviceId,

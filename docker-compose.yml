@@ -28,6 +28,7 @@ services:
   # ===================================
 
   # PostgreSQL - Main database with pgvector extension
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   postgres:
     image: pgvector/pgvector:pg16
     container_name: voiceassist-postgres
@@ -39,8 +40,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infrastructure/docker/init-scripts:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
     networks:
       - database-network
     healthcheck:
@@ -51,14 +50,13 @@ services:
     restart: unless-stopped
 
   # Redis - Cache and session storage
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   redis:
     image: redis:7-alpine
     container_name: voiceassist-redis
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
     networks:
       - database-network
     healthcheck:
@@ -69,14 +67,12 @@ services:
     restart: unless-stopped
 
   # Qdrant - Vector database for semantic search
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   qdrant:
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.15.2
     container_name: voiceassist-qdrant
     volumes:
       - qdrant-data:/qdrant/storage
-    ports:
-      - "6333:6333"
-      - "6334:6334"
     networks:
       - database-network
     environment:
@@ -129,6 +125,11 @@ services:
       - CALENDAR_ENCRYPTION_KEY=${CALENDAR_ENCRYPTION_KEY}
       # Web Search
       - SERPAPI_API_KEY=${SERPAPI_API_KEY}
+      # WebSocket Latency Optimization (controlled by feature flags)
+      - WS_COMPRESSION_ENABLED=${WS_COMPRESSION_ENABLED:-false}
+      - WS_AUDIO_PREBUFFER_CHUNKS=${WS_AUDIO_PREBUFFER_CHUNKS:-3}
+      - WS_AUDIO_PREBUFFER_TIMEOUT_MS=${WS_AUDIO_PREBUFFER_TIMEOUT_MS:-500}
+      - WS_ADAPTIVE_CHUNK_DEFAULT=${WS_ADAPTIVE_CHUNK_DEFAULT:-2048}
     ports:
       - "8000:8000"
     networks:

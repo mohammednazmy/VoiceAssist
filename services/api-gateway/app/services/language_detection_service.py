@@ -10,13 +10,12 @@ Provides real-time language detection for:
 - Integration with STT and TTS for language-appropriate processing
 """
 
-import asyncio
 import logging
 import re
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -342,7 +341,7 @@ class LanguageDetectionService:
         logger.info(
             "Initializing LanguageDetectionService",
             extra={
-                "supported_languages": [l.value for l in self.config.supported_languages],
+                "supported_languages": [lang.value for lang in self.config.supported_languages],
                 "code_switch_enabled": self.config.enable_code_switch_detection,
             },
         )

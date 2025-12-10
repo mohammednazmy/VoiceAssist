@@ -60,6 +60,12 @@ vi.mock("../../../hooks/useAuth", () => ({
     apiClient: {
       synthesizeSpeech: vi.fn().mockResolvedValue(new Blob()),
       transcribeAudio: vi.fn().mockResolvedValue("test transcript"),
+      getFeatureFlag: vi.fn().mockImplementation(async (name: string) => ({
+        name,
+        enabled: true,
+        value: undefined,
+        default_value: undefined,
+      })),
     },
     tokens: { accessToken: "test-token" },
   }),
@@ -82,6 +88,25 @@ vi.mock("../../../utils/waveform", () => ({
     disconnect() {}
   },
 }));
+
+// Mock heavy voice mode panel to avoid WebAudio/WebSocket dependencies
+vi.mock("../../voice/ThinkerTalkerVoicePanel", async () => {
+  const React = await import("react");
+  const { useVoiceSettingsStore } =
+    await import("../../../stores/voiceSettingsStore");
+
+  const MockPanel = () => {
+    const { voice, showStatusHints } = useVoiceSettingsStore();
+    return (
+      <div data-testid="voice-mode-panel">
+        <div>{voice ? voice.charAt(0).toUpperCase() + voice.slice(1) : ""}</div>
+        <button data-testid="voice-settings-button">Settings</button>
+        {showStatusHints && <p>Tap the microphone to start</p>}
+      </div>
+    );
+  };
+  return { ThinkerTalkerVoicePanel: MockPanel, default: MockPanel };
+});
 
 describe("MessageInput Voice Settings Integration", () => {
   const mockOnSend = vi.fn();

@@ -505,10 +505,42 @@ interface TTSessionAnalytics {
     durationMs: number;
   };
   latency: {
-    stt: { count: number; total: number; min: number; max: number; p50: number; p95: number; p99: number };
-    llm: { count: number; total: number; min: number; max: number; p50: number; p95: number; p99: number };
-    tts: { count: number; total: number; min: number; max: number; p50: number; p95: number; p99: number };
-    e2e: { count: number; total: number; min: number; max: number; p50: number; p95: number; p99: number };
+    stt: {
+      count: number;
+      total: number;
+      min: number;
+      max: number;
+      p50: number;
+      p95: number;
+      p99: number;
+    };
+    llm: {
+      count: number;
+      total: number;
+      min: number;
+      max: number;
+      p50: number;
+      p95: number;
+      p99: number;
+    };
+    tts: {
+      count: number;
+      total: number;
+      min: number;
+      max: number;
+      p50: number;
+      p95: number;
+      p99: number;
+    };
+    e2e: {
+      count: number;
+      total: number;
+      min: number;
+      max: number;
+      p50: number;
+      p95: number;
+      p99: number;
+    };
   };
   interactions: {
     counts: Record<string, number>;
@@ -519,7 +551,11 @@ interface TTSessionAnalytics {
     sttConfidence: { count: number; total: number; min: number; max: number };
     aiConfidence: { count: number; total: number; min: number; max: number };
     emotion: { dominant: string | null; valence: number; arousal: number };
-    turnTaking: { bargeIns: number; overlaps: number; smoothTransitions: number };
+    turnTaking: {
+      bargeIns: number;
+      overlaps: number;
+      smoothTransitions: number;
+    };
     repairs: number;
   };
   dictation: {

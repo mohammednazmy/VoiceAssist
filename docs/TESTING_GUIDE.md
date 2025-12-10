@@ -84,6 +84,7 @@ VoiceAssist/
 │   ├── login.spec.ts             # Manual login tests
 │   ├── voice-mode-navigation.spec.ts  # [ACTIVE] Voice Mode tile → /chat flow
 │   ├── voice-mode-session-smoke.spec.ts # [ACTIVE] Voice session smoke test
+│   ├── voice-mode-settings.spec.ts # [ACTIVE] Voice settings → API propagation
 │   └── ai/                       # AI-generated and implemented tests
 │       ├── quick-consult.spec.ts    # [ACTIVE] Chat flow tests
 │       ├── clinical-context.spec.ts # [ACTIVE] Clinical context UI tests
@@ -303,12 +304,13 @@ VoiceAssist includes dedicated E2E tests for the Voice Mode feature. These tests
 
 ### Voice Mode Test Files
 
-| File                                        | Status | Description                                   |
-| ------------------------------------------- | ------ | --------------------------------------------- |
-| `voice-mode-navigation.spec.ts`             | ACTIVE | Tests Voice Mode tile → /chat navigation      |
-| `voice-mode-session-smoke.spec.ts`          | ACTIVE | Tests "Start Voice Session" button behavior   |
-| `voice-mode-voice-chat-integration.spec.ts` | ACTIVE | Tests voice panel + chat timeline integration |
-| `ai/voice-mode.spec.ts`                     | ACTIVE | Legacy voice UI tests (for migration)         |
+| File                                        | Status | Description                                       |
+| ------------------------------------------- | ------ | ------------------------------------------------- |
+| `voice-mode-navigation.spec.ts`             | ACTIVE | Tests Voice Mode tile → /chat navigation          |
+| `voice-mode-session-smoke.spec.ts`          | ACTIVE | Tests "Start Voice Session" button behavior       |
+| `voice-mode-settings.spec.ts`               | ACTIVE | Tests settings → /api/voice/realtime-session flow |
+| `voice-mode-voice-chat-integration.spec.ts` | ACTIVE | Tests voice panel + chat timeline integration     |
+| `ai/voice-mode.spec.ts`                     | ACTIVE | Legacy voice UI tests (for migration)             |
 
 ### Voice Mode Navigation Test
 
@@ -413,6 +415,69 @@ pnpm test:e2e voice-mode-session-smoke.spec.ts --debug
 
 - `LIVE_REALTIME_E2E=1`: Enable live backend testing (costs money, requires valid OpenAI key)
 
+### Voice Mode Settings Test
+
+**File**: `e2e/voice-mode-settings.spec.ts`
+
+**Purpose**: Verifies that voice settings configured in the UI correctly propagate to the backend `/api/voice/realtime-session` endpoint.
+
+**Design Philosophy**:
+
+This test is **fully deterministic** and does NOT require:
+
+- A running backend server
+- A valid OpenAI API key
+- Actual WebSocket connections
+
+The test intercepts the `/api/voice/realtime-session` network request and validates the payload contains the expected settings.
+
+**Test Cases**:
+
+1. **Settings Propagation** (core test):
+   - Opens Voice Mode settings modal
+   - Changes voice to "nova", language to "es", VAD sensitivity to 80
+   - Clicks "Start Voice Session"
+   - Verifies the intercepted POST request contains:
+     - `voice: "nova"`
+     - `language: "es"`
+     - `vad_sensitivity: 80`
+
+2. **Default Settings**:
+   - Clears any persisted settings
+   - Starts voice session without changes
+   - Verifies request is sent to backend (backend handles defaults)
+
+3. **Settings Persistence**:
+   - Changes voice to "shimmer"
+   - Navigates away to home page
+   - Returns to chat and starts voice session
+   - Verifies the persisted voice setting is sent in the request
+
+4. **autoStartOnOpen UX**:
+   - Pre-configures settings with `autoStartOnOpen: true`
+   - Navigates to Voice Mode via tile click
+   - Verifies Voice Mode panel is visible/accessible
+
+**Run Locally**:
+
+```bash
+# Run all Voice Mode settings tests
+pnpm test:e2e --project=chromium e2e/voice-mode-settings.spec.ts
+
+# Run specific test
+pnpm test:e2e --project=chromium e2e/voice-mode-settings.spec.ts -g "settings to /api/voice"
+
+# Debug mode
+pnpm test:e2e --project=chromium e2e/voice-mode-settings.spec.ts --debug
+```
+
+**Important Notes**:
+
+- These tests mock `/api/voice/realtime-session` entirely
+- No OpenAI API calls are made
+- Tests validate the **request payload**, not the response
+- Safe to run in CI without API keys
+
 ### Voice Pipeline Smoke Suite
 
 For comprehensive voice pipeline validation, use the **Voice Pipeline Smoke Suite** which covers backend, frontend unit, and E2E tests:
@@ -435,6 +500,46 @@ npx playwright test e2e/voice-mode-*.spec.ts --project=chromium --reporter=list
 
 For detailed pipeline architecture, metrics tracking, and complete test commands, see [VOICE_MODE_PIPELINE.md](./VOICE_MODE_PIPELINE.md).
 
+## Thinker/Talker Transcript Validation Tests
+
+The transcript validation suite tests STT accuracy and echo contamination using a mocked Thinker/Talker WebSocket.
+
+### Running the Tests
+
+```bash
+# Run with mock WebSocket (deterministic, no real backend)
+MOCK_WEBSOCKET_E2E=1 pnpm exec playwright test e2e/voice-transcript-validation.spec.ts --project=chromium
+```
+
+### What It Validates
+
+1. **User transcript accuracy (pipeline + DOM)**: `transcript.complete` events in `window.__tt_ws_events` and the rendered chat timeline user message both match expected user text (≥0.9 `overallScore` via `TranscriptScorer`)
+2. **AI transcript accuracy (pipeline + DOM when available)**:
+   - When `response.complete` events are present in `window.__tt_ws_events`, their text is scored against the expected AI response (≥0.9).
+   - When the AI response appears in the chat timeline, the DOM transcript is also scored against the expected AI response (≥0.9). If the assistant message is not yet wired into the UI, the test logs a warning and continues.
+3. **Echo contamination**: User transcript is NOT polluted with AI keywords/phrases
+
+### Mock WebSocket Details
+
+- Intercepts connections to `/api/voice/pipeline-ws`
+- Emits T/T protocol messages: `transcript.delta`, `transcript.complete`, `response.delta`, `response.complete`
+- Uses deterministic test transcripts for reproducible assertions
+
+### Utilities
+
+- `TranscriptScorer` class in `e2e/voice/utils/transcript-scorer.ts`
+  - `score(expected, actual)`: Returns accuracy metrics
+  - `detectEchoContamination(userText, aiKeywords, aiFullResponse?)`: Detects AI speech leakage
+
+## Voice E2E Profiles (How to Choose)
+
+Voice Mode E2E tests are grouped into named profiles (Playwright projects) described in `docs/voice/E2E_PROFILES.md`. Use these as a quick guide:
+
+- Run the **`voice-smoke`** project on every PR to cover navigation plus basic Voice Mode session behavior.
+- Use **`voice-multi-turn`** when you need Thinker/Talker multi-turn coverage and latency/turn-count metrics.
+- Use **`voice-barge-in`** and **`voice-barge-in-two-phase`** when working on barge-in responsiveness and latency.
+- Use the **Mock WS transcript profile** (`MOCK_WEBSOCKET_E2E=1` + `e2e/voice-transcript-validation.spec.ts`) when you need deterministic STT/echo validation without hitting the live backend.
+
 ### Voice Mode Test Strategy
 
 **Deterministic Tests** (run in CI):
@@ -444,6 +549,9 @@ For detailed pipeline architecture, metrics tracking, and complete test commands
 - ✅ Button responsiveness (some UI change occurs)
 - ✅ Connection status visibility (ephemeral session states)
 - ✅ Keyboard accessibility
+- ✅ Settings propagation to `/api/voice/realtime-session`
+- ✅ Settings persistence across page navigation
+- ✅ autoStartOnOpen UX behavior
 
 **Optional Live Tests** (gated by env flag):
 
@@ -462,17 +570,18 @@ For detailed pipeline architecture, metrics tracking, and complete test commands
 
 Both features are tested with similar patterns:
 
-| Feature       | Navigation Test          | Session Test                          |
-| ------------- | ------------------------ | ------------------------------------- |
-| Voice Mode    | `voice-mode-navigation`  | `voice-mode-session-smoke` (tolerant) |
-| Quick Consult | `quick-consult` (in ai/) | Covered by chat flow tests            |
+| Feature       | Navigation Test          | Session Test                          | Settings Test           |
+| ------------- | ------------------------ | ------------------------------------- | ----------------------- |
+| Voice Mode    | `voice-mode-navigation`  | `voice-mode-session-smoke` (tolerant) | `voice-mode-settings`   |
+| Quick Consult | `quick-consult` (in ai/) | Covered by chat flow tests            | N/A (no voice settings) |
 
 ### Troubleshooting Voice Mode Tests
 
 **Voice Mode panel not found**:
 
-- Check that `data-testid="voice-mode-card"` exists on Home page
-- Verify ChatPage passes `autoOpenRealtimeVoice` prop
+- Check that `data-testid="chat-with-voice-card"` exists on Home page
+- Verify unified chat/voice feature flag is enabled (`unified_chat_voice_ui` via `/api/experiments/flags/unified_chat_voice_ui`)
+- Confirm `UnifiedChatContainer` is rendering `ThinkerTalkerVoicePanel` with `data-testid="voice-mode-panel"`
 - Check browser console for React errors
 
 **Start button not responding**:
