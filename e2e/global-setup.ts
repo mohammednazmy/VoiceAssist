@@ -284,15 +284,19 @@ async function globalSetup() {
     console.log("[E2E Setup] Mock mode - creating placeholder auth state");
 
     // Create a mock auth state for non-live tests
+    // IMPORTANT: Use backend format (snake_case) as that's what the frontend stores after real login
     const mockAuthState = {
       state: {
         user: {
           id: "mock-user-id",
           email: E2E_USER.email,
-          name: E2E_USER.fullName,
-          role: "user",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          full_name: E2E_USER.fullName,
+          is_active: true,
+          is_admin: true,
+          admin_role: "admin",
+          nextcloud_user_id: null,
+          created_at: new Date().toISOString(),
+          last_login: new Date().toISOString(),
         },
         tokens: {
           accessToken: "mock-access-token",
@@ -300,7 +304,6 @@ async function globalSetup() {
           expiresIn: 3600,
         },
         isAuthenticated: true,
-        _hasHydrated: true,
       },
       version: 0,
     };
@@ -375,15 +378,19 @@ async function globalSetup() {
   console.log(`[E2E Setup] Got tokens for user: ${userEmail} (${userId})`);
 
   // Build auth state for localStorage
+  // IMPORTANT: Use backend format (snake_case) as that's what the frontend stores after real login
   const authState = {
     state: {
       user: {
         id: userId,
         email: userEmail,
-        name: E2E_USER.fullName,
-        role: tokens.role || "user",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        full_name: E2E_USER.fullName,
+        is_active: true,
+        is_admin: tokens.role === "admin" || tokens.role === "super_admin",
+        admin_role: tokens.role || "admin",
+        nextcloud_user_id: null,
+        created_at: new Date().toISOString(),
+        last_login: new Date().toISOString(),
       },
       tokens: {
         accessToken: tokens.access_token,
@@ -391,7 +398,6 @@ async function globalSetup() {
         expiresIn: tokens.expires_in,
       },
       isAuthenticated: true,
-      _hasHydrated: true,
     },
     version: 0,
   };

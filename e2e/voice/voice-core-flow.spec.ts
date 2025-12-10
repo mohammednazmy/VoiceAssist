@@ -14,7 +14,7 @@
  * - Handle multiple conversation turns
  */
 
-import { test as baseTest, expect } from "../fixtures/auth";
+import { test, expect } from "@playwright/test";
 import {
   VOICE_SELECTORS,
   VOICE_CONFIG,
@@ -25,10 +25,8 @@ import {
   waitForVoiceConnection,
   waitForTranscript,
   waitForAIResponse,
+  navigateToVoiceChat,
 } from "../fixtures/voice";
-
-// Use authenticated page from auth fixture
-const test = baseTest;
 
 // Skip all tests if live backend is not enabled
 test.beforeEach(async ({}, testInfo) => {
@@ -41,12 +39,9 @@ test.describe("Voice Core Flow - Live Backend", () => {
   // Increase timeout for live API calls
   test.setTimeout(90000);
 
-  test("should start voice session and show connected state", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
-
-    // Navigate to voice chat
-    await page.goto("/chat?mode=voice");
-    await page.waitForLoadState("networkidle");
+  test("should start voice session and show connected state", async ({ page }) => {
+    // Navigate to voice chat with login handling
+    await navigateToVoiceChat(page);
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
 
     // Start voice session
@@ -93,10 +88,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     await stopVoiceSession(page);
   });
 
-  test("should display partial transcript while speaking", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should display partial transcript while speaking", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -123,10 +118,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     await stopVoiceSession(page);
   });
 
-  test("should show final transcript in chat timeline", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should show final transcript in chat timeline", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -155,10 +150,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     await stopVoiceSession(page);
   });
 
-  test("should play AI audio response", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should play AI audio response", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -187,10 +182,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     await stopVoiceSession(page);
   });
 
-  test("should support barge-in interruption", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should support barge-in interruption", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -232,10 +227,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     await stopVoiceSession(page);
   });
 
-  test("should stop voice session on Stop click", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should stop voice session on Stop click", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -278,10 +273,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
     console.log("Voice session stopped successfully");
   });
 
-  test("should handle multiple conversation turns", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should handle multiple conversation turns", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);
@@ -318,10 +313,10 @@ test.describe("Voice Core Flow - Live Backend", () => {
 test.describe("Voice Core Flow - Connection States", () => {
   test.setTimeout(60000);
 
-  test("should show correct connection state transitions", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should show correct connection state transitions", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await waitForVoicePanel(page);
@@ -368,10 +363,10 @@ test.describe("Voice Core Flow - Connection States", () => {
     await stopVoiceSession(page);
   });
 
-  test("should display voice metrics when connected", async ({ authenticatedPage }) => {
-    const page = authenticatedPage;
+  test("should display voice metrics when connected", async ({ page }) => {
+    
 
-    await page.goto("/chat?mode=voice");
+    await navigateToVoiceChat(page);
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
     await startVoiceSession(page);

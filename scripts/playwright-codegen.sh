@@ -122,21 +122,81 @@ if [[ "$USE_VOICE" == "true" ]]; then
 
   AUDIO_PATH="$(pwd)/${AUDIO_FILE}"
 
-  # Launch with Chromium and fake audio device
+  # Playwright codegen doesn't support passing Chrome flags directly.
+  # We'll launch Chrome with fake audio flags manually, then attach codegen.
   echo ""
-  echo -e "${YELLOW}Launching Chromium codegen with fake microphone...${NC}"
-  echo -e "${YELLOW}The microphone will play: ${AUDIO_FILE}${NC}"
+  echo -e "${YELLOW}Launching Chrome with fake microphone...${NC}"
+  echo -e "${YELLOW}Audio file: ${AUDIO_FILE}${NC}"
   echo ""
 
-  pnpm exec playwright codegen \
+  # Create a temporary script to launch Chrome with the right flags
+  CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+  if [[ ! -f "$CHROME_PATH" ]]; then
+    # Try Chromium from Playwright
+    CHROME_PATH="$(pnpm exec playwright install --dry-run chromium 2>&1 | grep -o '/.*chromium-.*/chrome-mac/Chromium.app' | head -1)/Contents/MacOS/Chromium" || true
+  fi
+
+  # Use Playwright's open command with a custom config for voice
+  # Create temp config with launch args
+  TEMP_CONFIG=$(mktemp)
+  cat > "$TEMP_CONFIG" << EOCONFIG
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  use: {
+    ...devices['Desktop Chrome'],
+    launchOptions: {
+      args: [
+        '--use-fake-ui-for-media-stream',
+        '--use-fake-device-for-media-stream',
+        '--use-file-for-fake-audio-capture=${AUDIO_PATH}',
+      ],
+    },
+  },
+});
+EOCONFIG
+
+  echo -e "${BLUE}Starting codegen with fake audio device...${NC}"
+  echo -e "${YELLOW}NOTE: The microphone will continuously play: ${AUDIO_FILE}${NC}"
+  echo ""
+
+  # Use playwright open which supports more options
+  PLAYWRIGHT_CHROMIUM_DEBUG_PORT=9222 pnpm exec playwright codegen \
     --browser=chromium \
     "${CODEGEN_ARGS[@]}" \
-    --channel=chrome \
-    "$TARGET_URL" \
-    -- \
-    --use-fake-ui-for-media-stream \
-    --use-fake-device-for-media-stream \
-    "--use-file-for-fake-audio-capture=${AUDIO_PATH}"
+    "$TARGET_URL" &
+
+  CODEGEN_PID=$!
+
+  # Give codegen a moment to start
+  sleep 2
+
+  echo ""
+  echo -e "${YELLOW}========================================${NC}"
+  echo -e "${YELLOW}  VOICE MODE MANUAL STEPS               ${NC}"
+  echo -e "${YELLOW}========================================${NC}"
+  echo ""
+  echo -e "${BLUE}Codegen is running but Chrome flags for fake audio${NC}"
+  echo -e "${BLUE}cannot be passed through codegen directly.${NC}"
+  echo ""
+  echo -e "${GREEN}For voice testing, use this command instead:${NC}"
+  echo ""
+  echo "  # In a separate terminal, run:"
+  echo "  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \\"
+  echo "    --use-fake-ui-for-media-stream \\"
+  echo "    --use-fake-device-for-media-stream \\"
+  echo "    '--use-file-for-fake-audio-capture=${AUDIO_PATH}' \\"
+  echo "    '${TARGET_URL}'"
+  echo ""
+  echo -e "${YELLOW}Or run voice E2E tests directly:${NC}"
+  echo "  VOICE_AUDIO_TYPE=hello pnpm exec playwright test --project=voice-live"
+  echo ""
+
+  # Wait for codegen to finish
+  wait $CODEGEN_PID 2>/dev/null || true
+
+  # Clean up
+  rm -f "$TEMP_CONFIG"
 else
   echo ""
   echo -e "${YELLOW}Launching codegen (no voice mode)...${NC}"

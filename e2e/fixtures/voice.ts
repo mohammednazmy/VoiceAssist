@@ -30,6 +30,154 @@ export const VOICE_CONFIG = {
 };
 
 /**
+ * Login credentials from environment
+ */
+const LOGIN_CREDENTIALS = {
+  email: process.env.E2E_EMAIL || "mo@asimo.io",
+  password: process.env.E2E_PASSWORD || "TestPassword123!",
+};
+
+/**
+ * Perform explicit login if needed (storageState auth not working)
+ * Based on codegen recording of actual login flow
+ *
+ * Note: React app may show login form even though URL is /chat due to
+ * client-side auth routing. Must detect by element presence, not URL.
+ */
+export async function ensureLoggedIn(page: Page, maxRetries = 2): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    // Wait for page to settle
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500); // Allow React to render
+
+    // Check if login form is visible (more reliable than URL check)
+    const emailField = page.getByRole('textbox', { name: 'Emailrequired' });
+    const isLoginFormVisible = await emailField.isVisible({ timeout: 3000 }).catch(() => false);
+
+    if (!isLoginFormVisible) {
+      console.log('[Voice] Login form not visible, continuing...');
+      return;
+    }
+
+    console.log(`[Voice] Login form visible, performing explicit login (attempt ${attempt}/${maxRetries})...`);
+
+    try {
+      // Wait for email field to be ready and visible
+      await emailField.waitFor({ state: 'visible', timeout: 5000 });
+
+      // Clear and fill email (more reliable than click + fill)
+      await emailField.clear();
+      await emailField.fill(LOGIN_CREDENTIALS.email);
+
+      // Verify email was filled
+      const emailValue = await emailField.inputValue();
+      if (!emailValue || emailValue !== LOGIN_CREDENTIALS.email) {
+        console.log(`[Voice] Email fill failed (got: "${emailValue}"), retrying...`);
+        await page.waitForTimeout(500);
+        continue;
+      }
+
+      // Fill password
+      const passwordField = page.getByRole('textbox', { name: 'Passwordrequired' });
+      await passwordField.waitFor({ state: 'visible', timeout: 5000 });
+      await passwordField.clear();
+      await passwordField.fill(LOGIN_CREDENTIALS.password);
+
+      // Click sign in button
+      const signInButton = page.getByRole('button', { name: 'Sign in to VoiceAssist' });
+      await signInButton.waitFor({ state: 'visible', timeout: 5000 });
+      await signInButton.click();
+
+      // Wait for login form to disappear (React re-renders, URL may not change)
+      await page.waitForFunction(() => {
+        const emailInput = document.querySelector('input[name="email"], input[type="email"]');
+        return !emailInput || !(emailInput as HTMLElement).offsetParent;
+      }, { timeout: 15000 });
+
+      await page.waitForLoadState('networkidle');
+      console.log('[Voice] Login successful, URL:', page.url());
+      return;
+    } catch (error) {
+      console.log(`[Voice] Login attempt ${attempt} failed:`, error);
+      if (attempt < maxRetries) {
+        await page.waitForTimeout(1000);
+      }
+    }
+  }
+
+  // If we get here, login failed after all retries
+  console.log('[Voice] Login failed after all retries, proceeding anyway...');
+}
+
+/**
+ * Navigate to voice chat page with login handling
+ * Uses retry loop to handle race conditions in parallel test execution
+ */
+export async function navigateToVoiceChat(page: Page): Promise<void> {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await page.goto('http://localhost:5173/');
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // Check if we landed on login page directly (can happen after session timeout)
+      await ensureLoggedIn(page);
+
+      // Now look for the Chat with Voice card (should be on dashboard)
+      const chatWithVoiceCard = page.getByTestId('chat-with-voice-card');
+      const cardVisible = await chatWithVoiceCard.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (!cardVisible) {
+        // Maybe we're already on voice chat page, check for voice button
+        const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
+        const buttonVisible = await voiceButton.isVisible({ timeout: 2000 }).catch(() => false);
+        if (buttonVisible) {
+          console.log('[Voice] Already on voice chat page, navigation complete');
+          return;
+        }
+        // Otherwise we might still be on login page - retry
+        throw new Error('Neither chat-with-voice-card nor voice button visible');
+      }
+
+      // Click Chat with Voice card
+      await chatWithVoiceCard.click();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      // Handle login if needed (React may show login form even at /chat URL)
+      await ensureLoggedIn(page);
+
+      // After login, we may be back at homepage - check and click card again
+      const isCardVisibleAgain = await chatWithVoiceCard.isVisible({ timeout: 2000 }).catch(() => false);
+      if (isCardVisibleAgain) {
+        console.log('[Voice] On homepage after login, clicking chat-with-voice-card again...');
+        await chatWithVoiceCard.click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+        // Check for login again (in case redirect happens)
+        await ensureLoggedIn(page);
+      }
+
+      // Verify we have the voice button
+      const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
+      await voiceButton.waitFor({ timeout: 10000 });
+      console.log('[Voice] Navigation complete, voice button visible');
+      return;
+    } catch (error) {
+      console.log(`[Voice] Navigation attempt ${attempt}/${maxAttempts} failed:`, error);
+      if (attempt < maxAttempts) {
+        console.log('[Voice] Retrying navigation...');
+        await page.waitForTimeout(1000);
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+/**
  * Voice panel selectors
  * Updated to match actual component data-testid attributes
  */
@@ -431,22 +579,7 @@ export async function getVoiceMetrics(page: Page): Promise<{
   }
 }
 
-/**
- * Helper to navigate to chat with voice mode
- */
-export async function navigateToVoiceChat(page: Page): Promise<void> {
-  await page.goto("/chat");
-  await page.waitForLoadState("networkidle");
-  await page.waitForTimeout(WAIT_TIMES.UI_UPDATE);
-
-  // Wait for the voice button to be ready (indicates chat page is fully loaded)
-  try {
-    const voiceButton = page.locator(VOICE_SELECTORS.toggleButton).first();
-    await voiceButton.waitFor({ timeout: 15000 });
-  } catch {
-    console.log("[Voice] Voice button not found after navigation - page may not have voice enabled");
-  }
-}
+// navigateToVoiceChat is defined near the top of this file with login handling
 
 /**
  * Extended test fixture with voice-enabled page
