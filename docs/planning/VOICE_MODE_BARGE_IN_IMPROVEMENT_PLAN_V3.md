@@ -2132,6 +2132,31 @@ e2e/voice/
 >   - `e2e/voice/utils/test-setup.ts` (`waitForVoiceModeReady`, `openVoiceMode`, `enableAllVoiceFeatures`)
 >   - `e2e/fixtures/voice.ts` (`VOICE_SELECTORS.*`) for panel, toggle, start/stop, settings, transcript, and error states.
 > - All new barge‑in / latency tests should assume the **Thinker/Talker pipeline** over `/api/voice/pipeline-ws` (documented in `VOICE_MODE_PIPELINE.md` and `THINKER_TALKER_PIPELINE.md`) and rely on its debug surfaces (`window.__tt_ws_events`, `window.__tt_audio_debug`, `window.__voiceModeDebug`) rather than legacy OpenAI Realtime endpoints.
+>
+> **IMPORTANT: Robust Navigation & Login Handling**
+>
+> The React app uses client-side auth routing, which means the login form can appear at any URL (including `/chat`) when auth tokens are invalid or expired. **Never use raw `page.goto("/chat")`** in tests. Instead, always use the robust navigation helpers from `e2e/fixtures/voice.ts`:
+>
+> ```typescript
+> import { navigateToVoiceChat, ensureLoggedIn, VOICE_SELECTORS } from "../fixtures/voice";
+>
+> test("my voice test", async ({ page }) => {
+>   // Use navigateToVoiceChat instead of page.goto
+>   await navigateToVoiceChat(page);
+>
+>   // Voice button is now guaranteed to be visible
+>   await page.locator(VOICE_SELECTORS.toggleButton).click();
+>   // ... rest of test
+> });
+> ```
+>
+> The `navigateToVoiceChat(page)` function:
+> - Goes to homepage and clicks `chat-with-voice-card`
+> - Handles login if needed (detects login form by element presence, not URL)
+> - Retries navigation up to 3 times to handle race conditions
+> - Waits for voice toggle button to be visible before returning
+>
+> For tests that need login in other contexts, use `ensureLoggedIn(page)` directly.
 
 ### 6.2 Enhanced Statistical Testing Framework
 
@@ -2643,7 +2668,8 @@ export const transcriptScorer = new TranscriptScorer();
 ```typescript
 // File: e2e/voice/latency/voice-latency-benchmarks.spec.ts
 
-import { test, expect } from "../utils/test-setup";
+import { test, expect } from "@playwright/test";
+import { navigateToVoiceChat, VOICE_SELECTORS } from "../../fixtures/voice";
 import { LatencyHistogram } from "../utils/latency-histogram";
 import { createMetricsCollector } from "../utils/voice-test-metrics";
 
@@ -2692,8 +2718,8 @@ test.describe("Voice Mode Latency Benchmarks", () => {
       localStorage.setItem("voiceassist-force-instant-barge-in", "true");
     });
 
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
+    // Use navigateToVoiceChat for robust login handling
+    await navigateToVoiceChat(page);
 
     const metrics = createMetricsCollector(page);
 
@@ -2724,8 +2750,8 @@ test.describe("Voice Mode Latency Benchmarks", () => {
   });
 
   test("measure TTFA (Time to First Audio) distribution", async ({ page }) => {
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
+    // Use navigateToVoiceChat for robust login handling
+    await navigateToVoiceChat(page);
 
     const metrics = createMetricsCollector(page);
 
@@ -2754,8 +2780,8 @@ test.describe("Voice Mode Latency Benchmarks", () => {
   });
 
   test("measure end-to-end latency distribution", async ({ page }) => {
-    await page.goto("/chat");
-    await page.waitForLoadState("networkidle");
+    // Use navigateToVoiceChat for robust login handling
+    await navigateToVoiceChat(page);
 
     const metrics = createMetricsCollector(page);
 
@@ -2926,8 +2952,8 @@ const TURN_DETECTION_CASES: TurnDetectionTestCase[] = [
 test.describe("Semantic VAD Turn Detection", () => {
   for (const testCase of TURN_DETECTION_CASES) {
     test(testCase.name, async ({ page }) => {
-      await page.goto("/chat");
-      await page.waitForLoadState("networkidle");
+      // Use navigateToVoiceChat for robust login handling
+      await navigateToVoiceChat(page);
 
       // Enable semantic VAD
       await page.evaluate(() => {
@@ -3104,7 +3130,8 @@ test.describe("Voice Mode Edge Cases", () => {
 
   test.describe("Network Resilience", () => {
     test("network latency spike (500ms) - should recover gracefully", async ({ page, context }) => {
-      await page.goto("/chat");
+      // Use navigateToVoiceChat for robust login handling
+      await navigateToVoiceChat(page);
 
       // Add network latency
       await context.route("**/*", async (route) => {
@@ -3193,7 +3220,8 @@ const EIGHT_TURN_CONVERSATION: ConversationTurn[] = [
 
 test.describe("Multi-Turn Conversation Tests", () => {
   test("8-turn conversation with context preservation after barge-in", async ({ page }) => {
-    await page.goto("/chat");
+    // Use navigateToVoiceChat for robust login handling
+    await navigateToVoiceChat(page);
     await connectVoiceMode(page);
 
     const conversationLog: Array<{
