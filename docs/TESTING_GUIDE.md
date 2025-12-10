@@ -435,6 +435,35 @@ npx playwright test e2e/voice-mode-*.spec.ts --project=chromium --reporter=list
 
 For detailed pipeline architecture, metrics tracking, and complete test commands, see [VOICE_MODE_PIPELINE.md](./VOICE_MODE_PIPELINE.md).
 
+## Thinker/Talker Transcript Validation Tests
+
+The transcript validation suite tests STT accuracy and echo contamination using a mocked Thinker/Talker WebSocket.
+
+### Running the Tests
+
+```bash
+# Run with mock WebSocket (deterministic, no real backend)
+MOCK_WEBSOCKET_E2E=1 pnpm exec playwright test e2e/voice-transcript-validation.spec.ts --project=chromium
+```
+
+### What It Validates
+
+1. **User transcript accuracy**: DOM transcript matches expected user text (≥0.9 overallScore)
+2. **AI transcript accuracy (planned)**: Currently stubbed via deterministic mock data; stricter DOM-based assertions will be added once pipeline debug surfaces are stable
+3. **Echo contamination**: User transcript is NOT polluted with AI keywords/phrases
+
+### Mock WebSocket Details
+
+- Intercepts connections to `/api/voice/pipeline-ws`
+- Emits T/T protocol messages: `transcript.delta`, `transcript.complete`, `response.delta`, `response.complete`
+- Uses deterministic test transcripts for reproducible assertions
+
+### Utilities
+
+- `TranscriptScorer` class in `e2e/voice/utils/transcript-scorer.ts`
+  - `score(expected, actual)`: Returns accuracy metrics
+  - `detectEchoContamination(userText, aiKeywords, aiFullResponse?)`: Detects AI speech leakage
+
 ### Voice Mode Test Strategy
 
 **Deterministic Tests** (run in CI):
@@ -471,8 +500,9 @@ Both features are tested with similar patterns:
 
 **Voice Mode panel not found**:
 
-- Check that `data-testid="voice-mode-card"` exists on Home page
-- Verify ChatPage passes `autoOpenRealtimeVoice` prop
+- Check that `data-testid="chat-with-voice-card"` exists on Home page
+- Verify unified chat/voice feature flag is enabled (`unified_chat_voice_ui` via `/api/experiments/flags/unified_chat_voice_ui`)
+- Confirm `UnifiedChatContainer` is rendering `ThinkerTalkerVoicePanel` with `data-testid="voice-mode-panel"`
 - Check browser console for React errors
 
 **Start button not responding**:

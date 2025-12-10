@@ -274,6 +274,30 @@ export default defineConfig({
       timeout: 120 * 1000, // 2 minutes for two-phase barge-in tests
     },
 
+    /* Multi-Turn Thinker/Talker Flow - Metrics-focused (audio-injected) */
+    /* Run with: LIVE_REALTIME_E2E=1 pnpm exec playwright test --project=voice-multi-turn */
+    {
+      name: 'voice-multi-turn',
+      testDir: './e2e/voice',
+      testMatch: /voice-multi-turn-flow\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${getAudioFile()}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 180 * 1000,
+    },
+
     /* Voice Smoke Tests - Fast critical path tests for PR validation (~5 min) */
     /* Run with: npx playwright test --project=voice-smoke */
     {

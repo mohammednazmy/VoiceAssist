@@ -23,6 +23,7 @@ import {
   getVoiceModeDebugState,
   setupBargeInConsoleCapture,
 } from "./utils/test-setup";
+import { createMetricsCollector } from "./utils/voice-test-metrics";
 
 // Audio timeline constants (in milliseconds)
 const PHASE_1_END = 3190; // End of initial question
@@ -50,6 +51,9 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
       permissions: ["microphone"],
     });
     const page = await context.newPage();
+
+    // Attach voice metrics collector to capture barge-in latency / quality
+    const collector = createMetricsCollector(page);
 
     // Enable force flags for proper Silero VAD and instant barge-in
     await page.addInitScript(() => {
@@ -140,6 +144,30 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
     expect(bargeInSuccess).toBe(true);
 
     console.log("[TEST] Two-phase barge-in test PASSED!");
+
+    // === Metrics-based assertions ===
+    const conv = collector.getConversationMetrics();
+    console.log(
+      "[Two-Phase Barge-In] Metrics summary:\n",
+      collector.getSummary(),
+    );
+
+    // We expect at least one barge-in attempt and execution in this two-phase scenario
+    expect(
+      conv.bargeInAttempts,
+      `Expected at least one barge-in attempt, got ${conv.bargeInAttempts}`,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      conv.successfulBargeIns,
+      `Expected at least one successful barge-in, got ${conv.successfulBargeIns}`,
+    ).toBeGreaterThanOrEqual(1);
+
+    // Barge-in latency should be reasonable; tests have overhead so we allow a
+    // looser bound than production SLOs but still catch regressions.
+    expect(
+      conv.averageBargeInLatencyMs,
+      `Average barge-in latency too high: ${conv.averageBargeInLatencyMs.toFixed(0)}ms`,
+    ).toBeLessThanOrEqual(2000);
 
     await context.close();
   });

@@ -21,8 +21,11 @@ logger = get_logger(__name__)
 
 
 # UI Feature Flag defaults (matching frontend featureFlags.ts)
+# NOTE: unified_chat_voice_ui defaults to True so the unified
+# chat+voice experience is the primary path. Operators can still
+# disable it explicitly via the feature flag database / admin panel.
 UI_FLAG_DEFAULTS = {
-    "unified_chat_voice_ui": False,
+    "unified_chat_voice_ui": True,
     "new_navigation": False,
     "enhanced_documents": False,
     "clinical_wizard": False,
