@@ -1837,8 +1837,15 @@ class VoicePipelineSession:
 
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
-        logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}'")
+        logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}', state={self._state}")
         self._deepgram_vad_active = False
+
+        # Guard against duplicate processing: If we're already processing or speaking,
+        # this is a duplicate UtteranceEnd event (Deepgram can send multiple for a single
+        # speech turn). Just accumulate the transcript but don't trigger another processing cycle.
+        if self._state in (PipelineState.PROCESSING, PipelineState.SPEAKING):
+            logger.info(f"[Pipeline] Skipping duplicate speech_end - already in {self._state} state")
+            return
 
         # Notify backchannel session of speech end
         if self._backchannel_session:
@@ -2010,8 +2017,19 @@ class VoicePipelineSession:
         """
         logger.info(
             f"[Pipeline] Aggregated utterance ready: segments={utterance.segment_count}, "
-            f"merged={utterance.was_merged}, duration={utterance.total_duration_ms}ms"
+            f"merged={utterance.was_merged}, duration={utterance.total_duration_ms}ms, state={self._state}"
         )
+
+        # Guard against duplicate processing: If we're already processing or speaking,
+        # store the transcript for later but don't trigger another processing cycle.
+        # This can happen when: (1) window timer fires, (2) new segment arrives after
+        # window expired causing add_segment to return result immediately + start new window.
+        if self._state in (PipelineState.PROCESSING, PipelineState.SPEAKING):
+            logger.info(f"[Pipeline] Skipping duplicate aggregated utterance - already in {self._state} state")
+            # Store transcript for potential barge-in use
+            if utterance.text.strip():
+                self._final_transcript = utterance.text
+            return
 
         # Use the merged text as the final transcript
         self._final_transcript = utterance.text
@@ -2301,28 +2319,34 @@ class VoicePipelineSession:
         async with self._state_lock:
             self._state = PipelineState.LISTENING
 
-            # If pre-emptive listening was enabled, the STT session was created
-            # before TTS started and is already running. Only create a new session
-            # if pre-emptive listening was disabled.
-            if not self.config.enable_preemptive_listening:
-                # Restart STT for next input, preserving on_words callback for prosody/backchannel
-                self._stt_session = await self._stt_service.create_session(
-                    on_partial=self._handle_partial_transcript,
-                    on_final=self._handle_final_transcript,
-                    on_endpoint=self._handle_speech_end,
-                    on_speech_start=self._handle_speech_start,
-                    on_words=self._handle_word_data,
-                    config=STTSessionConfig(
-                        language=self.config.stt_language,
-                        sample_rate=self.config.stt_sample_rate,
-                        endpointing_ms=self.config.stt_endpointing_ms,
-                        utterance_end_ms=self.config.stt_utterance_end_ms,
-                    ),
-                )
-                await self._stt_session.start()
-            else:
-                # STT session already running from pre-emptive listening
-                logger.debug("[Pipeline] Keeping existing STT session from pre-emptive listening")
+            # ALWAYS restart STT session when transitioning from SPEAKING to LISTENING
+            # Even when pre-emptive listening is enabled, the reused session may have
+            # stale utterance detection state that prevents proper end-of-speech detection
+            # for the next turn. This was causing the "non-responsive after first turn" bug.
+            #
+            # The small overhead of creating a new session is worth the reliability.
+            if self._stt_session:
+                try:
+                    await self._stt_session.stop()
+                except Exception as e:
+                    logger.warning(f"[Pipeline] Error stopping old STT session: {e}")
+
+            # Create fresh STT session for next input
+            logger.debug("[Pipeline] Creating fresh STT session for next turn")
+            self._stt_session = await self._stt_service.create_session(
+                on_partial=self._handle_partial_transcript,
+                on_final=self._handle_final_transcript,
+                on_endpoint=self._handle_speech_end,
+                on_speech_start=self._handle_speech_start,
+                on_words=self._handle_word_data,
+                config=STTSessionConfig(
+                    language=self.config.stt_language,
+                    sample_rate=self.config.stt_sample_rate,
+                    endpointing_ms=self.config.stt_endpointing_ms,
+                    utterance_end_ms=self.config.stt_utterance_end_ms,
+                ),
+            )
+            await self._stt_session.start()
 
             await self._send_state_update()
             # Issue 3: Publish turn.yielded when AI finishes speaking

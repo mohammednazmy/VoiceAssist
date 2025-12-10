@@ -1,7 +1,8 @@
 import type { APIEnvelope } from "../types";
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 export class APIError extends Error {
   code: string;

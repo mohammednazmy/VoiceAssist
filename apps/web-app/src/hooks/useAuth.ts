@@ -58,11 +58,12 @@ function getOAuthErrorMessage(provider: string, err: unknown): string {
 }
 
 // Initialize API client
+// Use VITE_API_URL if set, otherwise use current page origin.
+// This is a client-side SPA so window is always available at runtime.
+// Empty string fallback allows relative API calls to work correctly.
 const resolvedApiBase =
   import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined"
-    ? window.location.origin
-    : "https://api.voiceassist.example.com");
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 const apiClient = new VoiceAssistApiClient({
   // Fallback to current origin so dev/e2e proxied /api requests work without VITE_API_URL

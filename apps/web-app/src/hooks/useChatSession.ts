@@ -20,7 +20,8 @@ import { useAuth } from "./useAuth";
 import { createAttachmentsApi } from "../lib/api/attachmentsApi";
 import { websocketLog } from "../lib/logger";
 
-const DEFAULT_GATEWAY = "https://api.voiceassist.example.com";
+const DEFAULT_GATEWAY =
+  typeof window !== "undefined" ? window.location.origin : "";
 
 interface UseChatSessionOptions {
   conversationId: string | undefined;
@@ -48,17 +49,27 @@ interface UseChatSessionReturn {
 // WebSocket URL - configurable per environment
 const DEFAULT_WS_PATH = "/api/realtime/ws";
 
-const WS_URL = (() => {
+/**
+ * Get WebSocket URL dynamically at connection time.
+ * This function is called lazily to ensure window.location is available
+ * and reflects the actual host the user is accessing.
+ */
+function getWebSocketUrl(): string {
+  // Check for explicit env var first (for testing/staging overrides)
   if (import.meta.env.VITE_WS_URL) {
     return import.meta.env.VITE_WS_URL;
   }
 
+  // In dev mode, connect to local server
   if (import.meta.env.DEV) {
     return `ws://localhost:8000${DEFAULT_WS_PATH}`;
   }
 
-  return `wss://api.voiceassist.example.com${DEFAULT_WS_PATH}`;
-})();
+  // Production: derive WebSocket URL from current page location
+  // This ensures we always connect to the same host the user is accessing
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}${DEFAULT_WS_PATH}`;
+}
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -418,7 +429,7 @@ export function useChatSession(
     updateConnectionStatus("connecting");
 
     try {
-      const url = new URL(WS_URL);
+      const url = new URL(getWebSocketUrl());
       url.searchParams.append("conversationId", conversationId);
       // Token is guaranteed to exist at this point (checked above)
       url.searchParams.append("token", tokens!.accessToken);

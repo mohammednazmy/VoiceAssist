@@ -95,9 +95,13 @@ function PageLoader() {
 }
 
 export function App() {
+  console.log("[App] App component rendering");
+  console.log("[App] window.location.href:", window.location.href);
+  console.log("[App] window.location.origin:", window.location.origin);
+  console.log("[App] window.location.pathname:", window.location.pathname);
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter basename="/admin">
         <AuthProvider>
           <Routes>
             {/* Public route */}

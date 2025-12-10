@@ -1590,6 +1590,73 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 other_flags=["backend.voice_continuation_detection"],
             ),
         ),
+        "voice_semantic_vad_hesitation_tolerance_ms": FeatureFlagDefinition(
+            name="backend.voice_semantic_vad_hesitation_tolerance_ms",
+            description=(
+                "[Barge-In v3] How long to wait during hesitations (um, uh, etc.) before responding. "
+                "Higher values allow more time for user to continue speaking after a hesitation marker. "
+                "Lower values respond faster but may interrupt mid-thought."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=2000,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=500,
+                max_value=5000,
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["SemanticVADService"],
+                other_flags=["backend.voice_semantic_vad"],
+            ),
+        ),
+        "voice_semantic_vad_completion_threshold": FeatureFlagDefinition(
+            name="backend.voice_semantic_vad_completion_threshold",
+            description=(
+                "[Barge-In v3] Confidence threshold (0-1) for turn completion detection. "
+                "Higher values require stronger completion signals before responding. "
+                "Lower values respond more quickly but may interrupt more often."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=0.65,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=0.3,
+                max_value=0.95,
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["SemanticVADService"],
+                other_flags=["backend.voice_semantic_vad"],
+            ),
+        ),
+        "voice_semantic_vad_use_llm_assist": FeatureFlagDefinition(
+            name="backend.voice_semantic_vad_use_llm_assist",
+            description=(
+                "[Barge-In v3] Use LLM to assist with turn completion detection for complex cases. "
+                "When enabled, sends ambiguous transcripts to LLM for intent analysis. "
+                "Improves accuracy but adds latency (~100-200ms)."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["SemanticVADService", "ThinkerService"],
+                other_flags=["backend.voice_semantic_vad"],
+            ),
+        ),
         "voice_graceful_truncation": FeatureFlagDefinition(
             name="backend.voice_graceful_truncation",
             description=(

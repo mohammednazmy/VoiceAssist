@@ -54,9 +54,10 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
   test("barge-in should immediately stop AI audio when user speaks", async ({
     browser,
   }) => {
-    // Launch browser with fake audio capture
+    // Launch browser with fake audio capture and auth state
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 
@@ -186,6 +187,7 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 
@@ -243,6 +245,7 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
   test("conversation should continue after barge-in", async ({ browser }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 
@@ -310,6 +313,7 @@ test.describe("Voice Mode Barge-In - Failure Diagnostics", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 

@@ -59,6 +59,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Skip admin panel requests - admin panel has its own app
+  if (event.request.url.includes("/admin/") || event.request.url.includes("/admin")) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {

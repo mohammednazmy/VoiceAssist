@@ -205,18 +205,25 @@ export class NetworkResilienceManager {
     const packetLossPercent = this.getAveragePacketLoss();
     const quality = this.assessQuality(latencyMs, packetLossPercent);
 
-    // Try to get connection info from navigator
+    // Try to get connection info from navigator (browser environment only)
     let connectionType = "unknown";
     let isMetered = false;
     let bandwidthKbps = 10000; // Default assumption
 
-    if (typeof navigator !== "undefined" && "connection" in navigator) {
-      const conn = (navigator as any).connection;
-      if (conn) {
-        connectionType = conn.effectiveType || conn.type || "unknown";
-        isMetered = conn.saveData || false;
-        bandwidthKbps = (conn.downlink || 10) * 1000;
+    // Check for browser environment and Network Information API
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nav = (globalThis as any).navigator;
+      if (nav && typeof nav === "object" && "connection" in nav) {
+        const conn = nav.connection;
+        if (conn && typeof conn === "object") {
+          connectionType = conn.effectiveType || conn.type || "unknown";
+          isMetered = conn.saveData || false;
+          bandwidthKbps = (conn.downlink || 10) * 1000;
+        }
       }
+    } catch {
+      // Not in browser environment or API not available
     }
 
     return {

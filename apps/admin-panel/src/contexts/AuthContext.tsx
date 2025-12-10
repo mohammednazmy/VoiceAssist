@@ -60,6 +60,7 @@ const decodeToken = (token?: string): DecodedToken | null => {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  console.log("[AuthContext] AuthProvider mounting");
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  console.log("[AuthContext] Getting API client...");
   const apiClient = getApiClient();
+  console.log("[AuthContext] API client obtained, baseURL:", apiClient.getBaseUrl());
 
   const scheduleRefresh = useCallback(
     (accessToken: string) => {
@@ -102,11 +105,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const checkAuth = useCallback(async () => {
+    console.log("[AuthContext] checkAuth() starting...");
+    console.log("[AuthContext] Current URL:", window.location.href);
     try {
       const storedRole = deriveRole(getStoredRole() || undefined);
       const token = localStorage.getItem("auth_token");
+      console.log("[AuthContext] Stored role:", storedRole);
+      console.log("[AuthContext] Has token:", !!token);
 
       if (!token) {
+        console.log("[AuthContext] No token found, setting loading=false");
         setLoading(false);
         return;
       }

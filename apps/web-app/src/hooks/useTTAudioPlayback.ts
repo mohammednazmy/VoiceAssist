@@ -75,11 +75,16 @@ const MAX_PREBUFFER_WAIT_MS = 500;
  * Don't schedule audio more than this far in the future.
  * Prevents massive source accumulation when chunks arrive faster than playback.
  *
- * Set to 3 seconds to allow for initial buffering when AudioContext is fresh
- * (currentTime starts at 0 and advances slowly). This prevents the scheduling
- * loop from getting stuck waiting for currentTime to catch up.
+ * Set to 2.5 seconds to allow for:
+ * - Initial buffering when AudioContext is fresh (currentTime starts at 0)
+ * - Network jitter where chunks arrive in bursts
+ * - Variable TTS generation speed
+ *
+ * Too tight (1.0s) causes choppy audio from frequent resets.
+ * Too loose (5.0s+) causes perceived lag when barge-in occurs.
+ * 3.5s provides good balance - allows burst arrival of ~20 chunks without pausing.
  */
-const MAX_SCHEDULE_LOOKAHEAD_S = 1.0; // tighten lookahead to reduce perceived lag
+const MAX_SCHEDULE_LOOKAHEAD_S = 3.5;
 
 /**
  * Maximum queue duration in milliseconds (Phase 1: Queue Duration Enforcement).
@@ -587,32 +592,13 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          // Hard reset the schedule to avoid runaway lookahead and drop stale audio
-          voiceLog.warn(
-            `[TTAudioPlayback] Overscheduled by ${scheduledAhead.toFixed(2)}s; resetting schedule and trimming queue`,
+          // Pause scheduling to let playback catch up
+          // DO NOT stop playing audio - just wait for scheduled audio to play out
+          // The next queueAudioChunk call will re-trigger processAudioQueue
+          voiceLog.debug(
+            `[TTAudioPlayback] Schedule ahead by ${scheduledAhead.toFixed(2)}s (>${MAX_SCHEDULE_LOOKAHEAD_S}s); pausing scheduling to let playback catch up`,
           );
-          nextScheduledTimeRef.current = now + 0.01; // schedule near-future
-
-          // Stop any already scheduled sources so barge-in or new audio is not delayed
-          for (const source of activeSourcesRef.current) {
-            try {
-              source.stop();
-              source.disconnect();
-            } catch {
-              // Ignore
-            }
-          }
-          activeSourcesRef.current.clear();
-
-          // Keep only the most recent chunks to prevent long backlogs (preserve minimal buffer)
-          const maxBufferedChunks = Math.max(
-            prebufferChunks,
-            DEFAULT_PREBUFFER_CHUNKS,
-          );
-          if (audioQueueRef.current.length > maxBufferedChunks) {
-            audioQueueRef.current =
-              audioQueueRef.current.slice(-maxBufferedChunks);
-          }
+          break;
         }
 
         const audioData = audioQueueRef.current.shift()!;

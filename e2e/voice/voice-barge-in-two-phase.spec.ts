@@ -49,6 +49,7 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
   }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 
@@ -178,6 +179,7 @@ test.describe("Voice Mode Two-Phase Barge-In", () => {
   test("diagnostic: two-phase audio timeline analysis", async ({ browser }) => {
     const context = await browser.newContext({
       permissions: ["microphone"],
+      storageState: "e2e/.auth/user.json",
     });
     const page = await context.newPage();
 

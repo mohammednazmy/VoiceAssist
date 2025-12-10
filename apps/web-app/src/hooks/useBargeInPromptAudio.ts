@@ -137,9 +137,13 @@ export function useBargeInPromptAudio(
     async (text: string): Promise<ArrayBuffer | null> => {
       const token = getAccessToken?.();
 
-      // Skip if no token - user not authenticated
-      if (!token) {
-        voiceLog.debug("[BargeInAudio] Skipping TTS fetch - no auth token");
+      // Skip if no token or token is invalid (JWT should be at least 100 chars with 3 parts)
+      if (!token || typeof token !== "string" || token.length < 100 || token.split(".").length !== 3) {
+        voiceLog.debug("[BargeInAudio] Skipping TTS fetch - no valid auth token", {
+          hasToken: !!token,
+          tokenType: typeof token,
+          tokenLength: token?.length ?? 0,
+        });
         return null;
       }
 
@@ -330,18 +334,23 @@ export function useBargeInPromptAudio(
     voiceLog.debug("[BargeInAudio] Cache cleared");
   }, []);
 
+  // Helper to check if token is valid (JWT with 3 parts and reasonable length)
+  const isValidToken = useCallback((token: string | null | undefined): boolean => {
+    return !!(token && typeof token === "string" && token.length >= 100 && token.split(".").length === 3);
+  }, []);
+
   // Auto-preload on mount or when voice changes
-  // Only preload if user is authenticated (has access token)
+  // Only preload if user is authenticated (has valid access token)
   useEffect(() => {
     const token = getAccessToken?.();
-    if (autoPreload && voiceId && token) {
+    if (autoPreload && voiceId && isValidToken(token)) {
       preloadPrompts();
-    } else if (autoPreload && voiceId && !token) {
+    } else if (autoPreload && voiceId && !isValidToken(token)) {
       voiceLog.debug(
-        "[BargeInAudio] Skipping preload - user not authenticated",
+        "[BargeInAudio] Skipping preload - no valid auth token",
       );
     }
-  }, [autoPreload, voiceId, language, preloadPrompts, getAccessToken]);
+  }, [autoPreload, voiceId, language, preloadPrompts, getAccessToken, isValidToken]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -44,7 +44,7 @@ export function LoginPage() {
       persistRole(role);
 
       // Force a page reload to re-initialize auth state
-      window.location.href = "/dashboard";
+      window.location.href = "/admin/dashboard";
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
@@ -70,7 +70,7 @@ export function LoginPage() {
       persistRole(role);
 
       // Force a page reload to re-initialize auth state
-      window.location.href = "/dashboard";
+      window.location.href = "/admin/dashboard";
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Verification failed";

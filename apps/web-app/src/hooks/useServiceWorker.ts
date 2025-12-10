@@ -124,8 +124,9 @@ export function useServiceWorker({
 
     try {
       console.log("[SW] Registering service worker:", swUrl);
+      // Exclude /admin/ from SW scope to avoid intercepting admin panel requests
       const registration = await navigator.serviceWorker.register(swUrl, {
-        scope: "/",
+        scope: "/app/",
       });
       registrationRef.current = registration;
 

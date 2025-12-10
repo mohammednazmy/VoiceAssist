@@ -390,7 +390,8 @@ let defaultInstance: ConversationsApiClient | null = null;
 export function getDefaultConversationsApi(): ConversationsApiClient {
   if (!defaultInstance) {
     const baseUrl =
-      import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
+      import.meta.env.VITE_API_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "");
     defaultInstance = createConversationsApi(baseUrl, () => {
       // Get token from auth store (zustand persist uses "voiceassist-auth" key)
       const authData = localStorage.getItem("voiceassist-auth");

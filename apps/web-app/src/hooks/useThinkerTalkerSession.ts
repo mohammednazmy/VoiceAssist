@@ -2416,9 +2416,9 @@ export function useThinkerTalkerSession(
         }
 
         // Build WebSocket URL with auth token
-        const apiBase = import.meta.env.VITE_API_URL || "";
+        const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
         const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
-        const wsHost = apiBase.replace(/^https?:\/\//, "");
+        const wsHost = apiBase.replace(/^https?:\/\//, "") || window.location.host;
         const wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
 
         voiceLog.debug(
@@ -2726,12 +2726,6 @@ export function useThinkerTalkerSession(
 
       const source = audioContext.createMediaStreamSource(stream);
       const bufferSize = 2048;
-      const scriptProcessor = audioContext.createScriptProcessor(
-        bufferSize,
-        1,
-        1,
-      );
-      processorNodeRef.current = scriptProcessor;
 
       // Natural Conversation Flow: Phase 3.1 - Initialize prosody extractor
       if (prosodyEnabledRef.current && !prosodyExtractorRef.current) {
@@ -2744,56 +2738,20 @@ export function useThinkerTalkerSession(
 
       let audioChunkCount = 0;
 
-      // Local VAD state for barge-in detection
-      let lastVoiceActivityTime = 0;
-      const VOICE_ACTIVITY_DEBOUNCE_MS = 100; // Debounce to avoid rapid-fire callbacks
-      const VOICE_ACTIVITY_THRESHOLD = 0.02; // RMS threshold for voice detection (adjusted for echo cancellation)
-
-      scriptProcessor.onaudioprocess = (event) => {
+      // Shared function to process and send audio chunks
+      const processAndSendAudio = (pcm16: Int16Array, float32Data?: Float32Array) => {
         if (ws.readyState !== WebSocket.OPEN) return;
 
         if (isAutomation && pipelineStateRef.current !== "listening") {
           return;
         }
 
-        const inputData = event.inputBuffer.getChannelData(0);
-
-        // Calculate RMS for local voice activity detection
-        let sumSquares = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sumSquares += inputData[i] * inputData[i];
-        }
-        const rms = Math.sqrt(sumSquares / inputData.length);
-
-        // NOTE: RMS-based local VAD disabled - replaced by Silero VAD in useThinkerTalkerVoiceMode
-        // Silero VAD uses a neural network model which is much more accurate than RMS threshold
-        // The code below is kept for reference/debugging but the callback is disabled
-        const now = Date.now();
-        if (
-          rms > VOICE_ACTIVITY_THRESHOLD &&
-          now - lastVoiceActivityTime > VOICE_ACTIVITY_DEBOUNCE_MS
-        ) {
-          lastVoiceActivityTime = now;
-          // Debug: Log when RMS threshold exceeded (Silero VAD handles actual barge-in)
-          // console.log(`[ThinkerTalker] RMS threshold exceeded: rms=${rms.toFixed(4)}`);
-          // DISABLED: Silero VAD now handles local voice activity detection
-          // onLocalVoiceActivityRef.current?.(rms);
-        }
-
         // Natural Conversation Flow: Phase 3.1 - Extract prosody features
-        if (prosodyEnabledRef.current && prosodyExtractorRef.current) {
-          const prosodyFeatures =
-            prosodyExtractorRef.current.process(inputData);
+        if (prosodyEnabledRef.current && prosodyExtractorRef.current && float32Data) {
+          const prosodyFeatures = prosodyExtractorRef.current.process(float32Data);
           if (prosodyFeatures) {
             lastProsodyFeaturesRef.current = prosodyFeatures;
           }
-        }
-
-        // Convert float32 to PCM16
-        const pcm16 = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
         if (binaryProtocolEnabledRef.current) {
@@ -2837,14 +2795,85 @@ export function useThinkerTalkerSession(
         }
       };
 
-      // Connect nodes
-      const silentGain = audioContext.createGain();
-      silentGain.gain.value = 0;
-      source.connect(scriptProcessor);
-      scriptProcessor.connect(silentGain);
-      silentGain.connect(audioContext.destination);
+      // Try AudioWorklet first (modern approach), fallback to ScriptProcessorNode
+      let useAudioWorklet = false;
+      if (audioContext.audioWorklet) {
+        try {
+          await audioContext.audioWorklet.addModule(
+            "/thinker-talker-audio-processor.js",
+          );
 
-      voiceLog.debug("[ThinkerTalker] Audio streaming initialized");
+          const workletNode = new AudioWorkletNode(
+            audioContext,
+            "thinker-talker-audio-processor",
+            {
+              processorOptions: {
+                targetChunkSize: bufferSize,
+              },
+            },
+          );
+
+          // Handle messages from worklet
+          workletNode.port.onmessage = (event) => {
+            if (event.data.type === "audio") {
+              const pcm16 = new Int16Array(event.data.pcm16);
+              const float32 = new Float32Array(event.data.float32);
+              processAndSendAudio(pcm16, float32);
+            } else if (event.data.type === "ready") {
+              voiceLog.debug("[ThinkerTalker] AudioWorklet processor ready");
+            }
+          };
+
+          // Connect: source -> workletNode (no output needed, worklet sends via port)
+          // Need to connect to destination for worklet to process audio
+          const silentGain = audioContext.createGain();
+          silentGain.gain.value = 0;
+          source.connect(workletNode);
+          workletNode.connect(silentGain);
+          silentGain.connect(audioContext.destination);
+
+          processorNodeRef.current = workletNode;
+          useAudioWorklet = true;
+
+          voiceLog.debug("[ThinkerTalker] Audio streaming initialized (AudioWorklet)");
+        } catch (workletError) {
+          voiceLog.warn(
+            `[ThinkerTalker] AudioWorklet failed, falling back to ScriptProcessorNode: ${workletError instanceof Error ? workletError.message : "Unknown error"}`,
+          );
+        }
+      }
+
+      // Fallback: Use ScriptProcessorNode (deprecated but widely supported)
+      if (!useAudioWorklet) {
+        const scriptProcessor = audioContext.createScriptProcessor(
+          bufferSize,
+          1,
+          1,
+        );
+        processorNodeRef.current = scriptProcessor;
+
+        scriptProcessor.onaudioprocess = (event) => {
+          const inputData = event.inputBuffer.getChannelData(0);
+
+          // Convert float32 to PCM16
+          const pcm16 = new Int16Array(inputData.length);
+          for (let i = 0; i < inputData.length; i++) {
+            const s = Math.max(-1, Math.min(1, inputData[i]));
+            pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+          }
+
+          processAndSendAudio(pcm16, inputData);
+        };
+
+        // Connect nodes
+        const silentGain = audioContext.createGain();
+        silentGain.gain.value = 0;
+        source.connect(scriptProcessor);
+        scriptProcessor.connect(silentGain);
+        silentGain.connect(audioContext.destination);
+
+        voiceLog.debug("[ThinkerTalker] Audio streaming initialized (ScriptProcessor fallback)");
+      }
     } catch (err) {
       stream.getTracks().forEach((track) => track.stop());
       throw new Error(

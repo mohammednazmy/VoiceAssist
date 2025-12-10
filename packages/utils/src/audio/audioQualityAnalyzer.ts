@@ -275,6 +275,11 @@ export class AudioQualityAnalyzer {
     const rmsDeviation = Math.abs(rmsLevel - idealRms) / idealRms;
     score *= Math.max(0, 1 - rmsDeviation * 0.5);
 
+    // Peak level contribution (penalize very high peaks that approach clipping)
+    if (peakLevel > 0.9) {
+      score *= 0.9; // Slight penalty for near-clipping peaks
+    }
+
     // Penalties
     if (isClipping) score *= 0.5;
     if (isTooQuiet) score *= 0.7;

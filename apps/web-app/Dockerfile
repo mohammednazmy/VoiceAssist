@@ -7,6 +7,9 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
+# Remove production API URLs so app uses relative paths (window.location.origin)
+RUN sed -i '/VITE_API_URL/d' apps/web-app/.env.production && \
+    sed -i '/VITE_WS_URL/d' apps/web-app/.env.production
 RUN pnpm install --frozen-lockfile && pnpm --filter voiceassist-web build
 
 FROM nginx:stable-alpine
@@ -16,6 +19,8 @@ COPY <<'NGINX_CONF' /etc/nginx/conf.d/default.conf
 server {
     listen 80;
     server_name _;
+    root /usr/share/nginx/html;
+    include /etc/nginx/mime.types;
 
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
@@ -24,7 +29,7 @@ server {
     add_header Strict-Transport-Security "max-age=31536000" always;
 
     location / {
-        try_files $uri /index.html;
+        try_files $uri $uri/ /index.html;
     }
 }
 NGINX_CONF

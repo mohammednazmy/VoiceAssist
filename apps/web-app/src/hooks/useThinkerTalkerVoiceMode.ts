@@ -736,6 +736,20 @@ export function useThinkerTalkerVoiceMode(
     // NOTE: Message addition is handled by parent component via onUserTranscript callback
     // to avoid duplicate messages in the chat
     onTranscript: (transcript: TTTranscript) => {
+      // CRITICAL: If we receive actual transcript text, the user is speaking.
+      // This is REAL speech, not speaker echo. Clear natural completion mode
+      // so that speech_started events are properly handled.
+      // This fixes the bug where second turn speech is ignored because the
+      // system thinks it's still in natural completion mode from the first turn.
+      if (transcript.text && transcript.text.length > 0) {
+        if (naturalCompletionModeRef.current) {
+          voiceLog.info(
+            "[TTVoiceMode] Clearing natural completion mode - real transcript received",
+          );
+        }
+        naturalCompletionModeRef.current = false;
+      }
+
       if (transcript.is_final) {
         // Final transcript - notify parent (which handles message addition)
         setPartialTranscript("");

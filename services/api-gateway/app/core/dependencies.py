@@ -260,7 +260,7 @@ async def get_current_admin_user(
     Raises:
         HTTPException: If user is not an admin
     """
-    if current_user.admin_role != "admin":
+    if current_user.admin_role not in {"admin", "super_admin"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
@@ -268,9 +268,9 @@ async def get_current_admin_user(
 async def get_current_admin_or_viewer(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Get current user and verify they have admin or viewer role."""
+    """Get current user and verify they have admin, super_admin, or viewer role."""
 
-    if current_user.admin_role not in {"admin", "viewer"}:
+    if current_user.admin_role not in {"admin", "super_admin", "viewer"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin or viewer role required",
@@ -281,7 +281,7 @@ async def get_current_admin_or_viewer(
 def ensure_admin_privileges(user: User) -> None:
     """Helper to enforce admin-only operations inside routes."""
 
-    if user.admin_role != "admin":
+    if user.admin_role not in {"admin", "super_admin"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",

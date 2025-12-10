@@ -487,7 +487,8 @@ export function getAuthTokenFromStorage(): string | null {
 export function getDefaultAdminApi(): AdminApiClient {
   // Use the same pattern as lib/api.ts
   const baseUrl =
-    import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
+    import.meta.env.VITE_API_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
 
   return createAdminApi(baseUrl, getAuthTokenFromStorage);
 }

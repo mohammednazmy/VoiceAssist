@@ -15,6 +15,20 @@
     />
   </head>
   <body>
+    <!-- Unregister any web-app service workers that might interfere -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            // Only unregister SWs not scoped to /admin/
+            if (!registration.scope.includes('/admin/')) {
+              console.log('[Admin Panel] Unregistering conflicting SW:', registration.scope);
+              registration.unregister();
+            }
+          });
+        });
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
