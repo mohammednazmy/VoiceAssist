@@ -136,7 +136,7 @@ class ConversationContext:
         tz = pytz.timezone("America/New_York")
         now = datetime.now(tz)
 
-        return f"""You are VoiceAssist, a helpful AI voice assistant.
+        return f"""Your name is 'Asimo', you are a helpful medical AI voice assistant who helps medical doctors be more productive.
 
 CURRENT TIME CONTEXT:
 - Current date: {now.strftime("%A, %B %d, %Y")}
@@ -396,7 +396,7 @@ class ThinkerService:
 
     def __init__(self):
         self._llm_client = LLMClient(
-            cloud_model=settings.MODEL_SELECTION_DEFAULT or "gpt-4o",
+            cloud_model=settings.MODEL_SELECTION_DEFAULT or "gpt-5.1",
             openai_api_key=settings.OPENAI_API_KEY,
             openai_timeout_sec=settings.OPENAI_TIMEOUT_SEC,
         )

@@ -83,7 +83,7 @@ class Settings(BaseSettings):
     ENABLE_BIOGPT_ADAPTER: bool = True
     PUBMEDBERT_MODEL_ID: Optional[str] = None
     BIOGPT_MODEL_ID: Optional[str] = None
-    MODEL_SELECTION_DEFAULT: str = "gpt-4o"
+    MODEL_SELECTION_DEFAULT: str = "gpt-5.1"
 
     # Retrieval configuration
     ENABLE_QUERY_DECOMPOSITION: bool = True
@@ -102,7 +102,7 @@ class Settings(BaseSettings):
 
     # OpenAI Realtime API settings (voice mode with WebSocket)
     REALTIME_ENABLED: bool = True  # Enable Realtime API for voice sessions
-    REALTIME_MODEL: str = "gpt-4o-realtime-preview-2024-10-01"  # Realtime model
+    REALTIME_MODEL: str = "gpt-realtime-2025-08-28"  # Realtime model
     REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
     REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
 
@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     VOICE_PIPELINE_STT_PRIMARY: str = "deepgram"  # Primary STT provider
     VOICE_PIPELINE_STT_FALLBACK: str = "whisper"  # Fallback STT provider
     VOICE_PIPELINE_TTS_PROVIDER: str = "elevenlabs"  # TTS provider
-    VOICE_PIPELINE_LLM_MODEL: str = "gpt-4o"  # LLM model for Thinker
+    VOICE_PIPELINE_LLM_MODEL: str = "gpt-5.1"  # LLM model for Thinker
     VOICE_PIPELINE_STREAMING: bool = True  # Enable streaming at all stages
     VOICE_PIPELINE_MAX_TOKENS: int = 1024  # Max tokens for voice responses
 
