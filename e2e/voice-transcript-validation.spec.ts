@@ -13,6 +13,7 @@
 
 import { expect, Page } from "@playwright/test";
 import { test as authTest } from "./fixtures/auth";
+import { VOICE_SELECTORS } from "./fixtures/voice";
 import { transcriptScorer } from "./voice/utils/transcript-scorer";
 
 /**
@@ -323,7 +324,8 @@ authTest.describe("Voice Transcript Validation", () => {
 
     // Mock WebSocket auto-connects when the panel mounts, so no explicit
     // “Start Voice Session” button is required in the unified UI.
-    // The mock will emit transcript events shortly after connection.
+    // The mock will emit transcript events shortly after connection and the
+    // VoiceTranscriptPreview / VoiceModePanel will render them into the DOM.
 
     // Wait for T/T debug events to include transcript.complete
     const ttEventsHandle = await page.waitForFunction(() => {
@@ -354,6 +356,7 @@ authTest.describe("Voice Transcript Validation", () => {
     );
 
     const userEvent = ttEvents.find((e) => e.type === "transcript.complete");
+    const aiEvent = ttEvents.find((e) => e.type === "response.complete");
 
     expect(
       userEvent,
@@ -371,6 +374,71 @@ authTest.describe("Voice Transcript Validation", () => {
       userScore.overallScore,
       `User transcript accuracy too low: ${userScore.overallScore.toFixed(2)}`,
     ).toBeGreaterThanOrEqual(0.9);
+
+    // Pipeline-level AI transcript accuracy (response.complete event), if present.
+    if (aiEvent) {
+      const aiPipelineText = (aiEvent.data.text || "").trim();
+      const aiPipelineScore = transcriptScorer.score(
+        MOCK_AI_RESPONSE_TEXT,
+        aiPipelineText,
+      );
+      console.log(
+        "[Voice Transcript] AI pipeline transcript score:",
+        aiPipelineScore,
+      );
+      expect(
+        aiPipelineScore.overallScore,
+        `AI pipeline transcript accuracy too low: ${aiPipelineScore.overallScore.toFixed(2)}`,
+      ).toBeGreaterThanOrEqual(0.9);
+    } else {
+      console.log(
+        "[Voice Transcript] WARNING: response.complete event not present in __tt_ws_events; skipping pipeline AI accuracy assertion.",
+      );
+    }
+
+    // DOM-based assertions: verify that the rendered chat timeline
+    // shows the expected user transcript text.
+    const domUserMessages = page.locator(VOICE_SELECTORS.userMessage);
+    await expect(
+      domUserMessages.first(),
+      "User message should appear in chat timeline for mock voice transcript",
+    ).toBeVisible({ timeout: 7000 });
+
+    const domUserTranscript = (
+      await domUserMessages.last().innerText()
+    ).trim();
+    const domUserScore = transcriptScorer.score(
+      expectedUserText,
+      domUserTranscript,
+    );
+    console.log("[Voice Transcript] DOM user transcript score:", domUserScore);
+    expect(
+      domUserScore.overallScore,
+      `DOM user transcript accuracy too low: ${domUserScore.overallScore.toFixed(2)}`,
+    ).toBeGreaterThanOrEqual(0.9);
+
+    // DOM-based AI transcript accuracy: verify that the rendered chat timeline
+    // shows the expected AI response text.
+    const domAIMessages = page.locator(VOICE_SELECTORS.assistantMessage);
+    const aiMessageCount = await domAIMessages.count();
+    if (aiMessageCount === 0) {
+      console.log(
+        "[Voice Transcript] WARNING: no assistant messages found in chat timeline; skipping DOM AI accuracy assertion.",
+      );
+    } else {
+      const domAITranscript = (
+        await domAIMessages.last().innerText()
+      ).trim();
+      const domAIScore = transcriptScorer.score(
+        MOCK_AI_RESPONSE_TEXT,
+        domAITranscript,
+      );
+      console.log("[Voice Transcript] DOM AI transcript score:", domAIScore);
+      expect(
+        domAIScore.overallScore,
+        `DOM AI transcript accuracy too low: ${domAIScore.overallScore.toFixed(2)}`,
+      ).toBeGreaterThanOrEqual(0.9);
+    }
 
     // Sanity check that user transcript is not contaminated with obvious AI keywords
     const contamination = transcriptScorer.detectEchoContamination(
