@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/users/RoleBadge.tsx",
+  "language": "typescript",
+  "size": 1060,
+  "last_modified": "2025-11-29T09:47:34.179Z",
+  "lines": 52,
+  "content": "/**\n * RoleBadge Component\n *\n * A styled badge for displaying user roles with appropriate colors.\n * - Admin: Purple\n * - Viewer: Blue\n * - User: Slate (default)\n */\n\ninterface RoleBadgeProps {\n  role: \"user\" | \"admin\" | \"viewer\";\n  size?: \"sm\" | \"md\";\n}\n\nconst ROLE_STYLES: Record<\n  \"user\" | \"admin\" | \"viewer\",\n  { bg: string; text: string; label: string }\n> = {\n  admin: {\n    bg: \"bg-purple-900/50\",\n    text: \"text-purple-400\",\n    label: \"Admin\",\n  },\n  viewer: {\n    bg: \"bg-blue-900/50\",\n    text: \"text-blue-400\",\n    label: \"Viewer\",\n  },\n  user: {\n    bg: \"bg-slate-800\",\n    text: \"text-slate-400\",\n    label: \"User\",\n  },\n};\n\nexport function RoleBadge({ role, size = \"sm\" }: RoleBadgeProps) {\n  const styles = ROLE_STYLES[role] || ROLE_STYLES.user;\n\n  const sizeClasses =\n    size === \"sm\" ? \"px-2 py-0.5 text-xs\" : \"px-3 py-1 text-sm\";\n\n  return (\n    <span\n      className={`inline-flex items-center font-medium rounded-full ${styles.bg} ${styles.text} ${sizeClasses}`}\n    >\n      {styles.label}\n    </span>\n  );\n}\n\nexport default RoleBadge;\n"
+}

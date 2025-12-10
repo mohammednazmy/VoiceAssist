@@ -1,18 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { HelpButton } from "@voiceassist/ui";
+import { AskAIButton } from "../components/shared";
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
+import { useKBUpload } from "../hooks/useKBUpload";
 import { useAuth } from "../contexts/AuthContext";
-import { DocumentTable, type DocumentRow } from "../components/knowledge/DocumentTable";
+import {
+  DocumentTable,
+  type DocumentRow,
+} from "../components/knowledge/DocumentTable";
 import { UploadDialog } from "../components/knowledge/UploadDialog";
 import { AuditDrawer } from "../components/knowledge/AuditDrawer";
 
-const MAX_UPLOAD_MB = 25;
+const MAX_UPLOAD_MB = 50; // VoiceAssist backend supports up to 50 MB for PDFs
 
 export function KnowledgeBasePage() {
-  const { docs, loading, error } = useKnowledgeDocuments();
+  const { docs, loading, error, refetch } = useKnowledgeDocuments();
+  const {
+    uploadDocument,
+    isUploading,
+    error: uploadHookError,
+    clearError,
+  } = useKBUpload();
   const { isViewer } = useAuth();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [showUpload, setShowUpload] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [auditDoc, setAuditDoc] = useState<DocumentRow | null>(null);
 
@@ -26,50 +37,60 @@ export function KnowledgeBasePage() {
     );
   }, [docs]);
 
-  const simulateUpload = async (file: File, onProgress: (value: number) => void) => {
-    return new Promise<void>((resolve) => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress = Math.min(100, progress + 10 + Math.random() * 20);
-        onProgress(progress);
-        if (progress >= 100) {
-          clearInterval(interval);
-          setTimeout(resolve, 150);
-        }
-      }, 180);
-    });
-  };
-
-  const handleUpload = async (file: File, onProgress: (value: number) => void) => {
-    if (isViewer) {
-      throw new Error("Uploads are disabled for viewer role");
+  // Sync upload hook error with local state
+  useEffect(() => {
+    if (uploadHookError) {
+      setUploadError(uploadHookError);
     }
-    setUploading(true);
-    setUploadError(null);
-    try {
-      await simulateUpload(file, onProgress);
-      const now = new Date().toISOString();
-      const newDoc: DocumentRow = {
-        id: `local-${Date.now()}`,
-        name: file.name,
-        type: file.type?.includes("pdf") ? "pdf" : "note",
-        indexed: false,
-        status: "pending",
-        version: "v1",
-        lastIndexedAt: now,
-        sizeMb: file.size / (1024 * 1024),
-      };
-      setDocuments((prev) => [newDoc, ...prev]);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Upload failed";
-      setUploadError(message);
-      throw err;
-    } finally {
-      setUploading(false);
-    }
-  };
+  }, [uploadHookError]);
 
-  const updateDocumentsStatus = (ids: string[], status: DocumentRow["status"]) => {
+  const handleUpload = useCallback(
+    async (file: File, onProgress: (value: number) => void) => {
+      if (isViewer) {
+        throw new Error("Uploads are disabled for viewer role");
+      }
+
+      setUploadError(null);
+      clearError();
+
+      try {
+        // Upload to backend with progress callback
+        const result = await uploadDocument(
+          file,
+          file.name.replace(/\.[^/.]+$/, ""), // title from filename
+          "", // author empty for now
+          (progress) => onProgress(progress.percent),
+        );
+
+        // Create new document entry from response
+        const now = new Date().toISOString();
+        const newDoc: DocumentRow = {
+          id: result.source,
+          name: result.title,
+          type: file.type?.includes("pdf") ? "pdf" : "note",
+          indexed: result.chunks > 0,
+          status: result.chunks > 0 ? "indexed" : "pending",
+          version: "v1",
+          lastIndexedAt: now,
+          sizeMb: file.size / (1024 * 1024),
+        };
+        setDocuments((prev) => [newDoc, ...prev]);
+
+        // Optionally refetch the full list
+        refetch?.();
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Upload failed";
+        setUploadError(message);
+        throw err;
+      }
+    },
+    [isViewer, uploadDocument, clearError, refetch],
+  );
+
+  const updateDocumentsStatus = (
+    ids: string[],
+    status: DocumentRow["status"],
+  ) => {
     setDocuments((prev) =>
       prev.map((doc) =>
         ids.includes(doc.id)
@@ -77,7 +98,10 @@ export function KnowledgeBasePage() {
               ...doc,
               status,
               indexed: status === "indexed",
-              lastIndexedAt: status === "indexed" ? new Date().toISOString() : doc.lastIndexedAt,
+              lastIndexedAt:
+                status === "indexed"
+                  ? new Date().toISOString()
+                  : doc.lastIndexedAt,
             }
           : doc,
       ),
@@ -99,7 +123,9 @@ export function KnowledgeBasePage() {
     const total = documents.length;
     const indexed = documents.filter((d) => d.status === "indexed").length;
     const pending = documents.filter((d) => d.status === "pending").length;
-    const reindexing = documents.filter((d) => d.status === "reindexing").length;
+    const reindexing = documents.filter(
+      (d) => d.status === "reindexing",
+    ).length;
     return {
       total,
       indexed,
@@ -112,8 +138,23 @@ export function KnowledgeBasePage() {
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Knowledge Base</h1>
-          <p className="text-sm text-slate-400 mt-1">Manage medical documents, textbooks, and reference materials</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-100">
+              Knowledge Base
+            </h1>
+            <HelpButton
+              docPath="admin/knowledge-base"
+              tooltipText="View KB documentation"
+              docsBaseUrl={import.meta.env.VITE_DOCS_URL}
+            />
+            <AskAIButton
+              pageContext="Knowledge Base management"
+              docPath="admin/knowledge-base"
+            />
+          </div>
+          <p className="text-sm text-slate-400 mt-1">
+            Manage medical documents, textbooks, and reference materials
+          </p>
         </div>
         <button
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -122,15 +163,16 @@ export function KnowledgeBasePage() {
               : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
           onClick={() => setShowUpload(true)}
-          disabled={isViewer || uploading}
+          disabled={isViewer || isUploading}
         >
-          {uploading ? "Uploading…" : "+ Upload"}
+          {isUploading ? "Uploading…" : "+ Upload"}
         </button>
       </div>
 
       {isViewer && (
         <div className="p-3 bg-amber-950/40 border border-amber-900 rounded-md text-amber-300 text-sm">
-          Viewer role is read-only. Uploads and destructive actions are disabled.
+          Viewer role is read-only. Uploads and destructive actions are
+          disabled.
         </div>
       )}
 
@@ -147,10 +189,30 @@ export function KnowledgeBasePage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard label="Total Documents" value={stats.total} color="blue" subtitle={`${stats.indexed} indexed`} />
-        <StatCard label="Indexed" value={stats.indexed} color="green" subtitle="Ready for RAG" />
-        <StatCard label="Pending" value={stats.pending} color="amber" subtitle="Waiting to index" />
-        <StatCard label="Reindexing" value={stats.reindexing} color="blue" subtitle="Queued" />
+        <StatCard
+          label="Total Documents"
+          value={stats.total}
+          color="blue"
+          subtitle={`${stats.indexed} indexed`}
+        />
+        <StatCard
+          label="Indexed"
+          value={stats.indexed}
+          color="green"
+          subtitle="Ready for RAG"
+        />
+        <StatCard
+          label="Pending"
+          value={stats.pending}
+          color="amber"
+          subtitle="Waiting to index"
+        />
+        <StatCard
+          label="Reindexing"
+          value={stats.reindexing}
+          color="blue"
+          subtitle="Queued"
+        />
       </div>
 
       <DocumentTable
@@ -166,10 +228,14 @@ export function KnowledgeBasePage() {
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
         maxSizeMb={MAX_UPLOAD_MB}
-        acceptedTypes={["application/pdf", "text/plain"]}
+        acceptedTypes={["application/pdf", "text/plain", "text/markdown"]}
       />
 
-      <AuditDrawer open={Boolean(auditDoc)} document={auditDoc} onClose={() => setAuditDoc(null)} />
+      <AuditDrawer
+        open={Boolean(auditDoc)}
+        document={auditDoc}
+        onClose={() => setAuditDoc(null)}
+      />
     </div>
   );
 }
@@ -190,9 +256,13 @@ function StatCard({ label, value, color, subtitle }: StatCardProps) {
 
   return (
     <div className={`border rounded-lg p-4 ${colorMap[color]}`}>
-      <div className="text-xs uppercase tracking-wide text-slate-400">{label}</div>
+      <div className="text-xs uppercase tracking-wide text-slate-400">
+        {label}
+      </div>
       <div className="text-2xl font-semibold text-white mt-2">{value}</div>
-      {subtitle && <div className="text-xs text-slate-500 mt-1">{subtitle}</div>}
+      {subtitle && (
+        <div className="text-xs text-slate-500 mt-1">{subtitle}</div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { SearchModal } from "@/components/SearchModal";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-gray-800 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60">
@@ -39,19 +56,19 @@ export function Header() {
             href="/"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            Docs
+            {t("nav.docs")}
           </Link>
           <Link
             href="/architecture"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            Architecture
+            {t("nav.architecture")}
           </Link>
           <Link
             href="/reference/api"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            API
+            {t("nav.api")}
           </Link>
           <a
             href="https://github.com/mohammednazmy/VoiceAssist"
@@ -59,8 +76,46 @@ export function Header() {
             rel="noopener noreferrer"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
-            GitHub
+            {t("nav.github")}
           </a>
+          {/* Cross-app navigation links */}
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <a
+            href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+            className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+          >
+            App
+          </a>
+          <a
+            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"}
+            className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+          >
+            Admin
+          </a>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:border-primary-500 dark:hover:border-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
+            </svg>
+            <span>Search</span>
+            <span className="rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+              Ctrl + K
+            </span>
+          </button>
         </div>
 
         {/* Mobile menu button */}
@@ -111,25 +166,55 @@ export function Header() {
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Docs
+              {t("nav.docs")}
             </Link>
             <Link
               href="/architecture"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Architecture
+              {t("nav.architecture")}
             </Link>
             <Link
               href="/reference/api"
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
-              API
+              {t("nav.api")}
             </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchOpen(true);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Search
+            </button>
+            {/* Cross-app navigation links */}
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+            <a
+              href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+              className="block rounded-md px-3 py-2 text-base font-medium text-primary-600 hover:bg-gray-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Open App
+            </a>
+            <a
+              href={
+                process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"
+              }
+              className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Admin Panel
+            </a>
           </div>
         </div>
       )}
+
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </header>
   );
 }

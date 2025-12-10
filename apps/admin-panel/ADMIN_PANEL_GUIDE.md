@@ -13,12 +13,14 @@ The VoiceAssist Admin Panel is a comprehensive web-based control center for mana
 ## Features
 
 ### 1. Dashboard
+
 - **Real-time System Metrics**: View total users, active users, and admin counts
 - **Service Health Monitoring**: Check status of PostgreSQL, Redis, and Qdrant
 - **Auto-refresh**: Metrics update every 30 seconds automatically
 - **Visual Cards**: Color-coded metric cards for quick insights
 
 ### 2. User Management
+
 - **User Listing**: View all users with email, name, role, and status
 - **Role Management**: Promote/demote users to admin role
 - **Account Control**: Activate or deactivate user accounts
@@ -26,6 +28,7 @@ The VoiceAssist Admin Panel is a comprehensive web-based control center for mana
 - **Action Buttons**: Intuitive controls for role and status changes
 
 ### 3. Knowledge Base Management
+
 - **Document Upload**: Support for PDF and TXT files
 - **Document Listing**: View all indexed documents with metadata
 - **Status Tracking**: Monitor document indexing status (uploaded, processing, indexed, failed)
@@ -33,6 +36,7 @@ The VoiceAssist Admin Panel is a comprehensive web-based control center for mana
 - **Bulk Operations**: View and manage multiple documents at once
 
 ### 4. System Configuration
+
 - **Environment Settings**: Configure environment (dev/staging/production)
 - **Database Configuration**: Adjust connection pool sizes
 - **Redis Settings**: Configure max connections
@@ -43,6 +47,7 @@ The VoiceAssist Admin Panel is a comprehensive web-based control center for mana
 - **Configuration Persistence**: Save and apply system settings
 
 ### 5. Security & Access Control
+
 - **JWT Authentication**: Secure token-based authentication
 - **Admin-Only Access**: All routes require admin privileges
 - **Protected Routes**: Automatic redirection for unauthorized access
@@ -115,9 +120,11 @@ apps/admin-panel/
 ## Routing Structure
 
 ### Public Routes
+
 - `/login` - Login page (accessible without authentication)
 
 ### Protected Routes (Admin Only)
+
 - `/` - Redirects to `/dashboard`
 - `/dashboard` - System overview and metrics
 - `/users` - User management interface
@@ -126,6 +133,7 @@ apps/admin-panel/
 - `/*` (any other) - Redirects to `/dashboard`
 
 All protected routes:
+
 1. Check if user is authenticated
 2. Verify user has admin privileges
 3. Redirect to `/login` if unauthorized
@@ -137,37 +145,43 @@ All protected routes:
 ### Backend Endpoints Used
 
 #### Authentication
+
 - `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user info
 
 #### Admin Panel
+
 - `GET /api/admin/panel/summary` - Dashboard metrics
 
 #### User Management
+
 - `GET /api/users` - List all users
 - `PATCH /api/users/:id` - Update user (role, status)
 
 #### Knowledge Base
+
 - `GET /api/admin/kb/documents` - List documents
 - `POST /api/admin/kb/documents` - Upload document
 - `DELETE /api/admin/kb/documents/:id` - Delete document
 
 #### Health Check
+
 - `GET /health` - Service health status
 
 ### API Client (`lib/api.ts`)
 
 ```typescript
 // Usage example
-import { fetchAPI } from '../lib/api';
+import { fetchAPI } from "../lib/api";
 
-const data = await fetchAPI<User[]>('/api/users', {
-  method: 'GET',
-  headers: { Authorization: `Bearer ${token}` }
+const data = await fetchAPI<User[]>("/api/users", {
+  method: "GET",
+  headers: { Authorization: `Bearer ${token}` },
 });
 ```
 
 **Features:**
+
 - Automatic API envelope unwrapping
 - Type-safe responses
 - Error handling with structured APIError
@@ -243,6 +257,7 @@ navigate('/dashboard')
 **Purpose**: Centralized authentication state and methods
 
 **State:**
+
 - `user` - Current logged-in user (or null)
 - `loading` - Authentication check in progress
 - `error` - Authentication error message
@@ -250,6 +265,7 @@ navigate('/dashboard')
 - `isAdmin` - Boolean flag for admin status
 
 **Methods:**
+
 - `login(email, password)` - Authenticate user
 - `logout()` - Clear session
 - `checkAuth()` - Validate existing session
@@ -259,6 +275,7 @@ navigate('/dashboard')
 **Purpose**: Guard routes requiring authentication and admin access
 
 **Logic:**
+
 1. Check if user is authenticated
 2. Check if user has admin role
 3. Show loading state while checking
@@ -270,6 +287,7 @@ navigate('/dashboard')
 **Purpose**: Main application layout with navigation
 
 **Features:**
+
 - Sidebar navigation with active link highlighting
 - User profile display
 - Logout button
@@ -277,6 +295,7 @@ navigate('/dashboard')
 - Responsive design
 
 **Navigation Items:**
+
 - Dashboard (📊)
 - Users (👥)
 - Knowledge Base (📚)
@@ -285,12 +304,14 @@ navigate('/dashboard')
 ### DashboardPage
 
 **Metrics Displayed:**
+
 - Total Users
 - Active Users
 - Admin Users
 - Service Health (PostgreSQL, Redis, Qdrant)
 
 **Features:**
+
 - Auto-refresh every 30 seconds
 - Color-coded metric cards
 - Service status badges
@@ -299,6 +320,7 @@ navigate('/dashboard')
 ### UsersPage
 
 **Features:**
+
 - Searchable user table
 - Role toggle (User ↔ Admin)
 - Status toggle (Active ↔ Inactive)
@@ -306,6 +328,7 @@ navigate('/dashboard')
 - Create user modal (placeholder)
 
 **Table Columns:**
+
 - Email
 - Name
 - Role (badge)
@@ -316,16 +339,19 @@ navigate('/dashboard')
 ### KnowledgeBasePage
 
 **Features:**
+
 - Document upload (drag & drop or click)
 - Document status tracking
 - Statistics dashboard
 - Document actions (view, reindex, delete)
 
 **Supported Formats:**
+
 - PDF files
 - TXT files
 
 **Status Indicators:**
+
 - Uploaded (blue)
 - Processing (yellow)
 - Indexed (green)
@@ -350,6 +376,7 @@ navigate('/dashboard')
    - Nextcloud Integration
 
 **Features:**
+
 - Real-time configuration preview
 - Save button with loading state
 - Success confirmation
@@ -422,17 +449,9 @@ Access: http://localhost:4173
 
 ### Deploy
 
-```bash
-# Build
-npm run build
-
-# Deploy to web server
-rsync -avz dist/ user@server:/var/www/admin-panel/
-
-# Or use Docker
-docker build -t voiceassist-admin .
-docker run -p 80:80 voiceassist-admin
-```
+- CI/CD: `.github/workflows/admin-panel-deploy.yml` builds with `.env.production` (targeting `https://admin.asimo.io`), publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH when changes land on `main`.
+- Smoke tests run post-deploy to confirm login, metrics summary, and knowledge base APIs respond successfully.
+- Local preview remains available with `npm run preview` if you need to inspect the built output locally.
 
 ---
 
@@ -479,6 +498,7 @@ UPDATE users SET is_admin = true WHERE email = 'admin@example.com';
 
 **Problem**: "Login failed" / Network error
 **Solution**:
+
 1. Check backend API is running
 2. Verify API URL in environment variables
 3. Check browser console for CORS errors
@@ -490,6 +510,7 @@ UPDATE users SET is_admin = true WHERE email = 'admin@example.com';
 **Solution**: Configure web server for SPA routing
 
 Nginx example:
+
 ```nginx
 location / {
   try_files $uri $uri/ /index.html;
@@ -497,6 +518,7 @@ location / {
 ```
 
 Apache example:
+
 ```apache
 RewriteEngine On
 RewriteBase /
@@ -510,6 +532,7 @@ RewriteRule . /index.html [L]
 
 **Problem**: TypeScript errors
 **Solution**:
+
 ```bash
 # Check TypeScript config
 cat tsconfig.json
@@ -523,6 +546,7 @@ npm install
 
 **Problem**: Module not found
 **Solution**:
+
 ```bash
 # Clean and reinstall
 rm -rf node_modules package-lock.json
@@ -536,6 +560,7 @@ npm install
 ### Manual Testing Checklist
 
 #### Authentication
+
 - [ ] Login with valid admin credentials
 - [ ] Login with non-admin account (should fail)
 - [ ] Login with invalid credentials (should fail)
@@ -543,12 +568,14 @@ npm install
 - [ ] Refresh page while logged in (should stay logged in)
 
 #### Dashboard
+
 - [ ] View user metrics
 - [ ] Check service health indicators
 - [ ] Verify auto-refresh works
 - [ ] Test with different screen sizes
 
 #### Users Page
+
 - [ ] View user list
 - [ ] Toggle user admin role
 - [ ] Toggle user active/inactive status
@@ -556,6 +583,7 @@ npm install
 - [ ] Test with empty user list
 
 #### Knowledge Base
+
 - [ ] Upload PDF document
 - [ ] Upload TXT document
 - [ ] View document list
@@ -563,6 +591,7 @@ npm install
 - [ ] Verify statistics
 
 #### System Config
+
 - [ ] Change environment setting
 - [ ] Adjust database pool size
 - [ ] Toggle feature flags
@@ -587,6 +616,7 @@ npm run test:coverage
 ## Future Enhancements
 
 ### Phase 1: Enhanced Metrics (Priority: High)
+
 - [ ] Real-time WebSocket metrics updates
 - [ ] Historical metrics charts (last 7 days)
 - [ ] API call volume graphs
@@ -594,6 +624,7 @@ npm run test:coverage
 - [ ] System load visualization
 
 ### Phase 2: Advanced User Management (Priority: High)
+
 - [ ] Create user form (currently placeholder)
 - [ ] Bulk user operations
 - [ ] User search and filtering
@@ -601,6 +632,7 @@ npm run test:coverage
 - [ ] User activity logs
 
 ### Phase 3: Knowledge Base Features (Priority: Medium)
+
 - [ ] Document preview
 - [ ] Bulk document upload
 - [ ] Document search and filtering
@@ -609,6 +641,7 @@ npm run test:coverage
 - [ ] Vector database statistics
 
 ### Phase 4: System Monitoring (Priority: Medium)
+
 - [ ] Real-time logs viewer
 - [ ] Alert configuration
 - [ ] Performance metrics
@@ -616,6 +649,7 @@ npm run test:coverage
 - [ ] Database query analyzer
 
 ### Phase 5: Advanced Configuration (Priority: Low)
+
 - [ ] API key management
 - [ ] Integration settings (Nextcloud, calendar, email)
 - [ ] Backup and restore UI
@@ -623,6 +657,7 @@ npm run test:coverage
 - [ ] Rate limiting configuration
 
 ### Phase 6: Security & Compliance (Priority: High)
+
 - [ ] Multi-factor authentication (MFA)
 - [ ] Session timeout configuration
 - [ ] Audit log viewer
@@ -636,6 +671,7 @@ npm run test:coverage
 ### Authentication Endpoints
 
 #### Login
+
 ```
 POST /api/auth/login
 Content-Type: application/json
@@ -663,6 +699,7 @@ Response:
 ```
 
 #### Get Current User
+
 ```
 GET /api/auth/me
 Authorization: Bearer <token>
@@ -686,6 +723,7 @@ Response:
 ### Admin Panel Endpoints
 
 #### Dashboard Summary
+
 ```
 GET /api/admin/panel/summary
 Authorization: Bearer <token>
@@ -707,6 +745,7 @@ Response:
 ### User Management Endpoints
 
 #### List Users
+
 ```
 GET /api/users
 Authorization: Bearer <token>
@@ -730,6 +769,7 @@ Response:
 ```
 
 #### Update User
+
 ```
 PATCH /api/users/{user_id}
 Authorization: Bearer <token>

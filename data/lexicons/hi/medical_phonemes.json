@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 10,
+    "last_updated": "2024-12-04",
+    "language": "hi",
+    "alphabet": "ipa",
+    "status": "in_progress",
+    "categories": ["drug_names", "conditions", "anatomy"]
+  },
+  "मधुमेह": "mədʱumeːɦ",
+  "उच्च रक्तचाप": "ut͡ʃt͡ʃ rəktəˈt͡ʃɑːp",
+  "दिल": "dɪl",
+  "फेफड़ा": "pʰeːpʰɽɑː",
+  "जिगर": "d͡ʒɪɡər",
+  "गुर्दा": "ɡʊrdɑː",
+  "पेट": "peːʈ",
+  "दिमाग": "dɪmɑːɡ",
+  "दर्द": "dərd",
+  "बुखार": "bʊkʰɑːr"
+}

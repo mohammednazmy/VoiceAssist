@@ -1,3 +1,23 @@
+---
+title: "Feature Flags"
+slug: "feature-flags"
+summary: "Runtime feature toggling and configuration management system"
+ai_summary: Feature flags enable runtime toggles without deployments. Use category.feature_name pattern (e.g., ui.dark_mode, backend.rag_strategy). Stored in PostgreSQL, cached in Redis (5min TTL). See admin-guide/feature-flags/ for detailed docs.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-04"
+audience: ["developers", "admin", "ai-agents"]
+tags: ["feature", "flags", "configuration", "runtime"]
+category: reference
+component: "backend/feature-flags"
+relatedPaths:
+  - "services/api-gateway/app/api/admin_feature_flags.py"
+  - "services/api-gateway/app/api/feature_flags_realtime.py"
+  - "apps/admin-panel/src/components/feature-flags/index.ts"
+  - "apps/web-app/src/components/admin/FeatureFlagsManager.tsx"
+---
+
 # Feature Flags System
 
 **Last Updated**: 2025-11-21 (Phase 7 - P3.1)
@@ -85,6 +105,7 @@ CREATE INDEX ix_feature_flags_flag_type ON feature_flags(flag_type);
 ### Migration
 
 Feature flags table created by Alembic migration:
+
 - **File**: `alembic/versions/003_add_feature_flags.py`
 - **Revision**: `003`
 - **Revises**: `002` (audit_logs)
@@ -191,6 +212,7 @@ Authorization: Bearer <admin_jwt_token>
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -282,47 +304,47 @@ The system includes predefined feature flags for common features:
 
 ### Security & RBAC
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `rbac_enforcement` | boolean | `true` | Enable RBAC permission checks |
+| Flag               | Type    | Default | Description                          |
+| ------------------ | ------- | ------- | ------------------------------------ |
+| `rbac_enforcement` | boolean | `true`  | Enable RBAC permission checks        |
 | `rbac_strict_mode` | boolean | `false` | Enable strict RBAC (deny by default) |
 
 ### Observability
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `metrics_enabled` | boolean | `true` | Enable Prometheus metrics |
-| `tracing_enabled` | boolean | `true` | Enable OpenTelemetry tracing |
+| Flag              | Type    | Default | Description                    |
+| ----------------- | ------- | ------- | ------------------------------ |
+| `metrics_enabled` | boolean | `true`  | Enable Prometheus metrics      |
+| `tracing_enabled` | boolean | `true`  | Enable OpenTelemetry tracing   |
 | `logging_verbose` | boolean | `false` | Enable verbose logging (debug) |
 
 ### External Integrations
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `nextcloud_integration` | boolean | `true` | Enable Nextcloud features |
-| `openai_enabled` | boolean | `true` | Enable OpenAI API for RAG |
-| `nextcloud_auto_index` | boolean | `true` | Auto-index Nextcloud files |
+| Flag                    | Type    | Default | Description                |
+| ----------------------- | ------- | ------- | -------------------------- |
+| `nextcloud_integration` | boolean | `true`  | Enable Nextcloud features  |
+| `openai_enabled`        | boolean | `true`  | Enable OpenAI API for RAG  |
+| `nextcloud_auto_index`  | boolean | `true`  | Auto-index Nextcloud files |
 
 ### RAG Features
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `rag_strategy` | string | `"simple"` | RAG strategy: simple/multi_hop/hybrid |
-| `rag_max_results` | number | `5` | Maximum RAG search results |
-| `rag_score_threshold` | number | `0.2` | Minimum similarity score (0.0-1.0) |
+| Flag                  | Type   | Default    | Description                           |
+| --------------------- | ------ | ---------- | ------------------------------------- |
+| `rag_strategy`        | string | `"simple"` | RAG strategy: simple/multi_hop/hybrid |
+| `rag_max_results`     | number | `5`        | Maximum RAG search results            |
+| `rag_score_threshold` | number | `0.2`      | Minimum similarity score (0.0-1.0)    |
 
 ### Performance
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `cache_enabled` | boolean | `true` | Enable multi-level caching |
-| `async_indexing` | boolean | `true` | Enable async document indexing |
+| Flag             | Type    | Default | Description                    |
+| ---------------- | ------- | ------- | ------------------------------ |
+| `cache_enabled`  | boolean | `true`  | Enable multi-level caching     |
+| `async_indexing` | boolean | `true`  | Enable async document indexing |
 
 ### Experimental
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `beta_features` | boolean | `false` | Enable beta/experimental features |
+| Flag               | Type    | Default | Description                       |
+| ------------------ | ------- | ------- | --------------------------------- |
+| `beta_features`    | boolean | `false` | Enable beta/experimental features |
 | `experimental_api` | boolean | `false` | Enable experimental API endpoints |
 
 ---
@@ -339,6 +361,7 @@ python scripts/init_feature_flags.py
 ```
 
 **Output**:
+
 ```
 ✅ Feature flag initialization successful!
    - Created: 15
@@ -390,6 +413,7 @@ flag = await feature_flag_service.create_flag(
 ### 4. Metadata
 
 Use `metadata` field for:
+
 - **category**: Group related flags (`"security"`, `"rag"`, `"performance"`)
 - **criticality**: `"high"`, `"medium"`, `"low"`
 - **owner**: Team or person responsible
@@ -399,12 +423,14 @@ Use `metadata` field for:
 ### 5. Lifecycle Management
 
 **Creation**:
+
 1. Create flag with `enabled=false`
 2. Test in development environment
 3. Enable for specific users (future: user-based flags)
 4. Enable globally
 
 **Retirement**:
+
 1. Set flag to default/safe value
 2. Remove flag checks from code
 3. Delete flag via Admin API
@@ -413,6 +439,7 @@ Use `metadata` field for:
 ### 6. Monitoring
 
 Monitor feature flag usage:
+
 - Track flag check frequency in metrics
 - Alert on flag toggle frequency (rapid changes may indicate issues)
 - Log flag state changes for audit trail
@@ -518,6 +545,7 @@ async def process_request():
 **Cause**: Redis cache still serving old value (5-minute TTL)
 
 **Solution**:
+
 1. Wait up to 5 minutes for cache to expire
 2. Or manually invalidate cache:
    ```python
@@ -529,11 +557,13 @@ async def process_request():
 **Symptom**: Always getting default value
 
 **Possible Causes**:
+
 1. Flag doesn't exist in database
 2. Database connection error
 3. Typo in flag name
 
 **Solution**:
+
 1. Verify flag exists: `GET /api/admin/feature-flags/{flag_name}`
 2. Check database logs for connection errors
 3. Verify flag name matches constant (case-sensitive)
@@ -545,6 +575,7 @@ async def process_request():
 **Impact**: Graceful degradation - queries database directly
 
 **Solution**:
+
 - Check Redis connection: `redis-cli -h redis -p 6379 -a <password> ping`
 - Verify `REDIS_URL` in environment variables
 - Check Redis container health: `docker ps`
@@ -576,6 +607,19 @@ async def process_request():
 
 ## Related Documentation
 
+### Feature Flag Guides (New - Recommended)
+
+- [Feature Flags Overview](./admin-guide/feature-flags/README.md) - Comprehensive guide
+- [Naming Conventions](./admin-guide/feature-flags/naming-conventions.md) - `category.feature_name` pattern
+- [Feature Flag Lifecycle](./admin-guide/feature-flags/lifecycle.md) - Draft → Active → Deprecated → Removed
+- [Advanced Types](./admin-guide/feature-flags/advanced-types.md) - Boolean, percentage, variant, scheduled
+- [Multi-Environment](./admin-guide/feature-flags/multi-environment.md) - Dev, staging, production configs
+- [Admin Panel Guide](./admin-guide/feature-flags/admin-panel-guide.md) - UI usage
+- [Best Practices](./admin-guide/feature-flags/best-practices.md) - Guidelines and tips
+- [System Settings vs Feature Flags](./admin-guide/system-settings-vs-flags.md) - When to use each
+
+### Architecture & System Docs
+
 - [UNIFIED_ARCHITECTURE.md](./UNIFIED_ARCHITECTURE.md) - System architecture
 - [SERVICE_CATALOG.md](./SERVICE_CATALOG.md) - API endpoint catalog
 - [SECURITY_COMPLIANCE.md](./SECURITY_COMPLIANCE.md) - Security guidelines
@@ -583,7 +627,7 @@ async def process_request():
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-11-21
+**Document Version**: 2.0
+**Last Updated**: 2025-12-04
 **Maintained By**: VoiceAssist Engineering Team
 **Review Cycle**: Quarterly or after major feature additions

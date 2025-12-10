@@ -21,13 +21,13 @@ spec:
             # Requests: Guaranteed resources
             # Used by scheduler for pod placement
             requests:
-              cpu: 500m      # 0.5 CPU cores
-              memory: 512Mi  # 512 MiB RAM
+              cpu: 500m # 0.5 CPU cores
+              memory: 512Mi # 512 MiB RAM
             # Limits: Maximum allowed resources
             # Pod is throttled (CPU) or OOMKilled (memory) if exceeded
             limits:
-              cpu: 2000m     # 2 CPU cores
-              memory: 2Gi    # 2 GiB RAM
+              cpu: 2000m # 2 CPU cores
+              memory: 2Gi # 2 GiB RAM
 
           # Liveness probe: Restart if unhealthy
           livenessProbe:
@@ -57,7 +57,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 5
             timeoutSeconds: 3
-            failureThreshold: 30  # 150 seconds max startup time
+            failureThreshold: 30 # 150 seconds max startup time
 
 ---
 # Worker Deployment - Resource Configuration
@@ -77,11 +77,11 @@ spec:
           resources:
             # Higher resources for compute-intensive tasks
             requests:
-              cpu: 1000m     # 1 CPU core
-              memory: 1Gi    # 1 GiB RAM
+              cpu: 1000m # 1 CPU core
+              memory: 1Gi # 1 GiB RAM
             limits:
-              cpu: 4000m     # 4 CPU cores
-              memory: 4Gi    # 4 GiB RAM
+              cpu: 4000m # 4 CPU cores
+              memory: 4Gi # 4 GiB RAM
 
           # Liveness probe: Check worker health
           livenessProbe:
@@ -133,11 +133,11 @@ spec:
           resources:
             # Database needs consistent resources
             requests:
-              cpu: 1000m     # 1 CPU core
-              memory: 2Gi    # 2 GiB RAM
+              cpu: 1000m # 1 CPU core
+              memory: 2Gi # 2 GiB RAM
             limits:
-              cpu: 4000m     # 4 CPU cores
-              memory: 8Gi    # 8 GiB RAM
+              cpu: 4000m # 4 CPU cores
+              memory: 8Gi # 8 GiB RAM
 
           # Liveness probe: PostgreSQL health check
           livenessProbe:
@@ -176,7 +176,7 @@ spec:
           # Security context
           securityContext:
             runAsNonRoot: true
-            runAsUser: 999  # postgres user
+            runAsUser: 999 # postgres user
             fsGroup: 999
             allowPrivilegeEscalation: false
 
@@ -198,11 +198,11 @@ spec:
           resources:
             # Redis is memory-intensive but light on CPU
             requests:
-              cpu: 250m      # 0.25 CPU cores
-              memory: 256Mi  # 256 MiB RAM
+              cpu: 250m # 0.25 CPU cores
+              memory: 256Mi # 256 MiB RAM
             limits:
-              cpu: 1000m     # 1 CPU core
-              memory: 1Gi    # 1 GiB RAM
+              cpu: 1000m # 1 CPU core
+              memory: 1Gi # 1 GiB RAM
 
           # Liveness probe: Redis PING
           livenessProbe:
@@ -229,13 +229,13 @@ spec:
           # Redis configuration for performance
           args:
             - --maxmemory
-            - "768Mi"  # 75% of limit
+            - "768Mi" # 75% of limit
             - --maxmemory-policy
-            - allkeys-lru  # Evict least recently used keys
+            - allkeys-lru # Evict least recently used keys
             - --save
-            - ""  # Disable RDB snapshots for cache use case
+            - "" # Disable RDB snapshots for cache use case
             - --appendonly
-            - "no"  # Disable AOF for cache use case
+            - "no" # Disable AOF for cache use case
 
 ---
 # Resource Quota for namespace (optional)
@@ -248,14 +248,14 @@ metadata:
 spec:
   hard:
     # Limit total CPU and memory for all pods
-    requests.cpu: "20"        # 20 CPU cores total
-    requests.memory: 40Gi     # 40 GiB RAM total
-    limits.cpu: "50"          # 50 CPU cores total
-    limits.memory: 100Gi      # 100 GiB RAM total
+    requests.cpu: "20" # 20 CPU cores total
+    requests.memory: 40Gi # 40 GiB RAM total
+    limits.cpu: "50" # 50 CPU cores total
+    limits.memory: 100Gi # 100 GiB RAM total
     # Limit number of resources
-    pods: "50"                # Maximum 50 pods
-    services: "20"            # Maximum 20 services
-    persistentvolumeclaims: "10"  # Maximum 10 PVCs
+    pods: "50" # Maximum 50 pods
+    services: "20" # Maximum 20 services
+    persistentvolumeclaims: "10" # Maximum 10 PVCs
 
 ---
 # LimitRange for namespace (optional)

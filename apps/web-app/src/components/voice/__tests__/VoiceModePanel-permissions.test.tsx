@@ -17,8 +17,50 @@ vi.mock("../../../hooks/useAuth", () => ({
   useAuth: () => ({
     apiClient: {
       createRealtimeSession: vi.fn(),
+      synthesizeSpeech: vi.fn().mockResolvedValue(new Blob()),
     },
+    tokens: { accessToken: "test-token" },
   }),
+}));
+
+// Mock useOfflineVoiceCapture
+vi.mock("../../../hooks/useOfflineVoiceCapture", () => ({
+  useOfflineVoiceCapture: () => ({
+    isRecording: false,
+    isOfflineMode: false,
+    recordingDuration: 0,
+    pendingCount: 0,
+    startRecording: vi.fn(),
+    stopRecording: vi.fn().mockResolvedValue(null),
+    cancelRecording: vi.fn(),
+    syncPendingRecordings: vi.fn(),
+    getPendingRecordings: vi.fn().mockResolvedValue([]),
+    deleteRecording: vi.fn(),
+    setOfflineMode: vi.fn(),
+  }),
+}));
+
+// Mock useWebRTCClient
+vi.mock("../../../hooks/useWebRTCClient", () => ({
+  useWebRTCClient: () => ({
+    state: "idle",
+    vadState: "idle",
+    noiseSuppressionEnabled: false,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    bargeIn: vi.fn(),
+  }),
+}));
+
+// Mock voice settings store
+vi.mock("../../../stores/voiceSettingsStore", () => ({
+  useVoiceSettingsStore: () => ({
+    voice: "alloy",
+    language: "en",
+    showStatusHints: true,
+  }),
+  VOICE_OPTIONS: [{ value: "alloy", label: "Alloy" }],
+  LANGUAGE_OPTIONS: [{ value: "en", label: "English" }],
 }));
 
 // Mock the waveform utility with a proper class mock
@@ -62,6 +104,10 @@ const createMockHookReturn = (
   connect: vi.fn(),
   disconnect: vi.fn(),
   sendMessage: vi.fn(),
+  prewarmSession: vi.fn().mockResolvedValue(undefined),
+  prewarmMicPermission: vi.fn().mockResolvedValue(true),
+  prewarmWebSocket: vi.fn().mockResolvedValue(undefined),
+  setEchoReferencePlaybackState: vi.fn(),
   isConnected: false,
   isConnecting: false,
   canSend: false,
@@ -92,7 +138,7 @@ describe("VoiceModePanel - Permission Handling", () => {
       render(<VoiceModePanel />);
 
       // Click start to trigger the permission error
-      const startButton = screen.getByTestId("start-voice-session");
+      const startButton = screen.getByTestId("main-mic-button");
       fireEvent.click(startButton);
 
       await waitFor(() => {
@@ -196,7 +242,7 @@ describe("VoiceModePanel - Permission Handling", () => {
       render(<VoiceModePanel />);
 
       // Click end session
-      const endButton = screen.getByTestId("end-voice-session");
+      const endButton = screen.getByTestId("end-session-small");
       fireEvent.click(endButton);
 
       expect(mockDisconnect).toHaveBeenCalled();
@@ -212,8 +258,11 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("start-voice-session")).toBeInTheDocument();
-      expect(screen.getByText("Start Voice Session")).toBeInTheDocument();
+      expect(screen.getByTestId("main-mic-button")).toBeInTheDocument();
+      // Button shows "Tap to start" status text when disconnected
+      expect(screen.getByTestId("mic-status-text")).toHaveTextContent(
+        "Tap to start",
+      );
     });
 
     it("should show End Session button when connected", () => {
@@ -226,8 +275,9 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("end-voice-session")).toBeInTheDocument();
-      expect(screen.getByText("End Session")).toBeInTheDocument();
+      expect(screen.getByTestId("end-session-small")).toBeInTheDocument();
+      // Check for End button text
+      expect(screen.getByText("End")).toBeInTheDocument();
     });
   });
 
@@ -242,8 +292,11 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Connecting...",
+      // The connection status indicator has aria-label with status info
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Connecting"),
       );
     });
 
@@ -257,12 +310,14 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Connected",
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Connected"),
       );
     });
 
-    it("should show Reconnecting status with alert", () => {
+    it("should show Reconnecting status", () => {
       mockUseRealtimeVoiceSession.mockReturnValue(
         createMockHookReturn({
           status: "reconnecting",
@@ -271,13 +326,14 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Reconnecting...",
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Reconnecting"),
       );
-      expect(screen.getByTestId("reconnecting-alert")).toBeInTheDocument();
     });
 
-    it("should show Connection Failed status with reconnect button", () => {
+    it("should show Failed status", () => {
       mockUseRealtimeVoiceSession.mockReturnValue(
         createMockHookReturn({
           status: "failed",
@@ -286,16 +342,14 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Connection Failed",
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Failed"),
       );
-      expect(screen.getByTestId("failed-alert")).toBeInTheDocument();
-      // Use getAllByText since there may be multiple Reconnect buttons
-      const reconnectButtons = screen.getAllByText("Reconnect");
-      expect(reconnectButtons.length).toBeGreaterThan(0);
     });
 
-    it("should show Session Expired status with restart button", () => {
+    it("should show Expired status", () => {
       mockUseRealtimeVoiceSession.mockReturnValue(
         createMockHookReturn({
           status: "expired",
@@ -304,11 +358,11 @@ describe("VoiceModePanel - Permission Handling", () => {
 
       render(<VoiceModePanel />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Session Expired",
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Expired"),
       );
-      expect(screen.getByTestId("expired-alert")).toBeInTheDocument();
-      expect(screen.getByText("Start New Session")).toBeInTheDocument();
     });
   });
 

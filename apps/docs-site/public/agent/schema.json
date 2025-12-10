@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://assistdocs.asimo.io/agent/schema.json",
+  "title": "VoiceAssist Documentation API Schema",
+  "description": "JSON Schema for the VoiceAssist documentation API endpoints",
+  "definitions": {
+    "DocIndexEntry": {
+      "type": "object",
+      "description": "A single documentation entry with metadata",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "URL-friendly identifier for the document"
+        },
+        "path": {
+          "type": "string",
+          "description": "Relative path to the markdown file from docs/"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable document title"
+        },
+        "summary": {
+          "type": "string",
+          "description": "Brief description of the document content"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "experimental",
+            "stable",
+            "deprecated",
+            "active",
+            "production",
+            "in-progress",
+            "in-development"
+          ],
+          "description": "Document lifecycle status"
+        },
+        "stability": {
+          "type": "string",
+          "enum": ["production", "beta", "experimental", "legacy"],
+          "description": "API/feature stability level"
+        },
+        "owner": {
+          "type": "string",
+          "enum": [
+            "backend",
+            "frontend",
+            "infra",
+            "sre",
+            "docs",
+            "product",
+            "security",
+            "mixed"
+          ],
+          "description": "Team/area responsible for this document"
+        },
+        "audience": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "human",
+              "agent",
+              "ai-agent",
+              "ai-agents",
+              "admin",
+              "admins",
+              "architects",
+              "backend",
+              "compliance-officers",
+              "developers",
+              "devops",
+              "docs",
+              "frontend",
+              "frontend-developers",
+              "project-managers",
+              "security-engineers",
+              "sre",
+              "stakeholders",
+              "technical-writers",
+              "user"
+            ]
+          },
+          "description": "Target readers for this document. Use 'ai-agents' as canonical value for AI readers."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "admin",
+            "ai",
+            "api",
+            "architecture",
+            "debugging",
+            "deployment",
+            "feature-flags",
+            "getting-started",
+            "operations",
+            "overview",
+            "planning",
+            "reference",
+            "releases",
+            "security",
+            "testing",
+            "voice"
+          ],
+          "description": "Document category for filtering"
+        },
+        "ai_summary": {
+          "type": "string",
+          "description": "AI-optimized 2-3 sentence summary for context loading"
+        },
+        "component": {
+          "type": "string",
+          "description": "System component identifier for doc-code crosswalk (e.g., backend/api-gateway)"
+        },
+        "relatedPaths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Repo-relative paths to related code files for doc-code crosswalk"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Categorization tags for filtering"
+        },
+        "relatedServices": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Related service/component names"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO date of last update (YYYY-MM-DD)"
+        }
+      },
+      "required": ["slug", "path", "title"]
+    },
+    "DocsListResponse": {
+      "type": "object",
+      "description": "Response from GET /agent/docs.json",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "description": "Total number of documents"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when this file was generated"
+        },
+        "docs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/DocIndexEntry" },
+          "description": "Array of all documentation entries"
+        }
+      },
+      "required": ["count", "generated_at", "docs"]
+    },
+    "IndexResponse": {
+      "type": "object",
+      "description": "Response from GET /agent/index.json",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "API version"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when this file was generated"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the API"
+        },
+        "endpoints": {
+          "type": "object",
+          "description": "Available API endpoints"
+        },
+        "schema": {
+          "type": "object",
+          "description": "Schema definitions for response types"
+        },
+        "usage_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Usage instructions for AI agents"
+        }
+      },
+      "required": ["version", "generated_at", "endpoints"]
+    },
+    "SearchIndexEntry": {
+      "type": "object",
+      "description": "A single entry in the search index",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this search entry"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path to the source document"
+        },
+        "docTitle": {
+          "type": "string",
+          "description": "Title of the parent document"
+        },
+        "heading": {
+          "type": "string",
+          "description": "Section heading"
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to this section on the docs site"
+        },
+        "snippet": {
+          "type": "string",
+          "description": "Text snippet for search preview"
+        }
+      },
+      "required": ["id", "path", "url"]
+    },
+    "SearchIndexResponse": {
+      "type": "object",
+      "description": "Response from GET /search-index.json",
+      "properties": {
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when this index was generated"
+        },
+        "docs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SearchIndexEntry" },
+          "description": "Array of searchable entries"
+        }
+      },
+      "required": ["generatedAt", "docs"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "DocIndexEntry": { "$ref": "#/definitions/DocIndexEntry" },
+    "DocsListResponse": { "$ref": "#/definitions/DocsListResponse" },
+    "IndexResponse": { "$ref": "#/definitions/IndexResponse" },
+    "SearchIndexEntry": { "$ref": "#/definitions/SearchIndexEntry" },
+    "SearchIndexResponse": { "$ref": "#/definitions/SearchIndexResponse" }
+  }
+}

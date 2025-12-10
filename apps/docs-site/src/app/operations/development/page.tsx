@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { loadDoc, loadClientImplDoc } from "@/lib/docs";
+import { loadDoc, loadDocWithPrefix } from "@/lib/docs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function DevelopmentPage() {
   const devSetup = loadDoc("DEVELOPMENT_SETUP.md") || loadDoc("DEV_SETUP.md");
-  const contributing = loadDoc("CONTRIBUTING.md");
+  const contributing = loadDocWithPrefix("@root/CONTRIBUTING.md");
   const startHere = loadDoc("START_HERE.md");
 
   return (

@@ -245,9 +245,7 @@ export function CitationDisplay({
     <div className="space-y-2">
       {/* Header with export buttons */}
       <div className="flex items-center justify-between">
-        <div className="text-xs font-medium text-neutral-600">
-          {countLabel}
-        </div>
+        <div className="text-xs font-medium text-neutral-600">{countLabel}</div>
 
         {enableExport && citations.length > 0 && (
           <div className="flex items-center space-x-1">
@@ -298,7 +296,11 @@ export function CitationDisplay({
       </div>
 
       {availableSources.length > 1 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter citations by source">
+        <div
+          className="flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter citations by source"
+        >
           <button
             onClick={() => setSourceFilter("all")}
             className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${

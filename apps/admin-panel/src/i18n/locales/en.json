@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "knowledge": "Knowledge Base",
+    "analytics": "Analytics",
+    "system": "System Config",
+    "logout": "Logout"
+  },
+  "meta": {
+    "app": "VoiceAssist Admin",
+    "tagline": "Control Panel • v2.0",
+    "hipaa": "HIPAA Compliant • Production Ready"
+  }
+}

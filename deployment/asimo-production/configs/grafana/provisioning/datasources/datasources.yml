@@ -11,8 +11,8 @@ datasources:
     isDefault: true
     editable: false
     jsonData:
-      timeInterval: '15s'
-      httpMethod: 'POST'
+      timeInterval: "15s"
+      httpMethod: "POST"
 
   # Loki
   - name: Loki

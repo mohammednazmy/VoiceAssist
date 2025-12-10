@@ -11,7 +11,22 @@
  */
 
 import { useState } from "react";
-import type { VoiceMetrics } from "../../hooks/useRealtimeVoiceSession";
+
+/**
+ * Voice session metrics interface
+ * Used by both OpenAI Realtime and Thinker/Talker pipelines
+ */
+export interface VoiceMetrics {
+  connectionTimeMs: number | null;
+  timeToFirstTranscriptMs?: number | null;
+  lastSttLatencyMs: number | null;
+  lastResponseLatencyMs: number | null;
+  sessionDurationMs?: number | null;
+  userTranscriptCount?: number;
+  aiResponseCount?: number;
+  reconnectCount?: number;
+  sessionStartedAt?: number | null;
+}
 
 export interface VoiceMetricsDisplayProps {
   metrics: VoiceMetrics;
@@ -22,8 +37,8 @@ export interface VoiceMetricsDisplayProps {
  * Get color class based on latency threshold
  * <500ms = green (good), 500-1000ms = yellow (acceptable), >1000ms = red (poor)
  */
-function getLatencyColor(latencyMs: number | null): string {
-  if (latencyMs === null) return "text-neutral-400";
+function getLatencyColor(latencyMs: number | null | undefined): string {
+  if (latencyMs === null || latencyMs === undefined) return "text-neutral-400";
   if (latencyMs < 500) return "text-green-600";
   if (latencyMs < 1000) return "text-yellow-600";
   return "text-red-600";
@@ -32,8 +47,8 @@ function getLatencyColor(latencyMs: number | null): string {
 /**
  * Get background color class based on latency threshold
  */
-function getLatencyBgColor(latencyMs: number | null): string {
-  if (latencyMs === null) return "bg-neutral-100";
+function getLatencyBgColor(latencyMs: number | null | undefined): string {
+  if (latencyMs === null || latencyMs === undefined) return "bg-neutral-100";
   if (latencyMs < 500) return "bg-green-50";
   if (latencyMs < 1000) return "bg-yellow-50";
   return "bg-red-50";
@@ -42,8 +57,8 @@ function getLatencyBgColor(latencyMs: number | null): string {
 /**
  * Format milliseconds for display
  */
-function formatMs(ms: number | null): string {
-  if (ms === null) return "—";
+function formatMs(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
   if (ms < 1000) return `${Math.round(ms)}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
@@ -51,8 +66,8 @@ function formatMs(ms: number | null): string {
 /**
  * Format duration for display (mm:ss)
  */
-function formatDuration(ms: number | null): string {
-  if (ms === null) return "—";
+function formatDuration(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -254,10 +269,10 @@ export function VoiceMetricsDisplay({
                 AI responses
               </span>
             </div>
-            {metrics.reconnectCount > 0 && (
+            {(metrics.reconnectCount ?? 0) > 0 && (
               <span className="text-xs text-orange-500">
                 {metrics.reconnectCount} reconnect
-                {metrics.reconnectCount > 1 ? "s" : ""}
+                {(metrics.reconnectCount ?? 0) > 1 ? "s" : ""}
               </span>
             )}
           </div>

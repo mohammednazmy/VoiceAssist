@@ -1,6 +1,8 @@
-import { ServiceStatus } from '../components/dashboard/ServiceStatus';
-import { MetricCard } from '../components/dashboard/MetricCard';
-import { useMetrics } from '../hooks/useMetrics';
+import { ServiceStatus } from "../components/dashboard/ServiceStatus";
+import { MetricCard } from "../components/dashboard/MetricCard";
+import { IntegrationsWidget } from "../components/dashboard/IntegrationsWidget";
+import { ActivityFeed } from "../components/dashboard/ActivityFeed";
+import { useMetrics } from "../hooks/useMetrics";
 
 export function DashboardPage() {
   const {
@@ -114,22 +116,24 @@ export function DashboardPage() {
       <div className="space-y-4">
         <div>
           <div className="flex items-center justify-between gap-3 mb-3">
-            <h2 className="text-lg font-semibold text-slate-200">User Metrics</h2>
+            <h2 className="text-lg font-semibold text-slate-200">
+              User Metrics
+            </h2>
             <div className="flex items-center gap-2 text-xs text-slate-300">
               <span
                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${
-                  connectionStatus === 'open'
-                    ? 'text-emerald-400 border-emerald-500/50 bg-emerald-500/10'
-                    : 'text-slate-400 border-slate-600 bg-slate-800/60'
+                  connectionStatus === "open"
+                    ? "text-emerald-400 border-emerald-500/50 bg-emerald-500/10"
+                    : "text-slate-400 border-slate-600 bg-slate-800/60"
                 }`}
               >
                 <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
-                {connectionStatus === 'open' ? 'Live' : 'Offline'}
+                {connectionStatus === "open" ? "Live" : "Offline"}
               </span>
               <span className="px-3 py-1 rounded-md bg-slate-800/60 border border-slate-700">
                 {lastUpdated
                   ? `Last updated ${new Date(lastUpdated).toLocaleTimeString()}`
-                  : 'Awaiting first update'}
+                  : "Awaiting first update"}
               </span>
               <button
                 type="button"
@@ -144,8 +148,25 @@ export function DashboardPage() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">Service Health</h2>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">
+            Service Health
+          </h2>
           {renderServiceCards()}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">
+              External Integrations
+            </h2>
+            <IntegrationsWidget />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">
+              Activity Feed
+            </h2>
+            <ActivityFeed />
+          </div>
         </div>
       </div>
 
@@ -153,7 +174,7 @@ export function DashboardPage() {
         {lastUpdated ? (
           <>Last updated: {new Date(lastUpdated).toLocaleString()}</>
         ) : (
-          'Waiting for first successful sync…'
+          "Waiting for first successful sync…"
         )}
       </div>
     </div>
@@ -168,11 +189,11 @@ function ServiceCard({ name, healthy }: { name: string; healthy: boolean }) {
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
             healthy
-              ? 'bg-green-900/50 text-green-400 border border-green-800'
-              : 'bg-red-900/50 text-red-400 border border-red-800'
+              ? "bg-green-900/50 text-green-400 border border-green-800"
+              : "bg-red-900/50 text-red-400 border border-red-800"
           }`}
         >
-          {healthy ? '● Online' : '● Offline'}
+          {healthy ? "● Online" : "● Offline"}
         </span>
       </div>
     </div>

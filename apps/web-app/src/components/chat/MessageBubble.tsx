@@ -12,6 +12,11 @@ import { Highlight, themes } from "prism-react-renderer";
 import type { Message, Attachment } from "@voiceassist/types";
 import { CitationDisplay } from "./CitationDisplay";
 import { MessageActionMenu } from "./MessageActionMenu";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import {
+  RegenerationOptionsDialog,
+  type RegenerationOptions,
+} from "./RegenerationOptionsDialog";
 import { AudioPlayer } from "../voice/AudioPlayer";
 import { useAuth } from "../../hooks/useAuth";
 import { useToastContext } from "../../contexts/ToastContext";
@@ -23,11 +28,20 @@ export interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean;
   onEditSave?: (messageId: string, newContent: string) => Promise<void>;
-  onRegenerate?: (messageId: string) => Promise<void>;
+  onRegenerate?: (
+    messageId: string,
+    options?: RegenerationOptions,
+  ) => Promise<void>;
   onDelete?: (messageId: string) => Promise<void>;
   onBranch?: (messageId: string) => Promise<void>;
   /** Whether this message has branches created from it */
   hasBranch?: boolean;
+  /** Source of the message (text input, voice input, or system) */
+  source?: "text" | "voice" | "system";
+  /** Whether audio controls should be shown in compact mode */
+  compactAudio?: boolean;
+  /** Callback when audio playback is requested */
+  onPlayAudio?: (messageId: string) => void;
 }
 
 // Memoize to prevent unnecessary re-renders when other messages update
@@ -39,6 +53,9 @@ export const MessageBubble = memo(function MessageBubble({
   onDelete,
   onBranch,
   hasBranch,
+  source,
+  compactAudio: _compactAudio,
+  onPlayAudio: _onPlayAudio,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
@@ -63,6 +80,17 @@ export const MessageBubble = memo(function MessageBubble({
   const [downloadingAttachments, setDownloadingAttachments] = useState<
     Set<string>
   >(new Set());
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Regeneration dialog state
+  const [showRegenerationDialog, setShowRegenerationDialog] = useState(false);
+
+  // Action loading states
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isBranching, setIsBranching] = useState(false);
 
   // Save handler
   const handleSave = async () => {
@@ -106,6 +134,90 @@ export const MessageBubble = memo(function MessageBubble({
       toast.error("Copy failed", "Unable to copy to clipboard.");
     }
   }, [message.content, toast]);
+
+  // Delete handler - opens confirmation dialog
+  const handleDeleteClick = useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
+
+  // Confirm delete handler
+  const handleDeleteConfirm = useCallback(async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete?.(message.id);
+      setShowDeleteConfirm(false);
+      toast.success("Message deleted", "The message has been removed.");
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      toast.error(
+        "Delete failed",
+        error instanceof Error ? error.message : "Unable to delete message.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [message.id, onDelete, toast]);
+
+  // Cancel delete handler
+  const handleDeleteCancel = useCallback(() => {
+    if (!isDeleting) {
+      setShowDeleteConfirm(false);
+    }
+  }, [isDeleting]);
+
+  // Regenerate click handler - opens the options dialog
+  const handleRegenerateClick = useCallback(() => {
+    setShowRegenerationDialog(true);
+  }, []);
+
+  // Regenerate confirm handler - called when user confirms options
+  const handleRegenerateConfirm = useCallback(
+    async (options: RegenerationOptions) => {
+      setShowRegenerationDialog(false);
+      setIsRegenerating(true);
+      try {
+        await onRegenerate?.(message.id, options);
+      } catch (error) {
+        console.error("Failed to regenerate message:", error);
+        toast.error(
+          "Regeneration failed",
+          error instanceof Error
+            ? error.message
+            : "Unable to regenerate message.",
+        );
+      } finally {
+        setIsRegenerating(false);
+      }
+    },
+    [message.id, onRegenerate, toast],
+  );
+
+  // Regenerate cancel handler
+  const handleRegenerateCancel = useCallback(() => {
+    if (!isRegenerating) {
+      setShowRegenerationDialog(false);
+    }
+  }, [isRegenerating]);
+
+  // Branch handler
+  const handleBranch = useCallback(async () => {
+    setIsBranching(true);
+    try {
+      await onBranch?.(message.id);
+      toast.success(
+        "Branch created",
+        "A new conversation branch has been created.",
+      );
+    } catch (error) {
+      console.error("Failed to branch conversation:", error);
+      toast.error(
+        "Branch failed",
+        error instanceof Error ? error.message : "Unable to create branch.",
+      );
+    } finally {
+      setIsBranching(false);
+    }
+  }, [message.id, onBranch, toast]);
 
   // Audio synthesis handler
   const handlePlayAudio = async () => {
@@ -293,15 +405,36 @@ export const MessageBubble = memo(function MessageBubble({
             role={message.role as "user" | "assistant" | "system"}
             onEdit={isUser ? () => setIsEditing(true) : undefined}
             onRegenerate={
-              !isUser && !isSystem
-                ? () => onRegenerate?.(message.id)
-                : undefined
+              !isUser && !isSystem ? handleRegenerateClick : undefined
             }
-            onDelete={() => onDelete?.(message.id)}
+            onDelete={onDelete ? handleDeleteClick : undefined}
             onCopy={handleCopy}
-            onBranch={!isSystem ? () => onBranch?.(message.id) : undefined}
+            onBranch={!isSystem && onBranch ? handleBranch : undefined}
+            isDeleting={isDeleting}
+            isRegenerating={isRegenerating}
+            isBranching={isBranching}
           />
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmationDialog
+          isOpen={showDeleteConfirm}
+          messageContent={message.content}
+          messageRole={message.role as "user" | "assistant"}
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          isDeleting={isDeleting}
+        />
+
+        {/* Regeneration Options Dialog */}
+        <RegenerationOptionsDialog
+          isOpen={showRegenerationDialog}
+          onClose={handleRegenerateCancel}
+          onRegenerate={handleRegenerateConfirm}
+          originalContent={message.content}
+          isRegenerating={isRegenerating}
+          hasClinicalContext={false}
+        />
 
         {/* Message Content - Editing Mode or Display Mode */}
         {isEditing ? (
@@ -381,6 +514,13 @@ export const MessageBubble = memo(function MessageBubble({
               remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={{
+                // Pre wrapper - use div to avoid DOM nesting issues
+                // (react-markdown wraps code blocks in <pre><code>, but our code
+                // component renders its own <pre> inside Highlight)
+                pre({ children }) {
+                  return <>{children}</>;
+                },
+
                 // Code blocks with syntax highlighting
                 // In react-markdown v10+, we detect code blocks by checking if className exists
                 // (fenced code blocks have language-xxx class) or if content has newlines
@@ -743,12 +883,38 @@ export const MessageBubble = memo(function MessageBubble({
               </div>
             )}
 
-            {/* Timestamp and Branch Indicator */}
+            {/* Timestamp, Source Indicator, and Branch Indicator */}
             <div
               className={`flex items-center gap-2 text-xs mt-2 ${
                 isUser ? "text-primary-100" : "text-neutral-500"
               }`}
             >
+              {/* Voice Source Indicator */}
+              {source === "voice" && (
+                <span
+                  className={`inline-flex items-center gap-0.5 ${
+                    isUser ? "text-primary-100" : "text-neutral-500"
+                  }`}
+                  aria-label="Voice message"
+                  title="Sent via voice"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-3.5 h-3.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                </span>
+              )}
               <span>
                 {new Date(message.timestamp).toLocaleTimeString("en-US", {
                   hour: "2-digit",

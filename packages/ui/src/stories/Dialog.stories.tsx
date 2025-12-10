@@ -2,8 +2,8 @@
  * Dialog Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -12,23 +12,23 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from '../components/Dialog';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
+} from "../components/Dialog";
+import { Button } from "../components/Button";
+import { Input } from "../components/Input";
 
 const meta = {
-  title: 'Components/Dialog',
+  title: "Components/Dialog",
   component: Dialog,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Modal dialog built on Radix UI. Supports multiple sizes, animations, and full accessibility with keyboard shortcuts.',
+          "Modal dialog built on Radix UI. Supports multiple sizes, animations, and full accessibility with keyboard shortcuts.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 } satisfies Meta<typeof Dialog>;
 
 export default meta;
@@ -44,7 +44,8 @@ export const Default: Story = {
         <DialogHeader>
           <DialogTitle>Dialog Title</DialogTitle>
           <DialogDescription>
-            This is a default dialog. Press ESC or click the close button to dismiss.
+            This is a default dialog. Press ESC or click the close button to
+            dismiss.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -71,7 +72,9 @@ export const AllSizes: Story = {
         <DialogContent size="sm">
           <DialogHeader>
             <DialogTitle>Small Dialog</DialogTitle>
-            <DialogDescription>This is a small dialog (max-w-sm)</DialogDescription>
+            <DialogDescription>
+              This is a small dialog (max-w-sm)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -88,7 +91,9 @@ export const AllSizes: Story = {
         <DialogContent size="md">
           <DialogHeader>
             <DialogTitle>Medium Dialog</DialogTitle>
-            <DialogDescription>This is a medium dialog (max-w-md)</DialogDescription>
+            <DialogDescription>
+              This is a medium dialog (max-w-md)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -105,7 +110,9 @@ export const AllSizes: Story = {
         <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Large Dialog</DialogTitle>
-            <DialogDescription>This is a large dialog (max-w-lg)</DialogDescription>
+            <DialogDescription>
+              This is a large dialog (max-w-lg)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -122,7 +129,9 @@ export const AllSizes: Story = {
         <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle>Extra Large Dialog</DialogTitle>
-            <DialogDescription>This is an XL dialog (max-w-xl)</DialogDescription>
+            <DialogDescription>
+              This is an XL dialog (max-w-xl)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -139,7 +148,9 @@ export const AllSizes: Story = {
         <DialogContent size="2xl">
           <DialogHeader>
             <DialogTitle>2XL Dialog</DialogTitle>
-            <DialogDescription>This is a 2XL dialog (max-w-2xl)</DialogDescription>
+            <DialogDescription>
+              This is a 2XL dialog (max-w-2xl)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -156,7 +167,9 @@ export const AllSizes: Story = {
         <DialogContent size="full">
           <DialogHeader>
             <DialogTitle>Full Dialog</DialogTitle>
-            <DialogDescription>This is a full-size dialog (95vw x 95vh)</DialogDescription>
+            <DialogDescription>
+              This is a full-size dialog (95vw x 95vh)
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-text-secondary text-sm">
@@ -170,7 +183,7 @@ export const AllSizes: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'All available dialog sizes from small to full-screen.',
+        story: "All available dialog sizes from small to full-screen.",
       },
     },
   },
@@ -191,7 +204,8 @@ export const WithoutCloseButton: Story = {
         </DialogHeader>
         <div className="py-4">
           <p className="text-text-secondary">
-            This dialog doesn't have a close button but can still be closed with ESC or by clicking outside.
+            This dialog doesn't have a close button but can still be closed with
+            ESC or by clicking outside.
           </p>
         </div>
         <DialogFooter>
@@ -204,7 +218,8 @@ export const WithoutCloseButton: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Dialog without the close button, forcing user to choose an action.',
+        story:
+          "Dialog without the close button, forcing user to choose an action.",
       },
     },
   },
@@ -228,21 +243,14 @@ export const FormDialog: Story = {
           <DialogHeader>
             <DialogTitle>Add New Patient</DialogTitle>
             <DialogDescription>
-              Enter the patient's information below. All fields marked with * are required.
+              Enter the patient's information below. All fields marked with *
+              are required.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 py-4">
-              <Input
-                label="Patient Name"
-                placeholder="John Doe"
-                required
-              />
-              <Input
-                label="Date of Birth"
-                type="date"
-                required
-              />
+              <Input label="Patient Name" placeholder="John Doe" required />
+              <Input label="Date of Birth" type="date" required />
               <Input
                 label="Medical Record Number"
                 placeholder="MRN-123456"
@@ -253,14 +261,14 @@ export const FormDialog: Story = {
                 type="email"
                 placeholder="patient@example.com"
               />
-              <Input
-                label="Phone"
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-              />
+              <Input label="Phone" type="tel" placeholder="+1 (555) 123-4567" />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
                 Cancel
               </Button>
               <Button type="submit" variant="primary">
@@ -275,7 +283,8 @@ export const FormDialog: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Dialog with a form for data entry. Demonstrates controlled open state.',
+        story:
+          "Dialog with a form for data entry. Demonstrates controlled open state.",
       },
     },
   },
@@ -291,7 +300,8 @@ export const ConfirmationDialog: Story = {
         <DialogHeader>
           <DialogTitle>Are you sure?</DialogTitle>
           <DialogDescription>
-            This action cannot be undone. This will permanently delete the patient record.
+            This action cannot be undone. This will permanently delete the
+            patient record.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -304,7 +314,7 @@ export const ConfirmationDialog: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Confirmation dialog for destructive actions.',
+        story: "Confirmation dialog for destructive actions.",
       },
     },
   },
@@ -356,7 +366,7 @@ export const AlertDialog: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Alert dialog for notifications and confirmations.',
+        story: "Alert dialog for notifications and confirmations.",
       },
     },
   },
@@ -378,36 +388,36 @@ export const ScrollableContent: Story = {
         <div className="max-h-96 overflow-y-auto py-4">
           <div className="space-y-4 text-sm text-text-secondary">
             <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua.
             </p>
             <p>
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-              aliquip ex ea commodo consequat.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat.
             </p>
             <p>
-              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-              eu fugiat nulla pariatur.
+              Duis aute irure dolor in reprehenderit in voluptate velit esse
+              cillum dolore eu fugiat nulla pariatur.
             </p>
             <p>
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-              deserunt mollit anim id est laborum.
+              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+              officia deserunt mollit anim id est laborum.
             </p>
             <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua.
             </p>
             <p>
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-              aliquip ex ea commodo consequat.
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat.
             </p>
             <p>
-              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-              eu fugiat nulla pariatur.
+              Duis aute irure dolor in reprehenderit in voluptate velit esse
+              cillum dolore eu fugiat nulla pariatur.
             </p>
             <p>
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia
-              deserunt mollit anim id est laborum.
+              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+              officia deserunt mollit anim id est laborum.
             </p>
           </div>
         </div>
@@ -421,7 +431,7 @@ export const ScrollableContent: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Dialog with scrollable content for long text.',
+        story: "Dialog with scrollable content for long text.",
       },
     },
   },

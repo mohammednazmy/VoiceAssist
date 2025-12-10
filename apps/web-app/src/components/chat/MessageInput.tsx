@@ -5,10 +5,10 @@
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { VoiceInput } from "../voice/VoiceInput";
-import { VoiceModePanel } from "../voice/VoiceModePanel";
+import { ThinkerTalkerVoicePanel } from "../voice/ThinkerTalkerVoicePanel";
 import { ChatAttachmentUpload, type PendingFile } from "./ChatAttachmentUpload";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
-import type { VoiceMetrics } from "../../hooks/useRealtimeVoiceSession";
+import type { TTVoiceMetrics } from "../../hooks/useThinkerTalkerSession";
 
 export interface MessageInputProps {
   onSend: (content: string, files?: File[]) => void;
@@ -25,7 +25,7 @@ export interface MessageInputProps {
   /** Called when a voice assistant message should be added to chat (AI responded) */
   onVoiceAssistantMessage?: (content: string) => void;
   /** Called when voice metrics are updated (for backend export) */
-  onVoiceMetricsUpdate?: (metrics: VoiceMetrics) => void;
+  onVoiceMetricsUpdate?: (metrics: TTVoiceMetrics) => void;
   /** External control: whether voice panel is open (controlled mode) */
   isVoicePanelOpen?: boolean;
   /** External control: callback when voice panel open state changes */
@@ -149,7 +149,7 @@ export function MessageInput({
    * This adds the AI's response to the chat timeline
    */
   const handleVoiceAssistantMessage = (text: string) => {
-    if (text.trim() && onVoiceAssistantMessage) {
+    if (text && text.trim() && onVoiceAssistantMessage) {
       onVoiceAssistantMessage(text.trim());
     }
     // Note: If no onVoiceAssistantMessage handler is provided,
@@ -158,10 +158,11 @@ export function MessageInput({
 
   return (
     <div className="border-t border-neutral-200 bg-white p-4">
-      {/* Realtime Voice Mode Panel */}
+      {/* Thinker/Talker Voice Mode Panel */}
       {showRealtimeVoice && enableRealtimeVoice && (
         <div className="mb-4">
-          <VoiceModePanel
+          <ThinkerTalkerVoicePanel
+            key="tt-voice-mode-panel"
             conversationId={conversationId}
             onClose={() => setShowRealtimeVoice(false)}
             onUserMessage={handleVoiceUserMessage}

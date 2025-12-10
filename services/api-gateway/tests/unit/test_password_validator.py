@@ -1,6 +1,7 @@
 """Unit tests for Password Validator."""
+
 import pytest
-from app.core.password_validator import PasswordValidator, PasswordStrength
+from app.core.password_validator import PasswordStrength, PasswordValidator
 
 
 class TestPasswordValidator:
@@ -20,7 +21,7 @@ class TestPasswordValidator:
             require_lowercase=True,
             require_digits=True,
             require_special=True,
-            reject_common=True
+            reject_common=True,
         )
 
     @pytest.fixture
@@ -32,7 +33,7 @@ class TestPasswordValidator:
             require_lowercase=False,
             require_digits=False,
             require_special=False,
-            reject_common=False
+            reject_common=False,
         )
 
     # Test validation with various passwords

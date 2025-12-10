@@ -2,9 +2,90 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface MarkdownRendererProps {
   content: string;
+}
+
+/**
+ * Rewrite markdown document links to work on the web.
+ *
+ * Transforms:
+ * - FILENAME.md → /docs/FILENAME
+ * - subdir/FILENAME.md → /docs/subdir/FILENAME
+ * - ../.ai/index.json → /agent/index.json
+ * - ../.ai/README.md → /ai/onboarding
+ * - ../services/* and ../packages/* → GitHub blob links
+ * - ../apps/* → GitHub blob links
+ * - External URLs → unchanged
+ */
+function rewriteDocLink(href: string): string {
+  // Skip external URLs
+  if (href.startsWith("http://") || href.startsWith("https://")) {
+    return href;
+  }
+
+  // Skip anchor links
+  if (href.startsWith("#")) {
+    return href;
+  }
+
+  // Rewrite .ai/ references to /agent/ endpoints
+  if (href.includes(".ai/index.json")) {
+    return "/agent/index.json";
+  }
+  if (href.includes(".ai/docs.json")) {
+    return "/agent/docs.json";
+  }
+  if (href.includes(".ai/README.md") || href.includes(".ai/README")) {
+    return "/ai/onboarding";
+  }
+  if (href.includes(".ai/")) {
+    // Other .ai files - redirect to agent API
+    return "/ai/api";
+  }
+
+  // Rewrite relative paths to project directories → GitHub links
+  const githubBase = "https://github.com/mohammednazmy/VoiceAssist/blob/main";
+  if (href.startsWith("../services/")) {
+    return `${githubBase}/${href.replace("../", "")}`;
+  }
+  if (href.startsWith("../packages/")) {
+    return `${githubBase}/${href.replace("../", "")}`;
+  }
+  if (href.startsWith("../apps/")) {
+    return `${githubBase}/${href.replace("../", "")}`;
+  }
+  if (href.startsWith("../server/")) {
+    return `${githubBase}/${href.replace("../", "")}`;
+  }
+  if (href.startsWith("../PHASE_STATUS.md")) {
+    return `${githubBase}/PHASE_STATUS.md`;
+  }
+
+  // Handle .md links within docs/
+  if (href.endsWith(".md")) {
+    // Remove .md extension and convert to site route
+    const path = href.replace(/\.md$/, "").replace(/^\.\//, ""); // Remove leading ./
+
+    // If it's a relative path like phases/PHASE_00_INITIALIZATION
+    // it should become /docs/phases/PHASE_00_INITIALIZATION
+    return `/docs/${path}`;
+  }
+
+  // Handle links with anchor + .md (e.g., WEB_APP_SPECS.md#user-settings)
+  const mdAnchorMatch = href.match(/^([^#]+\.md)(#.+)$/);
+  if (mdAnchorMatch) {
+    const [, mdPath, anchor] = mdAnchorMatch;
+    const path = mdPath.replace(/\.md$/, "").replace(/^\.\//, "");
+    return `/docs/${path}${anchor}`;
+  }
+
+  // Return unchanged if no rewriting needed
+  return href;
 }
 
 export function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -12,138 +93,48 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSlug]}
         components={{
-          // Custom heading rendering with anchor links
-          h1: ({ children, ...props }) => (
-            <h1
-              className="text-3xl font-bold text-gray-900 dark:text-white mb-6"
-              {...props}
-            >
-              {children}
-            </h1>
-          ),
-          h2: ({ children, ...props }) => (
-            <h2
-              className="text-2xl font-semibold text-gray-900 dark:text-white mt-8 mb-4"
-              {...props}
-            >
-              {children}
-            </h2>
-          ),
-          h3: ({ children, ...props }) => (
-            <h3
-              className="text-xl font-semibold text-gray-900 dark:text-white mt-6 mb-3"
-              {...props}
-            >
-              {children}
-            </h3>
-          ),
-          // Custom code block styling
-          pre: ({ children, ...props }) => (
-            <pre
-              className="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto my-4"
-              {...props}
-            >
-              {children}
-            </pre>
-          ),
-          code: ({ className, children, ...props }) => {
-            const isInline = !className;
+          code({ node, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || "");
+            const isInline = !match;
+
             if (isInline) {
               return (
-                <code
-                  className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-sm font-mono"
-                  {...props}
-                >
+                <code className={className} {...props}>
                   {children}
                 </code>
               );
             }
+
             return (
-              <code className={className} {...props}>
-                {children}
-              </code>
+              <SyntaxHighlighter
+                style={oneDark}
+                language={match[1]}
+                PreTag="div"
+              >
+                {String(children).replace(/\n$/, "")}
+              </SyntaxHighlighter>
             );
           },
-          // Custom link styling
-          a: ({ href, children, ...props }) => (
-            <a
-              href={href}
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
-              target={href?.startsWith("http") ? "_blank" : undefined}
-              rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-              {...props}
-            >
-              {children}
-            </a>
-          ),
-          // Custom table styling
-          table: ({ children, ...props }) => (
-            <div className="overflow-x-auto my-6">
-              <table
-                className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+          a({ node, href, children, ...props }) {
+            const rewrittenHref = href ? rewriteDocLink(href) : "#";
+            const isExternal =
+              rewrittenHref.startsWith("http://") ||
+              rewrittenHref.startsWith("https://");
+
+            return (
+              <a
+                href={rewrittenHref}
                 {...props}
+                {...(isExternal
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
               >
                 {children}
-              </table>
-            </div>
-          ),
-          th: ({ children, ...props }) => (
-            <th
-              className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-              {...props}
-            >
-              {children}
-            </th>
-          ),
-          td: ({ children, ...props }) => (
-            <td
-              className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700"
-              {...props}
-            >
-              {children}
-            </td>
-          ),
-          // Custom blockquote styling
-          blockquote: ({ children, ...props }) => (
-            <blockquote
-              className="border-l-4 border-primary-500 pl-4 my-4 italic text-gray-700 dark:text-gray-300"
-              {...props}
-            >
-              {children}
-            </blockquote>
-          ),
-          // Custom list styling
-          ul: ({ children, ...props }) => (
-            <ul
-              className="list-disc list-inside space-y-2 my-4 text-gray-700 dark:text-gray-300"
-              {...props}
-            >
-              {children}
-            </ul>
-          ),
-          ol: ({ children, ...props }) => (
-            <ol
-              className="list-decimal list-inside space-y-2 my-4 text-gray-700 dark:text-gray-300"
-              {...props}
-            >
-              {children}
-            </ol>
-          ),
-          li: ({ children, ...props }) => (
-            <li className="ml-4" {...props}>
-              {children}
-            </li>
-          ),
-          // Paragraph styling
-          p: ({ children, ...props }) => (
-            <p
-              className="my-4 text-gray-700 dark:text-gray-300 leading-relaxed"
-              {...props}
-            >
-              {children}
-            </p>
-          ),
+              </a>
+            );
+          },
         }}
       >
         {content}

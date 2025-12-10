@@ -14,6 +14,7 @@ Works with any IMAP/SMTP server including Nextcloud Mail.
 
 import email
 import email.utils
+import functools
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -268,18 +269,34 @@ class EmailService:
             await self._reset_imap_connection()
             imap = await self._get_imap_connection()
 
-            # If the callable was a bound method on the old IMAP client,
-            # rebind it to the fresh connection so the retry uses the new
-            # socket instead of the closed one.
-            rebound_command = command
-            try:
-                if hasattr(command, "__self__") and hasattr(command, "__name__"):
-                    rebound_command = getattr(imap, command.__name__, command)
-            except Exception:
-                # Fallback to the original callable if rebinding fails
-                pass
-
+            rebound_command = self._rebind_imap_callable(command, imap)
             return await rebound_command(*args, **kwargs)
+
+    def _rebind_imap_callable(self, command, imap):
+        """Rebind an IMAP callable to a fresh client instance when possible."""
+
+        def _rebind(cmd):
+            # Handle functools.partial wrapping bound methods
+            if isinstance(cmd, functools.partial):
+                rebound_inner = _rebind(cmd.func)
+                return functools.partial(rebound_inner, *cmd.args, **(cmd.keywords or {}))
+
+            # Rebind bound methods using their underlying function
+            if getattr(cmd, "__self__", None) is not None:
+                func = getattr(cmd, "__func__", None)
+                if func is not None:
+                    return func.__get__(imap, type(imap))
+
+                name = getattr(cmd, "__name__", None)
+                if name and hasattr(imap, name):
+                    return getattr(imap, name)
+
+            return cmd
+
+        rebound = _rebind(command)
+        if rebound is not command:
+            logger.debug("Rebound IMAP command to refreshed connection")
+        return rebound
 
     async def close(self) -> None:
         """Close IMAP connection."""
@@ -862,9 +879,7 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         if response.result != "OK":
             return False
 
-        response = await self._execute_imap_command(
-            imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
-        )
+        response = await self._execute_imap_command(imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value)
         if response.result != "OK":
             return False
 
@@ -885,9 +900,7 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
             return False
 
         if permanent:
-            response = await self._execute_imap_command(
-                imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value
-            )
+            response = await self._execute_imap_command(imap.store, message_id, "+FLAGS", EmailFlag.DELETED.value)
             if response.result == "OK":
                 await self._execute_imap_command(imap.expunge)
                 return True
@@ -916,18 +929,14 @@ To: {', '.join(str(a) for a in original_message.to_addrs)}
         message_ids = set()
 
         if thread_id:
-            response = await self._execute_imap_command(
-                imap.search, f'HEADER "References" "{thread_id}"'
-            )
+            response = await self._execute_imap_command(imap.search, f'HEADER "References" "{thread_id}"')
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
                         line = line.decode()
                     message_ids.update(line.split())
 
-            response = await self._execute_imap_command(
-                imap.search, f'HEADER "Message-ID" "{thread_id}"'
-            )
+            response = await self._execute_imap_command(imap.search, f'HEADER "Message-ID" "{thread_id}"')
             if response.result == "OK":
                 for line in response.lines:
                     if isinstance(line, bytes):
@@ -969,7 +978,6 @@ _email_service: Optional[EmailService] = None
 
 def get_email_service() -> Optional[EmailService]:
     """Get email service singleton."""
-    global _email_service
     return _email_service
 
 
@@ -992,3 +1000,243 @@ def configure_email_service(
         password=password,
     )
     return _email_service
+
+
+# =============================================================================
+# Admin Panel Email Functions (Invitations, Password Resets)
+# =============================================================================
+
+
+async def send_admin_email(
+    to: str,
+    subject: str,
+    body_html: str,
+    body_text: Optional[str] = None,
+) -> bool:
+    """
+    Send an admin email using SMTP configuration from settings.
+
+    Used for system emails like invitations and password resets.
+    """
+    from app.core.config import settings
+
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        logger.error("SMTP not configured - cannot send email")
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["From"] = settings.SMTP_FROM or settings.SMTP_USER
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg["Date"] = email.utils.formatdate(localtime=True)
+    msg["Message-ID"] = f"<{uuid.uuid4()}@asimo.io>"
+
+    # Add plain text version (fallback)
+    if body_text:
+        msg.attach(MIMEText(body_text, "plain", "utf-8"))
+
+    # Add HTML version
+    msg.attach(MIMEText(body_html, "html", "utf-8"))
+
+    try:
+        async with aiosmtplib.SMTP(
+            hostname=settings.SMTP_HOST,
+            port=settings.SMTP_PORT,
+            use_tls=settings.SMTP_USE_SSL,
+            start_tls=not settings.SMTP_USE_SSL,  # Use STARTTLS only if not using SSL
+        ) as smtp:
+            await smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            await smtp.sendmail(settings.SMTP_FROM or settings.SMTP_USER, [to], msg.as_string())
+
+        logger.info(f"Admin email sent to {to}: {subject}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send admin email to {to}: {e}")
+        return False
+
+
+async def send_invitation_email(
+    to: str,
+    inviter_name: str,
+    invitation_link: str,
+    expires_in_days: int = 7,
+) -> bool:
+    """Send an invitation email to a new user."""
+    subject = "You've been invited to join Asimo Admin Panel"
+
+    body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
+        .header {{ text-align: center; margin-bottom: 30px; }}
+        .header h1 {{ color: #6366f1; margin: 0; }}
+        .content {{ background: #f9fafb; border-radius: 8px; padding: 30px; margin-bottom: 30px; }}
+        .button {{ display: inline-block; background: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; }}
+        .button:hover {{ background: #4f46e5; }}
+        .footer {{ text-align: center; color: #6b7280; font-size: 14px; }}
+        .expires {{ color: #dc2626; font-size: 14px; margin-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Asimo Admin Panel</h1>
+        </div>
+        <div class="content">
+            <p>Hi there,</p>
+            <p><strong>{inviter_name}</strong> has invited you to join the Asimo Admin Panel.</p>
+            <p>Click the button below to set up your account:</p>
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="{invitation_link}" class="button">Accept Invitation</a>
+            </p>
+            <p class="expires">This invitation expires in {expires_in_days} days.</p>
+        </div>
+        <div class="footer">
+            <p>If you didn't expect this invitation, you can safely ignore this email.</p>
+            <p>&copy; Asimo.io</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    body_text = f"""
+You've been invited to join Asimo Admin Panel
+
+{inviter_name} has invited you to join the Asimo Admin Panel.
+
+Click the link below to set up your account:
+{invitation_link}
+
+This invitation expires in {expires_in_days} days.
+
+If you didn't expect this invitation, you can safely ignore this email.
+"""
+
+    return await send_admin_email(to, subject, body_html, body_text)
+
+
+async def send_password_reset_email(
+    to: str,
+    reset_link: str,
+    expires_in_hours: int = 24,
+) -> bool:
+    """Send a password reset email."""
+    subject = "Reset your Asimo Admin Panel password"
+
+    body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
+        .header {{ text-align: center; margin-bottom: 30px; }}
+        .header h1 {{ color: #6366f1; margin: 0; }}
+        .content {{ background: #f9fafb; border-radius: 8px; padding: 30px; margin-bottom: 30px; }}
+        .button {{ display: inline-block; background: #6366f1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; }}
+        .button:hover {{ background: #4f46e5; }}
+        .footer {{ text-align: center; color: #6b7280; font-size: 14px; }}
+        .warning {{ background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 15px; margin-top: 20px; color: #991b1b; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Asimo Admin Panel</h1>
+        </div>
+        <div class="content">
+            <p>Hi,</p>
+            <p>We received a request to reset your password. Click the button below to choose a new password:</p>
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="{reset_link}" class="button">Reset Password</a>
+            </p>
+            <p style="color: #6b7280; font-size: 14px;">This link expires in {expires_in_hours} hours.</p>
+            <div class="warning">
+                If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; Asimo.io</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    body_text = f"""
+Reset your Asimo Admin Panel password
+
+We received a request to reset your password. Click the link below to choose a new password:
+
+{reset_link}
+
+This link expires in {expires_in_hours} hours.
+
+If you didn't request a password reset, please ignore this email or contact support if you have concerns.
+"""
+
+    return await send_admin_email(to, subject, body_html, body_text)
+
+
+async def send_temporary_password_email(
+    to: str,
+    temporary_password: str,
+) -> bool:
+    """Send an email with a temporary password."""
+    subject = "Your temporary password for Asimo Admin Panel"
+
+    body_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 40px 20px; }}
+        .header {{ text-align: center; margin-bottom: 30px; }}
+        .header h1 {{ color: #6366f1; margin: 0; }}
+        .content {{ background: #f9fafb; border-radius: 8px; padding: 30px; margin-bottom: 30px; }}
+        .password-box {{ background: #1f2937; color: #f9fafb; padding: 15px 20px; border-radius: 6px; font-family: monospace; font-size: 18px; text-align: center; margin: 20px 0; letter-spacing: 1px; }}
+        .footer {{ text-align: center; color: #6b7280; font-size: 14px; }}
+        .warning {{ background: #fef3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 15px; margin-top: 20px; color: #856404; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Asimo Admin Panel</h1>
+        </div>
+        <div class="content">
+            <p>Hi,</p>
+            <p>Your password has been reset. Use the temporary password below to log in:</p>
+            <div class="password-box">{temporary_password}</div>
+            <div class="warning">
+                <strong>Important:</strong> You will be required to change this password on your next login.
+            </div>
+        </div>
+        <div class="footer">
+            <p>&copy; Asimo.io</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    body_text = f"""
+Your temporary password for Asimo Admin Panel
+
+Your password has been reset. Use the temporary password below to log in:
+
+{temporary_password}
+
+Important: You will be required to change this password on your next login.
+"""
+
+    return await send_admin_email(to, subject, body_html, body_text)

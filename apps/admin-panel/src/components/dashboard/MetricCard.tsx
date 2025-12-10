@@ -26,7 +26,8 @@ export interface MetricCardProps {
 const colorThemes = {
   blue: "from-blue-900/50 to-blue-950/30 border-blue-800 text-blue-400",
   green: "from-green-900/50 to-green-950/30 border-green-800 text-green-400",
-  purple: "from-purple-900/50 to-purple-950/30 border-purple-800 text-purple-400",
+  purple:
+    "from-purple-900/50 to-purple-950/30 border-purple-800 text-purple-400",
 };
 
 export function MetricCard({
@@ -50,7 +51,9 @@ export function MetricCard({
         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${statusStyles[connectionStatus]}`}
       >
         <span className="h-2 w-2 rounded-full bg-current" aria-hidden />
-        <span className="text-xs font-medium capitalize">{connectionStatus}</span>
+        <span className="text-xs font-medium capitalize">
+          {connectionStatus}
+        </span>
       </div>
     );
   };
@@ -99,7 +102,9 @@ export function MetricCard({
   };
 
   return (
-    <div className={`bg-gradient-to-br ${colorThemes[color]} border rounded-lg p-4 space-y-3`}>
+    <div
+      className={`bg-gradient-to-br ${colorThemes[color]} border rounded-lg p-4 space-y-3`}
+    >
       <div className="flex items-center justify-between">
         <div className="text-sm text-slate-300">{title}</div>
         <span className="text-2xl" aria-hidden>

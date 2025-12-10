@@ -62,14 +62,21 @@ describe("CitationDisplay", () => {
       render(<CitationDisplay citations={[kbCitation]} />);
 
       const citationButton = screen.getByRole("button", { expanded: false });
-      expect(within(citationButton).getByText(/knowledge base/i)).toBeInTheDocument();
+      // The badge is in a span with specific styling (uppercase, rounded-full)
+      const badges = within(citationButton).getAllByText(/knowledge base/i);
+      // At least one should be the badge (smaller, uppercase styling)
+      expect(badges.length).toBeGreaterThanOrEqual(1);
+      expect(badges[0]).toBeInTheDocument();
     });
 
     it("should show external link badge for URL citations", () => {
       render(<CitationDisplay citations={[urlCitation]} />);
 
       const citationButton = screen.getByRole("button", { expanded: false });
-      expect(within(citationButton).getByText(/external link/i)).toBeInTheDocument();
+      // The badge and label both contain "External Link"
+      const badges = within(citationButton).getAllByText(/external link/i);
+      expect(badges.length).toBeGreaterThanOrEqual(1);
+      expect(badges[0]).toBeInTheDocument();
     });
 
     it("should show page number when present", () => {
@@ -274,20 +281,29 @@ describe("CitationDisplay", () => {
       const user = userEvent.setup();
       render(<CitationDisplay citations={[kbCitation, urlCitation]} />);
 
-      // Click the External Link filter pill
-      const externalFilter = screen.getByRole("button", {
+      // Find the filter group and click the External Link filter pill within it
+      const filterGroup = screen.getByRole("group", {
+        name: /filter citations by source/i,
+      });
+      const externalFilter = within(filterGroup).getByRole("button", {
         name: /external link/i,
       });
       await user.click(externalFilter);
 
-      const citationButtons = screen.getAllByRole("button", { expanded: false });
+      // The filter buttons have aria-pressed, citation buttons have aria-expanded
+      const citationButtons = screen.getAllByRole("button", {
+        expanded: false,
+      });
       expect(citationButtons).toHaveLength(1);
-      expect(
-        within(citationButtons[0]).queryByText(/knowledge base/i),
-      ).not.toBeInTheDocument();
-      expect(
-        within(citationButtons[0]).getByText(/external link/i),
-      ).toBeInTheDocument();
+      // The remaining citation should be "External Link" type
+      const kbMatches = within(citationButtons[0]).queryAllByText(
+        /knowledge base/i,
+      );
+      expect(kbMatches).toHaveLength(0);
+      const externalMatches = within(citationButtons[0]).getAllByText(
+        /external link/i,
+      );
+      expect(externalMatches.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

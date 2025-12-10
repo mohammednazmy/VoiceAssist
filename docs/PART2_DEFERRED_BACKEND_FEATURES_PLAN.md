@@ -1,3 +1,30 @@
+---
+title: Part2 Deferred Backend Features Plan
+slug: part2-deferred-backend-features-plan
+summary: "**Date:** 2025-11-26"
+status: stable
+stability: beta
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - backend
+  - ai-agents
+tags:
+  - part2
+  - deferred
+  - backend
+  - features
+category: planning
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/main.py"
+ai_summary: >-
+  Version: 1.0 Date: 2025-11-26 Status: Planning Complete - Ready for
+  Implementation Priority: High - Enables Full Frontend Functionality Estimated
+  Total Effort: 17-21 weeks (2-3 developers) --- This document consolidates and
+  expands upon all deferred backend features from the VoiceAssist developme...
+---
+
 # Part 2: Deferred Backend Features Implementation Plan
 
 **Version:** 1.0

@@ -3,6 +3,7 @@
 This guide provides practical examples for running and customizing k6 load tests for VoiceAssist.
 
 ## Table of Contents
+
 - [Quick Start Examples](#quick-start-examples)
 - [Custom Test Scenarios](#custom-test-scenarios)
 - [Environment Configuration](#environment-configuration)
@@ -106,12 +107,14 @@ k6 run \
 ### Using .env File
 
 Create a file `.env.k6`:
+
 ```bash
 BASE_URL=https://api.voiceassist.com
 WS_URL=wss://api.voiceassist.com
 ```
 
 Load it before running:
+
 ```bash
 export $(cat .env.k6 | xargs)
 k6 run 02-load-test.js
@@ -168,12 +171,13 @@ jq -s '.[0].http_req_duration.p95, .[1].http_req_duration.p95' \
 ### GitHub Actions
 
 `.github/workflows/load-tests.yml`:
+
 ```yaml
 name: Load Tests
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: "0 2 * * *" # Daily at 2 AM
   workflow_dispatch:
   push:
     branches: [main]
@@ -229,6 +233,7 @@ jobs:
 ### GitLab CI
 
 `.gitlab-ci.yml`:
+
 ```yaml
 stages:
   - smoke
@@ -265,8 +270,9 @@ load-test:
 ### Docker Compose
 
 `docker-compose.load-test.yml`:
+
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   k6:
@@ -309,6 +315,7 @@ networks:
 ```
 
 Run with:
+
 ```bash
 docker-compose -f docker-compose.load-test.yml up
 ```
@@ -316,6 +323,7 @@ docker-compose -f docker-compose.load-test.yml up
 ### Jenkins Pipeline
 
 `Jenkinsfile`:
+
 ```groovy
 pipeline {
     agent any
@@ -404,6 +412,7 @@ docker exec -it voiceassist-postgres psql -U voiceassist -c "SELECT count(*) FRO
 ### Timeout Issues
 
 Edit `config.js`:
+
 ```javascript
 TIMEOUTS: {
   http: 60000,      // Increase to 60 seconds
@@ -431,21 +440,22 @@ k6 run --insecure-skip-tls-verify 02-load-test.js
 ### Custom Thresholds
 
 Create a custom test:
+
 ```javascript
-import { CONFIG } from './config.js';
+import { CONFIG } from "./config.js";
 
 export const options = {
   scenarios: {
     custom: {
-      executor: 'constant-vus',
+      executor: "constant-vus",
       vus: 10,
-      duration: '5m'
-    }
+      duration: "5m",
+    },
   },
   thresholds: {
-    'http_req_duration': ['p(95)<300'],  // Custom threshold
-    'http_req_failed': ['rate<0.01']     // Custom error rate
-  }
+    http_req_duration: ["p(95)<300"], // Custom threshold
+    http_req_failed: ["rate<0.01"], // Custom error rate
+  },
 };
 
 // ... rest of test
@@ -456,23 +466,23 @@ export const options = {
 ### Rate Limiting Test
 
 ```javascript
-import http from 'k6/http';
-import { sleep } from 'k6';
+import http from "k6/http";
+import { sleep } from "k6";
 
 export const options = {
   scenarios: {
     rate_limit_test: {
-      executor: 'constant-arrival-rate',
-      rate: 100,        // 100 requests per timeUnit
-      timeUnit: '1s',   // per second
-      duration: '1m',
+      executor: "constant-arrival-rate",
+      rate: 100, // 100 requests per timeUnit
+      timeUnit: "1s", // per second
+      duration: "1m",
       preAllocatedVUs: 50,
-    }
-  }
+    },
+  },
 };
 
-export default function() {
-  http.get('http://localhost:8000/api/chat/message');
+export default function () {
+  http.get("http://localhost:8000/api/chat/message");
   sleep(1);
 }
 ```
@@ -482,26 +492,26 @@ export default function() {
 ```javascript
 export const options = {
   stages: [
-    { duration: '5m', target: 50 },
-    { duration: '5m', target: 100 },
-    { duration: '5m', target: 150 },
-    { duration: '5m', target: 200 },
-    { duration: '5m', target: 150 },
-    { duration: '5m', target: 100 },
-    { duration: '5m', target: 50 },
-    { duration: '5m', target: 0 }
-  ]
+    { duration: "5m", target: 50 },
+    { duration: "5m", target: 100 },
+    { duration: "5m", target: 150 },
+    { duration: "5m", target: 200 },
+    { duration: "5m", target: 150 },
+    { duration: "5m", target: 100 },
+    { duration: "5m", target: 50 },
+    { duration: "5m", target: 0 },
+  ],
 };
 ```
 
 ### Custom Metrics
 
 ```javascript
-import { Trend } from 'k6/metrics';
+import { Trend } from "k6/metrics";
 
-const customMetric = new Trend('custom_processing_time');
+const customMetric = new Trend("custom_processing_time");
 
-export default function() {
+export default function () {
   const start = Date.now();
   // ... do something
   const duration = Date.now() - start;

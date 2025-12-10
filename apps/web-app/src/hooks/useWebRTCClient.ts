@@ -122,7 +122,10 @@ export function useWebRTCClient(options: WebRTCOptions) {
       if (response.ok) {
         const payload = await response.json();
         if (payload.answer) {
-          await peer.setRemoteDescription({ type: "answer", sdp: payload.answer });
+          await peer.setRemoteDescription({
+            type: "answer",
+            sdp: payload.answer,
+          });
         }
         voiceLog("webrtc:offer:ok", payload);
       }
@@ -160,4 +163,3 @@ export function useWebRTCClient(options: WebRTCOptions) {
     bargeIn,
   } as const;
 }
-

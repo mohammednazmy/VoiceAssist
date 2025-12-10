@@ -44,7 +44,7 @@ method:
             path: "docker"
             arguments: ["compose", "stop", "postgres"]
     pauses:
-      after: 5  # Wait 5 seconds for impact
+      after: 5 # Wait 5 seconds for impact
 
   - name: "verify-graceful-degradation"
     type: probe
@@ -55,7 +55,7 @@ method:
         url: "${api_url}/health"
         timeout: 3
         expect:
-          - status: [503, 500]  # Accept either during failure
+          - status: [503, 500] # Accept either during failure
 
   - name: "verify-error-logged"
     type: probe
@@ -74,7 +74,7 @@ rollbacks:
       path: "docker"
       arguments: ["compose", "start", "postgres"]
     pauses:
-      after: 10  # Wait for PostgreSQL to be ready
+      after: 10 # Wait for PostgreSQL to be ready
 
   - name: "verify-recovery"
     type: probe

@@ -1,3 +1,26 @@
+---
+title: Docs Site Feature Specs
+slug: client-implementation/docs-site-feature-specs
+summary: "**Document Version:** 1.0.0"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - docs
+  - site
+  - feature
+  - specs
+ai_summary: >-
+  Document Version: 1.0.0 Last Updated: 2025-11-21 Status: Planning Phase --- 1.
+  Overview 2. Content Management Features 3. Interactive Elements Features 4.
+  Navigation Features 5. Technical Implementation 6. Content Structure 7.
+  Deployment Strategy --- The VoiceAssist Documentation Site is built on...
+---
+
 # VoiceAssist Documentation Site - Feature Specifications
 
 **Document Version:** 1.0.0
@@ -25,32 +48,39 @@
 The VoiceAssist Documentation Site is built on a modern, performant stack optimized for content-rich documentation:
 
 **Core Framework:**
+
 - **Next.js 14** with App Router for enhanced performance and React Server Components
 - **React 18** with concurrent features
 - **TypeScript** for type safety
 
 **Content Management:**
+
 - **MDX** for rich, interactive documentation
 - **Contentlayer** for type-safe content transformation
 - **Gray-matter** for frontmatter parsing
 
 **Styling:**
+
 - **Tailwind CSS 3.4+** for utility-first styling
 - **CSS Variables** for theming
 - **Tailwind Typography** for prose styling
 
 **Search:**
+
 - **Algolia DocSearch** for instant, typo-tolerant search
 - **Keyboard shortcuts** (Cmd+K / Ctrl+K)
 
 **Syntax Highlighting:**
+
 - **Shiki** for beautiful code highlighting
 - **Multiple themes** support (light/dark)
 
 **Diagrams:**
+
 - **Mermaid.js** for flowcharts, sequence diagrams, and more
 
 **Deployment:**
+
 - **Vercel** for zero-config deployments
 - **Cloudflare CDN** as alternative
 
@@ -120,94 +150,94 @@ A robust MDX-based content system that allows technical writers to create rich d
 **contentlayer.config.ts:**
 
 ```typescript
-import { defineDocumentType, makeSource } from 'contentlayer/source-files'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
-import rehypePrettyCode from 'rehype-pretty-code'
-import rehypeSlug from 'rehype-slug'
-import remarkGfm from 'remark-gfm'
+import { defineDocumentType, makeSource } from "contentlayer/source-files";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
 
 export const Doc = defineDocumentType(() => ({
-  name: 'Doc',
+  name: "Doc",
   filePathPattern: `docs/**/*.mdx`,
-  contentType: 'mdx',
+  contentType: "mdx",
   fields: {
     title: {
-      type: 'string',
+      type: "string",
       required: true,
     },
     description: {
-      type: 'string',
+      type: "string",
       required: true,
     },
     category: {
-      type: 'enum',
-      options: ['getting-started', 'api-reference', 'guides', 'examples'],
+      type: "enum",
+      options: ["getting-started", "api-reference", "guides", "examples"],
       required: true,
     },
     order: {
-      type: 'number',
+      type: "number",
       required: false,
     },
     published: {
-      type: 'boolean',
+      type: "boolean",
       default: true,
     },
     tags: {
-      type: 'list',
-      of: { type: 'string' },
+      type: "list",
+      of: { type: "string" },
     },
     author: {
-      type: 'string',
+      type: "string",
       required: false,
     },
     lastModified: {
-      type: 'date',
+      type: "date",
       required: false,
     },
     version: {
-      type: 'string',
+      type: "string",
       required: false,
     },
   },
   computedFields: {
     slug: {
-      type: 'string',
-      resolve: (doc) => doc._raw.flattenedPath.replace(/^docs\//, ''),
+      type: "string",
+      resolve: (doc) => doc._raw.flattenedPath.replace(/^docs\//, ""),
     },
     slugAsParams: {
-      type: 'string',
-      resolve: (doc) => doc._raw.flattenedPath.split('/').slice(1).join('/'),
+      type: "string",
+      resolve: (doc) => doc._raw.flattenedPath.split("/").slice(1).join("/"),
     },
     url: {
-      type: 'string',
-      resolve: (doc) => `/docs/${doc._raw.flattenedPath.replace(/^docs\//, '')}`,
+      type: "string",
+      resolve: (doc) => `/docs/${doc._raw.flattenedPath.replace(/^docs\//, "")}`,
     },
     headings: {
-      type: 'json',
+      type: "json",
       resolve: async (doc) => {
-        const headingsRegex = /^(#{1,6})\s+(.+)$/gm
-        const headings: { level: number; text: string; slug: string }[] = []
-        let match
+        const headingsRegex = /^(#{1,6})\s+(.+)$/gm;
+        const headings: { level: number; text: string; slug: string }[] = [];
+        let match;
 
         while ((match = headingsRegex.exec(doc.body.raw)) !== null) {
-          const level = match[1].length
-          const text = match[2]
+          const level = match[1].length;
+          const text = match[2];
           const slug = text
             .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '')
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
 
-          headings.push({ level, text, slug })
+          headings.push({ level, text, slug });
         }
 
-        return headings
+        return headings;
       },
     },
   },
-}))
+}));
 
 export default makeSource({
-  contentDirPath: './content',
+  contentDirPath: "./content",
   documentTypes: [Doc],
   mdx: {
     remarkPlugins: [remarkGfm],
@@ -217,8 +247,8 @@ export default makeSource({
         rehypePrettyCode,
         {
           theme: {
-            dark: 'github-dark-dimmed',
-            light: 'github-light',
+            dark: "github-dark-dimmed",
+            light: "github-light",
           },
           keepBackground: false,
         },
@@ -226,15 +256,15 @@ export default makeSource({
       [
         rehypeAutolinkHeadings,
         {
-          behavior: 'wrap',
+          behavior: "wrap",
           properties: {
-            className: ['anchor'],
+            className: ["anchor"],
           },
         },
       ],
     ],
   },
-})
+});
 ```
 
 **components/MDXComponents.tsx:**
@@ -474,7 +504,7 @@ export default async function DocPage({ params }: DocPageProps) {
 
 **Example MDX Content (content/docs/getting-started/installation.mdx):**
 
-```mdx
+````mdx
 ---
 title: Installation
 description: Get started with VoiceAssist in minutes
@@ -485,17 +515,15 @@ tags: [setup, installation, quickstart]
 version: "1.0.0"
 ---
 
-import { Callout } from '@/components/Callout'
-import { Steps } from '@/components/Steps'
-import { Tabs, Tab } from '@/components/Tabs'
+import { Callout } from "@/components/Callout";
+import { Steps } from "@/components/Steps";
+import { Tabs, Tab } from "@/components/Tabs";
 
 # Installation
 
 Get VoiceAssist up and running in your project in just a few minutes.
 
-<Callout type="info">
-  Before you begin, make sure you have Node.js 18 or later installed.
-</Callout>
+<Callout type="info">Before you begin, make sure you have Node.js 18 or later installed.</Callout>
 
 ## Prerequisites
 
@@ -520,11 +548,7 @@ Choose your preferred package manager:
     ```
   </Tab>
 
-  <Tab label="yarn">
-    ```bash
-    yarn add voiceassist
-    ```
-  </Tab>
+<Tab label="yarn">```bash yarn add voiceassist ```</Tab>
 
   <Tab label="pnpm">
     ```bash
@@ -541,6 +565,7 @@ Create a `.env.local` file in your project root:
 VOICEASSIST_API_KEY=your_api_key_here
 VOICEASSIST_REGION=us-east-1
 ```
+````
 
 <Callout type="warning">
   Never commit your API key to version control. Add `.env.local` to your `.gitignore` file.
@@ -551,16 +576,16 @@ VOICEASSIST_REGION=us-east-1
 Create a new file `lib/voiceassist.ts`:
 
 ```typescript
-import { VoiceAssist } from 'voiceassist'
+import { VoiceAssist } from "voiceassist";
 
 export const voiceAssist = new VoiceAssist({
   apiKey: process.env.VOICEASSIST_API_KEY!,
   region: process.env.VOICEASSIST_REGION,
   options: {
-    language: 'en-US',
-    enableLogging: process.env.NODE_ENV === 'development',
+    language: "en-US",
+    enableLogging: process.env.NODE_ENV === "development",
   },
-})
+});
 ```
 
 ### Verify installation
@@ -577,9 +602,11 @@ npm run voiceassist:verify
 
 Now that you have VoiceAssist installed, you can:
 
-- [Create your first voice command](/docs/guides/first-command)
-- [Explore the API reference](/docs/api-reference)
-- [Check out examples](/docs/examples)
+<!-- NOTE: These are example placeholder routes for the docs template -->
+
+- Create your first voice command (see voice mode guides)
+- Explore the API reference (see /ai/api)
+- Check out examples (see usage documentation)
 
 <Callout type="success">
   Installation complete! You're ready to build amazing voice experiences.
@@ -609,55 +636,53 @@ Seamless version control integration that tracks content changes, enables collab
 **lib/git-utils.ts:**
 
 ```typescript
-import { execSync } from 'child_process'
-import path from 'path'
+import { execSync } from "child_process";
+import path from "path";
 
 export interface GitFileInfo {
-  lastModified: Date
-  author: string
-  authorEmail: string
-  commitHash: string
+  lastModified: Date;
+  author: string;
+  authorEmail: string;
+  commitHash: string;
   contributors: Array<{
-    name: string
-    email: string
-    commits: number
-  }>
+    name: string;
+    email: string;
+    commits: number;
+  }>;
 }
 
 export function getGitFileInfo(filePath: string): GitFileInfo | null {
   try {
-    const absolutePath = path.join(process.cwd(), filePath)
+    const absolutePath = path.join(process.cwd(), filePath);
 
     // Get last commit info
-    const lastCommit = execSync(
-      `git log -1 --format="%ai|%an|%ae|%H" -- "${absolutePath}"`,
-      { encoding: 'utf-8' }
-    ).trim()
+    const lastCommit = execSync(`git log -1 --format="%ai|%an|%ae|%H" -- "${absolutePath}"`, {
+      encoding: "utf-8",
+    }).trim();
 
-    if (!lastCommit) return null
+    if (!lastCommit) return null;
 
-    const [dateStr, author, authorEmail, commitHash] = lastCommit.split('|')
+    const [dateStr, author, authorEmail, commitHash] = lastCommit.split("|");
 
     // Get all contributors
-    const contributorsOutput = execSync(
-      `git log --format="%an|%ae" -- "${absolutePath}" | sort | uniq -c | sort -rn`,
-      { encoding: 'utf-8' }
-    ).trim()
+    const contributorsOutput = execSync(`git log --format="%an|%ae" -- "${absolutePath}" | sort | uniq -c | sort -rn`, {
+      encoding: "utf-8",
+    }).trim();
 
     const contributors = contributorsOutput
-      .split('\n')
+      .split("\n")
       .filter(Boolean)
       .map((line) => {
-        const match = line.trim().match(/^\s*(\d+)\s+(.+)\|(.+)$/)
-        if (!match) return null
+        const match = line.trim().match(/^\s*(\d+)\s+(.+)\|(.+)$/);
+        if (!match) return null;
 
         return {
           name: match[2],
           email: match[3],
           commits: parseInt(match[1], 10),
-        }
+        };
       })
-      .filter(Boolean) as GitFileInfo['contributors']
+      .filter(Boolean) as GitFileInfo["contributors"];
 
     return {
       lastModified: new Date(dateStr),
@@ -665,16 +690,16 @@ export function getGitFileInfo(filePath: string): GitFileInfo | null {
       authorEmail,
       commitHash,
       contributors,
-    }
+    };
   } catch (error) {
-    console.error('Error getting git info:', error)
-    return null
+    console.error("Error getting git info:", error);
+    return null;
   }
 }
 
 export function getEditUrl(filePath: string, repo: string): string {
-  const branch = 'main'
-  return `https://github.com/${repo}/edit/${branch}/${filePath}`
+  const branch = "main";
+  return `https://github.com/${repo}/edit/${branch}/${filePath}`;
 }
 ```
 
@@ -854,62 +879,62 @@ Comprehensive internationalization support for documentation in multiple languag
 **i18n/config.ts:**
 
 ```typescript
-export const locales = ['en', 'ar', 'es', 'fr', 'de', 'zh'] as const
-export type Locale = (typeof locales)[number]
+export const locales = ["en", "ar", "es", "fr", "de", "zh"] as const;
+export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = 'en'
+export const defaultLocale: Locale = "en";
 
 export const localeNames: Record<Locale, string> = {
-  en: 'English',
-  ar: 'العربية',
-  es: 'Español',
-  fr: 'Français',
-  de: 'Deutsch',
-  zh: '中文',
-}
+  en: "English",
+  ar: "العربية",
+  es: "Español",
+  fr: "Français",
+  de: "Deutsch",
+  zh: "中文",
+};
 
-export const localeDirections: Record<Locale, 'ltr' | 'rtl'> = {
-  en: 'ltr',
-  ar: 'rtl',
-  es: 'ltr',
-  fr: 'ltr',
-  de: 'ltr',
-  zh: 'ltr',
-}
+export const localeDirections: Record<Locale, "ltr" | "rtl"> = {
+  en: "ltr",
+  ar: "rtl",
+  es: "ltr",
+  fr: "ltr",
+  de: "ltr",
+  zh: "ltr",
+};
 ```
 
 **Enhanced contentlayer.config.ts:**
 
 ```typescript
 export const Doc = defineDocumentType(() => ({
-  name: 'Doc',
+  name: "Doc",
   filePathPattern: `docs/**/*.mdx`,
-  contentType: 'mdx',
+  contentType: "mdx",
   fields: {
     // ... existing fields ...
     locale: {
-      type: 'enum',
-      options: ['en', 'ar', 'es', 'fr', 'de', 'zh'],
-      default: 'en',
+      type: "enum",
+      options: ["en", "ar", "es", "fr", "de", "zh"],
+      default: "en",
       required: true,
     },
     translationKey: {
-      type: 'string',
+      type: "string",
       required: false,
-      description: 'Key to link translations together',
+      description: "Key to link translations together",
     },
   },
   computedFields: {
     // ... existing computed fields ...
     localizedPath: {
-      type: 'string',
+      type: "string",
       resolve: (doc) => {
-        const path = doc._raw.flattenedPath.replace(/^docs\//, '')
-        return doc.locale === 'en' ? path : `${doc.locale}/${path}`
+        const path = doc._raw.flattenedPath.replace(/^docs\//, "");
+        return doc.locale === "en" ? path : `${doc.locale}/${path}`;
       },
     },
   },
-}))
+}));
 ```
 
 **Content Structure:**
@@ -1227,9 +1252,8 @@ export function SearchTrigger() {
   --docsearch-hit-background: rgb(255, 255, 255);
   --docsearch-hit-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
   --docsearch-key-gradient: linear-gradient(-225deg, rgb(249, 250, 251), rgb(243, 244, 246));
-  --docsearch-key-shadow: inset 0 -2px 0 0 rgb(209, 213, 219),
-    inset 0 0 1px 1px rgb(255, 255, 255),
-    0 1px 2px 1px rgba(0, 0, 0, 0.1);
+  --docsearch-key-shadow:
+    inset 0 -2px 0 0 rgb(209, 213, 219), inset 0 0 1px 1px rgb(255, 255, 255), 0 1px 2px 1px rgba(0, 0, 0, 0.1);
   --docsearch-footer-background: rgb(249, 250, 251);
 }
 
@@ -1244,12 +1268,10 @@ export function SearchTrigger() {
   --docsearch-hit-shadow: none;
   --docsearch-hit-background: rgb(55, 65, 81);
   --docsearch-key-gradient: linear-gradient(-26.5deg, rgb(55, 65, 81), rgb(31, 41, 55));
-  --docsearch-key-shadow: inset 0 -2px 0 0 rgb(17, 24, 39),
-    inset 0 0 1px 1px rgb(75, 85, 99),
-    0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  --docsearch-key-shadow:
+    inset 0 -2px 0 0 rgb(17, 24, 39), inset 0 0 1px 1px rgb(75, 85, 99), 0 2px 2px 0 rgba(0, 0, 0, 0.3);
   --docsearch-footer-background: rgb(17, 24, 39);
-  --docsearch-footer-shadow: inset 0 1px 0 0 rgb(55, 65, 81),
-    0 -4px 8px 0 rgba(0, 0, 0, 0.2);
+  --docsearch-footer-shadow: inset 0 1px 0 0 rgb(55, 65, 81), 0 -4px 8px 0 rgba(0, 0, 0, 0.2);
   --docsearch-muted-color: rgb(156, 163, 175);
 }
 
@@ -1268,12 +1290,12 @@ export function SearchTrigger() {
   align-items: center;
 }
 
-.DocSearch-Hit[aria-selected='true'] {
+.DocSearch-Hit[aria-selected="true"] {
   background: var(--docsearch-primary-color);
 }
 
-.DocSearch-Hit[aria-selected='true'] .DocSearch-Hit-title,
-.DocSearch-Hit[aria-selected='true'] .DocSearch-Hit-path {
+.DocSearch-Hit[aria-selected="true"] .DocSearch-Hit-title,
+.DocSearch-Hit[aria-selected="true"] .DocSearch-Hit-path {
   color: var(--docsearch-hit-active-color);
 }
 ```
@@ -1314,22 +1336,10 @@ export function SearchTrigger() {
       "text": "article p, article li"
     }
   },
-  "selectors_exclude": [
-    ".hash-link",
-    ".table-of-contents",
-    ".DocSearch-Button",
-    "footer"
-  ],
+  "selectors_exclude": [".hash-link", ".table-of-contents", ".DocSearch-Button", "footer"],
   "custom_settings": {
     "attributesForFaceting": ["language", "version", "category"],
-    "attributesToRetrieve": [
-      "hierarchy",
-      "content",
-      "anchor",
-      "url",
-      "url_without_anchor",
-      "type"
-    ],
+    "attributesToRetrieve": ["hierarchy", "content", "anchor", "url", "url_without_anchor", "type"],
     "attributesToHighlight": ["hierarchy", "content"],
     "attributesToSnippet": ["content:20"],
     "highlightPreTag": "<mark>",
@@ -1473,43 +1483,43 @@ export const Doc = defineDocumentType(() => ({
   computedFields: {
     // ... existing computed fields ...
     headings: {
-      type: 'json',
+      type: "json",
       resolve: async (doc) => {
-        const headingsRegex = /^(#{1,6})\s+(.+)$/gm
-        const headings: { level: number; text: string; slug: string }[] = []
-        let match
+        const headingsRegex = /^(#{1,6})\s+(.+)$/gm;
+        const headings: { level: number; text: string; slug: string }[] = [];
+        let match;
 
         while ((match = headingsRegex.exec(doc.body.raw)) !== null) {
-          const level = match[1].length
+          const level = match[1].length;
           const text = match[2]
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links
-            .replace(/`([^`]+)`/g, '$1') // Remove code formatting
-            .replace(/<[^>]+>/g, '') // Remove HTML tags
-            .trim()
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove markdown links
+            .replace(/`([^`]+)`/g, "$1") // Remove code formatting
+            .replace(/<[^>]+>/g, "") // Remove HTML tags
+            .trim();
 
           const slug = text
             .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '')
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
 
-          headings.push({ level, text, slug })
+          headings.push({ level, text, slug });
         }
 
-        return headings
+        return headings;
       },
     },
   },
-}))
+}));
 ```
 
 **lib/utils.ts (cn helper):**
 
 ```typescript
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 ```
 
@@ -1668,7 +1678,7 @@ export function CodePlayground({
 title: Voice Recognition Example
 ---
 
-import { CodePlayground } from '@/components/CodePlayground'
+import { CodePlayground } from "@/components/CodePlayground";
 
 # Voice Recognition Example
 
@@ -1683,57 +1693,58 @@ export default function App() {
   const [transcript, setTranscript] = useState('')
   const [isListening, setIsListening] = useState(false)
 
-  const handleStart = async () => {
-    setIsListening(true)
-    const voice = new VoiceAssist({
-      onTranscript: (text) => setTranscript(text),
-    })
-    await voice.start()
-  }
+const handleStart = async () => {
+setIsListening(true)
+const voice = new VoiceAssist({
+onTranscript: (text) => setTranscript(text),
+})
+await voice.start()
+}
 
-  const handleStop = () => {
-    setIsListening(false)
-  }
+const handleStop = () => {
+setIsListening(false)
+}
 
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>Voice Recognition Demo</h1>
-      <button onClick={isListening ? handleStop : handleStart}>
-        {isListening ? 'Stop' : 'Start'} Listening
-      </button>
-      {transcript && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#f0f0f0' }}>
-          <strong>Transcript:</strong> {transcript}
-        </div>
-      )}
-    </div>
-  )
+return (
+
+<div style={{ padding: '20px' }}>
+<h1>Voice Recognition Demo</h1>
+<button onClick={isListening ? handleStop : handleStart}>
+{isListening ? 'Stop' : 'Start'} Listening
+</button>
+{transcript && (
+<div style={{ marginTop: '20px', padding: '10px', background: '#f0f0f0' }}>
+<strong>Transcript:</strong> {transcript}
+</div>
+)}
+</div>
+)
 }`,
     '/styles.css': `body {
-  font-family: system-ui, sans-serif;
-  margin: 0;
-  padding: 0;
+font-family: system-ui, sans-serif;
+margin: 0;
+padding: 0;
 }
 
 button {
-  padding: 12px 24px;
-  font-size: 16px;
-  background: #0070f3;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+padding: 12px 24px;
+font-size: 16px;
+background: #0070f3;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
 }
 
 button:hover {
-  background: #0051cc;
+background: #0051cc;
 }`,
-  }}
-  template="react-ts"
-  dependencies={{
+}}
+template="react-ts"
+dependencies={{
     'voiceassist': '^1.0.0',
   }}
-  options={{
+options={{
     showLineNumbers: true,
     showTabs: true,
     editorHeight: 450,
@@ -1949,8 +1960,8 @@ export function VoiceWaveform({
 **Usage in MDX:**
 
 ```mdx
-import { InteractiveExample } from '@/components/InteractiveExample'
-import { VoiceWaveform } from '@/components/VoiceWaveform'
+import { InteractiveExample } from "@/components/InteractiveExample";
+import { VoiceWaveform } from "@/components/VoiceWaveform";
 
 ## Voice Waveform Visualization
 
@@ -1961,17 +1972,15 @@ import { VoiceWaveform } from '@/components/VoiceWaveform'
   code={`import { VoiceWaveform } from 'voiceassist/ui'
 
 function MyComponent() {
-  const [isListening, setIsListening] = useState(false)
+const [isListening, setIsListening] = useState(false)
 
-  return (
-    <VoiceWaveform
-      isActive={isListening}
-      color="rgb(59, 130, 246)"
-      bars={40}
-    />
-  )
+return (
+
+<VoiceWaveform isActive={isListening} color="rgb(59, 130, 246)" bars={40} />)
 }`}
+
 >
+
   <VoiceWaveform isActive={true} color="rgb(59, 130, 246)" bars={40} />
 </InteractiveExample>
 ```
@@ -2142,7 +2151,7 @@ export function VideoPlayer({
 **Usage in MDX:**
 
 ```mdx
-import { VideoPlayer } from '@/components/VideoPlayer'
+import { VideoPlayer } from "@/components/VideoPlayer";
 
 ## Getting Started Video
 
@@ -2322,33 +2331,33 @@ export function Mermaid({ chart, title, caption }: MermaidProps) {
 **rehype-mermaid.ts (Plugin for automatic Mermaid rendering):**
 
 ```typescript
-import { visit } from 'unist-util-visit'
-import type { Root } from 'mdast'
+import { visit } from "unist-util-visit";
+import type { Root } from "mdast";
 
 export function rehypeMermaid() {
   return (tree: Root) => {
-    visit(tree, 'code', (node: any) => {
-      if (node.lang === 'mermaid') {
-        node.type = 'mdxJsxFlowElement'
-        node.name = 'Mermaid'
+    visit(tree, "code", (node: any) => {
+      if (node.lang === "mermaid") {
+        node.type = "mdxJsxFlowElement";
+        node.name = "Mermaid";
         node.attributes = [
           {
-            type: 'mdxJsxAttribute',
-            name: 'chart',
+            type: "mdxJsxAttribute",
+            name: "chart",
             value: node.value,
           },
-        ]
-        delete node.lang
-        delete node.value
+        ];
+        delete node.lang;
+        delete node.value;
       }
-    })
-  }
+    });
+  };
 }
 ```
 
 **Usage in MDX:**
 
-```mdx
+````mdx
 ## Architecture Overview
 
 Here's a high-level overview of the VoiceAssist architecture:
@@ -2376,18 +2385,19 @@ graph TB
     style B fill:#3b82f6,stroke:#1e40af,color:#fff
     style K fill:#10b981,stroke:#047857,color:#fff
 ```
+````
 
 Or use the component directly for more control:
 
 <Mermaid
-  title="Voice Command Flow"
-  caption="Figure 1: How voice commands are processed"
-  chart={`sequenceDiagram
-    participant U as User
-    participant V as VoiceAssist
-    participant S as Speech Recognition
-    participant N as NLP Engine
-    participant A as App
+title="Voice Command Flow"
+caption="Figure 1: How voice commands are processed"
+chart={`sequenceDiagram
+participant U as User
+participant V as VoiceAssist
+participant S as Speech Recognition
+participant N as NLP Engine
+participant A as App
 
     U->>V: Speaks command
     V->>S: Send audio
@@ -2397,8 +2407,10 @@ Or use the component directly for more control:
     V->>A: Trigger action
     A->>V: Return result
     V->>U: Speak response`}
+
 />
-```
+
+````
 
 ---
 
@@ -2512,7 +2524,7 @@ export function Callout({
     </div>
   )
 }
-```
+````
 
 **components/Steps.tsx:**
 
@@ -2553,25 +2565,19 @@ export function Steps({ children }: StepsProps) {
 **Usage in MDX:**
 
 ```mdx
-<Callout type="info">
-  Before you begin, make sure you have Node.js 18 or later installed.
-</Callout>
+<Callout type="info">Before you begin, make sure you have Node.js 18 or later installed.</Callout>
 
 <Callout type="warning" title="Important">
   Never commit your API keys to version control!
 </Callout>
 
-<Callout type="error">
-  This feature is deprecated and will be removed in version 2.0.
-</Callout>
+<Callout type="error">This feature is deprecated and will be removed in version 2.0.</Callout>
 
 <Callout type="success" title="Installation Complete">
   You're now ready to start building with VoiceAssist!
 </Callout>
 
-<Callout type="tip">
-  Pro tip: Use the `--verbose` flag to see detailed logs during development.
-</Callout>
+<Callout type="tip">Pro tip: Use the `--verbose` flag to see detailed logs during development.</Callout>
 ```
 
 ---
@@ -2755,44 +2761,52 @@ export function Sidebar({ navigation }: SidebarProps) {
 ```typescript
 export const navigation: NavItem[] = [
   {
-    title: 'Getting Started',
+    title: "Getting Started",
     children: [
-      { title: 'Introduction', href: '/docs/introduction' },
-      { title: 'Installation', href: '/docs/installation' },
-      { title: 'Quick Start', href: '/docs/quick-start' },
-      { title: 'Configuration', href: '/docs/configuration' },
+      { title: "Introduction", href: "/docs/introduction" },
+      { title: "Installation", href: "/docs/installation" },
+      { title: "Quick Start", href: "/docs/quick-start" },
+      { title: "Configuration", href: "/docs/configuration" },
     ],
   },
   {
-    title: 'Guides',
+    title: "Guides",
     children: [
-      { title: 'Voice Commands', href: '/docs/guides/voice-commands' },
-      { title: 'Speech Recognition', href: '/docs/guides/speech-recognition' },
-      { title: 'Text-to-Speech', href: '/docs/guides/text-to-speech' },
-      { title: 'Custom Intents', href: '/docs/guides/custom-intents', badge: 'new' },
-      { title: 'Error Handling', href: '/docs/guides/error-handling' },
+      { title: "Voice Commands", href: "/docs/guides/voice-commands" },
+      { title: "Speech Recognition", href: "/docs/guides/speech-recognition" },
+      { title: "Text-to-Speech", href: "/docs/guides/text-to-speech" },
+      {
+        title: "Custom Intents",
+        href: "/docs/guides/custom-intents",
+        badge: "new",
+      },
+      { title: "Error Handling", href: "/docs/guides/error-handling" },
     ],
   },
   {
-    title: 'API Reference',
+    title: "API Reference",
     children: [
-      { title: 'VoiceAssist', href: '/docs/api/voiceassist' },
-      { title: 'SpeechRecognition', href: '/docs/api/speech-recognition' },
-      { title: 'TextToSpeech', href: '/docs/api/text-to-speech' },
-      { title: 'IntentDetector', href: '/docs/api/intent-detector', badge: 'beta' },
-      { title: 'Configuration', href: '/docs/api/configuration' },
+      { title: "VoiceAssist", href: "/docs/api/voiceassist" },
+      { title: "SpeechRecognition", href: "/docs/api/speech-recognition" },
+      { title: "TextToSpeech", href: "/docs/api/text-to-speech" },
+      {
+        title: "IntentDetector",
+        href: "/docs/api/intent-detector",
+        badge: "beta",
+      },
+      { title: "Configuration", href: "/docs/api/configuration" },
     ],
   },
   {
-    title: 'Examples',
+    title: "Examples",
     children: [
-      { title: 'Basic Usage', href: '/docs/examples/basic' },
-      { title: 'React Integration', href: '/docs/examples/react' },
-      { title: 'Vue Integration', href: '/docs/examples/vue' },
-      { title: 'Next.js App', href: '/docs/examples/nextjs' },
+      { title: "Basic Usage", href: "/docs/examples/basic" },
+      { title: "React Integration", href: "/docs/examples/react" },
+      { title: "Vue Integration", href: "/docs/examples/vue" },
+      { title: "Next.js App", href: "/docs/examples/nextjs" },
     ],
   },
-]
+];
 ```
 
 ---
@@ -3210,49 +3224,49 @@ export default function RootLayout({
 **next.config.js:**
 
 ```javascript
-const { withContentlayer } = require('next-contentlayer')
+const { withContentlayer } = require("next-contentlayer");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['docs.voiceassist.io'],
-    formats: ['image/avif', 'image/webp'],
+    domains: ["docs.voiceassist.io"],
+    formats: ["image/avif", "image/webp"],
   },
   async redirects() {
     return [
       {
-        source: '/docs',
-        destination: '/docs/introduction',
+        source: "/docs",
+        destination: "/docs/introduction",
         permanent: true,
       },
-    ]
+    ];
   },
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
         ],
       },
-    ]
+    ];
   },
-}
+};
 
-module.exports = withContentlayer(nextConfig)
+module.exports = withContentlayer(nextConfig);
 ```
 
 ### TypeScript Configuration
@@ -3286,13 +3300,7 @@ module.exports = withContentlayer(nextConfig)
       "contentlayer/generated": ["./.contentlayer/generated"]
     }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".contentlayer/generated"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".contentlayer/generated"],
   "exclude": ["node_modules"]
 }
 ```
@@ -3302,76 +3310,74 @@ module.exports = withContentlayer(nextConfig)
 **tailwind.config.ts:**
 
 ```typescript
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: 'class',
+  darkMode: "class",
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './content/**/*.{md,mdx}',
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./content/**/*.{md,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
         },
       },
       typography: (theme: any) => ({
         DEFAULT: {
           css: {
-            maxWidth: 'none',
-            color: theme('colors.gray.700'),
+            maxWidth: "none",
+            color: theme("colors.gray.700"),
             a: {
-              color: theme('colors.blue.600'),
-              '&:hover': {
-                color: theme('colors.blue.800'),
+              color: theme("colors.blue.600"),
+              "&:hover": {
+                color: theme("colors.blue.800"),
               },
             },
-            'h1, h2, h3, h4': {
-              scrollMarginTop: '5rem',
+            "h1, h2, h3, h4": {
+              scrollMarginTop: "5rem",
             },
           },
         },
         dark: {
           css: {
-            color: theme('colors.gray.300'),
+            color: theme("colors.gray.300"),
             a: {
-              color: theme('colors.blue.400'),
-              '&:hover': {
-                color: theme('colors.blue.300'),
+              color: theme("colors.blue.400"),
+              "&:hover": {
+                color: theme("colors.blue.300"),
               },
             },
-            'h1, h2, h3, h4': {
-              color: theme('colors.gray.100'),
+            "h1, h2, h3, h4": {
+              color: theme("colors.gray.100"),
             },
           },
         },
       }),
     },
   },
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
-}
+  plugins: [require("@tailwindcss/typography")],
+};
 
-export default config
+export default config;
 ```
 
 ---
@@ -3415,17 +3421,17 @@ content/
 
 ```yaml
 ---
-title: Page Title                    # Required
-description: Page description        # Required
-category: getting-started            # Required
-order: 1                             # Optional, for sorting
-published: true                      # Default: true
-tags: [setup, installation]          # Optional
-author: John Doe                     # Optional
-lastModified: 2024-01-15            # Optional, auto-populated from git
-version: "1.0.0"                    # Optional
-locale: en                          # Default: en
-translationKey: installation         # Optional, links translations
+title: Page Title # Required
+description: Page description # Required
+category: getting-started # Required
+order: 1 # Optional, for sorting
+published: true # Default: true
+tags: [setup, installation] # Optional
+author: John Doe # Optional
+lastModified: 2024-01-15 # Optional, auto-populated from git
+version: "1.0.0" # Optional
+locale: en # Default: en
+translationKey: installation # Optional, links translations
 ---
 ```
 
@@ -3478,8 +3484,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -3510,17 +3516,14 @@ const nextConfig = {
   // ... existing config ...
 
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === "production",
   },
 
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: [
-      'lucide-react',
-      '@codesandbox/sandpack-react',
-    ],
+    optimizePackageImports: ["lucide-react", "@codesandbox/sandpack-react"],
   },
-}
+};
 ```
 
 ### Sitemap Generation
@@ -3528,8 +3531,8 @@ const nextConfig = {
 **app/sitemap.ts:**
 
 ```typescript
-import { MetadataRoute } from 'next'
-import { allDocs } from 'contentlayer/generated'
+import { MetadataRoute } from "next";
+import { allDocs } from "contentlayer/generated";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const docs = allDocs
@@ -3537,19 +3540,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .map((doc) => ({
       url: `https://docs.voiceassist.io${doc.url}`,
       lastModified: doc.lastModified || new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: doc.category === 'getting-started' ? 1.0 : 0.8,
-    }))
+      changeFrequency: "weekly" as const,
+      priority: doc.category === "getting-started" ? 1.0 : 0.8,
+    }));
 
   return [
     {
-      url: 'https://docs.voiceassist.io',
+      url: "https://docs.voiceassist.io",
       lastModified: new Date(),
-      changeFrequency: 'daily',
+      changeFrequency: "daily",
       priority: 1.0,
     },
     ...docs,
-  ]
+  ];
 }
 ```
 
@@ -3558,24 +3561,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
 **components/Analytics.tsx:**
 
 ```typescript
-'use client'
+"use client";
 
-import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 export function Analytics() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', 'GA_MEASUREMENT_ID', {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("config", "GA_MEASUREMENT_ID", {
         page_path: pathname + searchParams.toString(),
-      })
+      });
     }
-  }, [pathname, searchParams])
+  }, [pathname, searchParams]);
 
-  return null
+  return null;
 }
 ```
 
@@ -3593,6 +3596,7 @@ This comprehensive specification document outlines 15 features across three cate
 - **Mermaid.js** for diagrams
 
 Each feature includes:
+
 - Priority and effort estimates
 - Detailed specifications
 - Complete implementation code
@@ -3600,6 +3604,7 @@ Each feature includes:
 - Integration with the overall architecture
 
 The documentation site is designed to be:
+
 - **Performant:** Sub-second page loads, optimized assets
 - **Accessible:** WCAG 2.1 AA compliant
 - **Scalable:** Supports 1000+ pages

@@ -19,6 +19,10 @@ body {
   background: rgb(var(--background-start-rgb));
 }
 
+mark {
+  @apply bg-yellow-200 text-gray-900 dark:bg-yellow-300/70 dark:text-gray-900 px-0.5 rounded;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -66,4 +70,78 @@ body {
 
 .dark .sidebar-link-active {
   @apply bg-primary-900/30 text-primary-300 border-primary-400;
+}
+
+/* Rehype Pretty Code styling */
+[data-rehype-pretty-code-figure] {
+  @apply my-6 overflow-hidden rounded-xl border border-slate-200 bg-slate-900 shadow-sm dark:border-slate-800;
+}
+
+[data-rehype-pretty-code-figure] code {
+  background: none !important;
+}
+
+[data-rehype-pretty-code-title] {
+  @apply bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200;
+}
+
+[data-rehype-pretty-code-figure] pre {
+  @apply m-0 bg-transparent p-4 text-sm text-slate-50;
+}
+
+[data-highlighted-line] {
+  @apply block rounded bg-slate-800/70 px-3 py-0.5;
+}
+
+/* === WCAG 2.1 AA Accessibility Improvements === */
+
+/* Skip to content link */
+.skip-to-content {
+  @apply absolute left-4 top-4 z-[100] -translate-y-20 rounded-md bg-primary-600 px-4 py-2 text-white font-medium transition-transform duration-200;
+}
+
+.skip-to-content:focus {
+  @apply translate-y-0 outline-none ring-2 ring-primary-400 ring-offset-2;
+}
+
+/* Enhanced focus indicators for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* Focus indicator for sidebar links */
+.sidebar-link:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  a:focus-visible,
+  button:focus-visible {
+    @apply ring-4 ring-black dark:ring-white;
+  }
+
+  .prose a {
+    @apply underline decoration-2;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .skip-to-content {
+    @apply transition-none;
+  }
 }

@@ -10,7 +10,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**', '.next/**', 'build/**', 'coverage/**'],
+    ignores: ['dist/**', 'dev-dist/**', 'node_modules/**', '.next/**', 'build/**', 'coverage/**', 'public/sw.js'],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

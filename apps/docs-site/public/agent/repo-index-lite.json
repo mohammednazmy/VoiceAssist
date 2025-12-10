@@ -1,0 +1,5012 @@
+{
+  "version": "1.0-lite",
+  "generated_at": "2025-12-05T04:07:18.694Z",
+  "description": "Lite version with key source files only (excludes tests, generated files)",
+  "full_version": "/agent/repo-index.json",
+  "stats": {
+    "total_files": 23310,
+    "total_dirs": 2813,
+    "total_size_bytes": 698572959,
+    "by_language": {
+      "json": 472,
+      "ignore": 7,
+      "markdown": 357,
+      "yaml": 128,
+      "toml": 7,
+      "makefile": 2,
+      "dockerfile": 5,
+      "typescript": 728,
+      "javascript": 50,
+      "html": 11,
+      "css": 5,
+      "mdx": 3,
+      "shell": 55,
+      "python": 13792,
+      "terraform": 22,
+      "xml": 41,
+      "php": 9,
+      "powershell": 3,
+      "c": 293,
+      "cpp": 58,
+      "go": 2,
+      "rust": 2
+    },
+    "by_component": {
+      "root": 286,
+      "frontend/admin-panel": 216,
+      "frontend/docs-site": 577,
+      "frontend/web-app": 483,
+      "docs": 326,
+      "testing": 103,
+      "infra/k8s": 52,
+      "infra": 97,
+      "shared/packages": 120,
+      "tooling": 36,
+      "backend/api-gateway": 23827
+    },
+    "lite_files": 1107,
+    "note": "Stats are from full index; this lite version has fewer files"
+  },
+  "key_mapping": { "p": "path", "c": "component", "l": "language" },
+  "files": [
+    { "p": ".gitleaks.toml", "c": "root", "l": "toml" },
+    { "p": ".pre-commit-config.yaml", "c": "root", "l": "yaml" },
+    { "p": ".safety-policy.yml", "c": "root", "l": "yaml" },
+    { "p": "CONTRIBUTING.md", "c": "root", "l": "markdown" },
+    { "p": "DOCUMENTATION_UPDATE_PLAN.md", "c": "root", "l": "markdown" },
+    { "p": "FRONTEND_ROADMAP.md", "c": "root", "l": "markdown" },
+    { "p": "KNOWN_ISSUES.md", "c": "root", "l": "markdown" },
+    { "p": "PHASE_STATUS.md", "c": "root", "l": "markdown" },
+    { "p": "PRODUCTION_DEPLOYMENT.md", "c": "root", "l": "markdown" },
+    { "p": "README.md", "c": "root", "l": "markdown" },
+    {
+      "p": "apps/admin-panel/src/App.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/AdminLayout.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/AdminLayoutWithRouter.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/Dashboard.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/KnowledgeBase.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/ProtectedRoute.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/SettingsPanel.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/ToolsIntegrations.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/dashboard/ActivityFeed.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/dashboard/IntegrationsWidget.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/dashboard/MetricCard.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/dashboard/ServiceStatus.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/feature-flags/RuleEditor.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/feature-flags/ScheduledChangesPanel.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/feature-flags/UserOverridesPanel.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/feature-flags/VariantEditor.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/feature-flags/index.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/integrations/SystemKeyManager.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/knowledge/AuditDrawer.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/knowledge/DocumentTable.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/knowledge/UploadDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/logs/LogFilters.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/logs/LogViewer.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/security/AuditLogViewer.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/security/TwoFactorSettings.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/security/UserAPIKeyManager.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/session/SessionTimeoutWarning.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/AskAIButton.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/ConfirmDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/DataPanel.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/EmptyState.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/ErrorBoundary.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/ErrorState.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/HelpTooltip.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/LoadingState.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/PageContainer.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/PageHeader.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/RefreshButton.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/StatCard.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/StatusBadge.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/TabGroup.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/shared/index.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/BulkActionBar.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/CreateUserDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/EditUserDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/PasswordResetDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/PermanentDeleteDialog.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/RoleBadge.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/components/users/RoleSelector.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/config/env.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/contexts/AuthContext.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/contexts/LanguageContext.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/use2FA.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useAdminSummary.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useAuditLogs.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useBackups.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useBulkOperations.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useCreateUser.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useEditUser.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useFeatureFlags.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useFeatureFlagsRealtime.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useIndexingJobs.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useIntegrations.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useKBUpload.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useKnowledgeDocuments.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useMetrics.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useModelAnalytics.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/usePHI.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/usePrompts.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useRealtimeEvents.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useScheduledChanges.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useSystem.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useSystemKeys.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useTools.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useTroubleshooting.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useUserAPIKeys.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useUserOverrides.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/hooks/useVoiceMonitor.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/i18n/index.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/lib/api.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/lib/apiClient.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/main.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/AnalyticsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/BackupsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/CalendarConnectionsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/ClinicalContextsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/ConversationDetailPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/ConversationsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/DashboardPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/FeatureFlagsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/FunctionCallAnalyticsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/IntegrationsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/KnowledgeBasePage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/LoginPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/SecurityPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/SystemPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/ToolsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/TroubleshootingPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/UsersPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/VoiceMonitorPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/prompts/PromptEditorModal.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/prompts/PromptTestPanel.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/prompts/PromptsPage.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/prompts/VersionHistoryDrawer.tsx",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/pages/prompts/index.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/services/websocket.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/test/setup.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/admin-panel/src/types.ts",
+      "c": "frontend/admin-panel",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/(docs)/[...slug]/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/analytics/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/backups/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/implementation-plan/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/integration/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/integrations/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/knowledge-base/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/models/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/overview/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/realtime-events/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/security/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/system/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/troubleshooting/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/admin/users/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/ai/api/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/ai/onboarding/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/ai/status/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/architecture/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/backend/architecture/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/backend/data-model/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/backend/websocket/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/dev/docs-system/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/docs/[...slug]/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/frontend/admin-panel/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/frontend/voice/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/frontend/web-app/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/layout.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging-backend/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging-docs/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging-frontend/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging-overview/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/debugging-voice/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/deployment/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/development/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/runbooks/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/operations/testing/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/overview/project-summary/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/all-docs/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/api/generated/api-spec.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/api/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/archive/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/configuration/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/reference/packages/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/robots.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/sitemap.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/voice/architecture/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/app/voice/page.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/ClientProviders.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/DocPage.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/DocsSearch.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/EditPageLink.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/Header.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/HeadingContext.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/MarkdownRenderer.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/OnThisPage.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/PageFrame.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/SearchModal.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/Sidebar.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/mdx/Badge.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/mdx/Callout.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/mdx/Mermaid.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/mdx/Tabs.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/components/mdx-components.tsx",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/apiClient.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/docs.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/i18n.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/mdx.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/navigation.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/remark-mermaid.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/docs-site/src/lib/search.ts",
+      "c": "frontend/docs-site",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/App.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/AppRoutes.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/__mocks__/virtual-pwa-register-react.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/Chat.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/KeyboardShortcutsDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/LanguageSelector.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/LanguageToolbar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/Layout.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/PWAPrompt.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/Sidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/ToolConfirmationDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/accessibility/LiveRegion.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/accessibility/SkipLink.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/AdminErrorBoundary.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/AdminSkeletons.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/AnalyticsDashboard.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/AuditLogViewer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/CacheManager.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/DashboardOverview.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/FeatureFlagsManager.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/KnowledgeBaseManager.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/MetricsCharts.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/SystemHealth.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/UserManagement.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/VoiceAdminPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/VoiceMetricsDashboard.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/admin/WebSocketStatusPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/auth/ProtectedRoute.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/BranchPreview.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/BranchSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/BranchTree.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/ChatAttachmentUpload.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/ChatErrorBoundary.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/ChatHeaderActions.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/CitationDisplay.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/ConnectionStatus.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/DeleteConfirmationDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/MessageActionMenu.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/MessageBubble.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/MessageInput.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/MessageList.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/RegenerationOptionsDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/chat/StreamingIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/citations/CitationSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/clinical/ClinicalContextAdapter.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/clinical/ClinicalContextPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/clinical/ClinicalContextPresetPicker.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/clinical/ClinicalContextSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/conversations/ConversationList.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/conversations/ConversationListItem.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/conversations/ConversationsSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/export/ExportDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/feedback/FeedbackWidget.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/files/FileAttachmentList.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/files/FileUpload.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/files/FileUploadZone.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/folders/FolderDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/folders/FolderSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/layout/AnalyticsConsentUI.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/layout/AnalyticsOptInLayout.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/layout/MainLayout.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/notifications/Toast.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/notifications/ToastContainer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/performance/LazyComponent.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/performance/OptimizedImage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/sharing/ShareDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/sidebar/DeleteAllConfirmDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/templates/SaveAsTemplateDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/templates/TemplatePicker.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/ui/Tooltip.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/CollapsibleContextPane.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/CollapsibleSidebar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/UnifiedChatContainer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/UnifiedChatError.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/UnifiedChatSkeleton.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/UnifiedHeader.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/UnifiedInputArea.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/unified-chat/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/AudioDeviceSelector.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/AudioPlayer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/AudioPlayerEnhanced.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/BargeInFeedback.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/CalibrationDialog.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/CompactVoiceBar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/ConnectionStatusIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/DuplexIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/EmotionIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/FrequencySpectrum.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/LatencyIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/PendingRecordingsPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/PlaybackSpeedControl.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/QualityBadge.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/SpeakerAttributedTranscript.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/StreamingTextDisplay.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/ThinkingFeedbackPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/ThinkingVisualIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/ToolCallDisplay.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VitalsPanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceActivityIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceBargeInIndicator.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceErrorBoundary.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceExpandedDrawer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceFirstInputBar.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceInput.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceInputEnhanced.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceMetricsDisplay.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceMicControl.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceModeSettings.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceSettings.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceSettingsEnhanced.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/VoiceTranscriptPreview.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/components/voice/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/contexts/ConversationSessionContext.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/contexts/LanguageContext.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/contexts/ThemeContext.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/contexts/ToastContext.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/chatSessionUtils.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useAdminQuery.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useAnalytics.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useAudioPlayback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useAuditTrail.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useAuth.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useBackchannelAudio.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useBargeInPromptAudio.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useBranching.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useChatSession.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useClinicalContext.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useConnectionManager.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useConversationManager.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useConversations.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useDebounce.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useEncryptedStorage.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useExperiment.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useFeedback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useFolders.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useHapticFeedback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useInputModeDetection.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useIntelligentBargeIn/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useIntelligentBargeIn/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useIntersectionObserver.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useIsMobile.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useKeyboardShortcuts.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useLanguage.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useMessagePagination.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useMultilingual.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useNetworkStatus.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useNeuralVAD.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useOfflineVAD.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useOfflineVoiceCapture.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/usePWA.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/usePerformanceMetrics.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/usePersonalization.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/usePhiDetection.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useRTL.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useServiceWorker.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useStreamingAudio.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useTTAudioPlayback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useTemplates.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useThinkerTalkerSession.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useThinkingTone.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useThrottle.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useToast.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useToolConfirmation.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useUnifiedMemory.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVirtualList.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVoiceKeyboardShortcuts.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVoiceMetrics.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVoiceModeStateMachine.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVoicePreferencesSync.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useVoiceSession.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useWebRTCClient.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/hooks/useWebVitals.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/i18n/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/AccessibilitySettings.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/Announcer.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/FocusTrap.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/SkipLinks.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/accessibility/useReducedMotion.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/analytics/AnalyticsProvider.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/analytics/ErrorBoundary.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/analytics/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api/adminApi.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api/attachmentsApi.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api/conversationsApi.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api/exportApi.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api/foldersApi.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/api.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/audioFeedback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/audioRateLimiter.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/bargeInClassifier/backchannelDetector.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/bargeInClassifier/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/bargeInClassifier/intentClassifier.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/bargeInClassifier/phraseLibrary.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/bargeInClassifier/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/conversationManager/discourseTracker.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/conversationManager/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/conversationManager/sentimentAnalyzer.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/conversationManager/toolCallHandler.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/conversationManager/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/echoCancellation/adaptiveFilter.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/echoCancellation/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/echoCancellation/privacyFilter.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/echoCancellation/speakerReference.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/echoCancellation/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/featureFlags.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/fullDuplex/audioMixer.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/fullDuplex/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/fullDuplex/overlapHandler.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/fullDuplex/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/logger.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/multilingual/accentProfiles.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/multilingual/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/multilingual/languageDetector.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/multilingual/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/networkMonitor.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/offlineFallback.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/ttsCacheManager.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/offline/webrtcVAD.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/personalization/behaviorTracker.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/personalization/calibrationManager.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/personalization/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/personalization/preferenceStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/personalization/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/sentry.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/sileroVAD/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/sileroVAD/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/sileroVAD/vadWorker.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/turnTaking/contextResumer.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/turnTaking/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/turnTaking/prosodicAnalyzer.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/turnTaking/silencePredictor.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/turnTaking/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/utils.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/validations.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/voiceTelemetry.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/lib/voiceTimeouts.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/main.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/ChatPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/ClinicalContextPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/DocumentsPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/HomePage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/IntegrationsPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/LoginPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/OAuthCallbackPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/ProfilePage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/RegisterPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/SharedConversationPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/VoiceTestPage.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/pages/admin/AdminDashboard.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/analytics/AnalyticsService.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/analytics/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/analytics/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/audit/AuditTrail.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/audit/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/experiments/ExperimentService.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/experiments/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/experiments/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/feedback/FeedbackService.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/feedback/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/feedback/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/phi/PhiDetector.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/phi/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/phi/patterns.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/storage/CryptoUtils.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/storage/EncryptedStorage.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/services/storage/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/stores/authStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/stores/feedbackPreferencesStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/stores/languagePreferencesStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/stores/unifiedConversationStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/stores/voiceSettingsStore.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/MockWebSocket.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/featureFlagHelpers.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/mocks/MockAudioContext.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/mocks/MockMediaDevices.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/mocks/MockWebSocket.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/mocks/index.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/setup.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/test/test-utils.tsx",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/types.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/utils/exportConversation.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/utils/memoize.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/utils/storageQuota.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/utils/vad.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    {
+      "p": "apps/web-app/src/utils/waveform.ts",
+      "c": "frontend/web-app",
+      "l": "typescript"
+    },
+    { "p": "docker-compose.override.yml", "c": "root", "l": "yaml" },
+    { "p": "docker-compose.yml", "c": "root", "l": "yaml" },
+    { "p": "docs/ACCESSIBILITY_AUDIT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ADMIN_PANEL_DEPLOYMENT.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/ADMIN_PANEL_LOGIN_FIX.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/ADMIN_PANEL_SPECS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ALL_PHASES_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ANSIBLE_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/API_REFERENCE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ARCHITECTURE_V2.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/BACKEND_ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/BACKEND_SKELETON_VERIFICATION.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/CHAOS_ENGINEERING.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/CICD_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/CLAUDE_EXECUTION_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/CLAUDE_PROMPTS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/COMPOSE_FIRST_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/COMPOSE_TO_K8S_MIGRATION.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/CONFIGURATION_REFERENCE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/CONTINUOUS_IMPROVEMENT_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/CONTINUOUS_IMPROVEMENT_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/DATA_MODEL.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/DEEP_VERIFICATION_QA_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/DEPLOYMENT_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DEPLOYMENT_SUMMARY_ASIMO.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DEVELOPMENT_PHASES.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DEVELOPMENT_PHASES_V2.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DEVELOPMENT_SETUP.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DISASTER_RECOVERY_RUNBOOK.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/DOCS_HEALTH_OVERVIEW.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/DOCUMENTATION_COMPLETION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/DOCUMENTATION_METADATA_STANDARD.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/DOCUMENTATION_SITE_SPECS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ENHANCEMENT_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/FEATURE_FLAGS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/FILE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/FINAL_DOCUMENTATION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/FRONTEND_ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/FRONTEND_COMPLETION_PLAN.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/FRONTEND_VERIFICATION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/HIPAA_COMPLIANCE_MATRIX.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/INFRASTRUCTURE_AS_CODE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/INFRASTRUCTURE_SETUP.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/INTEGRATION_HANDOFF.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/INTEGRATION_IMPROVEMENTS_PHASE_0-8.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/INTERNAL_DOCS_SYSTEM.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/LOAD_TESTING_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/LOCAL_DEVELOPMENT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/LOGIN_500_FIX_2025-11-25.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/MEDICAL_FEATURES.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/MESSAGE_EDIT_PROGRESS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/NEXTCLOUD_APPS_DESIGN.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/NEXTCLOUD_INTEGRATION.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/NEXT_PHASE_IMPROVEMENTS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/OAUTH_LOGIN_CONFIG.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/OBSERVABILITY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ORCHESTRATION_DESIGN.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/PART2_DEFERRED_BACKEND_FEATURES_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/PART3_PLATFORM_ENHANCEMENTS_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/PERFORMANCE_BENCHMARKS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PERFORMANCE_TUNING_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_02_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/PHASE_02_ENHANCEMENTS_REPORT.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/PHASE_03_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_04_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_05_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_06_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_07_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_08_API_CONTRACTS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_08_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_09_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/PHASE_0_1_COMPLETION_REPORT.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/PHASE_0_1_OPTIMIZATION_RECOMMENDATIONS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/PHASE_10_COMPLETION_REPORT.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_2_OPTIMIZED_PLAN.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/PHASE_TEMPLATE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/PRODUCTION_DEPLOYMENT_RUNBOOK.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/PRODUCTION_READINESS_CHECKLIST.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/PROJECT_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/README.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/REALTIME_ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/REMAINING_MESSAGE_EDIT_WORK.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/ROADMAP.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/RTO_RPO_DOCUMENTATION.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/SECURITY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/SECURITY_COMPLIANCE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/SEMANTIC_SEARCH_DESIGN.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/SERVICE_CATALOG.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/START_HERE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/STYLE_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/SYSTEM_REVIEW_2025-11-22.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TERRAFORM_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TESTING_CONTRACTS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TESTING_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TESTING_RESULTS_2025-11-22.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/THINKER_TALKER_PIPELINE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TOOLS_AND_INTEGRATIONS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TOOLS_COMPLETION_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/TOOLS_INTEGRATION_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/UNIFIED_ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/UNIFIED_CHAT_VOICE_UI.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/USER_GUIDE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/VOICE_MODE_ENHANCEMENT_10_PHASE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/VOICE_MODE_PIPELINE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/VOICE_MODE_SETTINGS_GUIDE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/VOICE_READY_STATE_2025-11-25.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/VOICE_STATE_2025-11-29.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/WEBSOCKET_PROTOCOL.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/WEB_APP_SPECS.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/WEB_APP_WIREFRAMES.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/WORLD_CLASS_BARGE_IN_IMPLEMENTATION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin/ADMIN_PANEL_IMPLEMENTATION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin/ADMIN_PANEL_INTEGRATION_GUIDE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin/REALTIME_EVENTS_GUIDE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/admin/feature-parity.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/admin-guide/feature-flags/README.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/admin-panel-guide.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/advanced-types.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/best-practices.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/cli-reference.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/lifecycle.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/multi-environment.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/admin-guide/feature-flags/naming-conventions.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/admin-guide/for-ai-agents.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/admin-guide/system-settings-vs-flags.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/ai/AGENT_API_REFERENCE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ai/AGENT_ONBOARDING.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/ai/AGENT_TASK_INDEX.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/ai/REPO_NAVIGATION_FOR_AGENTS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/api-reference/API_ROUTES.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/api-reference/rest-api.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/api-reference/voice-pipeline-ws.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/architecture/ARCHITECTURE_DIAGRAMS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/architecture/README.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/BACKEND_IMPLEMENTATION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/BACKEND_IMPLEMENTATION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/BRANCHING_AND_SHORTCUTS_IMPLEMENTATION.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/CHANGES_SUMMARY.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/archive/CURRENT_PHASE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/DEPLOYMENT_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/DESIGN_SYSTEM_IMPLEMENTATION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/DEVELOPMENT_LOG.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/DEVELOPMENT_SESSION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/DEV_CORS_FIX_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/DOCUMENTATION_CREATED.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/FRONTEND_PHASE1_PHASE2_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/FRONTEND_PHASE8_TESTS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_09_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_10_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_10_LOCUST_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_10_OPTIMIZATION_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_3_VOICE_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/PHASE_5_COMPLETE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/PHASE_6_CITATIONS_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/PHASE_7_COMPLETE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/PHASE_7_CONVERSATION_MANAGEMENT_PROGRESS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_7_EXPORT_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/PHASE_8_ACCESSIBILITY_COMPLETE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/PLAN.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/archive/PULL_REQUEST.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/archive/README.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/REALTIME_SANITY_CHECK.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/SESSION_SUMMARY_2025-11-21_PHASE_10.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/SESSION_SUMMARY_2025-11-21_PHASE_9.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/archive/VOICE_ENDPOINT_FIX.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/archive/VOICE_MODE_ENHANCEMENT_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/VOICE_REALTIME_INTEGRATION.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/WEB_APP_DEVELOPMENT_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/archive/WORK_COMPLETED_2025-11-21.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/ADMIN_PANEL_FEATURE_SPECS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/API_REFERENCE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/ARCHITECTURE_OVERVIEW.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/ButtonGroup.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/CLIENT_DEV_ROADMAP.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/CLIENT_FOLDER_STRUCTURE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/CODE_EXAMPLES.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/COMPONENT_LIBRARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/CONVERSATIONS_AND_ROUTING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/DEVELOPMENT_WORKFLOW.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/DOCS_SITE_FEATURE_SPECS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/FRONTEND_PHASE3_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/INTEGRATION_GUIDE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/IconButton.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/MASTER_IMPLEMENTATION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/OPEN_QUESTIONS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/README.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/REALTIME_PROXY_SPEC.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/TECHNICAL_ARCHITECTURE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/TESTING_GUIDE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/TESTING_PHASE2.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/TESTING_PHASE3.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/WEB_APP_FEATURE_SPECS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/api-reference/rest-api.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/overview/ARCHITECTURE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/client-implementation/realtime/proxy-spec.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/debugging/DEBUGGING_BACKEND.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/debugging/DEBUGGING_DOCS_SITE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/debugging/DEBUGGING_FRONTEND.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/debugging/DEBUGGING_INDEX.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/debugging/DEBUGGING_OVERVIEW.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/debugging/DEBUGGING_VOICE_REALTIME.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/deployment/DEPLOYMENT_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/design-system/PHASE_1_BREAKDOWN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/frontend/thinker-talker-hooks.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/infra/DOCS_DOMAIN.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/operations/BUSINESS_METRICS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/CONNECTION_POOL_OPTIMIZATION.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/OPERATIONS_OVERVIEW.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/POST_LAUNCH_MONITORING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/operations/SLO_DEFINITIONS.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/operations/compliance/ANALYTICS_DATA_POLICY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/epic-fhir-runbook.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/BACKUP_RESTORE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/DEPLOYMENT.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/DOCS_SITE_DEPLOYMENT_AND_TLS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/INCIDENT_RESPONSE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/MONITORING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/SCALING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/operations/runbooks/TROUBLESHOOTING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/overview/ARCHITECTURE.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/overview/IMPLEMENTATION_STATUS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phase-15-final-review/FINAL_CODE_REVIEW.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phase-15-final-review/PROJECT_HANDOFF_PACKAGE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phase8-folders-testing-guide.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_00_INITIALIZATION.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_01_INFRASTRUCTURE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_01_LOCAL_ENVIRONMENT.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_02_DATABASE_SCHEMA.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_02_SECURITY_NEXTCLOUD.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_03_MICROSERVICES.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_04_VOICE_PIPELINE.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/phases/PHASE_05_MEDICAL_AI.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/phases/PHASE_06_NEXTCLOUD_APPS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_07_ADMIN_PANEL.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_08_OBSERVABILITY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/phases/PHASE_09_IAC_CICD.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/phases/PHASE_10_LOAD_TESTING.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_11_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_11_SECURITY_HIPAA.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_12_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/phases/PHASE_12_HA_DR.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/phases/PHASE_13_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_13_TESTING_DOCS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_14_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_14_PRODUCTION_DEPLOY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/phases/PHASE_15_COMPLETE_SUMMARY.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/planning/SPRINT_3_DESIGN_DOCS.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/planning/TODO_DOCS_ENHANCEMENT_PHASE2.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/plans/DOCS_SITE_PATH_RESOLUTION_PLAN.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/plans/STRATEGIC_ROADMAP_2025_Q1.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/releases/v4.1.0-release-announcement.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/releases/v4.1.1-release-announcement.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/releases/v4.1.2-release-announcement.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/services/talker-service.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/services/thinker-service.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/start/admins.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/start/ai-agents.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/start/developers.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/start/users.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/testing/E2E_TESTING_GUIDE.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/voice/MODEL_VERSIONS.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/voice/adaptive-quality-service.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/voice/adaptive-vad-presets.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/voice/design/g2p-alternatives-evaluation.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/fhir-streaming-service.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/latency-budgets-guide.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/lexicon-service-guide.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/multilingual-rag-architecture.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/phase3-implementation-plan.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/phi-aware-stt-routing.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/roadmap/next-prs-planning.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/roadmap/voice-mode-post-v41-roadmap.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/voice/rtl-support-guide.md", "c": "docs", "l": "markdown" },
+    { "p": "docs/voice/screenshots/README.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/voice/speaker-diarization-service.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/streaming-text-display.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/thinking-tone-settings.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/voice/unified-memory.md", "c": "docs", "l": "markdown" },
+    {
+      "p": "docs/voice/voice-first-input-bar.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    {
+      "p": "docs/voice/voice-mode-v4-overview.md",
+      "c": "docs",
+      "l": "markdown"
+    },
+    { "p": "docs/voice/whats-new-v4-1.md", "c": "docs", "l": "markdown" },
+    { "p": "package.json", "c": "root", "l": "json" },
+    {
+      "p": "packages/api-client/src/generated/api-types.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/api-client/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/api-client/src/retry.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/animations.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/breakpoints.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/colors.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/elevation.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/spacing.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/design-tokens/src/typography.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/telemetry/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/types/src/featureFlags.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/types/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Avatar.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Badge.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Button.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Card.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Dialog.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/DropdownMenu.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/FeedbackForm.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/FeedbackRating.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/HelpButton.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/IconButton.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Input.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Label.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/LocaleSwitcher.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/OAuthButton.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Select.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Skeleton.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Slider.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Spinner.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/Table.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/medical/AlertBanner.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/medical/MedicationList.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/medical/VitalSignCard.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/components/medical/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/lib/utils.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/providers/ThemeContext.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/providers/ThemeProvider.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/providers/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/providers/useTheme.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Avatar.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Badge.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Button.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Card.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Dialog.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/IconButton.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Input.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/LocaleSwitcher.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Select.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Skeleton.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Spinner.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/Table.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/medical/AlertBanner.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/medical/MedicationList.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/stories/medical/VitalSignCard.stories.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/test/setup.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/ui/src/test/test-utils.tsx",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    {
+      "p": "packages/utils/src/index.ts",
+      "c": "shared/packages",
+      "l": "typescript"
+    },
+    { "p": "pnpm-workspace.yaml", "c": "root", "l": "yaml" },
+    {
+      "p": "services/api-gateway/app/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin/schemas.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin/utils.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_attachments.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_cache.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_calendar_connections.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_clinical.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_conversations.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_feature_flags.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_folders.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_integrations.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_kb.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_medical.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_panel.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_phi.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_prompts.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_system.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_tools.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_troubleshooting.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_user_flag_overrides.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/admin_voice.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/advanced_search.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/attachments.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/auth.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/auth_2fa.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/auth_oauth.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/calendar_connections.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/clinical_context.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/conversation_schemas/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/conversation_schemas/schemas.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/conversations.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/experiments.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/export.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/external_medical.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/feature_flags_realtime.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/folders.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/health.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/integrations.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/medical_ai.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/metrics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/realtime.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/sharing.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/user_api_keys.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/users.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/voice.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/voice_schemas/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/api/voice_schemas/schemas.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/accessibility_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/api_envelope.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/audit_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/business_metrics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/cache_decorators.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/config.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/context_handler.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/database.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/dependencies.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/event_bus.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/feature_flags.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/flag_definitions.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/language_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/logging.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/metrics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/middleware.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/password_validator.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/plugin_framework.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/policy_config.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/query_profiler.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/request_id.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/resilience.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/security.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/sentry.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/slo.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/tracing_utils.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/voice_errors.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/core/voice_timing.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/adaptive_tuning.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/anomaly_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/collector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/provider_monitor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/analytics_engine/realtime_tuning.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/care_gaps.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/clinical_plugins.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/code_extractor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/context_aware_phi_filter.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/deidentification_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/enhanced_phi_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/lab_trending.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/medication_reconciliation.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/phi_confidence_calibrator.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/phi_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/clinical_engine/reasoning.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/ml_classifier.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/progressive_response.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/query_classifier.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/reference_resolver.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/repair_tracker.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/conversation_engine/turn_taking.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/autocorrect.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugin_registry.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/base.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/ehr_commands.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/ehr_query.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/emergency.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/radiology.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/dictation_engine/plugins/soap.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/emotion_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/emotion_engine/detection.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/emotion_engine/fusion.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/emotion_engine/personalization.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/emotion_engine/response_adaptation.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/memory_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/memory_engine/privacy_enforcer.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/memory_engine/progress_tracker.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/memory_engine/session_context.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/memory_engine/user_preferences.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/voice_engine/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/engines/voice_engine/unified_voice_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/ehr_data_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/epic_adapter.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/fhir_client.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/fhir_models.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/provider_monitor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/integrations/fhir/smart_auth_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/main.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/middleware/metrics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/middleware/phi_redaction.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/middleware/tracing.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/middleware/voice_auth.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/admin_audit_log.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/attachment.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/audit_log.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/citation.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/clinical_context.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/conversation_memory.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/document.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/feature_flag.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/feature_flag_analytics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/folder.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/message.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/prompt.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/session.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/session_event.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/system_api_key.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/user.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/user_api_key.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/user_emotion_profile.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/user_feature_flag.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/user_voice_preferences.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/models/voice_session_metrics.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/schemas/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/schemas/auth.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/schemas/prompt.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/schemas/websocket.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/adaptive_quality_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/adaptive_vad_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/admin_audit_log_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/admin_event_publisher.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/advanced_search.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/audio_processing_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/audio_processor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/audit_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/backchannel_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/barge_in_classifier.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/cache_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/caldav_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/carddav_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/dictation_phi_monitor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/dictation_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/document_queue.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/elevenlabs_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/email_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/emotion_detection_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/enhanced_g2p_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/event_logging_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/external_connectors.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/feature_flags.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/feedback_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/fhir_subscription_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/file_processor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/hybrid_search_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/intent_classifier.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/kb_indexer.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/language_detection_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/latency_aware_orchestrator.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/lexicon_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/llm_client.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/local_whisper_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/log_stream_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/medical_calculators.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/medical_embedding_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/medical_embeddings.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/medical_ner_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/medical_vocabulary_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/memory_context_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/model_adapters.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/multi_hop_reasoning_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/multilingual_rag_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/nextcloud.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/nextcloud_file_indexer.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/note_formatter_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/oidc_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/openai_realtime_client.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/openai_tts_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/parallel_stt_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/patient_context_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/phi_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/phi_stt_router.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/phi_telemetry.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/preemptive_stt_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/privacy_aware_stt_router.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/prompt_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/prosody_analysis_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/pubmed_enhanced_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/query_expansion.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/rag_cache.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/rag_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/realtime_voice_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/repair_strategy_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/reranking_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/rule_engine.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/search_aggregator.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/sentence_chunker.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/session_activity.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/session_analytics_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/speaker_diarization_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/ssml_processor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/storage_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/streaming_stt_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/system_key_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/talker_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/thinker_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/thinker_talker_websocket_handler.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/thinking_feedback_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/token_revocation.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/analytics_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/calendar_tool.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/medical_tools.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/oauth_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/search_tools.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tools/tool_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/translation_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tts/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tts/quality_presets.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/tts_cache_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/two_factor.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/unified_memory_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/uptodate_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/user_api_key_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/user_flag_override_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/variant_assignment.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_activity_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_authentication.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_command_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_fallback_orchestrator.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_pipeline_service.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_style_detector.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/voice_websocket_handler.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/services/webrtc_signaling.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/testing/__init__.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    {
+      "p": "services/api-gateway/app/testing/chaos_engineering.py",
+      "c": "backend/api-gateway",
+      "l": "python"
+    },
+    { "p": "trivy.yaml", "c": "root", "l": "yaml" },
+    { "p": "tsconfig.json", "c": "root", "l": "json" },
+    { "p": "turbo.json", "c": "root", "l": "json" }
+  ]
+}

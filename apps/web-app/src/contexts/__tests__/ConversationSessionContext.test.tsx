@@ -34,8 +34,8 @@ vi.mock("../../hooks/useChatSession", () => ({
   })),
 }));
 
-vi.mock("../../hooks/useRealtimeVoiceSession", () => ({
-  useRealtimeVoiceSession: vi.fn(() => ({
+vi.mock("../../hooks/useVoiceSession", () => ({
+  useVoiceSession: vi.fn(() => ({
     status: "disconnected",
     error: null,
     transcript: "",
@@ -46,6 +46,8 @@ vi.mock("../../hooks/useRealtimeVoiceSession", () => ({
     disconnect: vi.fn(),
     sendMessage: vi.fn(),
     isConnected: false,
+    isConnecting: false,
+    isMicPermissionDenied: false,
   })),
 }));
 

@@ -17,6 +17,7 @@ build/
 .env.local
 .env.*.local
 *.env
+e2e/.env*
 
 # IDEs
 .vscode/
@@ -51,6 +52,11 @@ out/
 build/
 dist/
 
+apps/docs-site/public/search-index.json
+
+artifacts/
+
+
 # Turbo
 .turbo/
 
@@ -61,6 +67,7 @@ htmlcov/
 coverage/
 playwright-report/
 test-results/
+e2e/.auth/
 
 # Docker
 *.pid
@@ -100,3 +107,6 @@ __MACOSX/
 # Jaeger observability data
 infrastructure/observability/jaeger/data/
 infrastructure/observability/jaeger/key/
+apps/web-app/dev-dist/
+.ai/
+apps/docs-site/public/agent/repo-index.json

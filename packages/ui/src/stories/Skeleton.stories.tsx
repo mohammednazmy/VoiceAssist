@@ -2,39 +2,44 @@
  * Skeleton Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { Skeleton, SkeletonAvatar, SkeletonCard, SkeletonTableRow } from '../components/Skeleton';
+import type { Meta, StoryObj } from "@storybook/react";
+import {
+  Skeleton,
+  SkeletonAvatar,
+  SkeletonCard,
+  SkeletonTableRow,
+} from "../components/Skeleton";
 
 const meta = {
-  title: 'Components/Skeleton',
+  title: "Components/Skeleton",
   component: Skeleton,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Loading placeholder with pulse animation. Use to indicate content is being loaded.',
+          "Loading placeholder with pulse animation. Use to indicate content is being loaded.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['text', 'circle', 'rectangle'],
-      description: 'The shape variant',
+      control: "select",
+      options: ["text", "circle", "rectangle"],
+      description: "The shape variant",
     },
     width: {
-      control: 'text',
-      description: 'Width of the skeleton (CSS value)',
+      control: "text",
+      description: "Width of the skeleton (CSS value)",
     },
     height: {
-      control: 'text',
-      description: 'Height of the skeleton (CSS value)',
+      control: "text",
+      description: "Height of the skeleton (CSS value)",
     },
     lines: {
-      control: 'number',
-      description: 'Number of text lines (for text variant)',
+      control: "number",
+      description: "Number of text lines (for text variant)",
     },
   },
 } satisfies Meta<typeof Skeleton>;
@@ -44,9 +49,9 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    variant: 'rectangle',
-    width: '200px',
-    height: '100px',
+    variant: "rectangle",
+    width: "200px",
+    height: "100px",
   },
 };
 
@@ -61,7 +66,7 @@ export const Text: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Text skeleton for loading text content.',
+        story: "Text skeleton for loading text content.",
       },
     },
   },
@@ -76,7 +81,8 @@ export const TextLines: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Multiple text lines with automatic width variation on the last line.',
+        story:
+          "Multiple text lines with automatic width variation on the last line.",
       },
     },
   },
@@ -93,7 +99,7 @@ export const Circle: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Circular skeleton for avatars and profile pictures.',
+        story: "Circular skeleton for avatars and profile pictures.",
       },
     },
   },
@@ -110,7 +116,7 @@ export const Rectangle: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Rectangular skeleton for images and cards.',
+        story: "Rectangular skeleton for images and cards.",
       },
     },
   },
@@ -129,7 +135,7 @@ export const AvatarSkeleton: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Pre-configured avatar skeleton with accompanying text.',
+        story: "Pre-configured avatar skeleton with accompanying text.",
       },
     },
   },
@@ -144,7 +150,7 @@ export const CardSkeleton: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Pre-configured card skeleton for loading card content.',
+        story: "Pre-configured card skeleton for loading card content.",
       },
     },
   },
@@ -174,7 +180,7 @@ export const TableSkeleton: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Pre-configured table row skeleton for loading table data.',
+        story: "Pre-configured table row skeleton for loading table data.",
       },
     },
   },
@@ -205,7 +211,7 @@ export const ComplexLayout: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Complex layout combining multiple skeleton types.',
+        story: "Complex layout combining multiple skeleton types.",
       },
     },
   },

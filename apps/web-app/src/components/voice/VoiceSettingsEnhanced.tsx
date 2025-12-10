@@ -1,6 +1,8 @@
 /**
  * Enhanced Voice Settings Component
  * Configure voice input/output preferences with backend persistence
+ *
+ * Voice Mode Overhaul: Added context-aware style toggle and backend sync
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -14,6 +16,8 @@ import {
 import type { VADConfig } from "../../utils/vad";
 import { DEFAULT_VAD_CONFIG } from "../../utils/vad";
 import { useAuth } from "../../hooks/useAuth";
+import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
+import { useVoicePreferencesSync } from "../../hooks/useVoicePreferencesSync";
 
 export interface VoiceSettingsData {
   // TTS Settings
@@ -67,30 +71,77 @@ export function VoiceSettingsEnhanced({
   initialSettings,
 }: VoiceSettingsEnhancedProps) {
   const { apiClient } = useAuth();
+
+  // Use zustand store for persistent settings
+  const {
+    voice,
+    playbackSpeed,
+    autoPlayInVoiceMode,
+    contextAwareStyle,
+    stability,
+    similarityBoost,
+    style: ttsStyle,
+    setVoice,
+    setPlaybackSpeed,
+    setAutoPlayInVoiceMode,
+    setContextAwareStyle,
+    setStability,
+    setSimilarityBoost,
+    setStyle,
+  } = useVoiceSettingsStore();
+
+  // Sync with backend
+  const { resetPreferences } = useVoicePreferencesSync();
+
+  // Local state for VAD and volume (not persisted to backend)
   const [settings, setSettings] = useState<VoiceSettingsData>({
     ...DEFAULT_SETTINGS,
     ...initialSettings,
+    voiceId: voice,
+    speed: playbackSpeed,
+    autoPlay: autoPlayInVoiceMode,
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showTTSAdvanced, setShowTTSAdvanced] = useState(false);
   const [isTestingVoice, setIsTestingVoice] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Load settings from localStorage on mount
+  // Sync local state with store on mount
+  useEffect(() => {
+    setSettings((prev) => ({
+      ...prev,
+      voiceId: voice,
+      speed: playbackSpeed,
+      autoPlay: autoPlayInVoiceMode,
+    }));
+  }, [voice, playbackSpeed, autoPlayInVoiceMode]);
+
+  // Load VAD settings from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("voiceassist-voice-settings");
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
+        setSettings((prev) => ({
+          ...prev,
+          vadEnabled: parsed.vadEnabled ?? prev.vadEnabled,
+          vadEnergyThreshold:
+            parsed.vadEnergyThreshold ?? prev.vadEnergyThreshold,
+          vadMinSpeechDuration:
+            parsed.vadMinSpeechDuration ?? prev.vadMinSpeechDuration,
+          vadMaxSilenceDuration:
+            parsed.vadMaxSilenceDuration ?? prev.vadMaxSilenceDuration,
+          volume: parsed.volume ?? prev.volume,
+        }));
       } catch (err) {
         console.error("Failed to parse voice settings:", err);
       }
     }
   }, []);
 
-  // Save settings to localStorage and notify parent
+  // Save VAD/volume settings to localStorage and notify parent
   useEffect(() => {
     localStorage.setItem(
       "voiceassist-voice-settings",
@@ -103,10 +154,21 @@ export function VoiceSettingsEnhanced({
     key: K,
     value: VoiceSettingsData[K],
   ) => {
+    // Update local state
     setSettings((prev) => ({ ...prev, [key]: value }));
+
+    // Sync to zustand store for backend-persisted settings
+    if (key === "voiceId" && typeof value === "string") {
+      setVoice(value);
+    } else if (key === "speed" && typeof value === "number") {
+      setPlaybackSpeed(value as 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2);
+    } else if (key === "autoPlay" && typeof value === "boolean") {
+      setAutoPlayInVoiceMode(value);
+    }
   };
 
-  const resetToDefaults = () => {
+  const resetToDefaults = async () => {
+    await resetPreferences();
     setSettings(DEFAULT_SETTINGS);
   };
 
@@ -286,6 +348,120 @@ export function VoiceSettingsEnhanced({
             <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
           </label>
         </div>
+
+        {/* Context-Aware Style */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <Label htmlFor="context-aware-style" className="font-medium">
+              Context-Aware Voice Style
+            </Label>
+            <p className="text-sm text-neutral-600 mt-1">
+              Automatically adjust voice tone based on content (urgent,
+              empathetic, etc.)
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer ml-4">
+            <input
+              id="context-aware-style"
+              type="checkbox"
+              checked={contextAwareStyle}
+              onChange={(e) => setContextAwareStyle(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+          </label>
+        </div>
+
+        {/* Advanced TTS Settings Toggle */}
+        <button
+          type="button"
+          onClick={() => setShowTTSAdvanced(!showTTSAdvanced)}
+          className="w-full flex items-center justify-between px-3 py-2 text-sm text-neutral-700 bg-neutral-50 rounded-md hover:bg-neutral-100 transition-colors"
+        >
+          <span className="font-medium">Advanced Voice Quality</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className={`w-4 h-4 transition-transform ${showTTSAdvanced ? "rotate-180" : ""}`}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+
+        {/* Advanced TTS Settings */}
+        {showTTSAdvanced && (
+          <div className="space-y-4 pt-2 border-t border-neutral-200">
+            {/* Stability */}
+            <div className="space-y-2">
+              <Label htmlFor="tts-stability">
+                Voice Stability: {Math.round(stability * 100)}%
+              </Label>
+              <input
+                id="tts-stability"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={stability}
+                onChange={(e) => setStability(parseFloat(e.target.value))}
+                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                aria-label="Voice stability"
+              />
+              <p className="text-xs text-neutral-500">
+                Lower = more expressive, Higher = more consistent
+              </p>
+            </div>
+
+            {/* Similarity Boost */}
+            <div className="space-y-2">
+              <Label htmlFor="tts-similarity">
+                Voice Clarity: {Math.round(similarityBoost * 100)}%
+              </Label>
+              <input
+                id="tts-similarity"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={similarityBoost}
+                onChange={(e) => setSimilarityBoost(parseFloat(e.target.value))}
+                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                aria-label="Voice clarity"
+              />
+              <p className="text-xs text-neutral-500">
+                Higher values produce clearer, more consistent voice
+              </p>
+            </div>
+
+            {/* Style/Emotion */}
+            <div className="space-y-2">
+              <Label htmlFor="tts-style">
+                Expressiveness: {Math.round(ttsStyle * 100)}%
+              </Label>
+              <input
+                id="tts-style"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={ttsStyle}
+                onChange={(e) => setStyle(parseFloat(e.target.value))}
+                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                aria-label="Voice expressiveness"
+              />
+              <p className="text-xs text-neutral-500">
+                Higher values add more emotion and style variation
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* VAD Toggle */}
         <div className="flex items-center justify-between pt-3 border-t border-neutral-200">

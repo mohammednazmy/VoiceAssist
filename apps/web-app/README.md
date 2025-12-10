@@ -1,3 +1,19 @@
+---
+title: Web Application
+description: User-facing medical AI assistant - React/TypeScript SPA
+version: 1.0.0
+status: in-development
+last_updated: 2025-11-27
+audience:
+  - frontend-developers
+  - ai-agents
+tags:
+  - frontend
+  - react
+  - typescript
+  - spa
+---
+
 # VoiceAssist Web Application
 
 ## Overview
@@ -104,17 +120,20 @@ web-app/
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Configure environment:
+
 ```bash
 cp .env.example .env.local
 # Edit .env.local with your settings
 ```
 
 3. Start development server:
+
 ```bash
 npm run dev
 ```
@@ -130,7 +149,7 @@ Create `.env.local` for local development:
 ```bash
 # API URLs (local development)
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000/ws
+VITE_WS_URL=ws://localhost:8000/api/realtime/ws
 
 # Environment
 VITE_ENV=development
@@ -150,7 +169,7 @@ Create `.env.production` for production builds:
 ```bash
 # API URLs (production)
 VITE_API_URL=https://voice.asimo.io
-VITE_WS_URL=wss://voice.asimo.io/ws
+VITE_WS_URL=wss://voice.asimo.io/api/realtime/ws
 
 # Environment
 VITE_ENV=production
@@ -177,7 +196,7 @@ interface ClinicalContext {
   title: string;
   patient?: {
     age?: number;
-    sex?: 'M' | 'F' | 'Other' | 'Unknown';
+    sex?: "M" | "F" | "Other" | "Unknown";
     weight?: number;
     height?: number;
   };
@@ -188,18 +207,18 @@ interface ClinicalContext {
   vitals?: string;
   notes?: string;
   specialty?: string;
-  urgency?: 'routine' | 'urgent' | 'emergent';
+  urgency?: "routine" | "urgent" | "emergent";
 }
 
 // Rich citation with medical metadata
 interface Citation {
   id: string;
-  sourceType: 'textbook' | 'journal' | 'guideline' | 'uptodate' | 'note' | 'trial';
+  sourceType: "textbook" | "journal" | "guideline" | "uptodate" | "note" | "trial";
   title: string;
   subtitle?: string;
   authors?: string[];
-  recommendationClass?: 'I' | 'IIa' | 'IIb' | 'III';  // ACC/AHA classes
-  evidenceLevel?: 'A' | 'B' | 'C';
+  recommendationClass?: "I" | "IIa" | "IIb" | "III"; // ACC/AHA classes
+  evidenceLevel?: "A" | "B" | "C";
   doi?: string;
   pmid?: string;
   url?: string;
@@ -211,7 +230,7 @@ interface Citation {
 interface ChatMessage {
   id: string;
   sessionId: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   citations?: Citation[];
   attachments?: Attachment[];
@@ -229,7 +248,7 @@ Manages WebSocket connection with automatic reconnection.
 **Implementation (`src/hooks/useWebSocket.ts`):**
 
 ```typescript
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect } from "react";
 
 interface UseWebSocketOptions {
   url: string;
@@ -242,30 +261,22 @@ interface UseWebSocketOptions {
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const {
-    url,
-    onMessage,
-    onError,
-    onConnect,
-    onDisconnect,
-    reconnectAttempts = 5,
-    reconnectDelay = 2000
-  } = options;
+  const { url, onMessage, onError, onConnect, onDisconnect, reconnectAttempts = 5, reconnectDelay = 2000 } = options;
 
   const ws = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<"disconnected" | "connecting" | "connected">("disconnected");
   const reconnectCount = useRef(0);
 
   const connect = useCallback(() => {
     if (ws.current?.readyState === WebSocket.OPEN) return;
 
-    setConnectionStatus('connecting');
+    setConnectionStatus("connecting");
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => {
       setIsConnected(true);
-      setConnectionStatus('connected');
+      setConnectionStatus("connected");
       reconnectCount.current = 0;
       onConnect?.();
     };
@@ -275,18 +286,18 @@ export function useWebSocket(options: UseWebSocketOptions) {
         const data: ServerEvent = JSON.parse(event.data);
         onMessage?.(data);
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        console.error("Failed to parse WebSocket message:", error);
       }
     };
 
     ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
       onError?.(error);
     };
 
     ws.current.onclose = () => {
       setIsConnected(false);
-      setConnectionStatus('disconnected');
+      setConnectionStatus("disconnected");
       onDisconnect?.();
 
       // Attempt reconnection
@@ -304,7 +315,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(event));
     } else {
-      console.warn('WebSocket not connected, cannot send:', event);
+      console.warn("WebSocket not connected, cannot send:", event);
     }
   }, []);
 
@@ -327,7 +338,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     connectionStatus,
     send,
     disconnect,
-    reconnect: connect
+    reconnect: connect,
   };
 }
 ```
@@ -339,13 +350,13 @@ Higher-level hook that wraps `useWebSocket` for chat functionality.
 **Implementation (`src/hooks/useChat.ts`):**
 
 ```typescript
-import { useState, useCallback, useRef } from 'react';
-import { useWebSocket } from './useWebSocket';
-import type { ChatMessage, Citation, ClinicalContext, ClientEvent, ServerEvent } from '../types';
+import { useState, useCallback, useRef } from "react";
+import { useWebSocket } from "./useWebSocket";
+import type { ChatMessage, Citation, ClinicalContext, ClientEvent, ServerEvent } from "../types";
 
 interface UseChatOptions {
   sessionId?: string;
-  mode: 'quick_consult' | 'case_workspace' | 'guideline_comparison';
+  mode: "quick_consult" | "case_workspace" | "guideline_comparison";
   clinicalContext?: ClinicalContext;
 }
 
@@ -359,11 +370,11 @@ export function useChat(options: UseChatOptions) {
 
   const handleServerEvent = useCallback((event: ServerEvent) => {
     switch (event.type) {
-      case 'session.started':
+      case "session.started":
         setSessionId(event.sessionId);
         break;
 
-      case 'message.delta':
+      case "message.delta":
         setIsStreaming(true);
         if (!currentMessageRef.current || currentMessageRef.current.id !== event.messageId) {
           const newMessage: ChatMessage = {
@@ -372,39 +383,33 @@ export function useChat(options: UseChatOptions) {
             role: event.role,
             content: event.contentDelta,
             createdAt: new Date().toISOString(),
-            streaming: true
+            streaming: true,
           };
           currentMessageRef.current = newMessage;
-          setMessages(prev => [...prev, newMessage]);
+          setMessages((prev) => [...prev, newMessage]);
         } else {
-          setMessages(prev => prev.map(msg =>
-            msg.id === event.messageId
-              ? { ...msg, content: msg.content + event.contentDelta }
-              : msg
-          ));
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === event.messageId ? { ...msg, content: msg.content + event.contentDelta } : msg,
+            ),
+          );
         }
         break;
 
-      case 'message.complete':
+      case "message.complete":
         setIsStreaming(false);
-        setMessages(prev => prev.map(msg =>
-          msg.id === event.messageId
-            ? { ...msg, streaming: false }
-            : msg
-        ));
+        setMessages((prev) => prev.map((msg) => (msg.id === event.messageId ? { ...msg, streaming: false } : msg)));
         currentMessageRef.current = null;
         break;
 
-      case 'citation.list':
-        setMessages(prev => prev.map(msg =>
-          msg.id === event.messageId
-            ? { ...msg, citations: event.citations }
-            : msg
-        ));
+      case "citation.list":
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === event.messageId ? { ...msg, citations: event.citations } : msg)),
+        );
         break;
 
-      case 'error':
-        console.error('Server error:', event.message);
+      case "error":
+        console.error("Server error:", event.message);
         setIsStreaming(false);
         break;
     }
@@ -415,38 +420,41 @@ export function useChat(options: UseChatOptions) {
     onMessage: handleServerEvent,
     onConnect: () => {
       send({
-        type: 'session.start',
+        type: "session.start",
         sessionId,
         mode,
-        clinicalContext
+        clinicalContext,
       });
-    }
+    },
   });
 
-  const sendMessage = useCallback((content: string, attachments?: string[]) => {
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      sessionId: sessionId!,
-      role: 'user',
-      content,
-      attachments: attachments?.map(id => ({ id, type: 'file', url: '', name: '' })),
-      createdAt: new Date().toISOString()
-    };
+  const sendMessage = useCallback(
+    (content: string, attachments?: string[]) => {
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        sessionId: sessionId!,
+        role: "user",
+        content,
+        attachments: attachments?.map((id) => ({ id, type: "file", url: "", name: "" })),
+        createdAt: new Date().toISOString(),
+      };
 
-    setMessages(prev => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
 
-    send({
-      type: 'message.send',
-      sessionId: sessionId!,
-      content,
-      attachments
-    });
-  }, [sessionId, send]);
+      send({
+        type: "message.send",
+        sessionId: sessionId!,
+        content,
+        attachments,
+      });
+    },
+    [sessionId, send],
+  );
 
   const stopGeneration = useCallback(() => {
     send({
-      type: 'generation.stop',
-      sessionId: sessionId!
+      type: "generation.stop",
+      sessionId: sessionId!,
     });
     setIsStreaming(false);
   }, [sessionId, send]);
@@ -457,7 +465,7 @@ export function useChat(options: UseChatOptions) {
     isStreaming,
     isConnected,
     sendMessage,
-    stopGeneration
+    stopGeneration,
   };
 }
 ```
@@ -469,7 +477,7 @@ Handles voice input recording and audio playback.
 **Implementation (`src/hooks/useVoice.ts`):**
 
 ```typescript
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from "react";
 
 export function useVoice() {
   const [isRecording, setIsRecording] = useState(false);
@@ -477,20 +485,18 @@ export function useVoice() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  const startRecording = useCallback(async (
-    onDataAvailable: (chunk: Blob) => void
-  ) => {
+  const startRecording = useCallback(async (onDataAvailable: (chunk: Blob) => void) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000
-        }
+          sampleRate: 16000,
+        },
       });
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: "audio/webm;codecs=opus",
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -503,15 +509,15 @@ export function useVoice() {
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error("Failed to start recording:", error);
       throw error;
     }
   }, []);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
       mediaRecorderRef.current = null;
       setIsRecording(false);
     }
@@ -533,7 +539,7 @@ export function useVoice() {
       setIsPlaying(true);
       source.start(0);
     } catch (error) {
-      console.error('Failed to play audio:', error);
+      console.error("Failed to play audio:", error);
       setIsPlaying(false);
     }
   }, []);
@@ -543,7 +549,7 @@ export function useVoice() {
     isPlaying,
     startRecording,
     stopRecording,
-    playAudio
+    playAudio,
   };
 }
 ```
@@ -679,6 +685,7 @@ export function ChatPage() {
 ### Chat Interface
 
 **MessageList.tsx**
+
 - Displays conversation messages using `ChatMessage[]` type
 - Streaming response support with `streaming` flag on messages
 - Virtualized scrolling for performance using `@tanstack/react-virtual`
@@ -686,6 +693,7 @@ export function ChatPage() {
 - Renders citations inline with `CitationCard` components
 
 **MessageBubble.tsx**
+
 ```typescript
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -718,6 +726,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
 ```
 
 **InputArea.tsx**
+
 - Text input with markdown support
 - File attachment picker using `<input type="file">`
 - Voice toggle button that calls `useVoice` hook
@@ -725,6 +734,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
 - Shows "Stop Generation" button when `isStreaming` is true
 
 **VoiceInput.tsx**
+
 - Web Audio API for recording via `useVoice` hook
 - Real-time audio visualization using AnalyserNode
 - Push-to-talk or toggle mode
@@ -733,6 +743,7 @@ export function MessageBubble({ message, isStreaming }: MessageBubbleProps) {
 ### Citations
 
 **CitationCard.tsx**
+
 ```typescript
 interface CitationCardProps {
   citation: Citation;
@@ -788,6 +799,7 @@ export function CitationCard({ citation, compact }: CitationCardProps) {
 ### Context Management
 
 **ContextPanel.tsx**
+
 - Form for entering patient demographics, problems list, medications, labs
 - Uses `ClinicalContext` type
 - Real-time updates sent via `context.update` WebSocket event
@@ -795,6 +807,7 @@ export function CitationCard({ citation, compact }: CitationCardProps) {
 - Auto-save with debouncing
 
 **Sidebar.tsx**
+
 - List of conversations grouped by date
 - Search conversations
 - New conversation button
@@ -878,7 +891,7 @@ const mediaRecorder = new MediaRecorder(stream);
 
 // Send audio chunks via WebSocket
 mediaRecorder.ondataavailable = (event) => {
-  websocket.emit('audio.chunk', { data: event.data });
+  websocket.emit("audio.chunk", { data: event.data });
 };
 ```
 
@@ -886,7 +899,7 @@ mediaRecorder.ondataavailable = (event) => {
 
 ```typescript
 // Receive audio chunks and play
-websocket.on('audio.chunk', (data) => {
+websocket.on("audio.chunk", (data) => {
   const audioContext = new AudioContext();
   audioContext.decodeAudioData(data.data, (buffer) => {
     const source = audioContext.createBufferSource();
@@ -908,13 +921,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#2563EB',    // Medical blue
-        secondary: '#14B8A6',  // Teal
+        primary: "#2563EB", // Medical blue
+        secondary: "#14B8A6", // Teal
         // ...
       },
     },
   },
-}
+};
 ```
 
 ### Dark Mode
@@ -922,8 +935,8 @@ module.exports = {
 ```typescript
 // Toggle dark mode
 const toggleDarkMode = () => {
-  document.documentElement.classList.toggle('dark');
-  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  document.documentElement.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "light" : "dark");
 };
 ```
 
@@ -949,8 +962,8 @@ const toggleDarkMode = () => {
 
 ```typescript
 // Lazy load routes
-const Settings = lazy(() => import('./pages/Settings'));
-const History = lazy(() => import('./pages/History'));
+const Settings = lazy(() => import("./pages/Settings"));
+const History = lazy(() => import("./pages/History"));
 ```
 
 ### Virtualization

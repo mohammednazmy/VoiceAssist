@@ -23,8 +23,10 @@ from typing import Awaitable, Callable, Dict, Literal, Optional
 
 import httpx
 from app.core.business_metrics import openai_api_cost_dollars, openai_tokens_used_total
+from app.core.resilience import openai_breaker
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
+from pybreaker import CircuitBreakerError
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +85,8 @@ def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
 
 @dataclass
 class LLMRequest:
-    prompt: str
+    prompt: Optional[str] = None  # Single prompt (for simple queries)
+    messages: Optional[list] = None  # Full message history (for multi-turn with tools)
     intent: IntentType = "other"
     temperature: float = 0.1
     max_tokens: int = 512
@@ -91,6 +94,18 @@ class LLMRequest:
     trace_id: Optional[str] = None
     model_override: Optional[str] = None
     model_provider: Optional[str] = None
+    # Tool/Function calling support
+    tools: Optional[list] = None  # List of tool definitions in OpenAI format
+    tool_choice: Optional[str] = "auto"  # "auto", "required", "none", or specific tool
+
+
+@dataclass
+class ToolCall:
+    """Represents a tool call from the LLM."""
+
+    id: str
+    name: str
+    arguments: str  # JSON string of arguments
 
 
 @dataclass
@@ -104,6 +119,8 @@ class LLMResponse:
     cost_usd: float = 0.0  # Estimated cost in USD
     input_tokens: int = 0
     output_tokens: int = 0
+    # Tool/Function calling support
+    tool_calls: Optional[list] = None  # List of ToolCall objects
 
 
 class LLMClient:
@@ -152,35 +169,72 @@ class LLMClient:
             )
         self.has_local_model = self.local_client is not None
 
+    # Default system prompts for fallback when dynamic lookup fails
+    _DEFAULT_SYSTEM_PROMPTS = {
+        "diagnosis": (
+            "You are a medical AI assistant specializing in clinical diagnosis. "
+            "Provide evidence-based diagnostic insights with appropriate citations."
+        ),
+        "treatment": (
+            "You are a medical AI assistant specializing in treatment planning. "
+            "Provide evidence-based treatment recommendations with appropriate citations."
+        ),
+        "drug": (
+            "You are a medical AI assistant specializing in pharmacology. "
+            "Provide evidence-based drug information with appropriate citations."
+        ),
+        "guideline": (
+            "You are a medical AI assistant specializing in clinical guidelines. "
+            "Provide evidence-based guideline information with appropriate citations."
+        ),
+        "summary": (
+            "You are a medical AI assistant specializing in medical summarization. "
+            "Provide clear, concise summaries with appropriate citations."
+        ),
+        "other": (
+            "You are a helpful medical AI assistant. "
+            "Provide accurate, evidence-based information with appropriate citations when available."
+        ),
+    }
+
     @staticmethod
-    def _system_prompt_for_intent(intent: IntentType) -> str:
-        system_prompts = {
-            "diagnosis": (
-                "You are a medical AI assistant specializing in clinical diagnosis. "
-                "Provide evidence-based diagnostic insights with appropriate citations."
-            ),
-            "treatment": (
-                "You are a medical AI assistant specializing in treatment planning. "
-                "Provide evidence-based treatment recommendations with appropriate citations."
-            ),
-            "drug": (
-                "You are a medical AI assistant specializing in pharmacology. "
-                "Provide evidence-based drug information with appropriate citations."
-            ),
-            "guideline": (
-                "You are a medical AI assistant specializing in clinical guidelines. "
-                "Provide evidence-based guideline information with appropriate citations."
-            ),
-            "summary": (
-                "You are a medical AI assistant specializing in medical summarization. "
-                "Provide clear, concise summaries with appropriate citations."
-            ),
-            "other": (
-                "You are a helpful medical AI assistant. "
-                "Provide accurate, evidence-based information with appropriate citations when available."
-            ),
-        }
-        return system_prompts.get(intent, system_prompts["other"])
+    def _get_default_system_prompt(intent: IntentType) -> str:
+        """Get default system prompt for intent (fallback)."""
+        return LLMClient._DEFAULT_SYSTEM_PROMPTS.get(intent, LLMClient._DEFAULT_SYSTEM_PROMPTS["other"])
+
+    async def _get_system_prompt_for_intent(self, intent: IntentType) -> str:
+        """Get system prompt for intent with dynamic lookup and fallback.
+
+        Uses the PromptService for dynamic prompt management with fallback
+        to hardcoded defaults if the dynamic lookup fails.
+
+        Args:
+            intent: The intent type (diagnosis, treatment, drug, etc.)
+
+        Returns:
+            The system prompt text
+        """
+        try:
+            # Import here to avoid circular imports
+            from app.services.prompt_service import prompt_service
+
+            # Try dynamic prompt lookup
+            prompt_text = await prompt_service.get_system_prompt_for_intent(intent, "chat")
+            if prompt_text:
+                return prompt_text
+        except Exception as e:
+            logger.warning(f"Failed to get dynamic prompt for intent '{intent}': {e}")
+
+        # Fallback to hardcoded default
+        return self._get_default_system_prompt(intent)
+
+    def _system_prompt_for_intent(self, intent: IntentType) -> str:
+        """Synchronous fallback for system prompt lookup.
+
+        Note: Prefer using _get_system_prompt_for_intent() for async contexts.
+        This method exists for backward compatibility.
+        """
+        return self._get_default_system_prompt(intent)
 
     async def generate(self, req: LLMRequest) -> LLMResponse:
         """Select model family and generate a single response.
@@ -192,17 +246,24 @@ class LLMClient:
         - Later phases can add per-intent routing, cost-awareness, etc.
 
         Safety checks:
-        - Validates prompt is non-empty
+        - Validates prompt or messages is non-empty
         - Normalizes whitespace
         - Enforces reasonable max_tokens limits
         """
-        # Safety: validate prompt is not empty
-        if not req.prompt or not req.prompt.strip():
-            logger.warning("LLMClient.generate called with empty prompt, trace_id=%s", req.trace_id)
-            raise ValueError("Prompt cannot be empty")
+        # Safety: validate prompt or messages is not empty
+        has_prompt = req.prompt and req.prompt.strip()
+        has_messages = req.messages and len(req.messages) > 0
+
+        if not has_prompt and not has_messages:
+            logger.warning(
+                "LLMClient.generate called with empty prompt and no messages, trace_id=%s",
+                req.trace_id,
+            )
+            raise ValueError("Prompt or messages cannot be empty")
 
         # Safety: normalize whitespace in prompt
-        req.prompt = " ".join(req.prompt.split())
+        if has_prompt:
+            req.prompt = " ".join(req.prompt.split())
 
         # Determine routing family
         adapter_requests_local = req.model_provider not in (None, "openai", "cloud")
@@ -239,7 +300,7 @@ class LLMClient:
         """Call a cloud model using OpenAI API.
 
         Uses the official OpenAI client library with proper error handling,
-        retry logic, and cost tracking.
+        retry logic, circuit breaker protection, and cost tracking.
 
         Tracks metrics: tokens (prompt + completion), latency, finish_reason
         See ORCHESTRATION_DESIGN.md - "Step 6: LLM Synthesis"
@@ -252,6 +313,16 @@ class LLMClient:
             )
             raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
 
+        # Check circuit breaker before attempting call
+        try:
+            openai_breaker.call(lambda: None)  # Lightweight check
+        except CircuitBreakerError:
+            logger.error(
+                "OpenAI circuit breaker is OPEN - failing fast. trace_id=%s",
+                req.trace_id,
+            )
+            raise RuntimeError("OpenAI API is temporarily unavailable (circuit breaker open)")
+
         model_name = req.model_override or self.cloud_model
 
         logger.info("Calling cloud model %s trace_id=%s", model_name, req.trace_id)
@@ -263,19 +334,39 @@ class LLMClient:
             start_time = time.time()
 
             try:
-                system_message = self._system_prompt_for_intent(req.intent)
+                # Build messages for the API call
+                if req.messages:
+                    # Use provided messages (multi-turn conversation with tool results)
+                    # Ensure system prompt is at the start
+                    messages = req.messages.copy()
+                    if not messages or messages[0].get("role") != "system":
+                        system_message = await self._get_system_prompt_for_intent(req.intent)
+                        messages.insert(0, {"role": "system", "content": system_message})
+                else:
+                    # Build messages from prompt (simple single-turn query)
+                    system_message = await self._get_system_prompt_for_intent(req.intent)
+                    messages = [
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": req.prompt},
+                    ]
+
+                # Build API call parameters
+                api_params = {
+                    "model": model_name,
+                    "messages": messages,
+                    "temperature": req.temperature,
+                    "max_tokens": req.max_tokens,
+                }
+
+                # Add tools if provided
+                if req.tools:
+                    api_params["tools"] = req.tools
+                    if req.tool_choice:
+                        api_params["tool_choice"] = req.tool_choice
 
                 # Call OpenAI Chat Completions API with timeout
                 response: ChatCompletion = await asyncio.wait_for(
-                    self.openai_client.chat.completions.create(
-                        model=model_name,
-                        messages=[
-                            {"role": "system", "content": system_message},
-                            {"role": "user", "content": req.prompt},
-                        ],
-                        temperature=req.temperature,
-                        max_tokens=req.max_tokens,
-                    ),
+                    self.openai_client.chat.completions.create(**api_params),
                     timeout=30,
                 )
 
@@ -286,6 +377,18 @@ class LLMClient:
                 choice = response.choices[0]
                 text = choice.message.content or ""
                 finish_reason = choice.finish_reason or "stop"
+
+                # Extract tool calls if present
+                tool_calls_list = None
+                if choice.message.tool_calls:
+                    tool_calls_list = [
+                        ToolCall(
+                            id=tc.id,
+                            name=tc.function.name,
+                            arguments=tc.function.arguments,
+                        )
+                        for tc in choice.message.tool_calls
+                    ]
 
                 # Calculate token usage
                 usage = response.usage
@@ -330,6 +433,7 @@ class LLMClient:
                     cost_usd=cost_usd,
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
+                    tool_calls=tool_calls_list,
                 )
 
             except asyncio.TimeoutError as exc:
@@ -366,7 +470,7 @@ class LLMClient:
         Stream a response from the cloud model and invoke a callback per text delta.
 
         Args:
-            req: LLMRequest with prompt and config
+            req: LLMRequest with prompt or messages and config
             on_chunk: Optional callback to receive partial text chunks
 
         Returns:
@@ -385,10 +489,16 @@ class LLMClient:
             )
             raise RuntimeError("OpenAI API key not configured. Cannot call cloud model.")
 
-        if not req.prompt or not req.prompt.strip():
-            raise ValueError("Prompt cannot be empty")
+        # Validate that we have either prompt or messages
+        has_prompt = req.prompt and req.prompt.strip()
+        has_messages = req.messages and len(req.messages) > 0
 
-        req.prompt = " ".join(req.prompt.split())
+        if not has_prompt and not has_messages:
+            raise ValueError("Prompt or messages cannot be empty")
+
+        if has_prompt:
+            req.prompt = " ".join(req.prompt.split())
+
         max_allowed_tokens = 2048 if family == "local" else 4096
         if req.max_tokens > max_allowed_tokens:
             req.max_tokens = max_allowed_tokens
@@ -401,18 +511,43 @@ class LLMClient:
         start_time = time.time()
         finish_reason: str = "stop"
         usage = None
+        tool_calls_list = None
 
         try:
-            stream = await self.openai_client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {"role": "system", "content": self._system_prompt_for_intent(req.intent)},
+            # Build messages for the API call (same logic as _call_cloud)
+            if has_messages:
+                # Use provided messages (multi-turn conversation with tools)
+                messages = req.messages.copy()
+                if not messages or messages[0].get("role") != "system":
+                    system_message = await self._get_system_prompt_for_intent(req.intent)
+                    messages.insert(0, {"role": "system", "content": system_message})
+            else:
+                # Build messages from prompt (simple single-turn query)
+                system_message = await self._get_system_prompt_for_intent(req.intent)
+                messages = [
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": req.prompt},
-                ],
-                temperature=req.temperature,
-                max_tokens=req.max_tokens,
-                stream=True,
-            )
+                ]
+
+            # Build API call parameters
+            api_params = {
+                "model": model_name,
+                "messages": messages,
+                "temperature": req.temperature,
+                "max_tokens": req.max_tokens,
+                "stream": True,
+            }
+
+            # Add tools if provided
+            if req.tools:
+                api_params["tools"] = req.tools
+                if req.tool_choice:
+                    api_params["tool_choice"] = req.tool_choice
+
+            stream = await self.openai_client.chat.completions.create(**api_params)
+
+            # Track tool calls accumulation (they come in chunks)
+            tool_calls_data: Dict[int, Dict] = {}  # index -> {id, name, arguments}
 
             async for chunk in stream:
                 if isinstance(chunk, ChatCompletionChunk):
@@ -425,6 +560,24 @@ class LLMClient:
                             if inspect.isawaitable(result):
                                 await result
 
+                    # Handle tool calls in streaming (they come incrementally)
+                    if hasattr(delta, "tool_calls") and delta.tool_calls:
+                        for tc in delta.tool_calls:
+                            idx = tc.index
+                            if idx not in tool_calls_data:
+                                tool_calls_data[idx] = {
+                                    "id": "",
+                                    "name": "",
+                                    "arguments": "",
+                                }
+                            if tc.id:
+                                tool_calls_data[idx]["id"] = tc.id
+                            if tc.function:
+                                if tc.function.name:
+                                    tool_calls_data[idx]["name"] = tc.function.name
+                                if tc.function.arguments:
+                                    tool_calls_data[idx]["arguments"] += tc.function.arguments
+
                     if chunk.choices[0].finish_reason:
                         finish_reason = chunk.choices[0].finish_reason
 
@@ -434,6 +587,17 @@ class LLMClient:
 
             latency_ms = (time.time() - start_time) * 1000
             aggregated_text = "".join(full_text)
+
+            # Build tool_calls list if any were made
+            if tool_calls_data:
+                tool_calls_list = [
+                    ToolCall(
+                        id=tc_data["id"],
+                        name=tc_data["name"],
+                        arguments=tc_data["arguments"],
+                    )
+                    for tc_data in tool_calls_data.values()
+                ]
 
             input_tokens = usage.prompt_tokens if usage else 0
             output_tokens = usage.completion_tokens if usage else 0
@@ -455,6 +619,7 @@ class LLMClient:
                 cost_usd=cost_usd,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
+                tool_calls=tool_calls_list,
             )
 
         except Exception as exc:  # noqa: BLE001

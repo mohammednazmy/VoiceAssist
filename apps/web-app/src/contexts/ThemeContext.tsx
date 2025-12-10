@@ -20,7 +20,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage for saved theme
     const savedTheme = localStorage.getItem("voiceassist-theme");
-    if (savedTheme === "light" || savedTheme === "dark" || savedTheme === "system") {
+    if (
+      savedTheme === "light" ||
+      savedTheme === "dark" ||
+      savedTheme === "system"
+    ) {
       return savedTheme;
     }
     return "system";
@@ -29,7 +33,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Resolve "system" to actual light/dark based on OS preference
   const getResolvedTheme = (): ResolvedTheme => {
     if (theme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
     return theme;
   };

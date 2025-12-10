@@ -16,15 +16,15 @@ Future enhancements:
 - Calendar sharing and permissions
 - Event reminders and notifications
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 import caldav
-from caldav.elements import dav, cdav
 import vobject
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CalendarEvent:
     """Represents a calendar event."""
+
     uid: str
     summary: str
     description: Optional[str]
@@ -55,12 +56,7 @@ class CalDAVService:
     and provides CRUD operations for events.
     """
 
-    def __init__(
-        self,
-        caldav_url: str,
-        username: str,
-        password: str
-    ):
+    def __init__(self, caldav_url: str, username: str, password: str):
         """
         Initialize CalDAV service.
 
@@ -83,11 +79,7 @@ class CalDAVService:
             True if connection successful, False otherwise
         """
         try:
-            self.client = caldav.DAVClient(
-                url=self.caldav_url,
-                username=self.username,
-                password=self.password
-            )
+            self.client = caldav.DAVClient(url=self.caldav_url, username=self.username, password=self.password)
 
             # Get principal (user's calendar root)
             self.principal = self.client.principal()
@@ -115,11 +107,13 @@ class CalDAVService:
 
             calendar_list = []
             for cal in calendars:
-                calendar_list.append({
-                    "id": str(cal.url),
-                    "name": cal.name,
-                    "description": getattr(cal, 'description', None)
-                })
+                calendar_list.append(
+                    {
+                        "id": str(cal.url),
+                        "name": cal.name,
+                        "description": getattr(cal, "description", None),
+                    }
+                )
 
             logger.info(f"Found {len(calendar_list)} calendars")
             return calendar_list
@@ -132,7 +126,7 @@ class CalDAVService:
         self,
         calendar_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> List[CalendarEvent]:
         """
         Retrieve calendar events within a date range.
@@ -179,12 +173,14 @@ class CalDAVService:
                     calendar_event = CalendarEvent(
                         uid=str(vevent.uid.value),
                         summary=str(vevent.summary.value),
-                        description=str(vevent.description.value) if hasattr(vevent, 'description') else None,
+                        description=(str(vevent.description.value) if hasattr(vevent, "description") else None),
                         start=vevent.dtstart.value,
                         end=vevent.dtend.value,
-                        location=str(vevent.location.value) if hasattr(vevent, 'location') else None,
-                        organizer=str(vevent.organizer.value) if hasattr(vevent, 'organizer') else None,
-                        attendees=[str(a.value) for a in vevent.attendee_list] if hasattr(vevent, 'attendee_list') else []
+                        location=(str(vevent.location.value) if hasattr(vevent, "location") else None),
+                        organizer=(str(vevent.organizer.value) if hasattr(vevent, "organizer") else None),
+                        attendees=(
+                            [str(a.value) for a in vevent.attendee_list] if hasattr(vevent, "attendee_list") else []
+                        ),
                     )
                     calendar_events.append(calendar_event)
 
@@ -206,7 +202,7 @@ class CalDAVService:
         end: datetime,
         description: Optional[str] = None,
         location: Optional[str] = None,
-        calendar_id: Optional[str] = None
+        calendar_id: Optional[str] = None,
     ) -> Optional[str]:
         """
         Create a new calendar event.
@@ -239,21 +235,22 @@ class CalDAVService:
 
             # Create vCal object
             vcal = vobject.iCalendar()
-            vevent = vcal.add('vevent')
+            vevent = vcal.add("vevent")
 
-            vevent.add('summary').value = summary
-            vevent.add('dtstart').value = start
-            vevent.add('dtend').value = end
+            vevent.add("summary").value = summary
+            vevent.add("dtstart").value = start
+            vevent.add("dtend").value = end
 
             if description:
-                vevent.add('description').value = description
+                vevent.add("description").value = description
             if location:
-                vevent.add('location').value = location
+                vevent.add("location").value = location
 
             # Generate UID
             import uuid
+
             event_uid = str(uuid.uuid4())
-            vevent.add('uid').value = event_uid
+            vevent.add("uid").value = event_uid
 
             # Add to calendar
             calendar.add_event(vcal.serialize())
@@ -273,7 +270,7 @@ class CalDAVService:
         end: Optional[datetime] = None,
         description: Optional[str] = None,
         location: Optional[str] = None,
-        calendar_id: Optional[str] = None
+        calendar_id: Optional[str] = None,
     ) -> bool:
         """
         Update an existing calendar event.
@@ -329,15 +326,15 @@ class CalDAVService:
             if end:
                 vevent.dtend.value = end
             if description:
-                if hasattr(vevent, 'description'):
+                if hasattr(vevent, "description"):
                     vevent.description.value = description
                 else:
-                    vevent.add('description').value = description
+                    vevent.add("description").value = description
             if location:
-                if hasattr(vevent, 'location'):
+                if hasattr(vevent, "location"):
                     vevent.location.value = location
                 else:
-                    vevent.add('location').value = location
+                    vevent.add("location").value = location
 
             # Save changes
             target_event.data = vcal.serialize()
@@ -350,11 +347,7 @@ class CalDAVService:
             logger.error(f"Error updating event: {e}", exc_info=True)
             return False
 
-    def delete_event(
-        self,
-        event_uid: str,
-        calendar_id: Optional[str] = None
-    ) -> bool:
+    def delete_event(self, event_uid: str, calendar_id: Optional[str] = None) -> bool:
         """
         Delete a calendar event.
 

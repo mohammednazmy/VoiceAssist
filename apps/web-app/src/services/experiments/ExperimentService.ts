@@ -35,10 +35,32 @@ import {
 } from "./types";
 
 /**
+ * Get the API base URL from environment, with fallback to relative path
+ * This ensures the ExperimentService uses the correct backend URL in all environments
+ * NOTE: This is called lazily at request time, not at module load time
+ */
+const getApiBaseUrl = (): string => {
+  // In browser environment, check for VITE_API_URL
+  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Fallback to relative path for production builds served from same domain
+  return "";
+};
+
+/**
+ * Get the full API endpoint URL (computed lazily)
+ */
+const getApiEndpoint = (): string => {
+  return `${getApiBaseUrl()}/api/experiments`;
+};
+
+/**
  * Default configuration
+ * NOTE: apiEndpoint is computed lazily via getter to ensure env vars are available
  */
 const DEFAULT_CONFIG: ExperimentConfig = {
-  apiEndpoint: "/api/experiments",
+  apiEndpoint: "", // Will be computed lazily via getApiEndpoint()
   cacheDuration: 300000, // 5 minutes
   enableOffline: true,
   defaultStrategy: "deterministic",
@@ -159,7 +181,7 @@ class ExperimentService {
     this.pendingEvents = [];
 
     try {
-      await fetch(`${this.config.apiEndpoint}/events`, {
+      await fetch(`${getApiEndpoint()}/events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -175,8 +197,32 @@ class ExperimentService {
 
   /**
    * Check if a feature flag is enabled
+   *
+   * Checks in order:
+   * 1. Local storage override (ff_{flagKey} = "true")
+   * 2. Environment variable override (for unified_chat_voice_ui: VITE_UNIFIED_UI)
+   * 3. Backend feature flag API
    */
   async isFeatureEnabled(flagKey: string): Promise<boolean> {
+    // 1. Check local storage override first (allows testing without backend)
+    if (typeof localStorage !== "undefined") {
+      const localOverride = localStorage.getItem(`ff_${flagKey}`);
+      if (localOverride === "true") return true;
+      if (localOverride === "false") return false;
+    }
+
+    // 2. Check environment variable overrides
+    if (typeof import.meta !== "undefined" && import.meta.env) {
+      // Map flag keys to env vars
+      const envVarMap: Record<string, string | undefined> = {
+        unified_chat_voice_ui: import.meta.env.VITE_UNIFIED_UI,
+      };
+      const envValue = envVarMap[flagKey];
+      if (envValue === "true") return true;
+      if (envValue === "false") return false;
+    }
+
+    // 3. Check backend feature flag
     try {
       const flag = await this.getFeatureFlag(flagKey);
       if (!flag) return false;
@@ -224,9 +270,7 @@ class ExperimentService {
     }
 
     try {
-      const response = await fetch(
-        `${this.config.apiEndpoint}/flags/${flagKey}`,
-      );
+      const response = await fetch(`${getApiEndpoint()}/flags/${flagKey}`);
       if (!response.ok) return null;
 
       const flag = await response.json();
@@ -304,7 +348,7 @@ class ExperimentService {
 
     try {
       const response = await fetch(
-        `${this.config.apiEndpoint}/experiments/${experimentId}`,
+        `${getApiEndpoint()}/experiments/${experimentId}`,
       );
       if (!response.ok) return null;
 
@@ -522,7 +566,7 @@ class ExperimentService {
   async getResults(experimentId: string): Promise<ExperimentResults | null> {
     try {
       const response = await fetch(
-        `${this.config.apiEndpoint}/experiments/${experimentId}/results`,
+        `${getApiEndpoint()}/experiments/${experimentId}/results`,
       );
       if (!response.ok) return null;
       return response.json();

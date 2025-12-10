@@ -5,7 +5,16 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
-import type { Conversation, PaginatedResponse } from "@voiceassist/types";
+import type {
+  Conversation,
+  PaginatedResponse,
+  Message,
+  Citation,
+} from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
+import { createLogger } from "../lib/logger";
+
+const log = createLogger("Conversations");
 
 export interface UseConversationsOptions {
   /** Callback when an error occurs (for toast notifications) */
@@ -33,13 +42,10 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
   const loadConversations = useCallback(
     async (page = 1, append = false) => {
+      log.debug(`loadConversations called (page: ${page}, append: ${append})`);
       // Guard against concurrent requests (prevents request storm)
       if (isLoadingRef.current && !append) {
-        console.log(
-          "[useConversations] Skipping load - already loading (page:",
-          page,
-          ")",
-        );
+        log.debug(`Skipping load - already loading (page: ${page})`);
         return;
       }
 
@@ -56,6 +62,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
         const response: PaginatedResponse<Conversation> =
           await apiClient.getConversations(page, pageSize);
 
+        log.debug(`Loaded ${response.items.length} conversations from API`);
         totalCountRef.current = response.totalCount;
         setHasMore(page < response.totalPages);
         setCurrentPage(page);
@@ -65,10 +72,10 @@ export function useConversations(options: UseConversationsOptions = {}) {
         } else {
           setConversations(response.items);
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to load conversations";
+      } catch (err: unknown) {
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
-        console.error("Failed to load conversations:", err);
+        log.error("Failed to load conversations:", err);
         onError?.("Failed to load conversations", errorMessage);
       } finally {
         setIsLoading(false);
@@ -101,8 +108,8 @@ export function useConversations(options: UseConversationsOptions = {}) {
         const newConversation = await apiClient.createConversation(title);
         setConversations((prev) => [newConversation, ...prev]);
         return newConversation;
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to create conversation";
+      } catch (err: unknown) {
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to create conversation", errorMessage);
         throw err;
@@ -135,10 +142,10 @@ export function useConversations(options: UseConversationsOptions = {}) {
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Rollback on error
         setConversations(originalConversations);
-        const errorMessage = err.message || "Failed to update conversation";
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to update conversation", errorMessage);
         throw err;
@@ -167,10 +174,10 @@ export function useConversations(options: UseConversationsOptions = {}) {
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Rollback on error
         setConversations(originalConversations);
-        const errorMessage = err.message || "Failed to archive conversation";
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to archive conversation", errorMessage);
         throw err;
@@ -199,10 +206,10 @@ export function useConversations(options: UseConversationsOptions = {}) {
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Rollback on error
         setConversations(originalConversations);
-        const errorMessage = err.message || "Failed to unarchive conversation";
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to unarchive conversation", errorMessage);
         throw err;
@@ -213,19 +220,29 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
   const deleteConversation = useCallback(
     async (id: string) => {
+      log.debug(`Deleting conversation: ${id}`);
       // Save original state for rollback
       const originalConversations = conversations;
       const deletedConversation = conversations.find((conv) => conv.id === id);
 
       // Optimistically remove
-      setConversations((prev) => prev.filter((conv) => conv.id !== id));
+      log.debug(
+        `Optimistically removing conversation, count before: ${conversations.length}`,
+      );
+      setConversations((prev) => {
+        const newList = prev.filter((conv) => conv.id !== id);
+        log.debug(`After filter, count: ${newList.length}`);
+        return newList;
+      });
 
       try {
         await apiClient.deleteConversation(id);
-      } catch (err: any) {
+        log.debug(`API delete successful for: ${id}`);
+      } catch (err: unknown) {
         // Rollback on error
+        log.debug(`API delete failed, rolling back`);
         setConversations(originalConversations);
-        const errorMessage = err.message || "Failed to delete conversation";
+        const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.(
           "Failed to delete conversation",
@@ -236,6 +253,37 @@ export function useConversations(options: UseConversationsOptions = {}) {
     },
     [apiClient, conversations, onError],
   );
+
+  const deleteAllConversations = useCallback(async () => {
+    // Save original state for rollback
+    const originalConversations = conversations;
+    const originalTotal = totalCountRef.current;
+    const count = conversations.length;
+
+    // Optimistically clear all
+    setConversations([]);
+    totalCountRef.current = 0;
+    setHasMore(false);
+    setCurrentPage(1);
+
+    try {
+      const result = await apiClient.deleteAllConversations();
+      log.debug(`Deleted ${result.deleted_count} conversations`);
+      return result;
+    } catch (err: unknown) {
+      // Rollback on error
+      setConversations(originalConversations);
+      totalCountRef.current = originalTotal;
+      setHasMore(originalConversations.length >= pageSize);
+      const errorMessage = extractErrorMessage(err);
+      setError(errorMessage);
+      onError?.(
+        "Failed to delete all conversations",
+        `Could not delete ${count} conversation(s). ${errorMessage}`,
+      );
+      throw err;
+    }
+  }, [apiClient, conversations, pageSize, onError]);
 
   const exportConversation = useCallback(
     async (id: string, format: "markdown" | "text" = "markdown") => {
@@ -275,8 +323,8 @@ export function useConversations(options: UseConversationsOptions = {}) {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (err: any) {
-        setError(err.message || "Failed to export conversation");
+      } catch (err: unknown) {
+        setError(extractErrorMessage(err));
         throw err;
       }
     },
@@ -309,6 +357,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
     archiveConversation,
     unarchiveConversation,
     deleteConversation,
+    deleteAllConversations,
     exportConversation,
     loadMore,
     reload: loadConversations,
@@ -318,7 +367,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
 // Helper function to generate Markdown export
 function generateMarkdownExport(
   conversation: Conversation,
-  messages: any[],
+  messages: Message[],
 ): string {
   const formattedDate = new Date(conversation.createdAt).toLocaleString();
   let markdown = `# ${conversation.title}\n\n`;
@@ -339,26 +388,28 @@ function generateMarkdownExport(
     // Add citations if present
     if (message.metadata?.citations && message.metadata.citations.length > 0) {
       markdown += `### Citations\n\n`;
-      message.metadata.citations.forEach((citation: any, citIndex: number) => {
-        markdown += `${citIndex + 1}. `;
-        if (citation.title) {
-          markdown += `**${citation.title}**`;
-        }
-        if (citation.reference) {
-          markdown += ` (${citation.reference})`;
-        }
-        markdown += `\n`;
-        if (citation.snippet) {
-          markdown += `   > ${citation.snippet}\n`;
-        }
-        if (citation.doi) {
-          markdown += `   DOI: [${citation.doi}](https://doi.org/${citation.doi})\n`;
-        }
-        if (citation.pubmedId) {
-          markdown += `   PubMed: [${citation.pubmedId}](https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/)\n`;
-        }
-        markdown += `\n`;
-      });
+      message.metadata.citations.forEach(
+        (citation: Citation, citIndex: number) => {
+          markdown += `${citIndex + 1}. `;
+          if (citation.title) {
+            markdown += `**${citation.title}**`;
+          }
+          if (citation.reference) {
+            markdown += ` (${citation.reference})`;
+          }
+          markdown += `\n`;
+          if (citation.snippet) {
+            markdown += `   > ${citation.snippet}\n`;
+          }
+          if (citation.doi) {
+            markdown += `   DOI: [${citation.doi}](https://doi.org/${citation.doi})\n`;
+          }
+          if (citation.pubmedId) {
+            markdown += `   PubMed: [${citation.pubmedId}](https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/)\n`;
+          }
+          markdown += `\n`;
+        },
+      );
     }
 
     markdown += `---\n\n`;
@@ -371,7 +422,7 @@ function generateMarkdownExport(
 // Helper function to generate plain text export
 function generateTextExport(
   conversation: Conversation,
-  messages: any[],
+  messages: Message[],
 ): string {
   const formattedDate = new Date(conversation.createdAt).toLocaleString();
   let text = `${conversation.title}\n`;
@@ -393,25 +444,27 @@ function generateTextExport(
     // Add citations if present
     if (message.metadata?.citations && message.metadata.citations.length > 0) {
       text += `CITATIONS:\n`;
-      message.metadata.citations.forEach((citation: any, citIndex: number) => {
-        text += `  ${citIndex + 1}. `;
-        if (citation.title) {
-          text += citation.title;
-        }
-        if (citation.reference) {
-          text += ` (${citation.reference})`;
-        }
-        text += `\n`;
-        if (citation.snippet) {
-          text += `     "${citation.snippet}"\n`;
-        }
-        if (citation.doi) {
-          text += `     DOI: https://doi.org/${citation.doi}\n`;
-        }
-        if (citation.pubmedId) {
-          text += `     PubMed: https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/\n`;
-        }
-      });
+      message.metadata.citations.forEach(
+        (citation: Citation, citIndex: number) => {
+          text += `  ${citIndex + 1}. `;
+          if (citation.title) {
+            text += citation.title;
+          }
+          if (citation.reference) {
+            text += ` (${citation.reference})`;
+          }
+          text += `\n`;
+          if (citation.snippet) {
+            text += `     "${citation.snippet}"\n`;
+          }
+          if (citation.doi) {
+            text += `     DOI: https://doi.org/${citation.doi}\n`;
+          }
+          if (citation.pubmedId) {
+            text += `     PubMed: https://pubmed.ncbi.nlm.nih.gov/${citation.pubmedId}/\n`;
+          }
+        },
+      );
       text += `\n`;
     }
 

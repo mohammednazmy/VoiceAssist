@@ -3,7 +3,7 @@
 
 packages:
   # Client applications
-  - 'apps/*'
+  - "apps/*"
 
   # Shared packages
-  - 'packages/*'
+  - "packages/*"

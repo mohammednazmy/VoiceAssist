@@ -1,4 +1,14 @@
 /**
+ * LEGACY - OpenAI Realtime API Voice Panel
+ *
+ * @deprecated This component uses OpenAI Realtime API which has been REPLACED
+ * by the Thinker/Talker pipeline (Deepgram STT + GPT-4o + ElevenLabs TTS).
+ *
+ * USE INSTEAD: ThinkerTalkerVoicePanel
+ *
+ * This component is maintained for backwards compatibility only.
+ *
+ * Original description:
  * Voice Mode Panel
  * Integrates OpenAI Realtime API for full-duplex voice conversations
  *
@@ -10,33 +20,32 @@
  * - Seamless integration with Chat UI
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useRealtimeVoiceSession,
   type VoiceMetrics,
 } from "../../hooks/useRealtimeVoiceSession";
 import { useOfflineVoiceCapture } from "../../hooks/useOfflineVoiceCapture";
-import { WaveformVisualizer } from "../../utils/waveform";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { VoiceMetricsDisplay } from "./VoiceMetricsDisplay";
 import { VoiceTranscriptPreview } from "./VoiceTranscriptPreview";
 import { PendingRecordingsPanel } from "./PendingRecordingsPanel";
 import {
+  VoiceBargeInIndicator,
+  type BargeInEvent,
+} from "./VoiceBargeInIndicator";
+import { ConnectionStatusIndicator } from "./ConnectionStatusIndicator";
+import { VoiceActivityIndicator } from "./VoiceActivityIndicator";
+import { VoiceMicControl, type VoiceStatus } from "./VoiceMicControl";
+import {
   useVoiceSettingsStore,
   VOICE_OPTIONS,
-  LANGUAGE_OPTIONS,
 } from "../../stores/voiceSettingsStore";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebRTCClient } from "../../hooks/useWebRTCClient";
+import { useStreamingAudio } from "../../hooks/useStreamingAudio";
 
-/**
- * Format duration in seconds to MM:SS display
- */
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+// Note: LANGUAGE_OPTIONS is defined in voiceSettingsStore but not currently used in this component
 
 export interface VoiceModePanelProps {
   conversationId?: string;
@@ -58,11 +67,16 @@ export function VoiceModePanel({
   onAssistantMessage,
   onMetricsUpdate,
 }: VoiceModePanelProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const waveformRef = useRef<WaveformVisualizer | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
+
+  // Track currently playing Audio element for stopping on barge-in
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  // Track if we're currently processing a response to prevent overlaps
+  const isProcessingResponseRef = useRef(false);
+  // Response ID to track current response and ignore stale ones
+  const currentResponseIdRef = useRef<number>(0);
 
   const [userTranscript, setUserTranscript] = useState("");
   const [aiTranscript, setAiTranscript] = useState("");
@@ -70,22 +84,130 @@ export function VoiceModePanel({
   const [showPendingRecordings, setShowPendingRecordings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [currentBargeInEvent, setCurrentBargeInEvent] =
+    useState<BargeInEvent | null>(null);
 
   // Track pending final transcripts to add to chat
   const pendingAiMessageRef = useRef<string | null>(null);
 
   // Voice settings from store
-  const { voice, language, showStatusHints } = useVoiceSettingsStore();
-  const { apiClient } = useAuth();
+  const {
+    voice,
+    language,
+    showStatusHints,
+    ttsProvider,
+    elevenlabsVoiceId,
+    stability,
+    similarityBoost,
+    style,
+  } = useVoiceSettingsStore();
+  const { apiClient, tokens } = useAuth();
+
+  // Initialize streaming audio hook for low-latency TTS
+  const {
+    playStream,
+    stop: stopStreamingAudio,
+    state: _streamingState,
+  } = useStreamingAudio({
+    onFirstAudio: (ttfaMs) => {
+      console.log(`[VoiceModePanel] Streaming TTFA: ${ttfaMs}ms`);
+    },
+    onEnd: () => {
+      console.log("[VoiceModePanel] Streaming playback ended");
+      isProcessingResponseRef.current = false;
+    },
+    onError: (error) => {
+      console.error("[VoiceModePanel] Streaming playback error:", error);
+      isProcessingResponseRef.current = false;
+    },
+  });
+
+  /**
+   * Stop any currently playing audio (for barge-in)
+   */
+  const stopCurrentAudio = useCallback(() => {
+    // Stop standard Audio element playback
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      // Revoke the object URL to free memory
+      if (currentAudioRef.current.src.startsWith("blob:")) {
+        URL.revokeObjectURL(currentAudioRef.current.src);
+      }
+      currentAudioRef.current = null;
+      console.log("[VoiceModePanel] Stopped current audio playback");
+    }
+    // Stop streaming audio playback
+    stopStreamingAudio();
+    // Clear the audio queue as well
+    audioQueueRef.current = [];
+    isPlayingRef.current = false;
+    // Increment response ID to invalidate any pending responses
+    currentResponseIdRef.current++;
+    isProcessingResponseRef.current = false;
+    setIsSynthesizing(false);
+  }, [stopStreamingAudio]);
 
   const {
-    state: webRTCState,
-    vadState,
-    noiseSuppressionEnabled,
+    state: _webRTCState,
+    vadState: _vadState,
+    noiseSuppressionEnabled: _noiseSuppressionEnabled,
     connect: connectWebRTC,
     disconnect: disconnectWebRTC,
-    bargeIn,
-  } = useWebRTCClient({ sessionId: conversationId || "voice-webrtc" });
+    bargeIn: bargeInWebRTC,
+  } = useWebRTCClient({
+    sessionId: conversationId || "voice-webrtc",
+    token: tokens?.accessToken,
+  });
+
+  /**
+   * Combined barge-in: stop audio + cancel response + reconnect WebRTC + log event
+   */
+  const bargeIn = useCallback(() => {
+    console.log("[VoiceModePanel] Barge-in triggered");
+
+    // Capture interrupted content before stopping
+    const interruptedContent = aiTranscript || pendingAiMessageRef.current;
+
+    stopCurrentAudio();
+    bargeInWebRTC();
+
+    // Create and show barge-in event
+    const bargeInEvent: BargeInEvent = {
+      id: `barge-${Date.now()}`,
+      timestamp: Date.now(),
+      interruptedContent: interruptedContent || undefined,
+      // Estimate completion based on whether we had partial content
+      completionPercentage: interruptedContent
+        ? Math.min(90, interruptedContent.length / 5)
+        : undefined,
+    };
+
+    setCurrentBargeInEvent(bargeInEvent);
+
+    // Log event to backend for analytics (fire-and-forget)
+    if (apiClient) {
+      apiClient
+        .logVoiceEvent({
+          conversation_id: conversationId || null,
+          event_type: "barge_in",
+          timestamp: bargeInEvent.timestamp,
+          metadata: {
+            interrupted_content: bargeInEvent.interruptedContent,
+            completion_percentage: bargeInEvent.completionPercentage,
+          },
+        })
+        .catch((err) => {
+          console.warn("[VoiceModePanel] Failed to log barge-in event:", err);
+        });
+    }
+  }, [
+    stopCurrentAudio,
+    bargeInWebRTC,
+    aiTranscript,
+    apiClient,
+    conversationId,
+  ]);
 
   // Initialize offline voice capture hook
   const {
@@ -204,18 +326,103 @@ export function VoiceModePanel({
     onRelayResult: async ({ answer }) => {
       // Backend RAG answer: show and synthesize audio
       if (answer) {
+        // Prevent overlapping responses - only process if not already processing
+        if (isProcessingResponseRef.current) {
+          console.log(
+            "[VoiceModePanel] Skipping response - already processing another",
+          );
+          return;
+        }
+
+        // Stop any currently playing audio first (before incrementing response ID)
+        stopCurrentAudio();
+
+        // Capture current response ID to check for staleness later
+        const responseId = ++currentResponseIdRef.current;
+        isProcessingResponseRef.current = true;
+
         setAiTranscript(answer);
         pendingAiMessageRef.current = answer;
         onAssistantMessage?.(answer);
 
         try {
           setIsSynthesizing(true);
-          const audioBlob = await apiClient.synthesizeSpeech(answer, voice);
-          const url = URL.createObjectURL(audioBlob);
-          const audio = new Audio(url);
-          audio.play().catch(() => {});
+
+          // Use streaming for ElevenLabs (lower latency), blob for OpenAI
+          const useStreaming = ttsProvider === "elevenlabs";
+          const effectiveVoice =
+            ttsProvider === "elevenlabs"
+              ? elevenlabsVoiceId || "Rachel"
+              : voice;
+
+          if (useStreaming) {
+            // Streaming playback for ElevenLabs - lower TTFA
+            console.log("[VoiceModePanel] Using streaming TTS (ElevenLabs)");
+            const response = await apiClient.synthesizeSpeechStream(answer, {
+              voiceId: effectiveVoice,
+              provider: ttsProvider,
+              stability,
+              similarityBoost,
+              style,
+              language,
+            });
+
+            // Check if this response is still current (not cancelled by barge-in)
+            if (responseId !== currentResponseIdRef.current) {
+              console.log(
+                "[VoiceModePanel] Response cancelled - skipping streaming playback",
+              );
+              return;
+            }
+
+            // Play using streaming audio hook (isProcessingResponseRef is managed by onEnd/onError callbacks)
+            await playStream(response);
+          } else {
+            // Standard blob playback for OpenAI
+            console.log("[VoiceModePanel] Using standard TTS (OpenAI HD)");
+            const audioBlob = await apiClient.synthesizeSpeech(
+              answer,
+              effectiveVoice,
+            );
+
+            // Check if this response is still current (not cancelled by barge-in)
+            if (responseId !== currentResponseIdRef.current) {
+              console.log(
+                "[VoiceModePanel] Response cancelled - skipping playback",
+              );
+              URL.revokeObjectURL(URL.createObjectURL(audioBlob));
+              return;
+            }
+
+            const url = URL.createObjectURL(audioBlob);
+            const audio = new Audio(url);
+            currentAudioRef.current = audio;
+
+            // Clean up when audio ends
+            audio.onended = () => {
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+                isProcessingResponseRef.current = false;
+              }
+              URL.revokeObjectURL(url);
+            };
+
+            audio.onerror = () => {
+              if (currentAudioRef.current === audio) {
+                currentAudioRef.current = null;
+                isProcessingResponseRef.current = false;
+              }
+              URL.revokeObjectURL(url);
+            };
+
+            await audio.play().catch((err) => {
+              console.error("[VoiceModePanel] Audio play failed:", err);
+              isProcessingResponseRef.current = false;
+            });
+          }
         } catch (err) {
           console.error("[VoiceModePanel] Failed to synthesize speech", err);
+          isProcessingResponseRef.current = false;
         } finally {
           setIsSynthesizing(false);
         }
@@ -228,16 +435,27 @@ export function VoiceModePanel({
         assistant_message_id,
       );
     },
+    onSpeechStarted: () => {
+      // User started speaking - stop any playing audio (barge-in)
+      console.log("[VoiceModePanel] Speech started - stopping audio");
+      stopCurrentAudio();
+    },
     autoConnect: false, // Manual connect
   });
 
+  // Use refs to avoid dependency array issues causing repeated connect/disconnect
+  const connectWebRTCRef = useRef(connectWebRTC);
+  const disconnectWebRTCRef = useRef(disconnectWebRTC);
+  connectWebRTCRef.current = connectWebRTC;
+  disconnectWebRTCRef.current = disconnectWebRTC;
+
   useEffect(() => {
     if (isConnected) {
-      void connectWebRTC();
+      void connectWebRTCRef.current();
     } else {
-      disconnectWebRTC();
+      disconnectWebRTCRef.current();
     }
-  }, [isConnected, connectWebRTC, disconnectWebRTC]);
+  }, [isConnected]);
 
   /**
    * Play queued audio chunks
@@ -293,41 +511,23 @@ export function VoiceModePanel({
     }
   };
 
-  /**
-   * Initialize waveform visualization when canvas is available
-   */
-  useEffect(() => {
-    if (canvasRef.current && !waveformRef.current) {
-      waveformRef.current = new WaveformVisualizer(canvasRef.current, {
-        width: 600,
-        height: 80,
-        color: "#3b82f6",
-        backgroundColor: "#f8fafc",
-        lineWidth: 2,
-      });
-    }
-
-    return () => {
-      if (waveformRef.current) {
-        waveformRef.current.disconnect();
-        waveformRef.current = null;
-      }
-    };
-  }, []);
+  // Ref to hold the latest disconnect function for cleanup
+  const disconnectFnRef = useRef(disconnect);
+  disconnectFnRef.current = disconnect;
 
   /**
-   * Cleanup on unmount
+   * Cleanup on unmount only
    */
   useEffect(() => {
     return () => {
-      disconnect();
+      disconnectFnRef.current();
       if (audioContextRef.current) {
         audioContextRef.current.close();
         audioContextRef.current = null;
       }
       audioQueueRef.current = [];
     };
-  }, [disconnect]);
+  }, []);
 
   /**
    * Update user transcript from the hook and add to chat
@@ -383,63 +583,34 @@ export function VoiceModePanel({
       className="bg-white border-2 border-primary-500 rounded-lg shadow-xl p-4 sm:p-6 space-y-3 sm:space-y-4"
       data-testid="voice-mode-panel"
     >
-      {/* Header */}
+      {/* Header - Simplified with connection status indicator */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="relative">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6 text-primary-600"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"
-              />
-            </svg>
-            {isConnected && (
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-            )}
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900">
-              Voice Mode{" "}
-              <span className="text-xs font-normal text-neutral-500">
-                (Beta)
-              </span>
-            </h3>
-            <p className="text-xs text-neutral-500">
-              {VOICE_OPTIONS.find((v) => v.value === voice)?.label} /{" "}
-              {LANGUAGE_OPTIONS.find((l) => l.value === language)?.label}
-            </p>
-          </div>
-          </div>
+          <h3 className="text-lg font-semibold text-neutral-900">Voice Mode</h3>
+          <ConnectionStatusIndicator
+            status={status}
+            isOfflineMode={isOfflineMode}
+            isOfflineRecording={isOfflineRecording}
+            reconnectAttempts={metrics.reconnectCount}
+          />
+        </div>
 
         <div className="flex items-center space-x-2">
-          {/* Pending recordings indicator */}
+          {/* Pending recordings badge */}
           {pendingCount > 0 && (
             <button
               type="button"
               onClick={() => setShowPendingRecordings(true)}
-              className="relative flex items-center space-x-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-full transition-colors"
-              aria-label={`${pendingCount} pending recording${pendingCount > 1 ? "s" : ""} - click to manage`}
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-full transition-colors"
+              aria-label={`${pendingCount} pending recording${pendingCount > 1 ? "s" : ""}`}
               data-testid="pending-recordings-badge"
-              title="Click to manage pending recordings"
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
+                className="w-3.5 h-3.5"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={1.5}
                 stroke="currentColor"
-                className="w-4 h-4"
+                strokeWidth={2}
               >
                 <path
                   strokeLinecap="round"
@@ -451,45 +622,25 @@ export function VoiceModePanel({
             </button>
           )}
 
-          {/* Offline mode indicator */}
-          {isOfflineMode && (
-            <span
-              className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full"
-              data-testid="offline-mode-indicator"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-3 h-3"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"
-                />
-              </svg>
-              <span>Offline</span>
-            </span>
-          )}
+          {/* Voice/Language info */}
+          <span className="hidden sm:inline text-xs text-neutral-500">
+            {VOICE_OPTIONS.find((v) => v.value === voice)?.label}
+          </span>
 
-          {/* Settings gear icon */}
+          {/* Settings */}
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
             aria-label="Voice settings"
             data-testid="voice-settings-button"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
               fill="none"
               viewBox="0 0 24 24"
-              strokeWidth={1.5}
               stroke="currentColor"
-              className="w-6 h-6"
+              strokeWidth={1.5}
             >
               <path
                 strokeLinecap="round"
@@ -504,20 +655,20 @@ export function VoiceModePanel({
             </svg>
           </button>
 
+          {/* Close */}
           <button
             type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
             aria-label="Close voice mode"
             data-testid="close-voice-mode"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
               fill="none"
               viewBox="0 0 24 24"
-              strokeWidth={2}
               stroke="currentColor"
-              className="w-6 h-6"
+              strokeWidth={2}
             >
               <path
                 strokeLinecap="round"
@@ -529,184 +680,30 @@ export function VoiceModePanel({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-neutral-50 border px-3 py-2">
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${vadState === "speaking" ? "bg-green-100 text-green-800" : "bg-neutral-200 text-neutral-700"}`}
-          data-testid="vad-indicator"
-        >
-          VAD: {vadState === "speaking" ? "Speaking" : "Silence"}
-        </span>
-        <span className="text-xs text-neutral-600" data-testid="noise-suppression">
-          Noise suppression {noiseSuppressionEnabled ? "enabled" : "disabled"}
-        </span>
-        <span className="text-xs text-neutral-600" data-testid="webrtc-state">
-          WebRTC {webRTCState}
-        </span>
-        <button
-          type="button"
-          onClick={bargeIn}
-          className="text-xs px-3 py-1 rounded-full bg-primary-50 text-primary-700 hover:bg-primary-100"
-          aria-label="Interrupt playback and capture"
-        >
-          Barge-in
-        </button>
-      </div>
-
-      {/* Connection Status */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 p-3 bg-neutral-50 rounded-lg">
-        <div className="flex items-center space-x-2">
-          <div
-            className={`w-2 h-2 rounded-full flex-shrink-0 ${
-              isOfflineRecording
-                ? "bg-red-500 animate-pulse"
-                : isOfflineMode
-                  ? "bg-orange-500"
-                  : status === "connected"
-                    ? "bg-green-500"
-                    : status === "connecting"
-                      ? "bg-yellow-500 animate-pulse"
-                      : status === "reconnecting"
-                        ? "bg-orange-500 animate-pulse"
-                        : status === "error" ||
-                            status === "failed" ||
-                            status === "mic_permission_denied"
-                          ? "bg-red-500"
-                          : status === "expired"
-                            ? "bg-amber-500"
-                            : "bg-neutral-300"
-            }`}
-          />
-          <span
-            className="text-sm font-medium text-neutral-700"
-            data-testid="connection-status"
-          >
-            {isOfflineRecording
-              ? `Recording (${formatDuration(recordingDuration)})`
-              : isOfflineMode
-                ? "Offline Mode"
-                : status === "connected"
-                  ? "Connected"
-                  : status === "connecting"
-                    ? "Connecting..."
-                    : status === "reconnecting"
-                      ? "Reconnecting..."
-                      : status === "error"
-                        ? "Error"
-                        : status === "failed"
-                          ? "Connection Failed"
-                          : status === "mic_permission_denied"
-                            ? "Microphone Blocked"
-                            : status === "expired"
-                              ? "Session Expired"
-                              : "Disconnected"}
-          </span>
-        </div>
-
-        {/* Offline recording controls */}
-        {isOfflineMode && !isConnected && (
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            {isOfflineRecording ? (
-              <>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const recording = await stopOfflineRecording();
-                    if (recording) {
-                      console.log(
-                        `[VoiceModePanel] Stopped recording: ${recording.id}`,
-                      );
-                    }
-                  }}
-                  className="min-h-[44px] flex-1 sm:flex-none px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 transition-colors"
-                  data-testid="stop-offline-recording"
-                >
-                  Stop Recording
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelOfflineRecording}
-                  className="min-h-[44px] px-3 py-2 bg-neutral-300 text-neutral-700 text-sm font-medium rounded-md hover:bg-neutral-400 transition-colors"
-                  data-testid="cancel-offline-recording"
-                  aria-label="Cancel recording"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={startOfflineRecording}
-                className="min-h-[44px] px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 transition-colors w-full sm:w-auto flex items-center justify-center space-x-2"
-                data-testid="start-offline-recording"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
-                  />
-                </svg>
-                <span>Record Offline</span>
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Show Start button when disconnected, failed, expired, or error (but not connecting/reconnecting/mic_permission_denied) and NOT in offline mode */}
-        {!isOfflineMode &&
-          (status === "disconnected" ||
-            status === "failed" ||
-            status === "expired" ||
-            status === "error") &&
-          !isMicPermissionDenied && (
-            <button
-              type="button"
-              onClick={handleConnect}
-              className="min-h-[44px] px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 transition-colors w-full sm:w-auto"
-              data-testid="start-voice-session"
-            >
-              {status === "failed" || status === "expired"
-                ? "Reconnect"
-                : status === "error"
-                  ? "Try Again"
-                  : "Start Voice Session"}
-            </button>
-          )}
-
-        {/* Show End button when connected, connecting, or reconnecting */}
-        {(isConnected ||
-          status === "connecting" ||
-          status === "reconnecting") && (
-          <button
-            type="button"
-            onClick={handleDisconnect}
-            className="min-h-[44px] px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-md hover:bg-red-600 transition-colors w-full sm:w-auto"
-            data-testid="end-voice-session"
-          >
-            End Session
-          </button>
-        )}
-      </div>
+      {/* Central Microphone Control */}
+      <VoiceMicControl
+        status={status as VoiceStatus}
+        isConnected={isConnected}
+        isSpeaking={isSpeaking}
+        isMicPermissionDenied={isMicPermissionDenied}
+        isOfflineMode={isOfflineMode}
+        isOfflineRecording={isOfflineRecording}
+        recordingDuration={recordingDuration}
+        isSynthesizing={isSynthesizing}
+        onConnect={handleConnect}
+        onDisconnect={handleDisconnect}
+        onBargeIn={bargeIn}
+        onStartOfflineRecording={startOfflineRecording}
+        onStopOfflineRecording={() => {
+          stopOfflineRecording().then((recording) => {
+            if (recording)
+              console.log(
+                `[VoiceModePanel] Stopped recording: ${recording.id}`,
+              );
+          });
+        }}
+        onCancelOfflineRecording={cancelOfflineRecording}
+      />
 
       {/* Microphone Permission Denied - Focused Error Card */}
       {isMicPermissionDenied && (
@@ -819,116 +816,6 @@ export function VoiceModePanel({
         </div>
       )}
 
-      {/* Reconnecting Status */}
-      {status === "reconnecting" && (
-        <div
-          className="p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start space-x-2"
-          data-testid="reconnecting-alert"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5 animate-spin"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-            />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-orange-900">
-              Reconnecting to Voice Session
-            </p>
-            <p className="text-sm text-orange-700 mt-1">
-              Connection was interrupted. Attempting to reconnect
-              automatically...
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Connection Failed Status */}
-      {status === "failed" && !error && (
-        <div
-          className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2"
-          data-testid="failed-alert"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
-            />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-red-900">
-              Connection Failed
-            </p>
-            <p className="text-sm text-red-700 mt-1">
-              Unable to establish a voice connection after multiple attempts.
-              Please check your internet connection and try again.
-            </p>
-            <button
-              type="button"
-              onClick={handleConnect}
-              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded transition-colors"
-            >
-              Reconnect
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Session Expired Status */}
-      {status === "expired" && !error && (
-        <div
-          className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start space-x-2"
-          data-testid="expired-alert"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-900">
-              Session Expired
-            </p>
-            <p className="text-sm text-amber-700 mt-1">
-              Your voice session has expired. Click below to start a new session
-              and continue your conversation.
-            </p>
-            <button
-              type="button"
-              onClick={handleConnect}
-              className="mt-2 min-h-[44px] px-3 py-2 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors"
-            >
-              Start New Session
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Offline Mode Info Card */}
       {isOfflineMode && !isConnected && !isOfflineRecording && (
         <div
@@ -968,69 +855,13 @@ export function VoiceModePanel({
         </div>
       )}
 
-      {/* Offline Recording in Progress */}
-      {isOfflineRecording && (
-        <div
-          className="p-4 bg-red-50 border-2 border-red-300 rounded-lg"
-          data-testid="offline-recording-status"
-        >
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="w-6 h-6 text-red-600"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
-                  />
-                </svg>
-              </div>
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-              </span>
-            </div>
-            <div className="flex-1">
-              <p className="text-lg font-semibold text-red-900">Recording...</p>
-              <p className="text-2xl font-mono font-bold text-red-700">
-                {formatDuration(recordingDuration)}
-              </p>
-            </div>
-          </div>
-          <p className="text-xs text-red-600 mt-3">
-            Speak clearly. Your recording will be transcribed when you&apos;re
-            back online.
-          </p>
-        </div>
-      )}
-
-      {/* Waveform Visualization */}
-      {isConnected && (
-        <div className="p-3 sm:p-4 bg-neutral-50 rounded-lg">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={80}
-            className="w-full h-16 sm:h-20 rounded"
-            style={{ maxWidth: "100%", height: "auto" }}
-          />
-          {isSpeaking && !partialTranscript && (
-            <div className="mt-2 flex items-center justify-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-green-600">
-                Speaking...
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Voice Activity Visualization */}
+      <VoiceActivityIndicator
+        isSpeaking={isSpeaking}
+        isSynthesizing={isSynthesizing}
+        isConnected={isConnected}
+        className="py-2"
+      />
 
       {/* Live Transcript Preview (while speaking) */}
       {isConnected && (
@@ -1047,7 +878,12 @@ export function VoiceModePanel({
           {userTranscript && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs font-semibold text-blue-900 mb-1">You:</p>
-              <p className="text-sm text-blue-800">{userTranscript}</p>
+              <p
+                className="text-sm text-blue-800"
+                data-testid="voice-user-transcript"
+              >
+                {userTranscript}
+              </p>
             </div>
           )}
 
@@ -1057,7 +893,12 @@ export function VoiceModePanel({
               <p className="text-xs font-semibold text-purple-900 mb-1">
                 AI Assistant:
               </p>
-              <p className="text-sm text-purple-800">{aiTranscript}</p>
+              <p
+                className="text-sm text-purple-800"
+                data-testid="voice-ai-transcript"
+              >
+                {aiTranscript}
+              </p>
             </div>
           )}
         </div>
@@ -1068,17 +909,10 @@ export function VoiceModePanel({
 
       {/* Instructions - only show when showStatusHints is enabled */}
       {!isConnected && !error && showStatusHints && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="text-sm font-semibold text-blue-900 mb-2">
-            How Voice Mode Works:
-          </h4>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>Click "Start Voice Session" to begin</li>
-            <li>Speak naturally - the AI will detect when you're done</li>
-            <li>The AI will respond with both voice and text</li>
-            <li>Your conversation is saved to this chat</li>
-            <li>Click "End Session" when you're finished</li>
-          </ul>
+        <div className="p-3 bg-blue-50/70 border border-blue-200/50 rounded-lg text-center">
+          <p className="text-sm text-blue-700">
+            Tap the microphone to start a voice conversation
+          </p>
         </div>
       )}
 
@@ -1108,6 +942,13 @@ export function VoiceModePanel({
           />
         </div>
       )}
+
+      {/* Voice Barge-in Indicator */}
+      <VoiceBargeInIndicator
+        event={currentBargeInEvent}
+        onDismiss={() => setCurrentBargeInEvent(null)}
+        autoDismissMs={4000}
+      />
     </div>
   );
 }

@@ -19,6 +19,7 @@ import {
   type VADConfig,
 } from "../../utils/vad";
 import { WaveformVisualizer } from "../../utils/waveform";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface VoiceInputEnhancedProps {
   onTranscript: (text: string) => void;
@@ -141,9 +142,9 @@ export function VoiceInputEnhanced({
           setTranscript(text);
           onTranscript(text);
           setRecordingState("idle");
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Transcription failed:", err);
-          setError("Failed to transcribe audio");
+          setError(extractErrorMessage(err));
           setRecordingState("idle");
         }
       };
@@ -168,13 +169,15 @@ export function VoiceInputEnhanced({
           stopRecording();
         });
 
-        vadRef.current.on("energyChange", (newEnergy: number) => {
-          setEnergy(newEnergy);
+        vadRef.current.on("energyChange", (newEnergy?: number) => {
+          if (newEnergy !== undefined) {
+            setEnergy(newEnergy);
+          }
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to start recording:", err);
-      setError("Microphone access denied or unavailable");
+      setError(extractErrorMessage(err));
       setRecordingState("idle");
       setMicrophoneState("denied");
     }
@@ -444,48 +447,48 @@ export function VoiceInputEnhanced({
 
       {/* Error Display - only show for non-microphone-permission errors */}
       {error && (
-          <div className="p-3 bg-red-50 rounded-md border border-red-200 flex items-start space-x-2">
+        <div className="p-3 bg-red-50 rounded-md border border-red-200 flex items-start space-x-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-5 h-5 text-red-600 flex-shrink-0"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+            />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm text-red-800 font-medium">Error</p>
+            <p className="text-sm text-red-600 mt-1">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-700 focus:outline-none"
+            aria-label="Dismiss error"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              strokeWidth={1.5}
+              strokeWidth={2}
               stroke="currentColor"
-              className="w-5 h-5 text-red-600 flex-shrink-0"
+              className="w-5 h-5"
             >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-            <div className="flex-1">
-              <p className="text-sm text-red-800 font-medium">Error</p>
-              <p className="text-sm text-red-600 mt-1">{error}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="text-red-600 hover:text-red-700 focus:outline-none"
-              aria-label="Dismiss error"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
+          </button>
+        </div>
+      )}
 
       {/* Instructions */}
       <p className="text-xs text-neutral-500 text-center">

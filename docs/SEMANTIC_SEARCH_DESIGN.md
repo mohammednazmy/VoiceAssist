@@ -1,3 +1,34 @@
+---
+title: Semantic Search Design
+slug: semantic-search-design
+summary: >-
+  VoiceAssist uses a sophisticated semantic search system to retrieve relevant
+  medical knowledge from textbooks, journals, and clinical guidelines. This...
+status: stable
+stability: beta
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - semantic
+  - search
+  - design
+category: reference
+component: "backend/search"
+relatedPaths:
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/services/embedding_service.py"
+  - "services/api-gateway/app/api/advanced_search.py"
+  - "services/api-gateway/app/api/admin_kb.py"
+ai_summary: >-
+  VoiceAssist uses a sophisticated semantic search system to retrieve relevant
+  medical knowledge from textbooks, journals, and clinical guidelines. This
+  document describes the complete ingestion and query pipeline. Note: For
+  canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), se...
+---
+
 # Semantic Search & Knowledge Base Design
 
 ## Overview
@@ -48,6 +79,7 @@ VoiceAssist uses a sophisticated semantic search system to retrieve relevant med
 ### 1. Document Upload & Storage
 
 **Process:**
+
 1. User uploads PDF/DOCX via admin panel
 2. File saved to `/data/documents/{doc_id}/{filename}`
 3. Document record created in PostgreSQL with status `uploaded`
@@ -124,12 +156,14 @@ class DocumentUploader:
 ### 2. Text Extraction
 
 **Supported Formats:**
+
 - PDF (native text extraction + OCR fallback)
 - DOCX (python-docx)
 - HTML (BeautifulSoup)
 - Plain text
 
 **Libraries:**
+
 - **PyPDF2**: Fast PDF text extraction
 - **pdfplumber**: Better table/structure handling
 - **Tesseract OCR**: For scanned documents
@@ -218,6 +252,7 @@ class TextExtractor:
 ### 3. Text Preprocessing & Cleaning
 
 **Steps:**
+
 1. Remove headers/footers (page numbers, running headers)
 2. Fix encoding issues
 3. Normalize whitespace
@@ -334,12 +369,14 @@ class TextPreprocessor:
 **Strategy:** Semantic chunking with overlap
 
 **Parameters:**
+
 - **Chunk size**: 500 tokens (~400 words)
 - **Overlap**: 100 tokens (20%)
 - **Max chunk size**: 750 tokens
 - **Min chunk size**: 200 tokens
 
 **Chunking Methods:**
+
 1. **Sentence-based**: Split on sentence boundaries
 2. **Heading-aware**: Keep sections together when possible
 3. **Table/figure extraction**: Handle structured content separately
@@ -481,12 +518,14 @@ class SemanticChunker:
 **Embedding Model:** OpenAI `text-embedding-3-large`
 
 **Specifications:**
+
 - **Dimensions**: 3072 (can be reduced to 1024/512 for efficiency)
 - **Max input**: 8191 tokens
 - **Cost**: $0.13 per 1M tokens
 - **Performance**: MTEB score 64.6
 
 **Alternative Models:**
+
 - **Local**: `sentence-transformers/all-MiniLM-L6-v2` (384 dim)
 - **Local Medical**: `microsoft/BiomedNLP-PubMedBERT-base` (768 dim)
 
@@ -569,6 +608,7 @@ Each `KnowledgeDocument` has a **stable `doc_key`** that serves as the idempoten
 - **Uniqueness**: Enforced at database level with unique constraint
 
 **Examples**:
+
 - `textbook-harrisons-21e-ch252` - Harrison's 21st edition, Chapter 252
 - `guideline-cdc-heart-failure-2023` - CDC heart failure guideline (2023 version)
 - `journal-nejm-2023-12345` - NEJM article with DOI suffix
@@ -586,6 +626,7 @@ When a document is re-ingested (same `doc_key`):
 3. **If not exists**: Create new document
 
 **Database Schema**:
+
 ```sql
 CREATE TABLE knowledge_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -621,6 +662,7 @@ CREATE INDEX idx_superseded_chunks ON kb_chunks(document_id) WHERE superseded = 
 ```
 
 **When document is updated:**
+
 1. Set `superseded = true` on old chunks
 2. Create new chunks with `superseded = false`
 3. Old chunks remain for audit but excluded from search
@@ -857,13 +899,13 @@ Each document ingestion creates an `IndexingJob` that tracks progress through th
 
 #### State Definitions
 
-| State | Description | Next States | Can Retry? |
-|-------|-------------|-------------|------------|
-| **PENDING** | Job queued, not yet started | RUNNING, FAILED | N/A |
-| **RUNNING** | Worker processing document | COMPLETED, FAILED | N/A |
-| **COMPLETED** | Successfully indexed | SUPERSEDED | No |
-| **FAILED** | Error during processing | PENDING (retry), SUPERSEDED | Yes |
-| **SUPERSEDED** | Replaced by newer version | (terminal) | No |
+| State          | Description                 | Next States                 | Can Retry? |
+| -------------- | --------------------------- | --------------------------- | ---------- |
+| **PENDING**    | Job queued, not yet started | RUNNING, FAILED             | N/A        |
+| **RUNNING**    | Worker processing document  | COMPLETED, FAILED           | N/A        |
+| **COMPLETED**  | Successfully indexed        | SUPERSEDED                  | No         |
+| **FAILED**     | Error during processing     | PENDING (retry), SUPERSEDED | Yes        |
+| **SUPERSEDED** | Replaced by newer version   | (terminal)                  | No         |
 
 #### State Transitions
 
@@ -994,6 +1036,7 @@ async def retry_indexing_job(job_id: str) -> APIEnvelope:
 ### 1. Query Enhancement
 
 **Steps:**
+
 1. Detect user intent (quick lookup vs deep analysis)
 2. Extract medical entities (drugs, conditions, procedures)
 3. Expand abbreviations
@@ -1137,6 +1180,7 @@ class QueryEnhancer:
 ### 2. Hybrid Search (Dense + Sparse)
 
 **Strategy:**
+
 - **Dense (Vector)**: Semantic similarity using embeddings
 - **Sparse (BM25)**: Keyword matching for exact terms
 - **Fusion**: Combine scores with learned weights
@@ -1278,6 +1322,7 @@ class RAGService:
 ### 3. Result Post-processing
 
 **Steps:**
+
 1. Deduplication (remove near-duplicate chunks)
 2. Citation formatting
 3. Relevance filtering (threshold)
@@ -1539,9 +1584,10 @@ These examples demonstrate how the semantic search system and conductor work tog
 
 #### Example 1: Heart Failure Management Query
 
-**User Query**: *"What are the current guidelines for managing acute decompensated heart failure in the emergency department?"*
+**User Query**: _"What are the current guidelines for managing acute decompensated heart failure in the emergency department?"_
 
 **Step 1: Intent Classification**
+
 ```json
 {
   "intent": "guideline",
@@ -1552,11 +1598,13 @@ These examples demonstrate how the semantic search system and conductor work tog
 ```
 
 **Step 2: Source Selection** (based on intent)
+
 - Internal KB: Filter `source_type = 'guideline'`
 - External: UpToDate, PubMed (recent RCTs)
 - Priority: Official guidelines (AHA, ACC, ESC)
 
 **Step 3: KB Search with Filters**
+
 ```python
 kb_results = await kb_engine.search(
     query="acute decompensated heart failure emergency management",
@@ -1571,6 +1619,7 @@ kb_results = await kb_engine.search(
 ```
 
 **KB Search Results** (vector similarity + BM25 hybrid):
+
 ```json
 [
   {
@@ -1607,6 +1656,7 @@ kb_results = await kb_engine.search(
 ```
 
 **Step 4: External Tool Results**
+
 ```json
 {
   "uptodate": [
@@ -1628,12 +1678,14 @@ kb_results = await kb_engine.search(
 ```
 
 **Step 5: Conductor Merges & Ranks Sources**
+
 - Priority 1: Official guidelines (AHA 2023)
 - Priority 2: Textbooks (Harrison's)
 - Priority 3: UpToDate (for practical management)
 - Priority 4: Recent RCTs (GALACTIC-HF)
 
 **Step 6: LLM Answer Generation**
+
 ```json
 {
   "answer": "For acute decompensated heart failure in the emergency department, current guidelines recommend the following approach:\n\n1. **Initial Assessment** (Class I, Level A): Rapid evaluation of volume status, respiratory distress, and end-organ perfusion.\n\n2. **Immediate Management**:\n   - IV loop diuretics (furosemide 40-80mg bolus initially) for volume overload\n   - Supplemental oxygen to maintain SpO2 >90%\n   - Upright positioning to reduce preload\n\n3. **Hemodynamic Monitoring**: Consider invasive monitoring if severe hypotension or cardiogenic shock.\n\n4. **Vasodilators**: Nitroglycerin for elevated blood pressure and pulmonary congestion (avoid if SBP <90 mmHg).\n\n5. **Inotropic Support**: Only if evidence of hypoperfusion despite adequate filling pressures.\n\nRecent data from the GALACTIC-HF trial suggests omecamtiv mecarbil may reduce cardiovascular death in chronic HF, though not specifically studied in acute settings.",
@@ -1669,9 +1721,10 @@ kb_results = await kb_engine.search(
 
 #### Example 2: Drug Dosing Query
 
-**User Query**: *"What's the appropriate dose of metformin for a patient with CKD stage 3?"*
+**User Query**: _"What's the appropriate dose of metformin for a patient with CKD stage 3?"_
 
 **Step 1: Intent Classification**
+
 ```json
 {
   "intent": "drug_reference",
@@ -1683,11 +1736,13 @@ kb_results = await kb_engine.search(
 ```
 
 **Step 2: Source Selection**
+
 - Internal KB: Filter `source_type = 'drug_formulary'` or `'guideline'`
 - External: Drug interaction databases, FDA prescribing information
 - Priority: Official prescribing info, renal dosing guidelines
 
 **Step 3: KB Search with Drug-Specific Filters**
+
 ```python
 kb_results = await kb_engine.search(
     query="metformin dosing chronic kidney disease stage 3 renal impairment",
@@ -1702,6 +1757,7 @@ kb_results = await kb_engine.search(
 ```
 
 **KB Search Results**:
+
 ```json
 [
   {
@@ -1724,6 +1780,7 @@ kb_results = await kb_engine.search(
 **Step 4: External Tool Results** (FDA prescribing info, drug databases)
 
 **Step 5: LLM Answer with Safety Warning**
+
 ```json
 {
   "answer": "For a patient with CKD Stage 3, metformin dosing depends on the specific eGFR:\n\n**Stage 3a (eGFR 45-59 mL/min/1.73m²)**:\n- Maximum dose: 2000 mg/day (divided doses)\n- Monitoring: Check eGFR every 3-6 months\n- Continue metformin if eGFR remains stable\n\n**Stage 3b (eGFR 30-44 mL/min/1.73m²)**:\n- Maximum dose: 1000 mg/day\n- Monitoring: Check eGFR every 3 months\n- Consider discontinuation if eGFR declining\n\n**Important**: Metformin is contraindicated if eGFR falls below 30 mL/min/1.73m² due to risk of lactic acidosis. Always verify current eGFR before prescribing.",

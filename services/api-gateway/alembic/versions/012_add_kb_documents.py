@@ -42,9 +42,7 @@ def upgrade():
             nullable=False,
             comment="Source type: uploaded, guideline, journal, etc.",
         ),
-        sa.Column(
-            "filename", sa.String(500), nullable=True, comment="Original filename"
-        ),
+        sa.Column("filename", sa.String(500), nullable=True, comment="Original filename"),
         sa.Column(
             "file_type",
             sa.String(50),

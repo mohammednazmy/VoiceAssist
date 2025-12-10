@@ -11,6 +11,9 @@ export type { InputProps } from "./components/Input";
 
 export { Label } from "./components/Label";
 
+export { Slider } from "./components/Slider";
+export type { SliderProps } from "./components/Slider";
+
 export {
   Card,
   CardHeader,
@@ -43,6 +46,9 @@ export type { AvatarProps, AvatarGroupProps } from "./components/Avatar";
 
 export { IconButton } from "./components/IconButton";
 export type { IconButtonProps } from "./components/IconButton";
+
+export { HelpButton } from "./components/HelpButton";
+export type { HelpButtonProps } from "./components/HelpButton";
 
 export {
   Table,
@@ -125,6 +131,12 @@ export type {
   FeedbackCategory,
   FeedbackSeverity,
 } from "./components/FeedbackForm";
+
+export { LocaleSwitcher } from "./components/LocaleSwitcher";
+export type {
+  LocaleSwitcherProps,
+  LocaleOption,
+} from "./components/LocaleSwitcher";
 
 // Providers
 export { ThemeProvider, useTheme } from "./providers";

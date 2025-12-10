@@ -18,7 +18,7 @@ docs:
     category: overview
     audience: [developer, clinician, security, admin]
     summary: "Main entry point with role-based guides, documentation map, quick start paths."
-    related: [architecture_v2, development_phases_v2, current_phase]
+    related: [architecture_v2, development_phases_v2]
 
   - id: architecture_v2
     path: docs/ARCHITECTURE_V2.md
@@ -43,7 +43,7 @@ docs:
     category: planning
     audience: [developer, pm]
     summary: "Complete 15-phase development plan (Phase 0-14), Compose-first approach."
-    related: [roadmap, all_phases_summary, current_phase]
+    related: [roadmap, all_phases_summary]
 
   - id: roadmap
     path: docs/ROADMAP.md
@@ -61,27 +61,19 @@ docs:
     summary: "Brief description of each phase (0-14) with deliverables."
     related: [development_phases_v2, roadmap]
 
-  - id: current_phase
-    path: CURRENT_PHASE.md
-    title: "Current Phase Tracking"
-    category: planning
-    audience: [developer]
-    summary: "Current phase status, next steps, what to read."
-    related: [phase_status, development_phases_v2]
-
   - id: phase_status
     path: PHASE_STATUS.md
     title: "Phase Status Tracking"
     category: planning
     audience: [developer, pm]
     summary: "Detailed phase completion tracking (0-14)."
-    related: [current_phase, development_phases_v2]
+    related: [development_phases_v2]
 
   # Development Setup
   - id: local_development
     path: docs/LOCAL_DEVELOPMENT.md
     title: "Local Development Guide"
-    category: development
+    category: reference
     audience: [developer]
     summary: "Complete local setup, ports table, separate Nextcloud stack, daily workflow."
     related: [architecture_v2, infrastructure_setup]
@@ -203,7 +195,7 @@ docs:
     related: [data_model, service_catalog, backend_architecture]
 
   - id: web_app_readme
-    path: web-app/README.md
+    path: apps/web-app/README.md
     title: "Web App Implementation Guide"
     category: implementation
     audience: [developer]
@@ -211,12 +203,20 @@ docs:
     related: [web_app_specs, data_model]
 
   - id: admin_panel_readme
-    path: admin-panel/README.md
+    path: apps/admin-panel/README.md
     title: "Admin Panel Implementation Guide"
     category: implementation
     audience: [developer]
     summary: "Next.js admin panel, React hooks, KB management, development setup."
     related: [admin_panel_specs, data_model]
+
+  - id: api_gateway_readme
+    path: services/api-gateway/README.md
+    title: "API Gateway Service"
+    category: implementation
+    audience: [developer, ops]
+    summary: "Gateway configuration, routes, and deployment notes for ingress to backend services."
+    related: [service_catalog, architecture_v2]
 
   # Backend Implementation Files
   - id: llm_client
@@ -252,8 +252,16 @@ docs:
     related: [orchestration_design, web_app_specs]
 
   # Frontend Implementation Files
+  - id: unified_chat_voice_ui
+    path: docs/UNIFIED_CHAT_VOICE_UI.md
+    title: "Unified Chat/Voice UI"
+    category: frontend
+    audience: [developer, frontend]
+    summary: "Three-panel unified interface merging chat and voice mode. Components: UnifiedChatContainer, CollapsibleSidebar, UnifiedInputArea, CollapsibleContextPane."
+    related: [web_app_specs, frontend_architecture, voice_mode_pipeline]
+
   - id: web_app_types
-    path: web-app/src/types.ts
+    path: apps/web-app/src/types.ts
     title: "Web App TypeScript Types"
     category: implementation
     audience: [developer]
@@ -261,7 +269,7 @@ docs:
     related: [data_model, web_app_specs, web_app_api_client]
 
   - id: web_app_api_client
-    path: web-app/src/lib/api.ts
+    path: apps/web-app/src/lib/api.ts
     title: "Web App API Client"
     category: implementation
     audience: [developer]
@@ -269,7 +277,7 @@ docs:
     related: [web_app_types, server_readme]
 
   - id: web_app_chat_hook
-    path: web-app/src/hooks/useChatSession.ts
+    path: apps/web-app/src/hooks/useChatSession.ts
     title: "Web App Chat Hook"
     category: implementation
     audience: [developer]
@@ -277,7 +285,7 @@ docs:
     related: [web_app_types, web_app_api_client, web_app_specs]
 
   - id: admin_panel_types
-    path: admin-panel/src/types.ts
+    path: apps/admin-panel/src/types.ts
     title: "Admin Panel TypeScript Types"
     category: implementation
     audience: [developer]
@@ -285,7 +293,7 @@ docs:
     related: [data_model, admin_panel_specs, admin_panel_api_client]
 
   - id: admin_panel_api_client
-    path: admin-panel/src/lib/api.ts
+    path: apps/admin-panel/src/lib/api.ts
     title: "Admin Panel API Client"
     category: implementation
     audience: [developer]
@@ -293,7 +301,7 @@ docs:
     related: [admin_panel_types, server_readme]
 
   - id: admin_panel_kb_hook
-    path: admin-panel/src/hooks/useKnowledgeDocuments.ts
+    path: apps/admin-panel/src/hooks/useKnowledgeDocuments.ts
     title: "Admin Panel KB Documents Hook"
     category: implementation
     audience: [developer]
@@ -301,7 +309,7 @@ docs:
     related: [admin_panel_types, admin_panel_api_client, admin_panel_specs]
 
   - id: admin_panel_jobs_hook
-    path: admin-panel/src/hooks/useIndexingJobs.ts
+    path: apps/admin-panel/src/hooks/useIndexingJobs.ts
     title: "Admin Panel Indexing Jobs Hook"
     category: implementation
     audience: [developer]
@@ -366,6 +374,95 @@ docs:
     summary: "Detailed report of Phase 4 realtime communication foundation with WebSocket endpoint and QueryOrchestrator integration."
     related: [phase_status, development_phases_v2, service_catalog]
 
+  - id: phase_07_completion_report
+    path: docs/PHASE_07_COMPLETION_REPORT.md
+    title: "Phase 7 Completion Report"
+    category: phase_reports
+    audience: [developer, ai_agent]
+    summary: "Detailed report of Phase 7 Admin Panel & RBAC work."
+    related: [phase_status, development_phases_v2]
+
+  - id: nextcloud_apps_design
+    path: docs/NEXTCLOUD_APPS_DESIGN.md
+    title: "Nextcloud Apps Design"
+    category: integration
+    audience: [developer, ai_agent]
+    summary: "Design and status of the VoiceAssist Nextcloud apps for Phase 6."
+    related: [nextcloud_integration, phase_06_nextcloud_apps]
+
+  - id: rest_api_reference
+    path: docs/api-reference/rest-api.md
+    title: "REST API Reference"
+    category: api_reference
+    audience: [developer]
+    summary: "Endpoint catalogue, authentication, request/response schemas for the VoiceAssist REST API."
+    related: [api_gateway_readme, server_readme]
+
+  - id: archive_overview
+    path: docs/archive/README.md
+    title: "Documentation Archive"
+    category: archive
+    audience: [developer, pm]
+    summary: "Index of legacy and historical documentation retained for reference."
+    related: [doc_index]
+
+  # Monorepo Packages
+  - id: package_api_client
+    path: packages/api-client/README.md
+    title: "API Client Package"
+    category: packages
+    audience: [developer]
+    summary: "Typed client helpers for interacting with VoiceAssist services."
+    related: [rest_api_reference, api_gateway_readme]
+
+  - id: package_config
+    path: packages/config/README.md
+    title: "Config Package"
+    category: packages
+    audience: [developer]
+    summary: "Shared configuration utilities and environment management."
+    related: [server_readme]
+
+  - id: package_design_tokens
+    path: packages/design-tokens/README.md
+    title: "Design Tokens Package"
+    category: packages
+    audience: [developer, ux]
+    summary: "Color, typography, spacing, and component tokens for consistent UI."
+    related: [web_app_readme, admin_panel_readme]
+
+  - id: package_telemetry
+    path: packages/telemetry/README.md
+    title: "Telemetry Package"
+    category: packages
+    audience: [developer, ops]
+    summary: "Instrumentation helpers and telemetry pipelines for services and apps."
+    related: [observability, server_readme]
+
+  - id: package_types
+    path: packages/types/README.md
+    title: "Types Package"
+    category: packages
+    audience: [developer]
+    summary: "Shared TypeScript types used across VoiceAssist applications."
+    related: [data_model, web_app_types]
+
+  - id: package_ui
+    path: packages/ui/README.md
+    title: "UI Package"
+    category: packages
+    audience: [developer, ux]
+    summary: "Reusable UI components and styling primitives for web experiences."
+    related: [web_app_readme, admin_panel_readme, package_design_tokens]
+
+  - id: package_utils
+    path: packages/utils/README.md
+    title: "Utils Package"
+    category: packages
+    audience: [developer]
+    summary: "General-purpose utilities shared across services and apps."
+    related: [server_readme]
+
 # Task-to-Docs Mapping (for AI assistants)
 task_mappings:
   understand_architecture:
@@ -424,7 +521,6 @@ task_mappings:
     - observability
 
   start_phase:
-    - current_phase
     - phase_status
     - development_phases_v2
     - claude_execution_guide
@@ -438,22 +534,3 @@ task_mappings:
     - observability
     - web_app_specs
     - admin_panel_specs
-- id: nextcloud_apps_design
-  path: docs/NEXTCLOUD_APPS_DESIGN.md
-  title: "Nextcloud Apps Design"
-  category: integration
-  audience: ["developer", "ai_agent"]
-  summary: "Design and status of the VoiceAssist Nextcloud apps for Phase 6."
-  related:
-    - nextcloud_integration
-    - phase_06_nextcloud_apps
-- id: phase_07_completion_report
-  path: docs/PHASE_07_COMPLETION_REPORT.md
-  title: "Phase 7 Completion Report"
-  category: phase_reports
-  audience: ["developer", "ai_agent"]
-  summary: "Detailed report of Phase 7 Admin Panel & RBAC work."
-  related:
-    - phase_status
-    - development_phases_v2
-

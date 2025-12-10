@@ -39,7 +39,7 @@ export default defineConfig({
       '**/useChatSession.test.ts',
       '**/useChatSession-connect-prerequisites.test.ts',
     ],
-    // Fix ESM import issues (react-syntax-highlighter is mocked via alias)
+    // Handle ESM-only dependencies (refractor, remark plugins)
     server: {
       deps: {
         inline: [
@@ -58,8 +58,10 @@ export default defineConfig({
       { find: '@voiceassist/types', replacement: path.resolve(__dirname, '../../packages/types/src') },
       { find: '@voiceassist/api-client', replacement: path.resolve(__dirname, '../../packages/api-client/src') },
       { find: '@voiceassist/utils', replacement: path.resolve(__dirname, '../../packages/utils/src') },
-      // Mock react-syntax-highlighter and all its sub-imports
-      { find: /^react-syntax-highlighter(.*)$/, replacement: path.resolve(__dirname, './src/__mocks__/react-syntax-highlighter.tsx') },
+      {
+        find: 'virtual:pwa-register/react',
+        replacement: path.resolve(__dirname, './src/__mocks__/virtual-pwa-register-react.ts'),
+      },
     ],
   },
 });

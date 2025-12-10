@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/accessibility/LiveRegion.tsx",
+  "language": "typescript",
+  "size": 1300,
+  "last_modified": "2025-11-29T04:27:41.404Z",
+  "lines": 64,
+  "content": "/**\n * Live Region Component\n * Announces dynamic content changes to screen readers\n */\n\nimport { useEffect, useState } from \"react\";\n\nexport interface LiveRegionProps {\n  message?: string;\n  politeness?: \"polite\" | \"assertive\";\n  clearDelay?: number;\n}\n\nexport function LiveRegion({\n  message = \"\",\n  politeness = \"polite\",\n  clearDelay = 3000,\n}: LiveRegionProps) {\n  const [announcement, setAnnouncement] = useState(\"\");\n\n  useEffect(() => {\n    if (message) {\n      setAnnouncement(message);\n\n      // Clear announcement after delay to allow re-announcement\n      const timer = setTimeout(() => {\n        setAnnouncement(\"\");\n      }, clearDelay);\n\n      return () => clearTimeout(timer);\n    }\n  }, [message, clearDelay]);\n\n  return (\n    <div\n      role=\"status\"\n      aria-live={politeness}\n      aria-atomic=\"true\"\n      className=\"sr-only\"\n    >\n      {announcement}\n    </div>\n  );\n}\n\n/**\n * Hook for managing announcements\n */\nexport function useAnnouncer(politeness: \"polite\" | \"assertive\" = \"polite\") {\n  const [announcement, setAnnouncement] = useState(\"\");\n\n  const announce = (message: string) => {\n    setAnnouncement(message);\n  };\n\n  return {\n    announcement,\n    announce,\n    LiveRegion: () => (\n      <LiveRegion message={announcement} politeness={politeness} />\n    ),\n  };\n}\n"
+}

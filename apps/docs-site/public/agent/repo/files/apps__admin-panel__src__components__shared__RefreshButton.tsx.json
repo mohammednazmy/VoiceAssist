@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/shared/RefreshButton.tsx",
+  "language": "typescript",
+  "size": 1036,
+  "last_modified": "2025-11-28T04:58:59.065Z",
+  "lines": 49,
+  "content": "/**\n * RefreshButton - Consistent refresh action button\n */\n\ninterface RefreshButtonProps {\n  onClick: () => void;\n  isLoading?: boolean;\n  label?: string;\n  size?: \"sm\" | \"md\";\n  className?: string;\n}\n\nexport function RefreshButton({\n  onClick,\n  isLoading = false,\n  label = \"Refresh\",\n  size = \"md\",\n  className = \"\",\n}: RefreshButtonProps) {\n  const sizeClasses = {\n    sm: \"px-2 py-1 text-xs\",\n    md: \"px-3 py-1.5 text-sm\",\n  };\n\n  return (\n    <button\n      type=\"button\"\n      onClick={onClick}\n      disabled={isLoading}\n      className={`\n        ${sizeClasses[size]}\n        rounded-md border border-slate-700 bg-slate-800 text-slate-200\n        hover:bg-slate-700 transition-colors\n        disabled:opacity-50 disabled:cursor-not-allowed\n        flex items-center gap-1.5\n        ${className}\n      `}\n    >\n      <span\n        className={`text-sm ${isLoading ? \"animate-spin\" : \"\"}`}\n        aria-hidden=\"true\"\n      >\n        ↻\n      </span>\n      <span>{isLoading ? \"Refreshing...\" : label}</span>\n    </button>\n  );\n}\n"
+}

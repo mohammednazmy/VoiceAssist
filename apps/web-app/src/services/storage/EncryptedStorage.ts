@@ -40,8 +40,9 @@ import {
 
 /**
  * Storage schema types for IndexedDB
+ * Note: These interfaces document the structure of records in IndexedDB
  */
-interface EncryptedDataRecord {
+interface _EncryptedDataRecord {
   id: string;
   encryptedData: string; // Base64 encoded ciphertext
   iv: string; // Base64 encoded IV
@@ -50,7 +51,7 @@ interface EncryptedDataRecord {
   expiresAt?: number;
 }
 
-interface SessionAuditRecord {
+interface _SessionAuditRecord {
   action: string;
   timestamp: number;
   details: Record<string, unknown>;
@@ -58,7 +59,7 @@ interface SessionAuditRecord {
   sessionId: string;
 }
 
-interface KeyStorageRecord {
+interface _KeyStorageRecord {
   id: string;
   salt: string; // Base64 encoded salt
   createdAt: number;
@@ -133,7 +134,7 @@ export class EncryptedStorage {
     });
 
     // Get or create salt
-    let saltRecord = await this.db.get("key-storage", "encryption-salt");
+    const saltRecord = await this.db.get("key-storage", "encryption-salt");
     let salt: Uint8Array<ArrayBuffer>;
 
     if (saltRecord) {

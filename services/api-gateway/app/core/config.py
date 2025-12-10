@@ -4,6 +4,8 @@ Application configuration
 
 from typing import Optional
 
+# Import voice defaults from single source of truth
+from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_VOICE_ID
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,8 +15,10 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "VoiceAssist API Gateway"
     APP_VERSION: str = "0.1.0"
-    DEBUG: bool = True
-    ENVIRONMENT: str = "development"
+    # SECURITY: Debug mode defaults to False to prevent stack trace exposure in production
+    # Set DEBUG=true in .env for local development only
+    DEBUG: bool = False
+    ENVIRONMENT: str = "production"
 
     # Database
     POSTGRES_USER: str
@@ -52,7 +56,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # Session timeout settings
+    SESSION_INACTIVITY_TIMEOUT_MINUTES: int = 60  # Logout after 60 min of inactivity
+    SESSION_ABSOLUTE_TIMEOUT_HOURS: int = 24  # Force re-login after 24 hours
 
     # Nextcloud
     NEXTCLOUD_URL: str = "http://nextcloud"
@@ -97,12 +106,66 @@ class Settings(BaseSettings):
     REALTIME_BASE_URL: str = "wss://api.openai.com/v1/realtime"  # WebSocket endpoint
     REALTIME_TOKEN_EXPIRY_SEC: int = 300  # 5 minutes for ephemeral tokens
 
+    # Voice logging configuration (Phase 3 - Observability)
+    # MINIMAL: Errors only
+    # STANDARD: + Session lifecycle (start/end/state changes)
+    # VERBOSE: + All latency measurements
+    # DEBUG: + Audio frame details, chunk timing
+    VOICE_LOG_LEVEL: str = "STANDARD"
+
+    # Thinker/Talker Voice Pipeline settings
+    VOICE_PIPELINE_MODE: str = "thinker_talker"  # "thinker_talker" or "realtime_fallback"
+    VOICE_PIPELINE_STT_PRIMARY: str = "deepgram"  # Primary STT provider
+    VOICE_PIPELINE_STT_FALLBACK: str = "whisper"  # Fallback STT provider
+    VOICE_PIPELINE_TTS_PROVIDER: str = "elevenlabs"  # TTS provider
+    VOICE_PIPELINE_LLM_MODEL: str = "gpt-4o"  # LLM model for Thinker
+    VOICE_PIPELINE_STREAMING: bool = True  # Enable streaming at all stages
+    VOICE_PIPELINE_MAX_TOKENS: int = 1024  # Max tokens for voice responses
+
+    # Thinker/Talker latency settings
+    TARGET_STT_LATENCY_MS: int = 200  # Target STT latency
+    TARGET_LLM_FIRST_TOKEN_MS: int = 400  # Target time to first LLM token
+    TARGET_TTS_TTFB_MS: int = 200  # Target TTS time-to-first-byte
+    TARGET_TOTAL_LATENCY_MS: int = 1000  # Target end-to-end latency
+
+    # Barge-in settings
+    BARGE_IN_ENABLED: bool = True  # Allow user to interrupt AI
+    BARGE_IN_ENERGY_THRESHOLD: float = 0.05  # Audio energy threshold (0-1)
+    BARGE_IN_SUSTAINED_FRAMES: int = 5  # Frames required for barge-in
+
+    # WebSocket Latency Optimization Settings
+    # These settings are controlled by feature flags in admin.asimo.io
+    # See: backend.voice_ws_audio_prebuffering, backend.voice_ws_compression,
+    #      backend.voice_ws_adaptive_chunking
+    WS_COMPRESSION_ENABLED: bool = False  # Enable permessage-deflate compression
+    WS_AUDIO_PREBUFFER_CHUNKS: int = 3  # Number of chunks to buffer before playback
+    WS_AUDIO_PREBUFFER_TIMEOUT_MS: int = 500  # Max time to wait for prebuffer
+    WS_ADAPTIVE_CHUNK_MIN: int = 1024  # Min chunk size (samples) for good networks
+    WS_ADAPTIVE_CHUNK_MAX: int = 4096  # Max chunk size (samples) for poor networks
+    WS_ADAPTIVE_CHUNK_DEFAULT: int = 2048  # Default chunk size (samples)
+
+    # Deepgram STT settings
+    DEEPGRAM_MODEL: str = "nova-2"  # Deepgram model
+    DEEPGRAM_ENDPOINTING_MS: int = 200  # Silence detection for speech end
+
+    # ElevenLabs TTS settings
+    # Default values imported from voice_constants.py (single source of truth)
+    ELEVENLABS_MODEL: str = DEFAULT_TTS_MODEL
+    ELEVENLABS_VOICE_ID: str = DEFAULT_VOICE_ID  # Can be overridden via env var
+    ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
+
     # Provider API Keys (for future STT/TTS integration)
     # IMPORTANT: These are sensitive credentials and should never be logged or exposed
     ELEVENLABS_API_KEY: Optional[str] = None  # ElevenLabs TTS provider
     DEEPGRAM_API_KEY: Optional[str] = None  # Deepgram STT provider
     GOOGLE_STUDIO_API_KEY: Optional[str] = None  # Google AI Studio provider
     DEEPSEEK_API_KEY: Optional[str] = None  # DeepSeek LLM provider
+    SERPAPI_API_KEY: Optional[str] = None  # SerpAPI web search
+
+    # Hume AI Emotion Detection (for voice mode emotional intelligence)
+    HUME_API_KEY: Optional[str] = None  # Hume AI Expression Measurement API key
+    HUME_SECRET_KEY: Optional[str] = None  # Hume AI Secret key for authentication
+    HUME_ENABLED: bool = True  # Enable emotion detection in voice pipeline
 
     # OAuth Providers (optional - leave empty to disable)
     GOOGLE_CLIENT_ID: Optional[str] = None
@@ -120,6 +183,17 @@ class Settings(BaseSettings):
 
     # Frontend URL (used for generating share links and other frontend-facing URLs)
     FRONTEND_URL: str = "http://localhost:5173"
+
+    # Admin Panel URL (used for invitation and password reset links)
+    ADMIN_PANEL_URL: str = "https://admin.asimo.io"
+
+    # SMTP Email Configuration (for invitations, password resets)
+    SMTP_HOST: str = "smtp.hostinger.com"
+    SMTP_PORT: int = 465
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_FROM: Optional[str] = None
+    SMTP_USE_SSL: bool = True  # Use SSL (not STARTTLS) on port 465
 
     # Sentry Error Tracking
     SENTRY_DSN: Optional[str] = None  # Sentry DSN for error tracking

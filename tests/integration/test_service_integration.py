@@ -37,13 +37,13 @@ class TestRedisIntegration:
         """Test cache-based endpoint performance."""
         # First request (cache miss)
         response1 = await api_client.get("/api/cache-test")
-        
+
         if response1.status_code == 404:
             pytest.skip("Cache test endpoint not implemented")
-        
+
         # Second request (cache hit)
         response2 = await api_client.get("/api/cache-test")
-        
+
         assert response1.status_code == response2.status_code
         assert response1.json() == response2.json()
 
@@ -56,21 +56,21 @@ class TestQdrantIntegration:
     async def test_vector_search_integration(self, api_client: AsyncClient, user_token: str):
         """Test vector search functionality."""
         headers = {"Authorization": f"Bearer {user_token}"}
-        
+
         search_data = {
             "query": "test medical condition",
             "limit": 5
         }
-        
+
         response = await api_client.post(
             "/api/knowledge/search",
             json=search_data,
             headers=headers
         )
-        
+
         if response.status_code == 404:
             pytest.skip("Vector search endpoint not implemented")
-        
+
         assert response.status_code in [200, 503]
 
 
@@ -82,24 +82,24 @@ class TestNextcloudIntegration:
     async def test_nextcloud_file_operations(self, api_client: AsyncClient, user_token: str):
         """Test file operations through Nextcloud."""
         headers = {"Authorization": f"Bearer {user_token}"}
-        
+
         # List files
         files_response = await api_client.get("/api/nextcloud/files", headers=headers)
-        
+
         if files_response.status_code == 404:
             pytest.skip("Nextcloud integration not implemented")
-        
+
         assert files_response.status_code in [200, 503]
 
     async def test_nextcloud_calendar_sync(self, api_client: AsyncClient, user_token: str):
         """Test calendar synchronization."""
         headers = {"Authorization": f"Bearer {user_token}"}
-        
+
         calendar_response = await api_client.get("/api/nextcloud/calendar", headers=headers)
-        
+
         if calendar_response.status_code == 404:
             pytest.skip("Calendar integration not implemented")
-        
+
         assert calendar_response.status_code in [200, 404, 503]
 
 
@@ -111,27 +111,27 @@ class TestWorkerIntegration:
     async def test_async_task_creation(self, api_client: AsyncClient, user_token: str):
         """Test creating background tasks."""
         headers = {"Authorization": f"Bearer {user_token}"}
-        
+
         task_data = {
             "task_type": "document_processing",
             "document_id": "test-doc-123"
         }
-        
+
         response = await api_client.post(
             "/api/tasks",
             json=task_data,
             headers=headers
         )
-        
+
         if response.status_code == 404:
             pytest.skip("Task creation endpoint not implemented")
-        
+
         assert response.status_code in [200, 201, 202]
-        
+
         if response.status_code in [200, 201, 202]:
             task = response.json()
             task_id = task.get("task_id") or task.get("id")
-            
+
             # Check task status
             if task_id:
                 status_response = await api_client.get(
@@ -149,10 +149,10 @@ class TestMonitoringIntegration:
     async def test_prometheus_metrics(self, api_client: AsyncClient):
         """Test Prometheus metrics endpoint."""
         response = await api_client.get("/metrics")
-        
+
         # Metrics endpoint might be on different port
         assert response.status_code in [200, 404]
-        
+
         if response.status_code == 200:
             metrics_text = response.text
             assert len(metrics_text) > 0
@@ -163,13 +163,13 @@ class TestMonitoringIntegration:
         """Test health check endpoints."""
         # Test all health check variants
         endpoints = ["/health", "/healthz", "/ready", "/readiness", "/live", "/liveness"]
-        
+
         results = []
         for endpoint in endpoints:
             response = await api_client.get(endpoint)
             if response.status_code != 404:
                 results.append((endpoint, response.status_code))
-        
+
         # At least one health endpoint should exist
         assert len(results) > 0
 
@@ -183,20 +183,20 @@ class TestEndToEndServiceIntegration:
     async def test_complete_query_pipeline(self, api_client: AsyncClient, user_token: str):
         """Test complete query processing pipeline through all services."""
         headers = {"Authorization": f"Bearer {user_token}"}
-        
+
         # Step 1: Create a conversation
         conv_response = await api_client.post(
             "/api/conversations",
             json={"title": "Integration Test Conversation"},
             headers=headers
         )
-        
+
         if conv_response.status_code == 404:
             pytest.skip("Full pipeline not implemented")
-        
+
         if conv_response.status_code in [200, 201]:
             conv_id = conv_response.json().get("id")
-            
+
             # Step 2: Submit a query
             query_response = await api_client.post(
                 "/api/query",
@@ -207,20 +207,20 @@ class TestEndToEndServiceIntegration:
                 },
                 headers=headers
             )
-            
+
             assert query_response.status_code in [200, 404]
-            
+
             if query_response.status_code == 200:
                 result = query_response.json()
                 # Verify response structure
                 assert "answer" in result or "response" in result
-                
+
                 # Step 3: Get conversation history
                 history_response = await api_client.get(
                     f"/api/conversations/{conv_id}/messages",
                     headers=headers
                 )
-                
+
                 assert history_response.status_code == 200
                 messages = history_response.json()
                 assert len(messages) > 0 or len(messages.get("items", [])) > 0

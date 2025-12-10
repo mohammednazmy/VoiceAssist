@@ -1,10 +1,118 @@
+---
+title: Voice Mode Pipeline
+slug: voice/pipeline
+summary: >-
+  Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback,
+  metrics, offline fallback, and testing strategy.
+status: stable
+stability: production
+owner: backend
+lastUpdated: "2025-12-03"
+audience:
+  - human
+  - agent
+  - backend
+  - frontend
+  - ai-agents
+tags:
+  - voice
+  - realtime
+  - websocket
+  - openai
+  - api
+  - barge-in
+  - audio
+  - offline
+  - multilingual
+category: voice
+relatedServices:
+  - api-gateway
+  - web-app
+component: "backend/api-gateway"
+relatedPaths:
+  - "services/api-gateway/app/api/voice.py"
+  - "services/api-gateway/app/api/admin_voice.py"
+  - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
+  - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+ai_summary: >-
+  > Status: Production-ready > Last Updated: 2025-12-03 This document describes
+  the unified Voice Mode pipeline architecture, data flow, metrics, and testing
+  strategy. It serves as the canonical reference for developers working on
+  real-time voice features. VoiceAssist supports two voice pipeline mo...
+---
+
 # Voice Mode Pipeline
 
 > **Status**: Production-ready
-> **Branch**: `claude/voice-pipeline-unified-20251125072935`
-> **Last Updated**: 2025-11-25
+> **Last Updated**: 2025-12-03
 
 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
+
+## Voice Pipeline Modes
+
+VoiceAssist supports **two voice pipeline modes**:
+
+| Mode                             | Description                    | Best For                                       |
+| -------------------------------- | ------------------------------ | ---------------------------------------------- |
+| **Thinker-Talker** (Recommended) | Local STT → LLM → TTS pipeline | Full tool support, unified context, custom TTS |
+| **OpenAI Realtime** (Legacy)     | Direct OpenAI Realtime API     | Quick setup, minimal backend changes           |
+
+### Thinker-Talker Pipeline (Primary)
+
+The Thinker-Talker pipeline is the recommended approach, providing:
+
+- **Unified conversation context** between voice and chat modes
+- **Full tool/RAG support** in voice interactions
+- **Custom TTS** via ElevenLabs with premium voices
+- **Lower cost** per interaction
+
+**Documentation:** [THINKER_TALKER_PIPELINE.md](THINKER_TALKER_PIPELINE.md)
+
+```
+[Audio] → [Deepgram STT] → [GPT-4o Thinker] → [ElevenLabs TTS] → [Audio Out]
+              │                    │                    │
+         Transcripts          Tool Calls           Audio Chunks
+              │                    │                    │
+              └───────── WebSocket Handler ──────────────┘
+```
+
+### OpenAI Realtime API (Legacy)
+
+The original implementation using OpenAI's Realtime API directly. Still supported for backward compatibility.
+
+---
+
+## Implementation Status
+
+### Thinker-Talker Components
+
+| Component             | Status   | Location                                                        |
+| --------------------- | -------- | --------------------------------------------------------------- |
+| ThinkerService        | **Live** | `app/services/thinker_service.py`                               |
+| TalkerService         | **Live** | `app/services/talker_service.py`                                |
+| VoicePipelineService  | **Live** | `app/services/voice_pipeline_service.py`                        |
+| T/T WebSocket Handler | **Live** | `app/services/thinker_talker_websocket_handler.py`              |
+| SentenceChunker       | **Live** | `app/services/sentence_chunker.py`                              |
+| Frontend T/T hook     | **Live** | `apps/web-app/src/hooks/useThinkerTalkerSession.ts`             |
+| T/T Audio Playback    | **Live** | `apps/web-app/src/hooks/useTTAudioPlayback.ts`                  |
+| T/T Voice Panel       | **Live** | `apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx` |
+
+### OpenAI Realtime Components (Legacy)
+
+| Component                  | Status      | Location                                               |
+| -------------------------- | ----------- | ------------------------------------------------------ |
+| Backend session endpoint   | **Live**    | `services/api-gateway/app/api/voice.py`                |
+| Ephemeral token generation | **Live**    | `app/services/realtime_voice_service.py`               |
+| Voice metrics endpoint     | **Live**    | `POST /api/voice/metrics`                              |
+| Frontend voice hook        | **Live**    | `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`    |
+| Voice settings store       | **Live**    | `apps/web-app/src/stores/voiceSettingsStore.ts`        |
+| Voice UI panel             | **Live**    | `apps/web-app/src/components/voice/VoiceModePanel.tsx` |
+| Chat timeline integration  | **Live**    | Voice messages appear in chat                          |
+| Barge-in support           | **Live**    | `response.cancel` + `onSpeechStarted` callback         |
+| Audio overlap prevention   | **Live**    | Response ID tracking + `isProcessingResponseRef`       |
+| E2E test suite             | **Passing** | 95 tests across unit/integration/E2E                   |
+
+> **Full status:** See [Implementation Status](overview/IMPLEMENTATION_STATUS.md) for all components.
 
 ## Overview
 
@@ -16,6 +124,8 @@ Voice Mode enables real-time voice conversations with the AI assistant using Ope
 - **User settings propagation** (voice, language, VAD threshold)
 - **Chat timeline integration** (voice messages appear in chat)
 - **Connection state management** with automatic reconnection
+- **Barge-in support** (interrupt AI while speaking)
+- **Audio playback management** (prevent overlapping responses)
 - **Metrics tracking** for observability
 
 ## Architecture Diagram
@@ -302,6 +412,135 @@ interface VoiceMessage {
 }
 ```
 
+## Barge-in & Audio Playback
+
+**Location**: `apps/web-app/src/components/voice/VoiceModePanel.tsx`, `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`
+
+### Barge-in Flow
+
+When the user starts speaking while the AI is responding, the system immediately:
+
+1. **Detects speech start** via OpenAI's `input_audio_buffer.speech_started` event
+2. **Cancels active response** by sending `response.cancel` to OpenAI
+3. **Stops audio playback** via `onSpeechStarted` callback
+4. **Clears pending responses** to prevent stale audio from playing
+
+```
+User speaks → speech_started event → response.cancel → stopCurrentAudio()
+                                                            ↓
+                                                    Audio stops
+                                                    Queue cleared
+                                                    Response ID incremented
+```
+
+### Response Cancellation
+
+**Location**: `useRealtimeVoiceSession.ts` - `handleRealtimeMessage`
+
+```typescript
+case "input_audio_buffer.speech_started":
+  setIsSpeaking(true);
+  setPartialTranscript("");
+
+  // Barge-in: Cancel any active response when user starts speaking
+  if (activeResponseIdRef.current && wsRef.current?.readyState === WebSocket.OPEN) {
+    wsRef.current.send(JSON.stringify({ type: "response.cancel" }));
+    activeResponseIdRef.current = null;
+  }
+
+  // Notify parent to stop audio playback
+  options.onSpeechStarted?.();
+  break;
+```
+
+### Audio Playback Management
+
+**Location**: `VoiceModePanel.tsx`
+
+The panel tracks audio playback state to prevent overlapping responses:
+
+```typescript
+// Track currently playing Audio element
+const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+// Prevent overlapping response processing
+const isProcessingResponseRef = useRef(false);
+
+// Response ID to invalidate stale responses after barge-in
+const currentResponseIdRef = useRef<number>(0);
+```
+
+**Stop current audio function:**
+
+```typescript
+const stopCurrentAudio = useCallback(() => {
+  if (currentAudioRef.current) {
+    currentAudioRef.current.pause();
+    currentAudioRef.current.currentTime = 0;
+    if (currentAudioRef.current.src.startsWith("blob:")) {
+      URL.revokeObjectURL(currentAudioRef.current.src);
+    }
+    currentAudioRef.current = null;
+  }
+  audioQueueRef.current = [];
+  isPlayingRef.current = false;
+  currentResponseIdRef.current++; // Invalidate pending responses
+  isProcessingResponseRef.current = false;
+}, []);
+```
+
+### Overlap Prevention
+
+When a relay result arrives, the handler checks:
+
+1. **Already processing?** Skip if `isProcessingResponseRef.current === true`
+2. **Response ID valid?** Skip playback if ID changed (barge-in occurred)
+
+```typescript
+onRelayResult: async ({ answer }) => {
+  if (answer) {
+    // Prevent overlapping responses
+    if (isProcessingResponseRef.current) {
+      console.log("[VoiceModePanel] Skipping response - already processing another");
+      return;
+    }
+
+    const responseId = ++currentResponseIdRef.current;
+    isProcessingResponseRef.current = true;
+
+    // ... synthesis and playback ...
+
+    // Check if response is still valid before playback
+    if (responseId !== currentResponseIdRef.current) {
+      console.log("[VoiceModePanel] Response cancelled - skipping playback");
+      return;
+    }
+  }
+};
+```
+
+### Error Handling
+
+Benign cancellation errors (e.g., "Cancellation failed: no active response found") are handled gracefully:
+
+```typescript
+case "error": {
+  const errorMessage = message.error?.message || "Realtime API error";
+
+  // Ignore benign cancellation errors
+  if (
+    errorMessage.includes("Cancellation failed") ||
+    errorMessage.includes("no active response")
+  ) {
+    voiceLog.debug(`Ignoring benign error: ${errorMessage}`);
+    break;
+  }
+
+  handleError(new Error(errorMessage));
+  break;
+}
+```
+
 ## Metrics
 
 **Location**: `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`
@@ -424,8 +663,8 @@ logger.info(
 #### Testing
 
 ```bash
-# Backend
-cd /home/asimo/VoiceAssist/services/api-gateway
+# Backend (from project root)
+cd services/api-gateway
 source venv/bin/activate && export PYTHONPATH=.
 python -m pytest tests/integration/test_voice_metrics.py -v
 ```
@@ -453,14 +692,16 @@ The hook monitors `session.expires_at` and can trigger refresh before expiry. If
 Run these commands to validate the voice pipeline:
 
 ```bash
+# Run from VoiceAssist project root
+
 # 1. Backend tests (CI-safe, mocked)
-cd /home/asimo/VoiceAssist/services/api-gateway
+cd services/api-gateway
 source venv/bin/activate
 export PYTHONPATH=.
 python -m pytest tests/integration/test_openai_config.py -v
 
 # 2. Frontend unit tests (run individually to avoid OOM)
-cd /home/asimo/VoiceAssist/apps/web-app
+cd apps/web-app
 export NODE_OPTIONS="--max-old-space-size=768"
 
 npx vitest run src/hooks/__tests__/useRealtimeVoiceSession.test.ts --reporter=dot
@@ -470,7 +711,7 @@ npx vitest run src/components/voice/__tests__/VoiceModeSettings.test.tsx --repor
 npx vitest run src/components/chat/__tests__/MessageInput-voice-settings.test.tsx --reporter=dot
 
 # 3. E2E tests (Chromium, mocked backend)
-cd /home/asimo/VoiceAssist
+# From project root
 npx playwright test \
   e2e/voice-mode-navigation.spec.ts \
   e2e/voice-mode-session-smoke.spec.ts \
@@ -543,14 +784,385 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 
 ## Related Documentation
 
+- [VOICE_MODE_ENHANCEMENT_10_PHASE.md](./VOICE_MODE_ENHANCEMENT_10_PHASE.md) - **10-phase enhancement plan (emotion, dictation, analytics)**
 - [VOICE_MODE_SETTINGS_GUIDE.md](./VOICE_MODE_SETTINGS_GUIDE.md) - User settings configuration
-- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - E2E testing strategy
-- [.ai/VOICE_MODE_END_TO_END_CHECKLIST.md](../.ai/VOICE_MODE_END_TO_END_CHECKLIST.md) - Quick validation checklist
+- [TESTING_GUIDE.md](./TESTING_GUIDE.md) - E2E testing strategy and validation checklist
+
+## Observability & Monitoring (Phase 3)
+
+**Implemented:** 2025-12-02
+
+The voice pipeline includes comprehensive observability features for production monitoring.
+
+### Error Taxonomy (`voice_errors.py`)
+
+Location: `services/api-gateway/app/core/voice_errors.py`
+
+Structured error classification with 8 categories and 40+ error codes:
+
+| Category   | Codes          | Description                    |
+| ---------- | -------------- | ------------------------------ |
+| CONNECTION | CONN_001-7     | WebSocket, network failures    |
+| STT        | STT_001-7      | Speech-to-text errors          |
+| TTS        | TTS_001-7      | Text-to-speech errors          |
+| LLM        | LLM_001-6      | LLM processing errors          |
+| AUDIO      | AUDIO_001-6    | Audio encoding/decoding errors |
+| TIMEOUT    | TIMEOUT_001-7  | Various timeout conditions     |
+| PROVIDER   | PROVIDER_001-6 | External provider errors       |
+| INTERNAL   | INTERNAL_001-5 | Internal server errors         |
+
+Each error code includes:
+
+- Recoverability flag (can auto-retry)
+- Retry configuration (delay, max attempts)
+- User-friendly description
+
+### Voice Metrics (`metrics.py`)
+
+Location: `services/api-gateway/app/core/metrics.py`
+
+Prometheus metrics for voice pipeline monitoring:
+
+| Metric                                 | Type      | Labels                                | Description            |
+| -------------------------------------- | --------- | ------------------------------------- | ---------------------- |
+| `voice_errors_total`                   | Counter   | category, code, provider, recoverable | Total voice errors     |
+| `voice_pipeline_stage_latency_seconds` | Histogram | stage                                 | Per-stage latency      |
+| `voice_ttfa_seconds`                   | Histogram | -                                     | Time to first audio    |
+| `voice_active_sessions`                | Gauge     | -                                     | Active voice sessions  |
+| `voice_barge_in_total`                 | Counter   | -                                     | Barge-in events        |
+| `voice_audio_chunks_total`             | Counter   | status                                | Audio chunks processed |
+
+### Per-Stage Latency Tracking (`voice_timing.py`)
+
+Location: `services/api-gateway/app/core/voice_timing.py`
+
+Pipeline stages tracked:
+
+- `audio_receive` - Time to receive audio from client
+- `vad_process` - Voice activity detection time
+- `stt_transcribe` - Speech-to-text latency
+- `llm_process` - LLM inference time
+- `tts_synthesize` - Text-to-speech synthesis
+- `audio_send` - Time to send audio to client
+- `ttfa` - Time to first audio (end-to-end)
+
+Usage:
+
+```python
+from app.core.voice_timing import create_pipeline_timings, PipelineStage
+
+timings = create_pipeline_timings(session_id="abc123")
+
+with timings.time_stage(PipelineStage.STT_TRANSCRIBE):
+    transcript = await stt_client.transcribe(audio)
+
+timings.record_ttfa()  # When first audio byte ready
+timings.finalize()     # When response complete
+```
+
+### SLO Alerts (`voice_slo_alerts.yml`)
+
+Location: `infrastructure/observability/prometheus/rules/voice_slo_alerts.yml`
+
+SLO targets with Prometheus alerting rules:
+
+| SLO                  | Target  | Alert                           |
+| -------------------- | ------- | ------------------------------- |
+| TTFA P95             | < 200ms | VoiceTTFASLOViolation           |
+| STT Latency P95      | < 300ms | VoiceSTTLatencySLOViolation     |
+| TTS First Chunk P95  | < 200ms | VoiceTTSFirstChunkSLOViolation  |
+| Connection Time P95  | < 500ms | VoiceConnectionTimeSLOViolation |
+| Error Rate           | < 1%    | VoiceErrorRateHigh              |
+| Session Success Rate | > 95%   | VoiceSessionSuccessRateLow      |
+
+### Client Telemetry (`voiceTelemetry.ts`)
+
+Location: `apps/web-app/src/lib/voiceTelemetry.ts`
+
+Frontend telemetry with:
+
+- **Network quality assessment** via Network Information API
+- **Browser performance metrics** via Performance.memory API
+- **Jitter estimation** for network quality
+- **Batched reporting** (10s intervals)
+- **Beacon API** for reliable delivery on page unload
+
+```typescript
+import { getVoiceTelemetry } from "@/lib/voiceTelemetry";
+
+const telemetry = getVoiceTelemetry();
+telemetry.startSession(sessionId);
+telemetry.recordLatency("stt", 150);
+telemetry.recordLatency("ttfa", 180);
+telemetry.endSession();
+```
+
+### Voice Health Endpoint (`/health/voice`)
+
+Location: `services/api-gateway/app/api/health.py`
+
+Comprehensive voice subsystem health check:
+
+```bash
+curl https://assist.asimo.io/health/voice
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "providers": {
+    "openai": { "status": "up", "latency_ms": 120.5 },
+    "elevenlabs": { "status": "up", "latency_ms": 85.2 },
+    "deepgram": { "status": "up", "latency_ms": 95.8 }
+  },
+  "session_store": { "status": "up", "active_sessions": 5 },
+  "metrics": { "active_sessions": 5 },
+  "slo": { "ttfa_target_ms": 200, "error_rate_target": 0.01 }
+}
+```
+
+### Debug Logging Configuration
+
+Location: `services/api-gateway/app/core/logging.py`
+
+Configurable voice log verbosity via `VOICE_LOG_LEVEL` environment variable:
+
+| Level    | Content                                       |
+| -------- | --------------------------------------------- |
+| MINIMAL  | Errors only                                   |
+| STANDARD | + Session lifecycle (start/end/state changes) |
+| VERBOSE  | + All latency measurements                    |
+| DEBUG    | + Audio frame details, chunk timing           |
+
+Usage:
+
+```python
+from app.core.logging import get_voice_logger
+
+voice_log = get_voice_logger(__name__)
+voice_log.session_start(session_id="abc123", provider="thinker_talker")
+voice_log.latency("stt_transcribe", 150.5, session_id="abc123")
+voice_log.error("voice_connection_failed", error_code="CONN_001")
+```
+
+---
+
+## Phase 9: Offline & Network Fallback
+
+**Implemented:** 2025-12-03
+
+The voice pipeline now includes comprehensive offline support and network-aware fallback mechanisms.
+
+### Network Monitoring (`networkMonitor.ts`)
+
+Location: `apps/web-app/src/lib/offline/networkMonitor.ts`
+
+Continuously monitors network health using multiple signals:
+
+- **Navigator.onLine**: Basic online/offline detection
+- **Network Information API**: Connection type, downlink speed, RTT
+- **Health Check Pinging**: Periodic `/api/health` pings for latency measurement
+
+```typescript
+import { getNetworkMonitor } from "@/lib/offline/networkMonitor";
+
+const monitor = getNetworkMonitor();
+monitor.subscribe((status) => {
+  console.log(`Network quality: ${status.quality}`);
+  console.log(`Health check latency: ${status.healthCheckLatencyMs}ms`);
+});
+```
+
+#### Network Quality Levels
+
+| Quality   | Latency     | isHealthy | Action                     |
+| --------- | ----------- | --------- | -------------------------- |
+| Excellent | < 100ms     | true      | Full cloud processing      |
+| Good      | < 200ms     | true      | Full cloud processing      |
+| Moderate  | < 500ms     | true      | Cloud with quality warning |
+| Poor      | ≥ 500ms     | variable  | Consider offline fallback  |
+| Offline   | Unreachable | false     | Automatic offline fallback |
+
+#### Configuration
+
+```typescript
+const monitor = createNetworkMonitor({
+  healthCheckUrl: "/api/health",
+  healthCheckIntervalMs: 30000, // 30 seconds
+  healthCheckTimeoutMs: 5000, // 5 seconds
+  goodLatencyThresholdMs: 100,
+  moderateLatencyThresholdMs: 200,
+  poorLatencyThresholdMs: 500,
+  failuresBeforeUnhealthy: 3,
+});
+```
+
+### useNetworkStatus Hook
+
+Location: `apps/web-app/src/hooks/useNetworkStatus.ts`
+
+React hook providing network status with computed properties:
+
+```typescript
+const {
+  isOnline,
+  isHealthy,
+  quality,
+  healthCheckLatencyMs,
+  effectiveType, // "4g", "3g", "2g", "slow-2g"
+  downlink, // Mbps
+  rtt, // Round-trip time ms
+  isSuitableForVoice, // quality >= "good" && isHealthy
+  shouldUseOffline, // !isOnline || !isHealthy || quality < "moderate"
+  qualityScore, // 0-4 (offline=0, poor=1, moderate=2, good=3, excellent=4)
+  checkNow, // Force immediate health check
+} = useNetworkStatus();
+```
+
+### Offline VAD with Network Fallback
+
+Location: `apps/web-app/src/hooks/useOfflineVAD.ts`
+
+The `useOfflineVADWithFallback` hook automatically switches between network and offline VAD:
+
+```typescript
+const {
+  isListening,
+  isSpeaking,
+  currentEnergy,
+  isUsingOfflineVAD, // Currently using offline mode?
+  networkAvailable,
+  networkQuality,
+  modeReason, // "network_vad" | "network_unavailable" | "poor_quality" | "forced_offline"
+  forceOffline, // Manually switch to offline
+  forceNetwork, // Manually switch to network (if available)
+  startListening,
+  stopListening,
+} = useOfflineVADWithFallback({
+  useNetworkMonitor: true,
+  minNetworkQuality: "moderate",
+  networkRecoveryDelayMs: 2000, // Prevent flapping
+  onFallbackToOffline: () => console.log("Switched to offline VAD"),
+  onReturnToNetwork: () => console.log("Returned to network VAD"),
+});
+```
+
+### Fallback Decision Flow
+
+```
+┌────────────────────┐
+│  Network Monitor   │
+│  Health Check      │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Is Online?        │──────────▶│  Use Offline VAD   │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Is Healthy?       │──────────▶│  Use Offline VAD   │
+│  (3+ checks pass)  │            │  reason: unhealthy │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐     NO     ┌────────────────────┐
+│  Quality ≥ Min?    │──────────▶│  Use Offline VAD   │
+│  (e.g., moderate)  │            │  reason: poor_qual │
+└─────────┬──────────┘            └────────────────────┘
+          │ YES
+          ▼
+┌────────────────────┐
+│  Use Network VAD   │
+│  (cloud processing)│
+└────────────────────┘
+```
+
+### TTS Caching (`useTTSCache`)
+
+Location: `apps/web-app/src/hooks/useOfflineVAD.ts`
+
+Caches synthesized TTS audio for offline playback:
+
+```typescript
+const {
+  getTTS, // Get audio (from cache or fresh)
+  preload, // Preload common phrases
+  isCached, // Check if text is cached
+  stats, // { entryCount, sizeMB, hitRate }
+  clear, // Clear cache
+} = useTTSCache({
+  voice: "alloy",
+  maxSizeMB: 50,
+  ttsFunction: async (text) => synthesizeAudio(text),
+});
+
+// Preload common phrases on app start
+await preload(); // Caches "I'm listening", "Go ahead", etc.
+
+// Get TTS (cache hit = instant, cache miss = synthesize + cache)
+const audio = await getTTS("Hello world");
+```
+
+### User Settings Integration
+
+Phase 9 settings are stored in `voiceSettingsStore`:
+
+| Setting                 | Default | Description                              |
+| ----------------------- | ------- | ---------------------------------------- |
+| `enableOfflineFallback` | `true`  | Auto-switch to offline when network poor |
+| `preferOfflineVAD`      | `false` | Force offline VAD (privacy mode)         |
+| `ttsCacheEnabled`       | `true`  | Enable TTS response caching              |
+
+### File Reference (Phase 9)
+
+| File                                                            | Purpose                         |
+| --------------------------------------------------------------- | ------------------------------- |
+| `apps/web-app/src/lib/offline/networkMonitor.ts`                | Network health monitoring       |
+| `apps/web-app/src/lib/offline/webrtcVAD.ts`                     | WebRTC-based offline VAD        |
+| `apps/web-app/src/lib/offline/types.ts`                         | Offline module type definitions |
+| `apps/web-app/src/hooks/useNetworkStatus.ts`                    | React hook for network status   |
+| `apps/web-app/src/hooks/useOfflineVAD.ts`                       | Offline VAD + TTS cache hooks   |
+| `apps/web-app/src/lib/offline/__tests__/networkMonitor.test.ts` | Network monitor tests           |
+
+---
 
 ## Future Work
 
 - ~~**Metrics export to backend**: Send metrics to backend for aggregation/alerting~~ ✓ Implemented
+- ~~**Barge-in support**: Allow user to interrupt AI responses~~ ✓ Implemented (2025-11-28)
+- ~~**Audio overlap prevention**: Prevent multiple responses playing simultaneously~~ ✓ Implemented (2025-11-28)
+- ~~**Per-user voice preferences**: Backend persistence for TTS settings~~ ✓ Implemented (2025-11-29)
+- ~~**Context-aware voice styles**: Auto-detect tone from content~~ ✓ Implemented (2025-11-29)
+- ~~**Aggressive latency optimization**: 200ms VAD, 256-sample chunks, 300ms reconnect~~ ✓ Implemented (2025-11-29)
+- ~~**Observability & Monitoring (Phase 3)**: Error taxonomy, metrics, SLO alerts, telemetry~~ ✓ Implemented (2025-12-02)
+- ~~**Phase 7: Multilingual Support**: Auto language detection, accent profiles, language switch confidence~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 8: Voice Calibration**: Personalized VAD thresholds, calibration wizard, adaptive learning~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 9: Offline Fallback**: Network monitoring, offline VAD, TTS caching, quality-based switching~~ ✓ Implemented (2025-12-03)
+- ~~**Phase 10: Conversation Intelligence**: Sentiment tracking, discourse analysis, response recommendations~~ ✓ Implemented (2025-12-03)
+
+### Voice Mode Enhancement - 10 Phase Plan ✅ COMPLETE (2025-12-03)
+
+A comprehensive enhancement transforming voice mode into a human-like conversational partner with medical dictation:
+
+- ~~**Phase 1**: Emotional Intelligence (Hume AI)~~ ✓ Complete
+- ~~**Phase 2**: Backchanneling System~~ ✓ Complete
+- ~~**Phase 3**: Prosody Analysis~~ ✓ Complete
+- ~~**Phase 4**: Memory & Context System~~ ✓ Complete
+- ~~**Phase 5**: Advanced Turn-Taking~~ ✓ Complete
+- ~~**Phase 6**: Variable Response Timing~~ ✓ Complete
+- ~~**Phase 7**: Conversational Repair~~ ✓ Complete
+- ~~**Phase 8**: Medical Dictation Core~~ ✓ Complete
+- ~~**Phase 9**: Patient Context Integration~~ ✓ Complete
+- ~~**Phase 10**: Frontend Integration & Analytics~~ ✓ Complete
+
+**Full documentation:** [VOICE_MODE_ENHANCEMENT_10_PHASE.md](./VOICE_MODE_ENHANCEMENT_10_PHASE.md)
+
+### Remaining Tasks
+
 - **Voice→chat transcript content E2E**: Test actual transcript content in chat timeline
-- **Performance baseline**: Establish latency targets (connection <2s, STT <500ms)
 - **Error tracking integration**: Send errors to Sentry/similar
-- **Session analytics**: Track voice session patterns for UX improvements
+- **Audio level visualization**: Show real-time audio level meter during recording

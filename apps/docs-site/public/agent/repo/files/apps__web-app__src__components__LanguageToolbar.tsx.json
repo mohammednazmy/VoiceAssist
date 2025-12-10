@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/LanguageToolbar.tsx",
+  "language": "typescript",
+  "size": 706,
+  "last_modified": "2025-11-29T06:09:16.000Z",
+  "lines": 21,
+  "content": "import { useLocation } from \"react-router-dom\";\nimport { LocaleSwitcher } from \"@voiceassist/ui\";\nimport { useLanguageContext } from \"../contexts/LanguageContext\";\n\nexport function LanguageToolbar() {\n  const location = useLocation();\n  const { supportedLanguages } = useLanguageContext();\n\n  // Only show on the main dashboard page to avoid overlapping other UI\n  const isHomePage = location.pathname === \"/\" || location.pathname === \"/home\";\n  if (!isHomePage) {\n    return null;\n  }\n\n  return (\n    <div className=\"fixed right-4 top-[5rem] z-30 rounded-full bg-white/90 px-3 py-1.5 shadow-md backdrop-blur dark:bg-slate-900/90\">\n      <LocaleSwitcher languages={supportedLanguages} />\n    </div>\n  );\n}\n"
+}

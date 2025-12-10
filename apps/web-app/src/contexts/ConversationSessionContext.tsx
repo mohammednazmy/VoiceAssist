@@ -21,13 +21,14 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
+import { extractErrorMessage } from "@voiceassist/types";
 import { useChatSession } from "../hooks/useChatSession";
 import {
-  useRealtimeVoiceSession,
+  useVoiceSession,
   type ConnectionStatus as VoiceConnectionStatus,
   type VoiceMetrics,
   type VoiceSettings,
-} from "../hooks/useRealtimeVoiceSession";
+} from "../hooks/useVoiceSession";
 import { useBranching } from "../hooks/useBranching";
 import { useConversations } from "../hooks/useConversations";
 import { useAuth } from "../hooks/useAuth";
@@ -58,7 +59,8 @@ export type VoiceStatus =
   | "mic_permission_denied"
   | "error"
   | "expired"
-  | "failed";
+  | "failed"
+  | "ready"; // T/T pipeline ready state
 
 export interface ConversationSessionState {
   // Identity
@@ -134,8 +136,7 @@ export interface ConversationSessionActions {
 }
 
 export interface ConversationSessionContextValue
-  extends ConversationSessionState,
-    ConversationSessionActions {
+  extends ConversationSessionState, ConversationSessionActions {
   // Voice metrics (for observability)
   voiceMetrics: VoiceMetrics | null;
   voiceTranscript: string;
@@ -233,7 +234,8 @@ export function ConversationSessionProvider({
   const branching = useBranching(conversationId);
 
   // Voice Session Hook (lazy initialization - only connect when explicitly requested)
-  const voiceSession = useRealtimeVoiceSession({
+  // Uses Thinker/Talker pipeline for voice processing
+  const voiceSession = useVoiceSession({
     conversation_id: conversationId || undefined,
     voiceSettings,
     autoConnect: false, // Don't auto-connect, let user initiate
@@ -286,6 +288,8 @@ export function ConversationSessionProvider({
         return "failed";
       case "expired":
         return "expired";
+      case "mic_permission_denied":
+        return "mic_permission_denied";
       case "disconnected":
       default:
         return "idle";
@@ -311,11 +315,13 @@ export function ConversationSessionProvider({
 
         // Load branches
         await branching.loadBranches();
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errorResponse = (err as { response?: { status?: number } })
+          ?.response;
         const errorMessage =
-          err.response?.status === 404
+          errorResponse?.status === 404
             ? "Conversation not found"
-            : err.message || "Failed to load conversation";
+            : extractErrorMessage(err);
         setError(errorMessage);
         setConversationMeta(null);
         setInitialMessages([]);

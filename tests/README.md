@@ -19,11 +19,13 @@ tests/
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 pytest
 ```
 
 ### Run specific test categories
+
 ```bash
 # E2E tests only
 pytest -m e2e
@@ -39,6 +41,7 @@ pytest -m "not slow"
 ```
 
 ### Run specific test files
+
 ```bash
 pytest tests/e2e/test_user_workflows.py
 pytest tests/integration/test_service_integration.py
@@ -46,6 +49,7 @@ pytest tests/voice/test_voice_interactions.py
 ```
 
 ### Run with coverage
+
 ```bash
 pytest --cov=services --cov-report=html
 ```
@@ -53,12 +57,14 @@ pytest --cov=services --cov-report=html
 ## Test Configuration
 
 ### Environment Variables
+
 ```bash
 export TEST_DATABASE_URL="postgresql://voiceassist:password@localhost:5432/voiceassist_test"
 export TEST_API_BASE_URL="http://localhost:8000"
 ```
 
 ### Test Database Setup
+
 ```bash
 # Create test database
 createdb voiceassist_test
@@ -78,6 +84,7 @@ alembic upgrade head
 ## Writing New Tests
 
 ### Test Structure
+
 ```python
 import pytest
 from httpx import AsyncClient
@@ -91,6 +98,7 @@ async def test_my_feature(api_client: AsyncClient, user_token: str):
 ```
 
 ### Available Fixtures
+
 - `api_client` - Async HTTP client for API testing
 - `admin_token` - Admin authentication token
 - `user_token` - Regular user authentication token
@@ -103,6 +111,7 @@ async def test_my_feature(api_client: AsyncClient, user_token: str):
 ## CI/CD Integration
 
 Tests run automatically on:
+
 - Pull requests
 - Pushes to main branch
 - Nightly builds
@@ -112,6 +121,7 @@ See `.github/workflows/ci.yml` for CI configuration.
 ## Test Results
 
 Test results are available in:
+
 - Console output (real-time)
 - HTML coverage reports (`htmlcov/` directory)
 - JUnit XML reports (`test-results.xml`)
@@ -122,10 +132,11 @@ Test results are available in:
 ### Common Issues
 
 1. **Database connection fails**
+
    ```bash
    # Ensure PostgreSQL is running
    docker compose up -d postgres
-   
+
    # Check connection
    psql postgresql://voiceassist:password@localhost:5432/voiceassist_test
    ```
@@ -141,6 +152,7 @@ Test results are available in:
 ## Phase 13 Completion
 
 This test suite was created as part of Phase 13: Final Testing & Documentation to provide comprehensive coverage of:
+
 - User registration and authentication workflows
 - Document upload and processing
 - RAG query workflows
@@ -148,4 +160,3 @@ This test suite was created as part of Phase 13: Final Testing & Documentation t
 - Service-to-service integration
 - Health checks and monitoring
 - Admin functionality
-

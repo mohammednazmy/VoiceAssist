@@ -18,6 +18,79 @@ vi.mock("../../../contexts/ToastContext", () => ({
     warning: vi.fn(),
   }),
 }));
+
+// Mock the Dialog components from @voiceassist/ui for RegenerationOptionsDialog
+vi.mock("@voiceassist/ui", async () => {
+  const actual = await vi.importActual("@voiceassist/ui");
+  return {
+    ...actual,
+    Dialog: ({
+      children,
+      open,
+    }: {
+      children: React.ReactNode;
+      open: boolean;
+    }) => (open ? <div role="dialog">{children}</div> : null),
+    DialogContent: ({
+      children,
+      className,
+      ...props
+    }: {
+      children: React.ReactNode;
+      className?: string;
+      [key: string]: unknown;
+    }) => (
+      <div className={className} {...props}>
+        {children}
+      </div>
+    ),
+    DialogHeader: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DialogTitle: ({ children }: { children: React.ReactNode }) => (
+      <h2>{children}</h2>
+    ),
+    DialogDescription: ({ children }: { children: React.ReactNode }) => (
+      <p>{children}</p>
+    ),
+    DialogFooter: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <div className={className}>{children}</div>,
+    Slider: ({
+      id,
+      value,
+      onValueChange,
+      min,
+      max,
+      step,
+      ...props
+    }: {
+      id?: string;
+      value: number[];
+      onValueChange: (value: number[]) => void;
+      min: number;
+      max: number;
+      step: number;
+      [key: string]: unknown;
+    }) => (
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value[0]}
+        onChange={(e) => onValueChange([parseFloat(e.target.value)])}
+        {...props}
+      />
+    ),
+  };
+});
+
 describe("MessageBubble - Editing Flow", () => {
   const mockOnEditSave = vi.fn();
   const mockOnRegenerate = vi.fn();
@@ -362,7 +435,7 @@ describe("MessageBubble - Editing Flow", () => {
   });
 
   describe("regeneration flow", () => {
-    it("should call onRegenerate when regenerate is clicked", async () => {
+    it("should open options dialog when regenerate is clicked", async () => {
       const user = userEvent.setup();
       const assistantMessage: Message = {
         id: "msg-assistant",
@@ -384,18 +457,73 @@ describe("MessageBubble - Editing Flow", () => {
       });
       await user.click(menuButton);
 
-      // Click regenerate
+      // Click regenerate - should open dialog
       const regenerateButton = screen.getByText(/regenerate/i);
       await user.click(regenerateButton);
 
+      // Dialog should be visible
       await waitFor(() => {
-        expect(mockOnRegenerate).toHaveBeenCalledWith("msg-assistant");
+        expect(
+          screen.getByTestId("regeneration-options-dialog"),
+        ).toBeInTheDocument();
+      });
+
+      // onRegenerate should NOT be called yet (dialog is open)
+      expect(mockOnRegenerate).not.toHaveBeenCalled();
+    });
+
+    it("should call onRegenerate with options when dialog is confirmed", async () => {
+      const user = userEvent.setup();
+      const assistantMessage: Message = {
+        id: "msg-assistant",
+        role: "assistant",
+        content: "Assistant response",
+        timestamp: Date.now(),
+      };
+
+      render(
+        <MessageBubble
+          message={assistantMessage}
+          onRegenerate={mockOnRegenerate}
+        />,
+      );
+
+      // Open action menu and click regenerate
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+      const regenerateButton = screen.getByText(/regenerate/i);
+      await user.click(regenerateButton);
+
+      // Wait for dialog to appear
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("regeneration-options-dialog"),
+        ).toBeInTheDocument();
+      });
+
+      // Click confirm in the dialog
+      const confirmButton = screen.getByTestId("regenerate-confirm-button");
+      await user.click(confirmButton);
+
+      // Now onRegenerate should be called with options
+      await waitFor(() => {
+        expect(mockOnRegenerate).toHaveBeenCalledWith(
+          "msg-assistant",
+          expect.objectContaining({
+            temperature: expect.any(Number),
+            lengthPreference: expect.any(String),
+            useClinicalContext: expect.any(Boolean),
+            createBranch: expect.any(Boolean),
+          }),
+        );
       });
     });
   });
 
   describe("delete flow", () => {
-    it("should call onDelete when delete is clicked", async () => {
+    it("should open confirmation dialog when delete is clicked", async () => {
       const user = userEvent.setup();
       const userMessage: Message = {
         id: "msg-1",
@@ -418,12 +546,92 @@ describe("MessageBubble - Editing Flow", () => {
       });
       await user.click(menuButton);
 
-      // Click delete - use menuitem role to avoid matching "Message to delete" content
-      const deleteButton = screen.getByRole("menuitem", { name: /delete/i });
+      // Click delete - opens confirmation dialog
+      const deleteButton = screen.getByTestId("action-delete");
       await user.click(deleteButton);
+
+      // Confirmation dialog should appear
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-confirmation-dialog"),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should call onDelete when confirm is clicked in dialog", async () => {
+      const user = userEvent.setup();
+      const userMessage: Message = {
+        id: "msg-1",
+        role: "user",
+        content: "Message to delete",
+        timestamp: Date.now(),
+      };
+
+      render(
+        <MessageBubble
+          message={userMessage}
+          onEditSave={mockOnEditSave}
+          onDelete={mockOnDelete}
+        />,
+      );
+
+      // Open action menu
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      // Click delete - opens confirmation dialog
+      const deleteButton = screen.getByTestId("action-delete");
+      await user.click(deleteButton);
+
+      // Click confirm in dialog
+      const confirmButton = screen.getByTestId("delete-confirm-button");
+      await user.click(confirmButton);
 
       await waitFor(() => {
         expect(mockOnDelete).toHaveBeenCalledWith("msg-1");
+      });
+    });
+
+    it("should not call onDelete when cancel is clicked in dialog", async () => {
+      const user = userEvent.setup();
+      const userMessage: Message = {
+        id: "msg-1",
+        role: "user",
+        content: "Message to delete",
+        timestamp: Date.now(),
+      };
+
+      render(
+        <MessageBubble
+          message={userMessage}
+          onEditSave={mockOnEditSave}
+          onDelete={mockOnDelete}
+        />,
+      );
+
+      // Open action menu
+      const menuButton = screen.getByRole("button", {
+        name: /message actions/i,
+      });
+      await user.click(menuButton);
+
+      // Click delete - opens confirmation dialog
+      const deleteButton = screen.getByTestId("action-delete");
+      await user.click(deleteButton);
+
+      // Click cancel in dialog
+      const cancelButton = screen.getByTestId("delete-cancel-button");
+      await user.click(cancelButton);
+
+      expect(mockOnDelete).not.toHaveBeenCalled();
+
+      // Dialog should be closed
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("delete-confirmation-dialog"),
+        ).not.toBeInTheDocument();
       });
     });
   });

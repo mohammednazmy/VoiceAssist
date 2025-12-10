@@ -276,17 +276,27 @@ class TestOpenAIEmbeddings:
     @pytest.mark.asyncio
     async def test_embed_with_mock(self):
         """Test embedding with mocked OpenAI."""
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        import sys
 
-        with patch("openai.embeddings.create", new_callable=AsyncMock) as mock_create:
-            mock_response = MagicMock()
-            mock_response.data = [MagicMock(embedding=[0.1, 0.2, 0.3])]
-            mock_create.return_value = mock_response
+        # Create mock response data
+        mock_data = MagicMock()
+        mock_data.embedding = [0.1, 0.2, 0.3]
+        mock_response = MagicMock()
+        mock_response.data = [mock_data]
 
+        # Create a mock openai module
+        mock_openai = MagicMock()
+        mock_openai.embeddings = MagicMock()
+        mock_openai.embeddings.create = AsyncMock(return_value=mock_response)
+
+        # Patch sys.modules to use our mock openai
+        with patch.dict(sys.modules, {"openai": mock_openai}):
+            embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
             result = await embeddings.embed("test text")
 
             assert len(result) == 1
             assert len(result[0]) == 3
+            mock_openai.embeddings.create.assert_called_once()
 
 
 class TestHybridEmbeddingService:
@@ -441,8 +451,8 @@ class TestAdvancedSearchAggregator:
 
         assert "Harrison's Cardiology" in context
         assert "Heart failure" in context
-        assert "[1]" in context
-        assert "[2]" in context
+        assert "[1" in context  # Format is [1 | SOURCE]
+        assert "[2" in context  # Format is [2 | SOURCE]
 
     def test_format_empty_results(self):
         """Test formatting empty results."""

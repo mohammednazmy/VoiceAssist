@@ -99,7 +99,6 @@ describe("VoiceModePanel - Offline Mode (Online State)", () => {
       render(<VoiceModePanel conversationId="test-123" />);
 
       expect(screen.getByText("Voice Mode")).toBeInTheDocument();
-      expect(screen.getByText("(Beta)")).toBeInTheDocument();
     });
 
     it("should not show offline mode indicator when online", () => {
@@ -129,7 +128,7 @@ describe("VoiceModePanel - Offline Mode (Online State)", () => {
     it("should show Start Voice Session button when online and disconnected", () => {
       render(<VoiceModePanel conversationId="test-123" />);
 
-      expect(screen.getByTestId("start-voice-session")).toBeInTheDocument();
+      expect(screen.getByTestId("main-mic-button")).toBeInTheDocument();
     });
 
     it("should show settings button", () => {
@@ -156,8 +155,10 @@ describe("VoiceModePanel - Offline Mode (Online State)", () => {
     it("should show connection status as Disconnected", () => {
       render(<VoiceModePanel conversationId="test-123" />);
 
-      expect(screen.getByTestId("connection-status")).toHaveTextContent(
-        "Disconnected",
+      const statusIndicator = screen.getByTestId("connection-status-indicator");
+      expect(statusIndicator).toHaveAttribute(
+        "aria-label",
+        expect.stringContaining("Disconnected"),
       );
     });
   });

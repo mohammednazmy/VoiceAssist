@@ -1,0 +1,8 @@
+{
+  "path": "services/api-gateway/app/api/conversation_schemas/__init__.py",
+  "language": "python",
+  "size": 1157,
+  "last_modified": "2025-12-04T11:26:46.840Z",
+  "lines": 46,
+  "content": "\"\"\"Conversations API Module.\n\nThis module provides conversation-related API endpoints, split into logical submodules:\n- schemas: Pydantic request/response models\n\nFor backward compatibility, the main router is still in conversations.py (parent directory).\nThis module structure prepares for gradual migration.\n\"\"\"\n\nfrom app.api.conversation_schemas.schemas import (\n    BranchInfo,\n    BranchResponse,\n    ConversationResponse,\n    ConversationSettingsSchema,\n    ConversationsListResponse,\n    CreateBranchRequest,\n    CreateConversationRequest,\n    CreateMessageRequest,\n    EditMessageRequest,\n    MessageResponse,\n    MessagesListResponse,\n    SessionEventResponse,\n    UpdateConversationRequest,\n)\n\n__all__ = [\n    # Conversations\n    \"CreateConversationRequest\",\n    \"UpdateConversationRequest\",\n    \"ConversationResponse\",\n    \"ConversationsListResponse\",\n    # Branches\n    \"CreateBranchRequest\",\n    \"BranchResponse\",\n    \"BranchInfo\",\n    # Messages\n    \"MessageResponse\",\n    \"MessagesListResponse\",\n    \"CreateMessageRequest\",\n    \"EditMessageRequest\",\n    # Events\n    \"SessionEventResponse\",\n    # Settings\n    \"ConversationSettingsSchema\",\n]\n"
+}

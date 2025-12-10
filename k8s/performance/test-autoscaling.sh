@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034,SC2086,SC2155
 
 # VoiceAssist Autoscaling Test Script
 # Generates load to test HPA scaling behavior

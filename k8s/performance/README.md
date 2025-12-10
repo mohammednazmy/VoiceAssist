@@ -97,33 +97,39 @@ kubectl apply -k k8s/performance/overlays/prod/
 ### API Gateway (voiceassist-server)
 
 **Scaling Triggers:**
+
 - CPU > 70%
 - Memory > 80%
 - Requests per second > 100 req/s per pod
 
 **Replica Bounds:**
+
 - Development: 1-3 replicas
 - Staging: 2-6 replicas
 - Production: 3-15 replicas
 
 **Behavior:**
+
 - Scale up: 100% every 30s (max 2 pods at once)
 - Scale down: 10% every 5m (max 1 pod at once)
 
 ### Worker (voiceassist-worker)
 
 **Scaling Triggers:**
+
 - CPU > 80%
 - Memory > 85%
 - Queue depth > 50 jobs per pod
 - Queue age > 60 seconds
 
 **Replica Bounds:**
+
 - Development: 1-2 replicas
 - Staging: 1-3 replicas
 - Production: 2-8 replicas
 
 **Behavior:**
+
 - Scale up: 50% every 60s
 - Scale down: 10% every 10m
 
@@ -132,29 +138,29 @@ kubectl apply -k k8s/performance/overlays/prod/
 ### API Gateway Pod
 
 ```yaml
-Requests:  500m CPU, 512Mi Memory
-Limits:    2000m CPU, 2Gi Memory
+Requests: 500m CPU, 512Mi Memory
+Limits: 2000m CPU, 2Gi Memory
 ```
 
 ### Worker Pod
 
 ```yaml
-Requests:  1000m CPU, 1Gi Memory
-Limits:    4000m CPU, 4Gi Memory
+Requests: 1000m CPU, 1Gi Memory
+Limits: 4000m CPU, 4Gi Memory
 ```
 
 ### PostgreSQL Pod
 
 ```yaml
-Requests:  1000m CPU, 2Gi Memory
-Limits:    4000m CPU, 8Gi Memory
+Requests: 1000m CPU, 2Gi Memory
+Limits: 4000m CPU, 8Gi Memory
 ```
 
 ### Redis Pod
 
 ```yaml
-Requests:  250m CPU, 256Mi Memory
-Limits:    1000m CPU, 1Gi Memory
+Requests: 250m CPU, 256Mi Memory
+Limits: 1000m CPU, 1Gi Memory
 ```
 
 ## Monitoring & Verification
@@ -273,6 +279,7 @@ kubectl get pods -n voiceassist -l app=voiceassist-worker --watch
 ### Tuning Process
 
 1. **Baseline metrics** (1 week):
+
    ```bash
    # Collect metrics
    kubectl top pods -n voiceassist --containers > baseline.txt
@@ -348,12 +355,14 @@ spec:
 **Solutions**:
 
 1. Check metrics-server:
+
    ```bash
    kubectl get apiservices v1beta1.metrics.k8s.io
    kubectl logs -n kube-system deployment/metrics-server
    ```
 
 2. Verify metrics are available:
+
    ```bash
    kubectl top pods -n voiceassist
    kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/voiceassist/pods
@@ -371,12 +380,14 @@ spec:
 **Solutions**:
 
 1. Check resource usage:
+
    ```bash
    kubectl top pods -n voiceassist
    kubectl describe pod <pod-name> -n voiceassist
    ```
 
 2. Increase resource limits:
+
    ```bash
    kubectl patch deployment voiceassist-server -n voiceassist \
      -p '{"spec":{"template":{"spec":{"containers":[{"name":"server","resources":{"limits":{"memory":"3Gi"}}}]}}}}'
@@ -394,11 +405,13 @@ spec:
 **Solutions**:
 
 1. Check VPA installation:
+
    ```bash
    kubectl get pods -n kube-system | grep vpa
    ```
 
 2. Verify VPA is watching the deployment:
+
    ```bash
    kubectl describe vpa voiceassist-server-vpa -n voiceassist
    ```
@@ -412,11 +425,13 @@ spec:
 **Solutions**:
 
 1. Check PDB status:
+
    ```bash
    kubectl get pdb -n voiceassist -o wide
    ```
 
 2. Verify enough healthy pods:
+
    ```bash
    kubectl get pods -n voiceassist -l app=voiceassist-server
    ```
@@ -502,6 +517,7 @@ Before deploying to production:
 ## Support
 
 For issues or questions:
+
 - Create an issue in the repository
 - Contact DevOps team: devops@voiceassist.com
 - Slack: #voiceassist-infra

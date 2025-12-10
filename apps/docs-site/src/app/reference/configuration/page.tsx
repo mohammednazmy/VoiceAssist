@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { loadDoc, loadClientImplDoc } from "@/lib/docs";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import Link from "next/link";
+import { gatewayBaseUrl } from "@/lib/apiClient";
 
 export const metadata: Metadata = {
   title: "Configuration",
@@ -10,8 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function ConfigurationPage() {
-  const configDoc = loadDoc("CONFIGURATION.md") || loadDoc("CONFIG.md");
-  const envDoc = loadDoc("ENV_VARIABLES.md");
+  const configDoc = loadDoc("CONFIGURATION_REFERENCE.md");
+  const envDoc = loadDoc("DEVELOPMENT_SETUP.md");
   const settingsGuide = loadDoc("VOICE_MODE_SETTINGS_GUIDE.md");
 
   return (
@@ -50,6 +51,27 @@ export default function ConfigurationPage() {
             <li>• VITE_ENABLE_VOICE</li>
           </ul>
         </div>
+      </div>
+
+      <div className="mb-8 p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+        <h3 className="font-semibold text-indigo-800 dark:text-indigo-100 mb-2">
+          Gateway Configuration
+        </h3>
+        <p className="text-sm text-indigo-700 dark:text-indigo-200">
+          All applications now share the production gateway via{" "}
+          <code className="px-1 py-0.5 rounded bg-white/70 dark:bg-indigo-800/60 text-xs">
+            {gatewayBaseUrl}
+          </code>{" "}
+          by default. Override{" "}
+          <code className="px-1 py-0.5 rounded bg-white/70 dark:bg-indigo-800/60 text-xs">
+            VITE_API_URL
+          </code>{" "}
+          or
+          <code className="px-1 py-0.5 rounded bg-white/70 dark:bg-indigo-800/60 text-xs">
+            NEXT_PUBLIC_API_URL
+          </code>{" "}
+          to target a different environment.
+        </p>
       </div>
 
       {/* Environment Setup */}

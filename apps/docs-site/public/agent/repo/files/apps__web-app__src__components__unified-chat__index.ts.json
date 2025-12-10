@@ -1,0 +1,8 @@
+{
+  "path": "apps/web-app/src/components/unified-chat/index.ts",
+  "language": "typescript",
+  "size": 447,
+  "last_modified": "2025-11-28T13:03:11.113Z",
+  "lines": 13,
+  "content": "/**\n * Unified Chat Components\n *\n * Components for the merged chat/voice interface.\n * Used when the unified_chat_voice_ui feature flag is enabled.\n */\n\nexport { UnifiedChatContainer } from \"./UnifiedChatContainer\";\nexport { UnifiedInputArea } from \"./UnifiedInputArea\";\nexport { UnifiedHeader } from \"./UnifiedHeader\";\nexport { CollapsibleSidebar } from \"./CollapsibleSidebar\";\nexport { CollapsibleContextPane } from \"./CollapsibleContextPane\";\n"
+}

@@ -10,184 +10,52 @@ Phase 8 Improvements:
 - Optimized database queries (aggregated)
 - Redis caching for metrics
 - Audit logging for all admin actions
+
+NOTE: This file is being refactored into the app/api/admin/ module.
+Schemas and utilities have been moved to:
+- app/api/admin/schemas.py
+- app/api/admin/utils.py
 """
 
 from __future__ import annotations
 
+import asyncio
+import csv
+import io
 import json
 import logging
+import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
-from app.core.api_envelope import success_response
+from app.api.admin.schemas import PasswordResetRequest, UserInviteRequest, UserUpdate
+from app.api.admin.utils import (
+    METRICS_CACHE_TTL,
+    REDIS_METRICS_CACHE_KEY,
+    enforce_admin_action_rate_limit,
+    get_active_websocket_count,
+    get_all_websocket_sessions,
+    log_audit_event,
+    resolve_admin_role,
+    unregister_websocket_session,
+)
+from app.core.api_envelope import error_response, success_response
 from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats, redis_client
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer, get_current_admin_user
 from app.models.audit_log import AuditLog
 from app.models.user import User
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, EmailStr
+from app.services.admin_audit_log_service import admin_audit_log_service
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import Date, cast, desc, func
 from sqlalchemy.orm import Session
+from starlette.websockets import WebSocketState
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin/panel", tags=["admin", "panel"])
-
-# Redis keys for WebSocket session tracking and caching
-REDIS_WS_SESSIONS_KEY = "voiceassist:ws:sessions"
-REDIS_METRICS_CACHE_KEY = "voiceassist:admin:metrics"
-METRICS_CACHE_TTL = 60  # Cache metrics for 60 seconds
-
-
-# ============================================================================
-# Audit Log Helper Functions (Database-backed)
-# ============================================================================
-
-
-def log_audit_event(
-    db: Session,
-    action: str,
-    user_id: Optional[str] = None,
-    user_email: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    resource_id: Optional[str] = None,
-    success: bool = True,
-    details: Optional[str] = None,
-    request: Optional[Request] = None,
-) -> AuditLog:
-    """Log an audit event to the database.
-
-    Args:
-        db: Database session
-        action: Action performed (e.g., 'user.update', 'user.delete')
-        user_id: ID of user performing the action
-        user_email: Email of user performing the action
-        resource_type: Type of resource affected (e.g., 'user', 'session')
-        resource_id: ID of the affected resource
-        success: Whether the action was successful
-        details: Additional details (JSON string)
-        request: FastAPI request object for context
-    """
-    entry = AuditLog(
-        user_id=user_id,
-        user_email=user_email,
-        action=action,
-        resource_type=resource_type,
-        resource_id=resource_id,
-        success=success,
-        additional_data={"details": details} if details else None,
-        request_id=getattr(request.state, "trace_id", None) if request else None,
-        ip_address=request.client.host if request and request.client else None,
-        user_agent=request.headers.get("user-agent", "")[:500] if request else None,
-        endpoint=str(request.url.path) if request else None,
-    )
-    # Calculate integrity hash
-    entry.hash = entry.calculate_hash()
-
-    db.add(entry)
-    db.commit()
-    db.refresh(entry)
-    return entry
-
-
-# ============================================================================
-# WebSocket Session Tracking (Redis-backed for distributed deployments)
-# ============================================================================
-
-
-def register_websocket_session(session_id: str, user_id: str, session_type: str):
-    """Register a new WebSocket session in Redis."""
-    try:
-        session_data = json.dumps(
-            {
-                "user_id": user_id,
-                "type": session_type,
-                "connected_at": datetime.now(timezone.utc).isoformat(),
-            }
-        )
-        redis_client.hset(REDIS_WS_SESSIONS_KEY, session_id, session_data)
-        # Set expiry on the hash (auto-cleanup stale sessions after 24h)
-        redis_client.expire(REDIS_WS_SESSIONS_KEY, 86400)
-    except Exception as e:
-        logger.warning(f"Failed to register WebSocket session in Redis: {e}")
-
-
-def unregister_websocket_session(session_id: str):
-    """Unregister a WebSocket session from Redis."""
-    try:
-        redis_client.hdel(REDIS_WS_SESSIONS_KEY, session_id)
-    except Exception as e:
-        logger.warning(f"Failed to unregister WebSocket session from Redis: {e}")
-
-
-def get_all_websocket_sessions() -> Dict[str, dict]:
-    """Get all active WebSocket sessions from Redis."""
-    try:
-        sessions = redis_client.hgetall(REDIS_WS_SESSIONS_KEY)
-        return {sid: json.loads(data) if isinstance(data, str) else data for sid, data in sessions.items()}
-    except Exception as e:
-        logger.warning(f"Failed to get WebSocket sessions from Redis: {e}")
-        return {}
-
-
-def get_active_websocket_count() -> int:
-    """Get count of active WebSocket sessions."""
-    try:
-        return redis_client.hlen(REDIS_WS_SESSIONS_KEY)
-    except Exception:
-        return 0
-
-
-# ============================================================================
-# Pydantic Models
-# ============================================================================
-
-
-class UserCreate(BaseModel):
-    """Request model for creating a user."""
-
-    email: EmailStr
-    full_name: str
-    is_admin: bool = False
-    is_active: bool = True
-
-
-class UserUpdate(BaseModel):
-    """Request model for updating a user."""
-
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    is_admin: Optional[bool] = None
-    is_active: Optional[bool] = None
-
-
-class UserResponse(BaseModel):
-    """Response model for user data."""
-
-    id: str
-    email: str
-    full_name: Optional[str]
-    is_admin: bool
-    is_active: bool
-    created_at: str
-    last_login: Optional[str]
-
-    class Config:
-        from_attributes = True
-
-
-class AuditLogEntryResponse(BaseModel):
-    """Response model for audit log entry."""
-
-    timestamp: str
-    level: str
-    action: str
-    user_id: Optional[str]
-    user_email: Optional[str]
-    resource_type: Optional[str]
-    resource_id: Optional[str]
-    success: bool
-    details: Optional[str]
 
 
 # ============================================================================
@@ -199,7 +67,7 @@ class AuditLogEntryResponse(BaseModel):
 async def get_system_summary(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Return a simple system summary for the admin dashboard."""
     total_users = db.query(User).count()
@@ -224,7 +92,7 @@ async def get_system_summary(
 @router.get("/websocket-status")
 async def get_websocket_status(
     request: Request,
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Return WebSocket connection status for admin dashboard."""
     # Get pool stats
@@ -278,7 +146,7 @@ async def get_websocket_status(
 async def list_users(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     search: Optional[str] = Query(None),
@@ -310,6 +178,7 @@ async def list_users(
             "email": user.email,
             "full_name": user.full_name,
             "is_admin": user.is_admin,
+            "admin_role": user.admin_role,
             "is_active": user.is_active,
             "created_at": user.created_at.isoformat() if user.created_at else None,
             "last_login": user.last_login.isoformat() if user.last_login else None,
@@ -333,7 +202,7 @@ async def get_user(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Get a single user by ID."""
     user = db.query(User).filter(User.id == user_id).first()
@@ -345,6 +214,7 @@ async def get_user(
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "last_login": user.last_login.isoformat() if user.last_login else None,
@@ -360,15 +230,21 @@ async def update_user(
     user_id: str,
     user_update: UserUpdate,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Update a user's information."""
+    ensure_admin_privileges(current_admin_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    update_data = user_update.model_dump(exclude_unset=True)
+    incoming_role = update_data.pop("admin_role", None)
+    incoming_admin_flag = update_data.pop("is_admin", None)
+    desired_role = resolve_admin_role(user.admin_role, incoming_admin_flag, incoming_role)
+
     # Prevent admin from demoting themselves
-    if str(user.id) == str(current_admin_user.id) and user_update.is_admin is False:
+    if str(user.id) == str(current_admin_user.id) and desired_role != "admin":
         raise HTTPException(status_code=400, detail="Cannot remove your own admin privileges")
 
     # Capture original values for audit
@@ -376,18 +252,50 @@ async def update_user(
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
     }
 
     # Update fields
     update_data = user_update.model_dump(exclude_unset=True)
+    action_reason = update_data.pop("action_reason", None)
+
+    try:
+        rate_limit_info = None
+        if "is_admin" in update_data and update_data["is_admin"] != user.is_admin:
+            rate_limit_info = enforce_admin_action_rate_limit(request, action="role-change")
+        if "is_active" in update_data and update_data["is_active"] is False:
+            rate_limit_info = enforce_admin_action_rate_limit(request, action="account-deactivate")
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
     for field, value in update_data.items():
         setattr(user, field, value)
+
+    user.admin_role = desired_role
+    user.is_admin = desired_role == "admin"
 
     db.commit()
     db.refresh(user)
 
     # Log audit event
+    audit_updates = {
+        **update_data,
+        "admin_role": user.admin_role,
+        "is_admin": user.is_admin,
+    }
     log_audit_event(
         db=db,
         action="user.update",
@@ -396,19 +304,45 @@ async def update_user(
         resource_type="user",
         resource_id=user_id,
         success=True,
-        details=json.dumps({"original": original_values, "updated": update_data}),
+        details=json.dumps(
+            {
+                "original": original_values,
+                "updated": audit_updates,
+                "reason": action_reason,
+            }
+        ),
         request=request,
     )
+
+    if user.admin_role != original_values["admin_role"]:
+        admin_audit_log_service.log_action(
+            db=db,
+            actor=current_admin_user,
+            action="user.role_change",
+            target_type="user",
+            target_id=user_id,
+            success=True,
+            metadata={
+                "from": original_values["admin_role"],
+                "to": user.admin_role,
+            },
+            request=request,
+        )
 
     data = {
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
         "is_admin": user.is_admin,
+        "admin_role": user.admin_role,
         "is_active": user.is_active,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "last_login": user.last_login.isoformat() if user.last_login else None,
     }
+
+    # surface rate limit metadata when applicable
+    if "rate_limit_info" in locals() and rate_limit_info:
+        data["rate_limit"] = rate_limit_info
 
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
@@ -419,9 +353,10 @@ async def delete_user(
     request: Request,
     user_id: str,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ) -> Dict:
     """Delete a user (soft delete by deactivating)."""
+    ensure_admin_privileges(current_admin_user)
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -432,6 +367,24 @@ async def delete_user(
 
     # Capture user email for audit before deactivation
     target_email = user.email
+
+    try:
+        # Increased rate limit: 20 deletes per 5 minutes (was 5/60s default)
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="account-deactivate", calls=20, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
 
     # Soft delete - deactivate the user
     user.is_active = False
@@ -450,9 +403,832 @@ async def delete_user(
         request=request,
     )
 
-    data = {"message": "User deactivated successfully", "user_id": user_id}
+    data = {
+        "message": "User deactivated successfully",
+        "user_id": user_id,
+        "rate_limit": rate_limit_info,
+    }
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+class PermanentDeleteRequest(BaseModel):
+    """Request model for permanent user deletion."""
+
+    confirm_email: str  # Must match user's email for confirmation
+    reason: Optional[str] = None
+
+
+@router.delete("/users/{user_id}/permanent")
+async def permanent_delete_user(
+    request: Request,
+    user_id: str,
+    delete_request: PermanentDeleteRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Permanently delete a user and all associated data.
+
+    This action is IRREVERSIBLE. All user data will be permanently removed:
+    - User account
+    - Sessions and messages
+    - Audit logs (user reference will be anonymized)
+    - Any other associated data
+
+    Requires email confirmation to prevent accidental deletion.
+    """
+    from app.models.message import Message
+    from app.models.session import Session as DBSession
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent admin from deleting themselves
+    if str(user.id) == str(current_admin_user.id):
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    # Require email confirmation
+    if delete_request.confirm_email.lower() != user.email.lower():
+        raise HTTPException(
+            status_code=400,
+            detail="Email confirmation does not match. Please enter the user's email to confirm deletion.",
+        )
+
+    # Rate limit permanent delete actions (stricter limit)
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="permanent-delete", calls=3, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Capture user info for audit before deletion
+    deleted_user_info = {
+        "email": user.email,
+        "full_name": user.full_name,
+        "admin_role": user.admin_role,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+    # Count associated data for reporting
+    session_count = 0
+    message_count = 0
+    try:
+        session_count = db.query(func.count(DBSession.id)).filter(DBSession.user_id == user_id).scalar() or 0
+        message_count = db.query(func.count(Message.id)).filter(Message.user_id == user_id).scalar() or 0
+    except Exception as e:
+        logger.warning(f"Could not count user data: {e}")
+
+    # Anonymize audit logs (preserve the audit trail but remove user reference)
+    try:
+        db.query(AuditLog).filter(AuditLog.user_id == user_id).update(
+            {
+                "user_id": None,
+                "user_email": f"[DELETED:{user_id[:8]}]",
+            },
+            synchronize_session=False,
+        )
+    except Exception as e:
+        logger.warning(f"Could not anonymize audit logs: {e}")
+
+    # Delete associated sessions and messages (cascade delete)
+    try:
+        # Delete messages first (they reference sessions)
+        db.query(Message).filter(Message.user_id == user_id).delete(synchronize_session=False)
+        # Delete sessions
+        db.query(DBSession).filter(DBSession.user_id == user_id).delete(synchronize_session=False)
+    except Exception as e:
+        logger.warning(f"Error deleting user data: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete user data. Please try again.",
+        )
+
+    # Delete the user
+    try:
+        db.delete(user)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to delete user: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete user. Please try again.",
+        )
+
+    # Log audit event (with anonymized user info)
+    log_audit_event(
+        db=db,
+        action="user.permanent_delete",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps(
+            {
+                "deleted_user": deleted_user_info,
+                "sessions_deleted": session_count,
+                "messages_deleted": message_count,
+                "reason": delete_request.reason,
+            }
+        ),
+        request=request,
+    )
+
+    return success_response(
+        {
+            "message": "User permanently deleted",
+            "user_id": user_id,
+            "deleted_data": {
+                "sessions": session_count,
+                "messages": message_count,
+            },
+            "rate_limit": rate_limit_info,
+        },
+        trace_id=trace_id,
+    )
+
+
+def generate_temporary_password(length: int = 16) -> str:
+    """Generate a secure temporary password with mixed characters.
+
+    Guarantees at least one character from each category:
+    - lowercase letters
+    - uppercase letters
+    - digits
+    - special characters
+    """
+    if length < 4:
+        length = 4  # Minimum to include all character types
+
+    lowercase = "abcdefghijkmnopqrstuvwxyz"
+    uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    digits = "23456789"
+    special = "!@#$%^&*"
+    all_chars = lowercase + uppercase + digits + special
+
+    # Ensure at least one from each category
+    password_chars = [
+        secrets.choice(lowercase),
+        secrets.choice(uppercase),
+        secrets.choice(digits),
+        secrets.choice(special),
+    ]
+
+    # Fill remaining length with random characters from all categories
+    password_chars.extend(secrets.choice(all_chars) for _ in range(length - 4))
+
+    # Shuffle to avoid predictable positions
+    password_list = list(password_chars)
+    secrets.SystemRandom().shuffle(password_list)
+
+    return "".join(password_list)
+
+
+def generate_secure_token(length: int = 32) -> str:
+    """Generate a cryptographically secure token."""
+    return secrets.token_urlsafe(length)
+
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    request: Request,
+    user_id: str,
+    reset_request: PasswordResetRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Reset a user's password (admin action).
+
+    Two methods available:
+    - "temporary": Generate a temporary password that user must change on next login
+    - "email": Send a password reset email with a secure link
+    """
+    from app.core.config import settings
+    from app.services.email_service import send_password_reset_email, send_temporary_password_email
+    from passlib.context import CryptContext
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent resetting own password through admin panel
+    if str(user.id) == str(current_admin_user.id):
+        raise HTTPException(
+            status_code=400,
+            detail="Use the account settings page to change your own password",
+        )
+
+    # Rate limit password reset actions
+    try:
+        enforce_admin_action_rate_limit(request, action="password-reset", calls=10, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    if reset_request.method == "temporary":
+        # Generate temporary password
+        temp_password = generate_temporary_password()
+        user.hashed_password = pwd_context.hash(temp_password)
+        user.must_change_password = True
+        user.password_reset_token = None
+        user.password_reset_token_expires_at = None
+        db.commit()
+
+        # Log audit event
+        log_audit_event(
+            db=db,
+            action="user.password_reset",
+            user_id=str(current_admin_user.id),
+            user_email=current_admin_user.email,
+            resource_type="user",
+            resource_id=user_id,
+            success=True,
+            details=json.dumps({"method": "temporary", "notify_user": reset_request.notify_user}),
+            request=request,
+        )
+
+        # Optionally send email with temporary password
+        email_sent = False
+        if reset_request.notify_user:
+            email_sent = await send_temporary_password_email(user.email, temp_password)
+
+        return success_response(
+            {
+                "success": True,
+                "method": "temporary",
+                "temporary_password": temp_password,
+                "email_sent": email_sent,
+                "message": "User must change password on next login",
+            },
+            trace_id=trace_id,
+        )
+
+    else:  # email method
+        # Generate reset token with 24-hour expiry
+        reset_token = generate_secure_token()
+        user.password_reset_token = reset_token
+        user.password_reset_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+        db.commit()
+
+        # Build reset link
+        reset_link = f"{settings.ADMIN_PANEL_URL}/reset-password?token={reset_token}"
+
+        # Log audit event
+        log_audit_event(
+            db=db,
+            action="user.password_reset",
+            user_id=str(current_admin_user.id),
+            user_email=current_admin_user.email,
+            resource_type="user",
+            resource_id=user_id,
+            success=True,
+            details=json.dumps({"method": "email"}),
+            request=request,
+        )
+
+        # Send reset email
+        email_sent = await send_password_reset_email(user.email, reset_link)
+
+        return success_response(
+            {
+                "success": True,
+                "method": "email",
+                "email_sent": email_sent,
+                "message": ("Password reset email sent" if email_sent else "Failed to send email"),
+            },
+            trace_id=trace_id,
+        )
+
+
+@router.post("/users/invite")
+async def invite_user(
+    request: Request,
+    invite_request: UserInviteRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Invite a new user via email.
+
+    Creates a user account with a pending invitation. The user will receive
+    an email with a link to set their password and activate their account.
+    """
+    from app.core.config import settings
+    from app.services.email_service import send_invitation_email
+
+    ensure_admin_privileges(current_admin_user)
+
+    # Check if email already exists
+    existing_user = db.query(User).filter(User.email == invite_request.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+
+    # Rate limit invitation actions
+    try:
+        enforce_admin_action_rate_limit(request, action="user-invite", calls=20, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Generate invitation token with 7-day expiry
+    invitation_token = generate_secure_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+    # Create user with pending invitation
+    new_user = User(
+        email=invite_request.email,
+        full_name=invite_request.full_name or "",
+        hashed_password=None,  # No password until invitation is accepted
+        is_active=False,  # Inactive until invitation is accepted
+        is_admin=invite_request.admin_role == "admin",
+        admin_role=invite_request.admin_role,
+        invitation_token=invitation_token,
+        invitation_token_expires_at=expires_at,
+        invitation_sent_at=datetime.now(timezone.utc),
+        invited_by_id=current_admin_user.id,
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.invite",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=str(new_user.id),
+        success=True,
+        details=json.dumps(
+            {
+                "invited_email": invite_request.email,
+                "role": invite_request.admin_role,
+                "send_email": invite_request.send_email,
+            }
+        ),
+        request=request,
+    )
+
+    # Build invitation link
+    invitation_link = f"{settings.ADMIN_PANEL_URL}/accept-invitation?token={invitation_token}"
+
+    # Send invitation email
+    email_sent = False
+    if invite_request.send_email:
+        inviter_name = current_admin_user.full_name or current_admin_user.email
+        email_sent = await send_invitation_email(
+            to=invite_request.email,
+            inviter_name=inviter_name,
+            invitation_link=invitation_link,
+            expires_in_days=7,
+        )
+
+    return success_response(
+        {
+            "success": True,
+            "user_id": str(new_user.id),
+            "email": new_user.email,
+            "invitation_link": invitation_link,
+            "email_sent": email_sent,
+            "expires_at": expires_at.isoformat(),
+        },
+        trace_id=trace_id,
+    )
+
+
+@router.post("/users/{user_id}/resend-invitation")
+async def resend_invitation(
+    request: Request,
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Resend an invitation email to a pending user."""
+    from app.core.config import settings
+    from app.services.email_service import send_invitation_email
+
+    ensure_admin_privileges(current_admin_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_active:
+        raise HTTPException(status_code=400, detail="User has already accepted invitation")
+
+    if not user.invitation_token:
+        raise HTTPException(status_code=400, detail="User was not invited via email")
+
+    trace_id = getattr(request.state, "trace_id", None)
+
+    # Generate new invitation token with fresh 7-day expiry
+    new_token = generate_secure_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+    user.invitation_token = new_token
+    user.invitation_token_expires_at = expires_at
+    user.invitation_sent_at = datetime.now(timezone.utc)
+    db.commit()
+
+    # Build invitation link
+    invitation_link = f"{settings.ADMIN_PANEL_URL}/accept-invitation?token={new_token}"
+
+    # Send invitation email
+    inviter_name = current_admin_user.full_name or current_admin_user.email
+    email_sent = await send_invitation_email(
+        to=user.email,
+        inviter_name=inviter_name,
+        invitation_link=invitation_link,
+        expires_in_days=7,
+    )
+
+    # Log audit event
+    log_audit_event(
+        db=db,
+        action="user.resend_invitation",
+        user_id=str(current_admin_user.id),
+        user_email=current_admin_user.email,
+        resource_type="user",
+        resource_id=user_id,
+        success=True,
+        details=json.dumps({"email_sent": email_sent}),
+        request=request,
+    )
+
+    return success_response(
+        {
+            "success": True,
+            "email_sent": email_sent,
+            "expires_at": expires_at.isoformat(),
+            "message": "Invitation resent" if email_sent else "Failed to send email",
+        },
+        trace_id=trace_id,
+    )
+
+
+# ============================================================================
+# Bulk Operations
+# ============================================================================
+
+
+class BulkOperationRequest(BaseModel):
+    """Request model for bulk user operations."""
+
+    user_ids: list[str]
+    action: Literal["activate", "deactivate", "set_role"]
+    role: Optional[Literal["user", "admin", "viewer"]] = None  # Required for set_role action
+    reason: Optional[str] = None
+
+
+@router.post("/users/bulk")
+async def bulk_user_operation(
+    request: Request,
+    bulk_request: BulkOperationRequest,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """Perform bulk operations on multiple users.
+
+    Supported actions:
+    - "activate": Activate multiple user accounts
+    - "deactivate": Deactivate multiple user accounts (soft delete)
+    - "set_role": Set the role for multiple users (requires 'role' field)
+
+    Returns a summary of successful and failed operations.
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    # Validate request
+    if not bulk_request.user_ids:
+        raise HTTPException(status_code=400, detail="No user IDs provided")
+
+    if len(bulk_request.user_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 users per bulk operation")
+
+    if bulk_request.action == "set_role" and not bulk_request.role:
+        raise HTTPException(status_code=400, detail="Role is required for set_role action")
+
+    # Rate limit bulk operations
+    try:
+        rate_limit_info = enforce_admin_action_rate_limit(request, action="bulk-operation", calls=10, period=300)
+    except HTTPException as exc:
+        if exc.status_code == 429:
+            detail = exc.detail if isinstance(exc.detail, dict) else {}
+            trace_id = getattr(request.state, "trace_id", None)
+            return JSONResponse(
+                status_code=429,
+                content=error_response(
+                    code=detail.get("code", "RATE_LIMITED"),
+                    message=detail.get("message", "Rate limit exceeded"),
+                    details={"rate_limit": detail.get("rate_limit")},
+                    request_id=trace_id,
+                ),
+            )
+        raise
+
+    trace_id = getattr(request.state, "trace_id", None)
+    admin_user_id = str(current_admin_user.id)
+
+    # Track results
+    results = {
+        "successful": [],
+        "failed": [],
+        "skipped": [],
+    }
+
+    for user_id in bulk_request.user_ids:
+        try:
+            # Prevent self-modification
+            if user_id == admin_user_id:
+                results["skipped"].append(
+                    {
+                        "user_id": user_id,
+                        "reason": "Cannot modify your own account",
+                    }
+                )
+                continue
+
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                results["failed"].append(
+                    {
+                        "user_id": user_id,
+                        "reason": "User not found",
+                    }
+                )
+                continue
+
+            # Capture original values for audit
+            original_values = {
+                "is_active": user.is_active,
+                "is_admin": user.is_admin,
+                "admin_role": user.admin_role,
+            }
+
+            # Perform the action
+            if bulk_request.action == "activate":
+                if user.is_active:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": "Already active",
+                        }
+                    )
+                    continue
+                user.is_active = True
+
+            elif bulk_request.action == "deactivate":
+                if not user.is_active:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": "Already inactive",
+                        }
+                    )
+                    continue
+                user.is_active = False
+
+            elif bulk_request.action == "set_role":
+                if user.admin_role == bulk_request.role:
+                    results["skipped"].append(
+                        {
+                            "user_id": user_id,
+                            "email": user.email,
+                            "reason": f"Already has role '{bulk_request.role}'",
+                        }
+                    )
+                    continue
+                user.admin_role = bulk_request.role
+                user.is_admin = bulk_request.role == "admin"
+
+            db.commit()
+
+            # Log audit event
+            log_audit_event(
+                db=db,
+                action=f"user.bulk_{bulk_request.action}",
+                user_id=admin_user_id,
+                user_email=current_admin_user.email,
+                resource_type="user",
+                resource_id=user_id,
+                success=True,
+                details=json.dumps(
+                    {
+                        "original": original_values,
+                        "action": bulk_request.action,
+                        "new_role": (bulk_request.role if bulk_request.action == "set_role" else None),
+                        "reason": bulk_request.reason,
+                    }
+                ),
+                request=request,
+            )
+
+            results["successful"].append(
+                {
+                    "user_id": user_id,
+                    "email": user.email,
+                }
+            )
+
+        except Exception as e:
+            logger.warning(f"Bulk operation failed for user {user_id}: {e}")
+            db.rollback()
+            results["failed"].append(
+                {
+                    "user_id": user_id,
+                    "reason": str(e),
+                }
+            )
+
+    return success_response(
+        {
+            "action": bulk_request.action,
+            "total_requested": len(bulk_request.user_ids),
+            "successful": len(results["successful"]),
+            "failed": len(results["failed"]),
+            "skipped": len(results["skipped"]),
+            "results": results,
+            "rate_limit": rate_limit_info,
+        },
+        trace_id=trace_id,
+    )
+
+
+def _parse_audit_details(log: AuditLog) -> Dict:
+    """Extract structured audit details from an AuditLog entry."""
+
+    if not log.additional_data:
+        return {}
+
+    raw_details = log.additional_data
+    if isinstance(raw_details, dict) and "details" in raw_details:
+        raw_details = raw_details.get("details")
+
+    if isinstance(raw_details, str):
+        try:
+            raw_details = json.loads(raw_details)
+        except json.JSONDecodeError:
+            return {"details": raw_details}
+
+    return raw_details if isinstance(raw_details, dict) else {}
+
+
+@router.get("/users/{user_id}/role-history")
+async def get_role_history(
+    request: Request,
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    limit: int = Query(20, ge=1, le=100),
+) -> Dict:
+    """Return role assignment history for a user based on audit logs."""
+
+    logs = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.resource_type == "user",
+            AuditLog.resource_id == user_id,
+            AuditLog.action == "user.update",
+        )
+        .order_by(desc(AuditLog.timestamp))
+        .limit(limit)
+        .all()
+    )
+
+    history = []
+    for log in logs:
+        details = _parse_audit_details(log)
+        original = details.get("original", {}) if isinstance(details, dict) else {}
+        updated = details.get("updated", {}) if isinstance(details, dict) else {}
+
+        if "is_admin" not in original and "is_admin" not in updated:
+            continue
+
+        from_role = "admin" if original.get("is_admin") else "user"
+        to_role = "admin" if updated.get("is_admin", original.get("is_admin")) else "user"
+
+        if from_role == to_role:
+            continue
+
+        history.append(
+            {
+                "id": str(log.id),
+                "changed_at": log.timestamp.isoformat() if log.timestamp else None,
+                "actor": log.user_email or "unknown",
+                "from_role": from_role,
+                "to_role": to_role,
+                "reason": details.get("reason") or "Role updated by admin",
+                "trace_id": log.request_id,
+            }
+        )
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response({"history": history}, trace_id=trace_id)
+
+
+@router.get("/users/{user_id}/lock-reasons")
+async def get_lock_reasons(
+    request: Request,
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+    limit: int = Query(20, ge=1, le=100),
+) -> Dict:
+    """Return account lock/unlock reasons for a user."""
+
+    logs = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.resource_type == "user",
+            AuditLog.resource_id == user_id,
+            AuditLog.action.in_(["user.update", "user.deactivate"]),
+        )
+        .order_by(desc(AuditLog.timestamp))
+        .limit(limit)
+        .all()
+    )
+
+    events = []
+    for log in logs:
+        details = _parse_audit_details(log)
+        original = details.get("original", {}) if isinstance(details, dict) else {}
+        updated = details.get("updated", {}) if isinstance(details, dict) else {}
+
+        status_change = None
+        if log.action == "user.deactivate":
+            status_change = False
+        elif "is_active" in original or "is_active" in updated:
+            prev_active = original.get("is_active")
+            new_active = updated.get("is_active", prev_active)
+            if prev_active != new_active:
+                status_change = new_active
+
+        if status_change is None:
+            continue
+
+        events.append(
+            {
+                "id": str(log.id),
+                "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+                "actor": log.user_email or "unknown",
+                "status": "unlocked" if status_change else "locked",
+                "reason": details.get("reason") or details.get("details") or "Admin status change",
+                "trace_id": log.request_id,
+            }
+        )
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response({"events": events}, trace_id=trace_id)
 
 
 # ============================================================================
@@ -526,7 +1302,7 @@ def _fetch_metrics_from_db(db: Session, days: int) -> Dict:
 async def get_system_metrics(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     days: int = Query(7, ge=1, le=90),
 ) -> Dict:
     """Return system metrics for dashboard charts with caching."""
@@ -564,7 +1340,7 @@ async def get_system_metrics(
 async def get_audit_logs(
     request: Request,
     db: Session = Depends(get_db),
-    current_admin_user: User = Depends(get_current_admin_user),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     level: Optional[str] = Query(None),
@@ -625,3 +1401,240 @@ async def get_audit_logs(
 
     trace_id = getattr(request.state, "trace_id", None)
     return success_response(data, trace_id=trace_id)
+
+
+@router.get("/audit-logs/export")
+async def export_audit_logs(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin_user: User = Depends(get_current_admin_user),
+    action: Optional[str] = Query(None),
+    limit: int = Query(500, ge=1, le=2000),
+):
+    """Export recent admin audit activity as CSV for compliance."""
+
+    query = db.query(AuditLog)
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+
+    logs = query.order_by(desc(AuditLog.timestamp)).limit(limit).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        [
+            "timestamp",
+            "action",
+            "user_email",
+            "resource_type",
+            "resource_id",
+            "success",
+            "details",
+            "trace_id",
+        ]
+    )
+
+    for log in logs:
+        details = _parse_audit_details(log)
+        writer.writerow(
+            [
+                log.timestamp.isoformat() if log.timestamp else "",
+                log.action,
+                log.user_email or "",
+                log.resource_type or "",
+                log.resource_id or "",
+                "success" if log.success else "error",
+                json.dumps(details) if details else "",
+                log.request_id or "",
+            ]
+        )
+
+    output.seek(0)
+    filename = f"admin-audit-{datetime.now(timezone.utc).date()}.csv"
+    headers = {"Content-Disposition": f"attachment; filename={filename}"}
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers=headers,
+    )
+
+
+# ============================================================================
+# Admin WebSocket for Real-time Updates
+# ============================================================================
+
+# Track connected admin WebSocket sessions
+_admin_ws_connections: Dict[str, WebSocket] = {}
+
+
+@router.websocket("/ws")
+async def admin_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time admin panel updates.
+
+    Provides:
+    - Heartbeat/ping-pong to keep connection alive
+    - Real-time metric updates (every 10 seconds)
+    - System event notifications via Redis pub/sub
+    - Live events (sessions, conversations, voice, etc.)
+    """
+    await websocket.accept()
+
+    connection_id = str(uuid.uuid4())
+    _admin_ws_connections[connection_id] = websocket
+
+    logger.info(f"Admin WebSocket connected: {connection_id}")
+
+    # Send initial connection confirmation
+    await websocket.send_json(
+        {
+            "type": "connected",
+            "payload": {
+                "connection_id": connection_id,
+                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+            },
+        }
+    )
+
+    try:
+        # Start background tasks
+        update_task = asyncio.create_task(_send_periodic_updates(websocket, connection_id))
+        redis_task = asyncio.create_task(_subscribe_to_admin_events(websocket, connection_id))
+
+        # Main message loop
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
+
+                # Handle ping/pong
+                if data.get("type") == "ping":
+                    await websocket.send_json(
+                        {
+                            "type": "pong",
+                            "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"},
+                        }
+                    )
+
+                # Handle event subscription
+                elif data.get("type") == "subscribe":
+                    event_types = data.get("payload", {}).get("event_types", [])
+                    await websocket.send_json(
+                        {
+                            "type": "subscribed",
+                            "payload": {
+                                "event_types": event_types,
+                                "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                            },
+                        }
+                    )
+
+            except asyncio.TimeoutError:
+                # Send heartbeat on timeout
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_json(
+                        {
+                            "type": "heartbeat",
+                            "payload": {"timestamp": datetime.now(timezone.utc).isoformat() + "Z"},
+                        }
+                    )
+
+    except WebSocketDisconnect:
+        logger.info(f"Admin WebSocket disconnected: {connection_id}")
+    except Exception as e:
+        logger.error(f"Admin WebSocket error for {connection_id}: {e}")
+    finally:
+        update_task.cancel()
+        redis_task.cancel()
+        _admin_ws_connections.pop(connection_id, None)
+        register_websocket_session_cleanup(connection_id)
+
+
+async def _send_periodic_updates(websocket: WebSocket, connection_id: str):
+    """Send periodic metric updates to connected admin clients."""
+    try:
+        while True:
+            await asyncio.sleep(10)  # Update every 10 seconds
+
+            if websocket.client_state != WebSocketState.CONNECTED:
+                break
+
+            try:
+                # Get current stats
+                active_sessions = get_active_websocket_count()
+                db_stats = get_db_pool_stats()
+                redis_stats = get_redis_pool_stats()
+
+                await websocket.send_json(
+                    {
+                        "type": "metrics_update",
+                        "payload": {
+                            "active_websocket_sessions": active_sessions,
+                            "database_pool": db_stats,
+                            "redis_pool": redis_stats,
+                            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+                        },
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"Failed to send metrics update to {connection_id}: {e}")
+                break
+
+    except asyncio.CancelledError:
+        pass
+
+
+async def _subscribe_to_admin_events(websocket: WebSocket, connection_id: str):
+    """Subscribe to Redis pub/sub for real-time admin events."""
+    from app.services.admin_event_publisher import ADMIN_EVENTS_CHANNEL
+
+    try:
+        redis = redis_client
+        if not redis:
+            logger.warning(f"Redis not available for admin events subscription: {connection_id}")
+            return
+
+        # Create a pubsub connection
+        pubsub = redis.pubsub()
+        await pubsub.subscribe(ADMIN_EVENTS_CHANNEL)
+
+        logger.debug(f"Admin WebSocket {connection_id} subscribed to events channel")
+
+        # Listen for messages
+        async for message in pubsub.listen():
+            if websocket.client_state != WebSocketState.CONNECTED:
+                break
+
+            if message["type"] == "message":
+                try:
+                    # Parse the event data
+                    event_data = json.loads(message["data"])
+
+                    # Forward to WebSocket client
+                    await websocket.send_json(
+                        {
+                            "type": "admin_event",
+                            "payload": event_data,
+                        }
+                    )
+                except json.JSONDecodeError:
+                    logger.warning(f"Invalid JSON in admin event: {message['data']}")
+                except Exception as e:
+                    logger.warning(f"Failed to forward admin event to {connection_id}: {e}")
+
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        logger.error(f"Error in admin events subscription for {connection_id}: {e}")
+    finally:
+        try:
+            await pubsub.unsubscribe(ADMIN_EVENTS_CHANNEL)
+            await pubsub.close()
+        except Exception:
+            pass
+
+
+def register_websocket_session_cleanup(session_id: str):
+    """Clean up WebSocket session from tracking."""
+    try:
+        unregister_websocket_session(session_id)
+    except Exception as e:
+        logger.warning(f"Failed to cleanup WebSocket session {session_id}: {e}")

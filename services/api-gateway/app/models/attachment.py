@@ -33,12 +33,8 @@ class MessageAttachment(Base):
     file_metadata = Column(JSONB, nullable=True)  # Additional metadata (renamed to avoid SQLAlchemy conflict)
 
     # Timestamps
-    uploaded_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
-    created_at = Column(
-        DateTime(timezone=True), default=datetime.utcnow, nullable=False
-    )
+    uploaded_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     # Relationship
     message = relationship("Message", back_populates="attachments")

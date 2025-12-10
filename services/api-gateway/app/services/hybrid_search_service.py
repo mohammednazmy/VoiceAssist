@@ -262,9 +262,7 @@ class HybridSearchService:
 
         return Filter(must=must)
 
-    def _metadata_matches_filters(
-        self, metadata: Dict[str, Any], filters: Optional[Dict[str, Any]]
-    ) -> bool:
+    def _metadata_matches_filters(self, metadata: Dict[str, Any], filters: Optional[Dict[str, Any]]) -> bool:
         """Check if metadata satisfies filter conditions."""
 
         if not filters:
@@ -294,18 +292,22 @@ class HybridSearchService:
             query_embedding = await self._generate_embedding(query)
 
             # Execute Qdrant search in thread pool
+            # Note: qdrant-client v1.6+ uses query_points instead of search
             search_filter = self._build_filter(filters)
-            results = await asyncio.wait_for(
+            query_response = await asyncio.wait_for(
                 asyncio.to_thread(
-                    self.qdrant_client.search,
+                    self.qdrant_client.query_points,
                     collection_name=self.collection_name,
-                    query_vector=query_embedding,
+                    query=query_embedding,
                     limit=top_k,
                     score_threshold=score_threshold,
                     query_filter=search_filter,
                 ),
                 timeout=5,
             )
+
+            # Extract points from QueryResponse
+            results = query_response.points if hasattr(query_response, "points") else []
 
             search_results = []
             for result in results:
@@ -321,7 +323,13 @@ class HybridSearchService:
                             **{
                                 k: v
                                 for k, v in result.payload.items()
-                                if k not in ["content", "document_id", "title", "source_type"]
+                                if k
+                                not in [
+                                    "content",
+                                    "document_id",
+                                    "title",
+                                    "source_type",
+                                ]
                             },
                         },
                         source="vector",

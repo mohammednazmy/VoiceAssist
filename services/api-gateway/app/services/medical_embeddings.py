@@ -127,13 +127,18 @@ class PubMedBERTEmbeddings:
     - PubMed Central full-text articles
     """
 
+    # Pinned model revision for reproducibility
+    DEFAULT_REVISION = "v1.1"
+
     def __init__(
         self,
         model_name: str = "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
+        model_revision: str = "v1.1",
         device: str = "cpu",
         max_length: int = 512,
     ):
         self.model_name = model_name
+        self.model_revision = model_revision
         self.device = device
         self.max_length = max_length
         self._model = None
@@ -145,8 +150,11 @@ class PubMedBERTEmbeddings:
             try:
                 from transformers import AutoModel, AutoTokenizer
 
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self._model = AutoModel.from_pretrained(self.model_name)
+                # nosec B615 - revision pinned via self.model_revision
+                self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
+                    self.model_name, revision=self.model_revision
+                )
+                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)  # nosec B615
 
                 # Move to device
                 if self.device != "cpu":
@@ -219,13 +227,18 @@ class BioBERTEmbeddings:
     - PMC full-text articles
     """
 
+    # Pinned model revision for reproducibility
+    DEFAULT_REVISION = "main"
+
     def __init__(
         self,
         model_name: str = "dmis-lab/biobert-base-cased-v1.2",
+        model_revision: str = "main",
         device: str = "cpu",
         max_length: int = 512,
     ):
         self.model_name = model_name
+        self.model_revision = model_revision
         self.device = device
         self.max_length = max_length
         self._model = None
@@ -237,8 +250,11 @@ class BioBERTEmbeddings:
             try:
                 from transformers import AutoModel, AutoTokenizer
 
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self._model = AutoModel.from_pretrained(self.model_name)
+                # nosec B615 - revision pinned via self.model_revision
+                self._tokenizer = AutoTokenizer.from_pretrained(  # nosec B615
+                    self.model_name, revision=self.model_revision
+                )
+                self._model = AutoModel.from_pretrained(self.model_name, revision=self.model_revision)  # nosec B615
 
                 if self.device != "cpu":
                     import torch

@@ -2,8 +2,8 @@
  * Table Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { useState } from 'react';
+import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 import {
   Table,
   TableHeader,
@@ -13,23 +13,23 @@ import {
   TableRow,
   TableCell,
   TableCaption,
-} from '../components/Table';
-import { Badge } from '../components/Badge';
-import { IconButton } from '../components/IconButton';
+} from "../components/Table";
+import { Badge } from "../components/Badge";
+import { IconButton } from "../components/IconButton";
 
 const meta = {
-  title: 'Components/Table',
+  title: "Components/Table",
   component: Table,
   parameters: {
-    layout: 'padded',
+    layout: "padded",
     docs: {
       description: {
         component:
-          'Table component for displaying tabular data with support for sorting, hoverable rows, and striped styling.',
+          "Table component for displaying tabular data with support for sorting, hoverable rows, and striped styling.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
 } satisfies Meta<typeof Table>;
 
 export default meta;
@@ -139,7 +139,7 @@ export const Hoverable: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Hoverable rows for interactive tables.',
+        story: "Hoverable rows for interactive tables.",
       },
     },
   },
@@ -187,7 +187,7 @@ export const Striped: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Striped rows for better readability.',
+        story: "Striped rows for better readability.",
       },
     },
   },
@@ -196,14 +196,16 @@ export const Striped: Story = {
 export const Sortable: Story = {
   render: function SortableTable() {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+      null,
+    );
 
     const handleSort = (column: string) => {
       if (sortColumn === column) {
-        setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        setSortDirection(sortDirection === "asc" ? "desc" : "asc");
       } else {
         setSortColumn(column);
-        setSortDirection('asc');
+        setSortDirection("asc");
       }
     };
 
@@ -213,22 +215,22 @@ export const Sortable: Story = {
           <TableRow>
             <TableHead
               sortable
-              sortDirection={sortColumn === 'name' ? sortDirection : null}
-              onSort={() => handleSort('name')}
+              sortDirection={sortColumn === "name" ? sortDirection : null}
+              onSort={() => handleSort("name")}
             >
               Name
             </TableHead>
             <TableHead
               sortable
-              sortDirection={sortColumn === 'age' ? sortDirection : null}
-              onSort={() => handleSort('age')}
+              sortDirection={sortColumn === "age" ? sortDirection : null}
+              onSort={() => handleSort("age")}
             >
               Age
             </TableHead>
             <TableHead
               sortable
-              sortDirection={sortColumn === 'date' ? sortDirection : null}
-              onSort={() => handleSort('date')}
+              sortDirection={sortColumn === "date" ? sortDirection : null}
+              onSort={() => handleSort("date")}
             >
               Date
             </TableHead>
@@ -267,7 +269,7 @@ export const Sortable: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Sortable columns with visual indicators.',
+        story: "Sortable columns with visual indicators.",
       },
     },
   },
@@ -393,7 +395,7 @@ export const WithActions: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Table with action buttons for each row.',
+        story: "Table with action buttons for each row.",
       },
     },
   },
@@ -437,7 +439,7 @@ export const WithFooter: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Table with footer for totals or summary information.',
+        story: "Table with footer for totals or summary information.",
       },
     },
   },

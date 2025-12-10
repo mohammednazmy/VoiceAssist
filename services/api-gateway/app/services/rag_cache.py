@@ -26,45 +26,39 @@ Usage:
     # Invalidate on document update
     await rag_cache.invalidate_document(document_id)
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime
 
-from prometheus_client import Counter, Histogram
-
-from app.services.cache_service import cache_service
 from app.core.logging import get_logger
-
+from app.services.cache_service import cache_service
+from prometheus_client import Counter, Histogram
 
 logger = get_logger(__name__)
 
 
 # Prometheus Metrics
 rag_cache_hits_total = Counter(
-    'rag_cache_hits_total',
-    'Total number of RAG cache hits',
-    ['cache_type']  # query_embedding, search_results, document_meta
+    "rag_cache_hits_total",
+    "Total number of RAG cache hits",
+    ["cache_type"],  # query_embedding, search_results, document_meta
 )
 
-rag_cache_misses_total = Counter(
-    'rag_cache_misses_total',
-    'Total number of RAG cache misses',
-    ['cache_type']
-)
+rag_cache_misses_total = Counter("rag_cache_misses_total", "Total number of RAG cache misses", ["cache_type"])
 
 rag_cache_invalidations_total = Counter(
-    'rag_cache_invalidations_total',
-    'Total number of cache invalidations',
-    ['invalidation_type']  # document, pattern, all
+    "rag_cache_invalidations_total",
+    "Total number of cache invalidations",
+    ["invalidation_type"],  # document, pattern, all
 )
 
 rag_search_latency_saved = Histogram(
-    'rag_search_latency_saved_seconds',
-    'Estimated latency saved by cache hits',
-    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+    "rag_search_latency_saved_seconds",
+    "Estimated latency saved by cache hits",
+    buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
 )
 
 
@@ -106,7 +100,7 @@ class RAGCache:
         normalized = query.lower().strip()
 
         # Remove extra whitespace
-        normalized = ' '.join(normalized.split())
+        normalized = " ".join(normalized.split())
 
         return normalized
 
@@ -115,7 +109,7 @@ class RAGCache:
         query: str,
         top_k: int = 5,
         score_threshold: float = 0.7,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Generate cache key for search results.
 
@@ -133,10 +127,10 @@ class RAGCache:
 
         # Build key components
         key_data = {
-            'query': normalized_query,
-            'top_k': top_k,
-            'threshold': score_threshold,
-            'filters': filters or {}
+            "query": normalized_query,
+            "top_k": top_k,
+            "threshold": score_threshold,
+            "filters": filters or {},
         }
 
         # Create hash
@@ -173,10 +167,7 @@ class RAGCache:
         """
         return f"{self.DOCUMENT_NAMESPACE}:{document_id}"
 
-    async def get_search_results(
-        self,
-        cache_key: str
-    ) -> Optional[List[Dict[str, Any]]]:
+    async def get_search_results(self, cache_key: str) -> Optional[List[Dict[str, Any]]]:
         """Get cached search results.
 
         Args:
@@ -189,7 +180,7 @@ class RAGCache:
             results = await cache_service.get(cache_key)
 
             if results is not None:
-                rag_cache_hits_total.labels(cache_type='search_results').inc()
+                rag_cache_hits_total.labels(cache_type="search_results").inc()
                 self.logger.debug(f"RAG search cache hit: {cache_key}")
 
                 # Track latency saved (estimated)
@@ -198,19 +189,16 @@ class RAGCache:
 
                 return results
             else:
-                rag_cache_misses_total.labels(cache_type='search_results').inc()
+                rag_cache_misses_total.labels(cache_type="search_results").inc()
                 return None
 
         except Exception as e:
             self.logger.error(f"Error getting cached search results: {e}", exc_info=True)
-            rag_cache_misses_total.labels(cache_type='search_results').inc()
+            rag_cache_misses_total.labels(cache_type="search_results").inc()
             return None
 
     async def set_search_results(
-        self,
-        cache_key: str,
-        results: List[Dict[str, Any]],
-        ttl: Optional[int] = None
+        self, cache_key: str, results: List[Dict[str, Any]], ttl: Optional[int] = None
     ) -> bool:
         """Cache search results.
 
@@ -228,10 +216,7 @@ class RAGCache:
             success = await cache_service.set(cache_key, results, ttl=ttl)
 
             if success:
-                self.logger.debug(
-                    f"Cached RAG search results: {cache_key}, "
-                    f"{len(results)} results, TTL={ttl}s"
-                )
+                self.logger.debug(f"Cached RAG search results: {cache_key}, " f"{len(results)} results, TTL={ttl}s")
 
             return success
 
@@ -239,10 +224,7 @@ class RAGCache:
             self.logger.error(f"Error caching search results: {e}", exc_info=True)
             return False
 
-    async def get_embedding(
-        self,
-        cache_key: str
-    ) -> Optional[List[float]]:
+    async def get_embedding(self, cache_key: str) -> Optional[List[float]]:
         """Get cached text embedding.
 
         Args:
@@ -255,24 +237,19 @@ class RAGCache:
             embedding = await cache_service.get(cache_key)
 
             if embedding is not None:
-                rag_cache_hits_total.labels(cache_type='query_embedding').inc()
+                rag_cache_hits_total.labels(cache_type="query_embedding").inc()
                 self.logger.debug(f"RAG embedding cache hit: {cache_key}")
                 return embedding
             else:
-                rag_cache_misses_total.labels(cache_type='query_embedding').inc()
+                rag_cache_misses_total.labels(cache_type="query_embedding").inc()
                 return None
 
         except Exception as e:
             self.logger.error(f"Error getting cached embedding: {e}", exc_info=True)
-            rag_cache_misses_total.labels(cache_type='query_embedding').inc()
+            rag_cache_misses_total.labels(cache_type="query_embedding").inc()
             return None
 
-    async def set_embedding(
-        self,
-        cache_key: str,
-        embedding: List[float],
-        ttl: Optional[int] = None
-    ) -> bool:
+    async def set_embedding(self, cache_key: str, embedding: List[float], ttl: Optional[int] = None) -> bool:
         """Cache text embedding.
 
         Args:
@@ -290,14 +267,11 @@ class RAGCache:
                 cache_key,
                 embedding,
                 ttl=ttl,
-                compress=True  # Embeddings can be large, compress them
+                compress=True,  # Embeddings can be large, compress them
             )
 
             if success:
-                self.logger.debug(
-                    f"Cached RAG embedding: {cache_key}, "
-                    f"{len(embedding)} dimensions, TTL={ttl}s"
-                )
+                self.logger.debug(f"Cached RAG embedding: {cache_key}, " f"{len(embedding)} dimensions, TTL={ttl}s")
 
             return success
 
@@ -305,10 +279,7 @@ class RAGCache:
             self.logger.error(f"Error caching embedding: {e}", exc_info=True)
             return False
 
-    async def get_document_metadata(
-        self,
-        document_id: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
         """Get cached document metadata.
 
         Args:
@@ -322,23 +293,20 @@ class RAGCache:
             metadata = await cache_service.get(cache_key)
 
             if metadata is not None:
-                rag_cache_hits_total.labels(cache_type='document_meta').inc()
+                rag_cache_hits_total.labels(cache_type="document_meta").inc()
                 self.logger.debug(f"RAG document metadata cache hit: {document_id}")
                 return metadata
             else:
-                rag_cache_misses_total.labels(cache_type='document_meta').inc()
+                rag_cache_misses_total.labels(cache_type="document_meta").inc()
                 return None
 
         except Exception as e:
             self.logger.error(f"Error getting cached document metadata: {e}", exc_info=True)
-            rag_cache_misses_total.labels(cache_type='document_meta').inc()
+            rag_cache_misses_total.labels(cache_type="document_meta").inc()
             return None
 
     async def set_document_metadata(
-        self,
-        document_id: str,
-        metadata: Dict[str, Any],
-        ttl: Optional[int] = None
+        self, document_id: str, metadata: Dict[str, Any], ttl: Optional[int] = None
     ) -> bool:
         """Cache document metadata.
 
@@ -357,9 +325,7 @@ class RAGCache:
             success = await cache_service.set(cache_key, metadata, ttl=ttl)
 
             if success:
-                self.logger.debug(
-                    f"Cached RAG document metadata: {document_id}, TTL={ttl}s"
-                )
+                self.logger.debug(f"Cached RAG document metadata: {document_id}, TTL={ttl}s")
 
             return success
 
@@ -387,7 +353,7 @@ class RAGCache:
             # This is aggressive but ensures consistency
             await cache_service.delete_pattern(f"{self.SEARCH_NAMESPACE}:*")
 
-            rag_cache_invalidations_total.labels(invalidation_type='document').inc()
+            rag_cache_invalidations_total.labels(invalidation_type="document").inc()
 
             self.logger.info(f"Invalidated RAG caches for document: {document_id}")
             return True
@@ -395,7 +361,7 @@ class RAGCache:
         except Exception as e:
             self.logger.error(
                 f"Error invalidating document caches for {document_id}: {e}",
-                exc_info=True
+                exc_info=True,
             )
             return False
 
@@ -410,7 +376,7 @@ class RAGCache:
         try:
             count = await cache_service.delete_pattern(f"{self.SEARCH_NAMESPACE}:*")
 
-            rag_cache_invalidations_total.labels(invalidation_type='pattern').inc()
+            rag_cache_invalidations_total.labels(invalidation_type="pattern").inc()
 
             self.logger.info(f"Invalidated {count} RAG search result caches")
             return count
@@ -426,17 +392,11 @@ class RAGCache:
             Tuple of (embeddings_count, search_count, documents_count)
         """
         try:
-            embeddings_count = await cache_service.delete_pattern(
-                f"{self.EMBEDDING_NAMESPACE}:*"
-            )
-            search_count = await cache_service.delete_pattern(
-                f"{self.SEARCH_NAMESPACE}:*"
-            )
-            documents_count = await cache_service.delete_pattern(
-                f"{self.DOCUMENT_NAMESPACE}:*"
-            )
+            embeddings_count = await cache_service.delete_pattern(f"{self.EMBEDDING_NAMESPACE}:*")
+            search_count = await cache_service.delete_pattern(f"{self.SEARCH_NAMESPACE}:*")
+            documents_count = await cache_service.delete_pattern(f"{self.DOCUMENT_NAMESPACE}:*")
 
-            rag_cache_invalidations_total.labels(invalidation_type='all').inc()
+            rag_cache_invalidations_total.labels(invalidation_type="all").inc()
 
             self.logger.info(
                 f"Invalidated all RAG caches: "
@@ -460,18 +420,18 @@ class RAGCache:
         # This would ideally query Prometheus or maintain internal counters
         # For now, return a basic structure
         return {
-            'embeddings': {
-                'namespace': self.EMBEDDING_NAMESPACE,
-                'ttl_seconds': self.EMBEDDING_TTL
+            "embeddings": {
+                "namespace": self.EMBEDDING_NAMESPACE,
+                "ttl_seconds": self.EMBEDDING_TTL,
             },
-            'search_results': {
-                'namespace': self.SEARCH_NAMESPACE,
-                'ttl_seconds': self.SEARCH_RESULTS_TTL
+            "search_results": {
+                "namespace": self.SEARCH_NAMESPACE,
+                "ttl_seconds": self.SEARCH_RESULTS_TTL,
             },
-            'document_metadata': {
-                'namespace': self.DOCUMENT_NAMESPACE,
-                'ttl_seconds': self.DOCUMENT_META_TTL
-            }
+            "document_metadata": {
+                "namespace": self.DOCUMENT_NAMESPACE,
+                "ttl_seconds": self.DOCUMENT_META_TTL,
+            },
         }
 
 

@@ -81,7 +81,8 @@ export function useMetrics(options: UseMetricsOptions = {}): MetricsState {
       setLastUpdated(new Date().toISOString());
       setError(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to load metrics";
+      const message =
+        err instanceof Error ? err.message : "Failed to load metrics";
       setError(message);
     } finally {
       setLoading(false);
@@ -106,10 +107,13 @@ export function useMetrics(options: UseMetricsOptions = {}): MetricsState {
       });
 
       if (payload.health) {
-        setHealth((current) => ({
-          ...(current || {}),
-          ...payload.health,
-        } as ServiceHealth));
+        setHealth(
+          (current) =>
+            ({
+              ...(current || {}),
+              ...payload.health,
+            }) as ServiceHealth,
+        );
       }
 
       setLastUpdated(payload.timestamp || new Date().toISOString());
@@ -118,7 +122,8 @@ export function useMetrics(options: UseMetricsOptions = {}): MetricsState {
   );
 
   useEffect(() => {
-    const unsubscribeStatus = websocketService.subscribeStatus(setConnectionStatus);
+    const unsubscribeStatus =
+      websocketService.subscribeStatus(setConnectionStatus);
     const unsubscribeMessages = websocketService.subscribeMessages((event) => {
       if (!isMetricsUpdateEvent(event)) return;
       const payload = event.payload as MetricsUpdatePayload;

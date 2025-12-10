@@ -16,7 +16,8 @@
     "settings": "Settings",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "language": "Language"
   },
   "auth": {
     "welcome": "Welcome to VoiceAssist",

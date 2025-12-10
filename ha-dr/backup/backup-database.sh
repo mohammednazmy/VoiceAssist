@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2086,SC2015
 # Automated PostgreSQL Backup with Encryption (Phase 12 - HA/DR)
 # This script performs encrypted backups of the PostgreSQL database
 

@@ -132,11 +132,13 @@ class RequestTracingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Get or create correlation ID
         correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+        traceparent = request.headers.get("traceparent", f"00-{uuid.uuid4().hex}{uuid.uuid4().hex[:8]}-01")
 
         # Add to context for logging
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(
             correlation_id=correlation_id,
+            traceparent=traceparent,
             method=request.method,
             path=request.url.path,
         )
@@ -165,6 +167,7 @@ class RequestTracingMiddleware(BaseHTTPMiddleware):
 
             # Add correlation ID to response
             response.headers["X-Correlation-ID"] = correlation_id
+            response.headers["traceparent"] = traceparent
 
             return response
 

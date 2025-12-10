@@ -1,6 +1,32 @@
+---
+title: Nextcloud Apps Design
+slug: nextcloud-apps-design
+summary: "**Status:** In Progress (Phase 6 foundation started)"
+status: stable
+stability: beta
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - nextcloud
+  - apps
+  - design
+category: reference
+component: "integration/nextcloud"
+relatedPaths:
+  - "nextcloud-apps"
+ai_summary: >-
+  Status: In Progress (Phase 6 foundation started) Scope: Define how VoiceAssist
+  integrates with Nextcloud via dedicated apps. Phase 6 introduces three
+  Nextcloud apps under nextcloud-apps/: - voiceassist-client – entry point for
+  clinicians to launch the VoiceAssist web client from Nextcloud. - voic...
+---
+
 # Nextcloud Apps Design (Phase 6)
 
-**Status:** In Progress (Phase 6 foundation started)  
+**Status:** In Progress (Phase 6 foundation started)
 **Scope:** Define how VoiceAssist integrates with Nextcloud via dedicated apps.
 
 ## Overview
@@ -12,6 +38,7 @@ Phase 6 introduces three Nextcloud apps under `nextcloud-apps/`:
 - `voiceassist-docs` – bridges Nextcloud files to the VoiceAssist knowledge base ingestion pipeline.
 
 Each app is currently a **skeleton**:
+
 - `appinfo/info.xml` with metadata
 - `appinfo/routes.php` placeholder
 - `lib/AppInfo/Application.php` class stub
@@ -39,5 +66,6 @@ Later in Phase 6 and beyond:
   - File search and linking
 
 See also:
+
 - `NEXTCLOUD_INTEGRATION.md`
 - `phases/PHASE_06_NEXTCLOUD_APPS.md`

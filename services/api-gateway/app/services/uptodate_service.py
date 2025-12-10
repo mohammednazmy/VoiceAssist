@@ -140,8 +140,8 @@ class MedicalGraphic:
 
     id: str
     title: str
-    description: Optional[str] = None
     image_url: str
+    description: Optional[str] = None
     thumbnail_url: Optional[str] = None
     topic_id: Optional[str] = None
 
@@ -271,7 +271,7 @@ class UpToDateService:
         """Generate cache key from arguments."""
         key_parts = [prefix] + [str(arg) for arg in args if arg]
         key_str = ":".join(key_parts)
-        return f"uptodate:{hashlib.md5(key_str.encode()).hexdigest()}"
+        return f"uptodate:{hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()}"
 
     async def _cached_get(self, cache_key: str, ttl: int = 3600) -> Optional[Dict[str, Any]]:
         """Get cached response if available."""

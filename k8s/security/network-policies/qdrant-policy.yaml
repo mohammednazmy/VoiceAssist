@@ -26,9 +26,9 @@ spec:
               app: voiceassist-api-gateway
       ports:
         - protocol: TCP
-          port: 6333  # REST API
+          port: 6333 # REST API
         - protocol: TCP
-          port: 6334  # gRPC
+          port: 6334 # gRPC
     # Allow from Worker pods
     - from:
         - podSelector:

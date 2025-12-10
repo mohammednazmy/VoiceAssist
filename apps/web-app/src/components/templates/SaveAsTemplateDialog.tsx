@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { Button, Input } from "@voiceassist/ui";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface SaveAsTemplateDialogProps {
   isOpen: boolean;
@@ -29,9 +30,7 @@ const TEMPLATE_CATEGORIES = [
   "Custom",
 ];
 
-const TEMPLATE_ICONS = [
-  "📋", "📝", "🏥", "⚕️", "💊", "🔬", "📊", "📁",
-];
+const TEMPLATE_ICONS = ["📋", "📝", "🏥", "⚕️", "💊", "🔬", "📊", "📁"];
 
 const TEMPLATE_COLORS = [
   { name: "Blue", value: "#3B82F6" },
@@ -79,17 +78,27 @@ export function SaveAsTemplateDialog({
     setError(null);
 
     try {
-      await onSave(name.trim(), description.trim() || undefined, category, icon, color);
+      await onSave(
+        name.trim(),
+        description.trim() || undefined,
+        category,
+        icon,
+        color,
+      );
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Failed to save template");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isSaving && (e.target as HTMLElement).tagName !== "TEXTAREA") {
+    if (
+      e.key === "Enter" &&
+      !isSaving &&
+      (e.target as HTMLElement).tagName !== "TEXTAREA"
+    ) {
       handleSave();
     } else if (e.key === "Escape") {
       onClose();
@@ -108,7 +117,10 @@ export function SaveAsTemplateDialog({
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-          <h2 id="save-template-dialog-title" className="text-lg font-semibold text-neutral-900">
+          <h2
+            id="save-template-dialog-title"
+            className="text-lg font-semibold text-neutral-900"
+          >
             Save as Template
           </h2>
           <button
@@ -124,7 +136,11 @@ export function SaveAsTemplateDialog({
               stroke="currentColor"
               className="w-5 h-5 text-neutral-500"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -133,7 +149,10 @@ export function SaveAsTemplateDialog({
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Template Name */}
           <div>
-            <label htmlFor="template-name" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="template-name"
+              className="block text-sm font-medium text-neutral-700 mb-1"
+            >
               Template Name *
             </label>
             <Input
@@ -150,7 +169,10 @@ export function SaveAsTemplateDialog({
 
           {/* Description */}
           <div>
-            <label htmlFor="template-description" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="template-description"
+              className="block text-sm font-medium text-neutral-700 mb-1"
+            >
               Description (Optional)
             </label>
             <textarea
@@ -165,7 +187,10 @@ export function SaveAsTemplateDialog({
 
           {/* Category */}
           <div>
-            <label htmlFor="template-category" className="block text-sm font-medium text-neutral-700 mb-1">
+            <label
+              htmlFor="template-category"
+              className="block text-sm font-medium text-neutral-700 mb-1"
+            >
               Category
             </label>
             <select
@@ -216,7 +241,9 @@ export function SaveAsTemplateDialog({
                   key={c.value}
                   onClick={() => setColor(c.value)}
                   className={`w-8 h-8 rounded-full border-2 transition-all ${
-                    color === c.value ? "border-neutral-900 scale-110" : "border-transparent hover:scale-105"
+                    color === c.value
+                      ? "border-neutral-900 scale-110"
+                      : "border-transparent hover:scale-105"
                   }`}
                   style={{ backgroundColor: c.value }}
                   title={c.name}
@@ -236,8 +263,9 @@ export function SaveAsTemplateDialog({
           {/* Info */}
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-800">
-              This will save the current conversation's messages as a reusable template.
-              You can use this template to start new conversations with the same structure.
+              This will save the current conversation's messages as a reusable
+              template. You can use this template to start new conversations
+              with the same structure.
             </p>
           </div>
         </div>

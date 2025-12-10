@@ -28,7 +28,7 @@ spec:
         - protocol: TCP
           port: 6379
         - protocol: TCP
-          port: 6380  # TLS port
+          port: 6380 # TLS port
     # Allow from Worker pods
     - from:
         - podSelector:

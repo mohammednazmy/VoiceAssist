@@ -18,8 +18,8 @@ from typing import Any, Dict
 
 from app.core.business_metrics import rag_citations_per_query, rag_queries_total
 from app.core.database import get_db
-from app.core.logging import get_logger
 from app.core.dependencies import get_current_user
+from app.core.logging import get_logger
 from app.core.security import verify_token
 from app.models.message import Message
 from app.models.session import Session as ChatSession
@@ -33,8 +33,8 @@ from app.schemas.websocket import (
 )
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.webrtc_signaling import signaling_service
-from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketState
 
@@ -165,9 +165,7 @@ class WebRTCSessionResponse(BaseModel):
 
 
 @router.post("/webrtc/offer", response_model=WebRTCSessionResponse)
-async def post_webrtc_offer(
-    payload: WebRTCOffer, current_user: User = Depends(get_current_user)
-):
+async def post_webrtc_offer(payload: WebRTCOffer, current_user: User = Depends(get_current_user)):
     session = signaling_service.register_offer(
         session_id=payload.session_id, user_id=str(current_user.id), sdp=payload.sdp
     )
@@ -184,9 +182,7 @@ async def post_webrtc_offer(
 
 
 @router.post("/webrtc/answer", response_model=WebRTCSessionResponse)
-async def post_webrtc_answer(
-    payload: WebRTCAnswer, current_user: User = Depends(get_current_user)
-):
+async def post_webrtc_answer(payload: WebRTCAnswer, current_user: User = Depends(get_current_user)):
     session = signaling_service.register_answer(
         session_id=payload.session_id, user_id=str(current_user.id), sdp=payload.sdp
     )
@@ -206,9 +202,7 @@ async def post_webrtc_answer(
 
 
 @router.post("/webrtc/candidate", response_model=WebRTCSessionResponse)
-async def post_webrtc_candidate(
-    payload: ICECandidatePayload, current_user: User = Depends(get_current_user)
-):
+async def post_webrtc_candidate(payload: ICECandidatePayload, current_user: User = Depends(get_current_user)):
     session = signaling_service.add_ice_candidate(
         session_id=payload.session_id,
         user_id=str(current_user.id),
@@ -230,9 +224,7 @@ async def post_webrtc_candidate(
 
 
 @router.get("/webrtc/{session_id}", response_model=WebRTCSessionResponse)
-async def get_webrtc_state(
-    session_id: str, current_user: User = Depends(get_current_user)
-):
+async def get_webrtc_state(session_id: str, current_user: User = Depends(get_current_user)):
     session = signaling_service.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="WebRTC session not found")
@@ -367,13 +359,25 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
         await websocket.close(code=1008)
         return
 
-    # Verify user exists
+    # Verify user exists and is active
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         await websocket.accept()
         error_event = create_error_event(
             error_code="UNAUTHORIZED",
             error_message="User not found",
+            timestamp=datetime.now(timezone.utc),
+        )
+        await websocket.send_json(error_event)
+        await websocket.close(code=1008)
+        return
+
+    # Check if user is active
+    if not user.is_active:
+        await websocket.accept()
+        error_event = create_error_event(
+            error_code="FORBIDDEN",
+            error_message="User account is deactivated",
             timestamp=datetime.now(timezone.utc),
         )
         await websocket.send_json(error_event)
@@ -426,7 +430,7 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
                         "id": str(msg.id),
                         "role": msg.role,
                         "content": msg.content,
-                        "timestamp": int(msg.created_at.timestamp() * 1000) if msg.created_at else 0,
+                        "timestamp": (int(msg.created_at.timestamp() * 1000) if msg.created_at else 0),
                     }
                     # Include citations from metadata if present
                     if msg.message_metadata and "citations" in msg.message_metadata:
@@ -457,7 +461,11 @@ async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)
 
             logger.info(
                 "Received WebSocket message",
-                extra={"client_id": client_id, "message_type": message_type, "user_id": user_id},
+                extra={
+                    "client_id": client_id,
+                    "message_type": message_type,
+                    "user_id": user_id,
+                },
             )
 
             if message_type == "message":

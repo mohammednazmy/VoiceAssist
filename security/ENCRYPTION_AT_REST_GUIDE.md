@@ -486,7 +486,7 @@ groups:
           summary: "TLS certificate expiring in < 30 days"
 
       - alert: EncryptionKeyRotationOverdue
-        expr: time() - encryption_key_last_rotation_timestamp > 7776000  # 90 days
+        expr: time() - encryption_key_last_rotation_timestamp > 7776000 # 90 days
         annotations:
           summary: "Encryption key rotation overdue (>90 days)"
 ```

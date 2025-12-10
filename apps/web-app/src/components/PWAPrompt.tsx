@@ -21,7 +21,7 @@ export function PWAPrompt() {
   // Show update prompt
   if (needRefresh) {
     return (
-      <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 p-4 z-50">
+      <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 p-4 z-50">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
             <svg
@@ -65,6 +65,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-neutral-400 hover:text-neutral-500"
+            aria-label="Dismiss update notice"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +90,7 @@ export function PWAPrompt() {
   // Show offline ready notification
   if (offlineReady) {
     return (
-      <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-green-50 dark:bg-green-900/30 rounded-lg shadow-lg border border-green-200 dark:border-green-800 p-4 z-50">
+      <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-green-50 dark:bg-green-900/30 rounded-lg shadow-lg border border-green-200 dark:border-green-800 p-4 z-50">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
             <svg
@@ -118,6 +119,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-green-500 hover:text-green-600"
+            aria-label="Dismiss offline ready notice"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +144,7 @@ export function PWAPrompt() {
   // Show install prompt
   if (isInstallable) {
     return (
-      <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 p-4 z-50">
+      <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 p-4 z-50">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
             <svg
@@ -185,6 +187,7 @@ export function PWAPrompt() {
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-neutral-400 hover:text-neutral-500"
+            aria-label="Dismiss install prompt"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

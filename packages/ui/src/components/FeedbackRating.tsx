@@ -56,7 +56,8 @@ export type FeedbackRatingValue = "positive" | "negative" | "neutral" | null;
  * Props for the FeedbackRating component
  */
 export interface FeedbackRatingProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "onChange">,
     VariantProps<typeof ratingButtonVariants> {
   /** Current rating value */
   value?: FeedbackRatingValue;

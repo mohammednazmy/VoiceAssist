@@ -3,8 +3,8 @@
  * Lazy loading routes for better code splitting
  */
 
-import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 
@@ -44,7 +44,23 @@ const ClinicalContextPage = lazy(() =>
     default: m.ClinicalContextPage,
   })),
 );
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+// Redirect to external admin panel at admin.asimo.io
+function AdminRedirect() {
+  const location = useLocation();
+  useEffect(() => {
+    const adminPath = location.pathname.replace("/admin", "");
+    const adminUrl = import.meta.env.VITE_ADMIN_URL || "https://admin.asimo.io";
+    window.location.href = `${adminUrl}${adminPath || "/dashboard"}`;
+  }, [location.pathname]);
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
+        <p className="text-neutral-600">Redirecting to Admin Panel...</p>
+      </div>
+    </div>
+  );
+}
 const OAuthCallbackPage = lazy(() =>
   import("./pages/OAuthCallbackPage").then((m) => ({
     default: m.OAuthCallbackPage,
@@ -53,6 +69,11 @@ const OAuthCallbackPage = lazy(() =>
 const SharedConversationPage = lazy(() =>
   import("./pages/SharedConversationPage").then((m) => ({
     default: m.SharedConversationPage,
+  })),
+);
+const IntegrationsPage = lazy(() =>
+  import("./pages/IntegrationsPage").then((m) => ({
+    default: m.IntegrationsPage,
   })),
 );
 
@@ -83,9 +104,10 @@ export function AppRoutes() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/clinical-context" element={<ClinicalContextPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
 
-          {/* Admin routes */}
-          <Route path="/admin/*" element={<AdminDashboard />} />
+          {/* Admin routes - redirect to external admin panel */}
+          <Route path="/admin/*" element={<AdminRedirect />} />
         </Route>
 
         {/* Fallback */}

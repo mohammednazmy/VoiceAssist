@@ -3,10 +3,16 @@
  * Tests edit, regenerate, and delete message functionality
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useChatSession } from "../useChatSession";
 import type { Message } from "@voiceassist/types";
+import {
+  setupWebSocketMock,
+  cleanupWebSocketMock,
+  flushMicrotasks,
+  type MockWebSocket,
+} from "./utils/websocket-test-utils";
 
 // Mock authStore
 vi.mock("../../stores/authStore", () => ({
@@ -33,58 +39,31 @@ vi.mock("../useAuth", () => ({
   })),
 }));
 
-// Mock WebSocket
-class MockWebSocket {
-  public url: string;
-  public readyState: number = WebSocket.OPEN;
-  public onopen: ((event: Event) => void) | null = null;
-  public onclose: ((event: CloseEvent) => void) | null = null;
-  public onerror: ((event: Event) => void) | null = null;
-  public onmessage: ((event: MessageEvent) => void) | null = null;
-
-  private messageQueue: string[] = [];
-
-  constructor(url: string) {
-    this.url = url;
-    // Immediately open
-    setTimeout(() => {
-      this.onopen?.(new Event("open"));
-    }, 0);
-  }
-
-  send(data: string) {
-    this.messageQueue.push(data);
-  }
-
-  close() {
-    this.readyState = WebSocket.CLOSED;
-    const event = new CloseEvent("close", {
-      code: 1000,
-      reason: "Normal closure",
-    });
-    this.onclose?.(event);
-  }
-
-  getSentMessages() {
-    return this.messageQueue.map((msg) => JSON.parse(msg));
-  }
-}
+// Mock attachments API
+vi.mock("../../lib/api/attachmentsApi", () => ({
+  createAttachmentsApi: vi.fn(() => ({
+    uploadAttachment: vi.fn(),
+  })),
+}));
 
 describe("useChatSession - Editing", () => {
-  let mockWebSocket: MockWebSocket;
+  let getMockWs: () => MockWebSocket | null;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Note: Using real timers instead of fake timers because waitFor doesn't work
+    // well with fake timers and these tests don't actually need timer manipulation
 
-    // Replace global WebSocket with mock
-    mockWebSocket = new MockWebSocket("");
-    global.WebSocket = vi.fn((url: string) => {
-      mockWebSocket = new MockWebSocket(url);
-      return mockWebSocket as unknown as WebSocket;
-    }) as unknown as typeof WebSocket;
+    // Use centralized WebSocket mock utilities
+    const mockSetup = setupWebSocketMock();
+    getMockWs = mockSetup.getMockWs;
 
     // Mock window.confirm for delete confirmation
     global.confirm = vi.fn(() => true);
+  });
+
+  afterEach(() => {
+    cleanupWebSocketMock();
   });
 
   describe("editMessage", () => {
@@ -286,8 +265,7 @@ describe("useChatSession - Editing", () => {
   });
 
   describe("regenerateMessage", () => {
-    // TODO: Fix WebSocket timing issue - connection status not updating in time
-    it.skip("should regenerate assistant message", async () => {
+    it("should regenerate assistant message", async () => {
       const initialMessages: Message[] = [
         {
           id: "msg-user-1",
@@ -310,17 +288,24 @@ describe("useChatSession - Editing", () => {
         }),
       );
 
-      // Wait for WebSocket to connect and flush all pending updates
       await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await flushMicrotasks();
       });
 
-      await waitFor(
-        () => {
-          expect(result.current.connectionStatus).toBe("connected");
-        },
-        { timeout: 3000 },
-      );
+      const mockWs = getMockWs();
+      expect(mockWs).not.toBeNull();
+
+      // Open connection
+      act(() => {
+        mockWs!.open();
+      });
+
+      await waitFor(() => {
+        expect(result.current.connectionStatus).toBe("connected");
+      });
+
+      // Clear any initial messages sent
+      mockWs!.clearSentMessages();
 
       await act(async () => {
         await result.current.regenerateMessage("msg-assistant-1");
@@ -339,7 +324,7 @@ describe("useChatSession - Editing", () => {
       ).toBeDefined();
 
       // WebSocket should have received the re-sent user message
-      const sentMessages = mockWebSocket.getSentMessages();
+      const sentMessages = mockWs!.getSentMessages();
       expect(sentMessages).toContainEqual(
         expect.objectContaining({
           content: "What is the weather?",

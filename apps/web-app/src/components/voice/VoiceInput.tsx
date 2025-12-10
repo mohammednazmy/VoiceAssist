@@ -3,20 +3,21 @@
  * Push-to-talk voice input with real-time transcription
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button } from '@voiceassist/ui';
-import { useAuth } from '../../hooks/useAuth';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@voiceassist/ui";
+import { useAuth } from "../../hooks/useAuth";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
   disabled?: boolean;
 }
 
-type RecordingState = 'idle' | 'recording' | 'processing';
+type RecordingState = "idle" | "recording" | "processing";
 
 export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
-  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
-  const [transcript, setTranscript] = useState('');
+  const [recordingState, setRecordingState] = useState<RecordingState>("idle");
+  const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -29,7 +30,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: "audio/webm;codecs=opus",
       });
 
       audioChunksRef.current = [];
@@ -41,35 +42,40 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        stream.getTracks().forEach((track) => track.stop());
 
         // Send to backend for transcription
-        setRecordingState('processing');
+        setRecordingState("processing");
         try {
           const text = await apiClient.transcribeAudio(audioBlob);
           setTranscript(text);
           onTranscript(text);
-          setRecordingState('idle');
-        } catch (err: any) {
-          console.error('Transcription failed:', err);
-          setError('Failed to transcribe audio');
-          setRecordingState('idle');
+          setRecordingState("idle");
+        } catch (err: unknown) {
+          console.error("Transcription failed:", err);
+          setError(extractErrorMessage(err));
+          setRecordingState("idle");
         }
       };
 
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
-      setRecordingState('recording');
-    } catch (err: any) {
-      console.error('Failed to start recording:', err);
-      setError('Microphone access denied or unavailable');
-      setRecordingState('idle');
+      setRecordingState("recording");
+    } catch (err: unknown) {
+      console.error("Failed to start recording:", err);
+      setError(extractErrorMessage(err));
+      setRecordingState("idle");
     }
   }, [apiClient, onTranscript]);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
       mediaRecorderRef.current.stop();
     }
   }, []);
@@ -77,14 +83,17 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording"
+      ) {
         mediaRecorderRef.current.stop();
       }
     };
   }, []);
 
-  const isRecording = recordingState === 'recording';
-  const isProcessing = recordingState === 'processing';
+  const isRecording = recordingState === "recording";
+  const isProcessing = recordingState === "processing";
 
   return (
     <div className="flex flex-col space-y-3">
@@ -92,7 +101,7 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       <div className="flex items-center space-x-3">
         <Button
           type="button"
-          variant={isRecording ? 'danger' : 'primary'}
+          variant={isRecording ? "danger" : "primary"}
           size="lg"
           disabled={disabled || isProcessing}
           onMouseDown={startRecording}
@@ -100,7 +109,9 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
           onTouchStart={startRecording}
           onTouchEnd={stopRecording}
           className="flex-1"
-          aria-label={isRecording ? 'Recording... Release to stop' : 'Hold to record'}
+          aria-label={
+            isRecording ? "Recording... Release to stop" : "Hold to record"
+          }
         >
           {isProcessing ? (
             <>
@@ -115,8 +126,8 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
                 viewBox="0 0 24 24"
                 className="w-5 h-5 mr-2 animate-pulse"
               >
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
               </svg>
               Recording... (Release to stop)
             </>
@@ -145,7 +156,9 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       {/* Transcript Display */}
       {transcript && (
         <div className="p-3 bg-neutral-100 rounded-md border border-neutral-200">
-          <p className="text-sm text-neutral-600 font-medium mb-1">Transcript:</p>
+          <p className="text-sm text-neutral-600 font-medium mb-1">
+            Transcript:
+          </p>
           <p className="text-sm text-neutral-900">{transcript}</p>
         </div>
       )}
@@ -185,7 +198,11 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
               stroke="currentColor"
               className="w-5 h-5"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>

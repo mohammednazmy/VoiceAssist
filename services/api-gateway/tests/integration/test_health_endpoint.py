@@ -141,9 +141,7 @@ class TestOpenAIHealthEndpoint:
         # If accessible, should have latency_ms
         if data["accessible"]:
             assert "latency_ms" in data, "If accessible, should have latency_ms"
-            assert isinstance(
-                data["latency_ms"], (int, float)
-            ), "latency_ms should be numeric"
+            assert isinstance(data["latency_ms"], (int, float)), "latency_ms should be numeric"
 
         # If error, should have error message
         if data["status"] == "error":
@@ -157,9 +155,7 @@ class TestOpenAIHealthEndpoint:
 
         # If configured is False, status should be "error"
         if not data["configured"]:
-            assert (
-                data["status"] == "error"
-            ), "If not configured, status should be 'error'"
+            assert data["status"] == "error", "If not configured, status should be 'error'"
             assert "error" in data, "If not configured, should have error message"
 
     @pytest.mark.smoke

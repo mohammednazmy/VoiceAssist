@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Button, Input } from "@voiceassist/ui";
 import { useAuth } from "../../hooks/useAuth";
 import type { ShareLink } from "@voiceassist/types";
+import { extractErrorMessage } from "@voiceassist/types";
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const { apiClient } = useAuth();
   const [activeLinks, setActiveLinks] = useState<ShareLink[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +49,8 @@ export function ShareDialog({
     try {
       const links = await apiClient.listShareLinks(conversationId);
       setActiveLinks(links);
-    } catch (err: any) {
-      setError(err.message || "Failed to load share links");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +77,8 @@ export function ShareDialog({
 
       // Reset form
       setPassword("");
-    } catch (err: any) {
-      setError(err.message || "Failed to create share link");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     } finally {
       setIsCreating(false);
     }
@@ -87,8 +88,8 @@ export function ShareDialog({
     try {
       await apiClient.revokeShareLink(conversationId, shareToken);
       await loadShareLinks();
-    } catch (err: any) {
-      setError(err.message || "Failed to revoke share link");
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     }
   };
 

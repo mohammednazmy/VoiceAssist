@@ -30,6 +30,16 @@ from websockets.asyncio.client import ClientConnection
 
 logger = get_logger(__name__)
 
+# Import tool service for function calling support
+try:
+    from app.services.tools import tool_service
+    from app.services.tools.tool_service import ToolExecutionContext
+
+    TOOLS_AVAILABLE = True
+except ImportError:
+    TOOLS_AVAILABLE = False
+    logger.warning("Tool service not available - function calling disabled")
+
 
 class ConnectionState(Enum):
     """Voice connection states"""
@@ -69,10 +79,10 @@ class VoiceSessionConfig:
     echo_cancellation: bool = True
     noise_suppression: bool = True
 
-    # VAD settings
+    # VAD settings (aggressive defaults for low latency)
     vad_threshold: float = 0.5
-    vad_prefix_padding_ms: int = 300
-    vad_silence_duration_ms: int = 500
+    vad_prefix_padding_ms: int = 150  # Reduced from 300ms
+    vad_silence_duration_ms: int = 200  # Reduced from 500ms
 
     # Barge-in settings
     barge_in_enabled: bool = True
@@ -83,6 +93,10 @@ class VoiceSessionConfig:
     connection_timeout_sec: float = 10.0
     response_timeout_sec: float = 30.0
     idle_timeout_sec: float = 300.0  # 5 minutes
+
+    # Tool/Function calling settings
+    tools_enabled: bool = True  # Enable function calling
+    tool_categories: Optional[List[str]] = None  # Filter tool categories (None = all)
 
 
 @dataclass
@@ -147,7 +161,28 @@ class VoiceWebSocketHandler:
         self._on_error = on_error
 
         # Audio processing
-        self._audio_processor = StreamingAudioProcessor() if config.noise_suppression else None
+        # Phase 11: Enable audio processor for both echo cancellation and noise suppression
+        if config.echo_cancellation or config.noise_suppression:
+            from app.services.audio_processor import AudioProcessorConfig
+
+            processor_config = AudioProcessorConfig(
+                sample_rate=24000,  # Match OpenAI Realtime API sample rate
+                echo_enabled=config.echo_cancellation,
+                noise_enabled=config.noise_suppression,
+                agc_enabled=True,  # Always enable AGC for consistent levels
+                highpass_enabled=True,  # Remove DC offset
+            )
+            self._audio_processor = StreamingAudioProcessor(processor_config)
+            logger.debug(
+                "Audio processor initialized",
+                extra={
+                    "echo_cancellation": config.echo_cancellation,
+                    "noise_suppression": config.noise_suppression,
+                },
+            )
+        else:
+            self._audio_processor = None
+
         self._vad = StreamingVAD(
             VADConfig(
                 threshold=config.vad_threshold,
@@ -368,6 +403,21 @@ class VoiceWebSocketHandler:
                 },
             },
         }
+
+        # Add tools if enabled and available
+        if self.config.tools_enabled and TOOLS_AVAILABLE:
+            try:
+                tools = tool_service.get_openai_tools_for_realtime()
+                if tools:
+                    session_config["session"]["tools"] = tools
+                    session_config["session"]["tool_choice"] = "auto"
+                    logger.info(
+                        f"Configured {len(tools)} tools for voice session",
+                        extra={"session_id": self.config.session_id},
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to configure tools: {e}")
+
         await self._send_to_openai(session_config)
         self._update_connection_state(ConnectionState.AUTHENTICATED)
 
@@ -496,6 +546,16 @@ When speaking:
             if transcript and self._on_transcript:
                 self._on_transcript("user", transcript)
 
+        elif event_type == "response.function_call_arguments.done":
+            # Function call is complete - execute the tool
+            await self._handle_function_call(event)
+
+        elif event_type == "response.output_item.done":
+            item = event.get("item", {})
+            if item.get("type") == "function_call":
+                # Function call item completed - execute if not already handled
+                await self._handle_function_call_item(item)
+
         elif event_type == "error":
             error = event.get("error", {})
             error_msg = error.get("message", "Unknown error")
@@ -507,6 +567,121 @@ When speaking:
             # Rate limit info - log for monitoring
             rate_limits = event.get("rate_limits", [])
             logger.debug(f"Rate limits: {rate_limits}")
+
+    async def _handle_function_call(self, event: Dict[str, Any]) -> None:
+        """
+        Handle a completed function call from OpenAI.
+
+        Executes the tool and sends the result back to OpenAI.
+        """
+        if not TOOLS_AVAILABLE:
+            logger.warning("Function call received but tools not available")
+            return
+
+        call_id = event.get("call_id")
+        name = event.get("name")
+        arguments_str = event.get("arguments", "{}")
+
+        logger.info(
+            f"Executing tool: {name}",
+            extra={
+                "session_id": self.config.session_id,
+                "call_id": call_id,
+                "arguments": arguments_str[:200],
+            },
+        )
+
+        try:
+            # Parse arguments
+            arguments = json.loads(arguments_str)
+
+            # Create execution context
+            context = ToolExecutionContext(
+                user_id=self.config.user_id,
+                session_id=self.config.session_id,
+                mode="voice",
+            )
+
+            # Execute the tool
+            result = await tool_service.execute(name, arguments, context)
+
+            # Prepare output
+            if result.success:
+                output = result.data
+                if result.message:
+                    # Include message in output for the AI to speak
+                    if isinstance(output, dict):
+                        output["_message"] = result.message
+                    else:
+                        output = {"result": output, "_message": result.message}
+            else:
+                output = {
+                    "error": result.error,
+                    "needs_clarification": result.needs_clarification,
+                    "needs_connection": result.needs_connection,
+                }
+                if result.available_calendars:
+                    output["available_calendars"] = result.available_calendars
+                if result.message:
+                    output["_message"] = result.message
+
+            # Send result back to OpenAI
+            output_event = {
+                "type": "conversation.item.create",
+                "item": {
+                    "type": "function_call_output",
+                    "call_id": call_id,
+                    "output": json.dumps(output),
+                },
+            }
+            await self._send_to_openai(output_event)
+
+            # Trigger response generation
+            await self._send_to_openai({"type": "response.create"})
+
+            logger.info(
+                f"Tool executed: {name} - {'success' if result.success else 'failed'}",
+                extra={
+                    "session_id": self.config.session_id,
+                    "duration_ms": result.duration_ms,
+                },
+            )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse function arguments: {e}")
+            await self._send_function_error(call_id, f"Invalid arguments: {e}")
+        except Exception as e:
+            logger.exception(f"Error executing tool {name}: {e}")
+            await self._send_function_error(call_id, str(e))
+
+    async def _handle_function_call_item(self, item: Dict[str, Any]) -> None:
+        """Handle a function call item from response.output_item.done."""
+        # This is an alternative event format - extract call info and handle
+        call_id = item.get("call_id")
+        name = item.get("name")
+        arguments_str = item.get("arguments", "{}")
+
+        if call_id and name:
+            # Create a compatible event and handle it
+            event = {
+                "call_id": call_id,
+                "name": name,
+                "arguments": arguments_str,
+            }
+            await self._handle_function_call(event)
+
+    async def _send_function_error(self, call_id: str, error_message: str) -> None:
+        """Send a function call error back to OpenAI."""
+        output_event = {
+            "type": "conversation.item.create",
+            "item": {
+                "type": "function_call_output",
+                "call_id": call_id,
+                "output": json.dumps({"error": error_message}),
+            },
+        }
+        await self._send_to_openai(output_event)
+        await self._send_to_openai({"type": "response.create"})
 
     async def _audio_sender(self) -> None:
         """Send audio from buffer to OpenAI."""

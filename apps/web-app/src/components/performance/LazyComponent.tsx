@@ -32,7 +32,7 @@ interface LazyComponentProps {
  * Wrapper that only renders children when they enter the viewport
  */
 export function LazyComponent({
-  fallback = null,
+  fallback: _fallback = null,
   placeholder,
   placeholderHeight = "auto",
   className = "",

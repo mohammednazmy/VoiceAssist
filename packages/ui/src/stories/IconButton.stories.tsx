@@ -2,8 +2,8 @@
  * IconButton Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
-import { IconButton } from '../components/IconButton';
+import type { Meta, StoryObj } from "@storybook/react";
+import { IconButton } from "../components/IconButton";
 
 // Example icons
 const SearchIcon = (
@@ -75,41 +75,48 @@ const TrashIcon = (
 );
 
 const meta = {
-  title: 'Components/IconButton',
+  title: "Components/IconButton",
   component: IconButton,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'Button component specifically designed for icons. Supports all button variants with circular or square shapes.',
+          "Button component specifically designed for icons. Supports all button variants with circular or square shapes.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'secondary', 'outline', 'ghost', 'danger', 'success'],
-      description: 'The visual variant',
+      control: "select",
+      options: [
+        "primary",
+        "secondary",
+        "outline",
+        "ghost",
+        "danger",
+        "success",
+      ],
+      description: "The visual variant",
     },
     size: {
-      control: 'select',
-      options: ['xs', 'sm', 'md', 'lg', 'xl'],
-      description: 'The size of the button',
+      control: "select",
+      options: ["xs", "sm", "md", "lg", "xl"],
+      description: "The size of the button",
     },
     shape: {
-      control: 'select',
-      options: ['circle', 'square'],
-      description: 'The shape of the button',
+      control: "select",
+      options: ["circle", "square"],
+      description: "The shape of the button",
     },
     loading: {
-      control: 'boolean',
-      description: 'Show loading spinner',
+      control: "boolean",
+      description: "Show loading spinner",
     },
     disabled: {
-      control: 'boolean',
-      description: 'Disable the button',
+      control: "boolean",
+      description: "Disable the button",
     },
   },
 } satisfies Meta<typeof IconButton>;
@@ -120,7 +127,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     icon: SearchIcon,
-    'aria-label': 'Search',
+    "aria-label": "Search",
   },
 };
 
@@ -180,7 +187,7 @@ export const Shapes: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'IconButton supports both circular and square shapes.',
+        story: "IconButton supports both circular and square shapes.",
       },
     },
   },
@@ -190,14 +197,24 @@ export const Loading: Story = {
   render: () => (
     <div className="flex gap-4">
       <IconButton loading icon={SearchIcon} aria-label="Loading" />
-      <IconButton loading variant="secondary" icon={HeartIcon} aria-label="Loading" />
-      <IconButton loading variant="outline" icon={PlusIcon} aria-label="Loading" />
+      <IconButton
+        loading
+        variant="secondary"
+        icon={HeartIcon}
+        aria-label="Loading"
+      />
+      <IconButton
+        loading
+        variant="outline"
+        icon={PlusIcon}
+        aria-label="Loading"
+      />
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'IconButton with loading state shows a spinner.',
+        story: "IconButton with loading state shows a spinner.",
       },
     },
   },
@@ -207,8 +224,18 @@ export const Disabled: Story = {
   render: () => (
     <div className="flex gap-4">
       <IconButton disabled icon={SearchIcon} aria-label="Search" />
-      <IconButton disabled variant="secondary" icon={HeartIcon} aria-label="Like" />
-      <IconButton disabled variant="danger" icon={TrashIcon} aria-label="Delete" />
+      <IconButton
+        disabled
+        variant="secondary"
+        icon={HeartIcon}
+        aria-label="Like"
+      />
+      <IconButton
+        disabled
+        variant="danger"
+        icon={TrashIcon}
+        aria-label="Delete"
+      />
     </div>
   ),
 };
@@ -292,7 +319,7 @@ export const ActionButtons: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Common action buttons for tables and lists.',
+        story: "Common action buttons for tables and lists.",
       },
     },
   },
@@ -314,7 +341,7 @@ export const FloatingActionButton: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Floating action button (FAB) positioned over content.',
+        story: "Floating action button (FAB) positioned over content.",
       },
     },
   },

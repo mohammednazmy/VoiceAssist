@@ -13,11 +13,11 @@ spec:
         - name: server
           resources:
             requests:
-              cpu: 250m      # Reduced from 500m
-              memory: 256Mi  # Reduced from 512Mi
+              cpu: 250m # Reduced from 500m
+              memory: 256Mi # Reduced from 512Mi
             limits:
-              cpu: 1000m     # Reduced from 2000m
-              memory: 1Gi    # Reduced from 2Gi
+              cpu: 1000m # Reduced from 2000m
+              memory: 1Gi # Reduced from 2Gi
 
 ---
 apiVersion: apps/v1
@@ -31,8 +31,8 @@ spec:
         - name: worker
           resources:
             requests:
-              cpu: 500m      # Reduced from 1000m
-              memory: 512Mi  # Reduced from 1Gi
+              cpu: 500m # Reduced from 1000m
+              memory: 512Mi # Reduced from 1Gi
             limits:
-              cpu: 2000m     # Reduced from 4000m
-              memory: 2Gi    # Reduced from 4Gi
+              cpu: 2000m # Reduced from 4000m
+              memory: 2Gi # Reduced from 4Gi

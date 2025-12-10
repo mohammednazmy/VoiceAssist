@@ -1,3 +1,20 @@
+---
+title: Documentation Site
+description: Technical documentation website - Next.js 14 with markdown rendering
+version: 1.0.0
+status: in-development
+last_updated: 2025-11-27
+audience:
+  - frontend-developers
+  - technical-writers
+  - ai-agents
+tags:
+  - frontend
+  - nextjs
+  - documentation
+  - markdown
+---
+
 # VoiceAssist Documentation Site
 
 Technical documentation for the VoiceAssist platform, automatically rendering markdown files from the `docs/` directory.
@@ -5,6 +22,7 @@ Technical documentation for the VoiceAssist platform, automatically rendering ma
 **URL**: https://docs.asimo.io (assistdocs.asimo.io redirects here)
 
 ## Deployment & DNS
+
 - **Hosting**: Apache2 reverse proxy → `next start` on port **3001**
 - **Canonical domain**: `docs.asimo.io`
 - **Secondary domain**: `assistdocs.asimo.io` (301 to canonical on HTTP and HTTPS)
@@ -13,7 +31,9 @@ Technical documentation for the VoiceAssist platform, automatically rendering ma
   - `assistdocs.asimo.io` → CNAME to `docs.asimo.io`
 
 ### Environment
+
 Set at deploy time (or rely on defaults in `next.config.js`):
+
 - `NEXT_PUBLIC_DOCS_HOST` (default: `docs.asimo.io`)
 - `NEXT_PUBLIC_SECONDARY_DOCS_HOST` (default: `assistdocs.asimo.io`)
 
@@ -167,3 +187,103 @@ The site loads documentation from:
 - `docs/overview/` - Platform overviews
 - `docs/voice/` - Voice mode documentation
 - `docs/infra/` - Infrastructure documentation
+
+---
+
+## Deployment & Smoke Tests
+
+- **Env vars:** `NEXT_PUBLIC_DOCS_HOST=docs.asimo.io`, `NEXT_PUBLIC_SECONDARY_DOCS_HOST=assistdocs.asimo.io`
+- **Build artifacts:** `pnpm run generate-search-index && pnpm run generate-agent-json && pnpm build`
+- **Publish:** `rsync -av out/ /var/www/assistdocs.asimo.io/` (or the existing deployment script)
+- **Smoke checklist:** load `/`, `/search-index.json`, `/agent/index.json`, `/agent/docs.json`, and `/docs/VOICE_STATE_2025-11-28`
+- **Robots/sitemap:** verify `/robots.txt` allows `/agent/*` and `/sitemap.xml` includes `/agent/index.json`
+- **Host redirect:** enforce at the web server (`assistdocs.asimo.io` → `docs.asimo.io`)
+
+---
+
+## AI Agent Endpoints
+
+The docs site exposes machine-readable JSON endpoints for AI agents:
+
+| Endpoint                  | Description                       |
+| ------------------------- | --------------------------------- |
+| `GET /agent/index.json`   | Documentation system metadata     |
+| `GET /agent/docs.json`    | Full document list with filtering |
+| `GET /agent/search?q=...` | Full-text search                  |
+
+See `docs/ai/AGENT_API_REFERENCE.md` for full documentation.
+
+---
+
+## SEO & Crawling
+
+The site automatically generates:
+
+- **`/sitemap.xml`** - Dynamic sitemap from all markdown files in `docs/`
+- **`/robots.txt`** - Crawler instructions (allows AI bots like GPTBot, Claude-Web)
+
+Both are generated from `src/app/sitemap.ts` and `src/app/robots.ts`.
+
+---
+
+## Validation Scripts
+
+| Command                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `pnpm validate:metadata` | Validate YAML frontmatter against schema |
+| `pnpm check:links`       | Check for broken internal links          |
+| `pnpm validate:all`      | Run all validations                      |
+| `pnpm generate:api-docs` | Regenerate API docs from OpenAPI         |
+
+See `docs/INTERNAL_DOCS_SYSTEM.md` for details.
+
+---
+
+## Deployment
+
+### Canonical URL
+
+**Production URL:** `https://assistdocs.asimo.io`
+
+### Apache Reverse Proxy
+
+The docs site runs on port 3001 behind Apache:
+
+```apache
+<VirtualHost *:443>
+    ServerName assistdocs.asimo.io
+
+    SSLEngine on
+    SSLCertificateFile /etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem
+
+    ProxyPass / http://127.0.0.1:3001/
+    ProxyPassReverse / http://127.0.0.1:3001/
+</VirtualHost>
+```
+
+### SSL Renewal
+
+SSL certificates are managed by Certbot:
+
+```bash
+# Check certificate status
+sudo certbot certificates
+
+# Renew certificates
+sudo certbot renew
+
+# Reload Apache after renewal
+sudo systemctl reload apache2
+```
+
+Automatic renewal via cron/systemd timer.
+
+---
+
+## Version History
+
+| Version | Date       | Changes                                         |
+| ------- | ---------- | ----------------------------------------------- |
+| 1.1.0   | 2025-11-27 | Added agent API endpoints, metadata UI, sitemap |
+| 1.0.0   | 2025-11-26 | Initial release                                 |

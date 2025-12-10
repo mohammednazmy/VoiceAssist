@@ -138,6 +138,9 @@ export interface FeatureFlag {
   rollout_percentage?: number;
   user_groups?: string[];
   metadata?: Record<string, unknown>;
+  flag_type?: string;
+  value?: unknown;
+  default_value?: unknown;
 }
 
 export interface CreateFeatureFlagRequest {
@@ -483,7 +486,8 @@ export function getAuthTokenFromStorage(): string | null {
  */
 export function getDefaultAdminApi(): AdminApiClient {
   // Use the same pattern as lib/api.ts
-  const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const baseUrl =
+    import.meta.env.VITE_API_URL || "https://api.voiceassist.example.com";
 
   return createAdminApi(baseUrl, getAuthTokenFromStorage);
 }

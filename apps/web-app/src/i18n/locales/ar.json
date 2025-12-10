@@ -16,7 +16,8 @@
     "settings": "الإعدادات",
     "logout": "تسجيل الخروج",
     "login": "تسجيل الدخول",
-    "register": "إنشاء حساب"
+    "register": "إنشاء حساب",
+    "language": "اللغة"
   },
   "auth": {
     "welcome": "مرحباً بك في VoiceAssist",

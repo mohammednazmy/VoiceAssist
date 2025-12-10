@@ -66,79 +66,91 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ### Environment Overlays (9 files)
 
 #### Development Environment
+
 8. **overlays/dev/kustomization.yaml** (20 lines)
 9. **overlays/dev/hpa-patch.yaml** (25 lines)
 10. **overlays/dev/resource-patch.yaml** (30 lines)
-   - Reduced resources for local development
-   - API Gateway: 1-3 replicas, CPU 80%
-   - Worker: 1-2 replicas, CPU 85%
-   - Lower resource requests and limits
+
+- Reduced resources for local development
+- API Gateway: 1-3 replicas, CPU 80%
+- Worker: 1-2 replicas, CPU 85%
+- Lower resource requests and limits
 
 #### Staging Environment
+
 11. **overlays/staging/kustomization.yaml** (20 lines)
 12. **overlays/staging/hpa-patch.yaml** (21 lines)
-   - Production-like with moderate limits
-   - API Gateway: 2-6 replicas
-   - Worker: 1-3 replicas
+
+- Production-like with moderate limits
+- API Gateway: 2-6 replicas
+- Worker: 1-3 replicas
 
 #### Production Environment
+
 13. **overlays/prod/kustomization.yaml** (22 lines)
 14. **overlays/prod/hpa-patch.yaml** (32 lines)
 15. **overlays/prod/resource-patch.yaml** (49 lines)
-   - Maximum availability and performance
-   - API Gateway: 3-15 replicas, CPU 65%, Memory 75%
-   - Worker: 2-8 replicas, CPU 75%
-   - Enhanced resource allocations
+
+- Maximum availability and performance
+- API Gateway: 3-15 replicas, CPU 65%, Memory 75%
+- Worker: 2-8 replicas, CPU 75%
+- Enhanced resource allocations
 
 ### Documentation & Scripts (3 files)
 
 16. **README.md** (650+ lines)
-   - Complete installation guide
-   - Autoscaling configuration details
-   - Resource specifications
-   - Monitoring and verification procedures
-   - Testing instructions
-   - Tuning guidelines
-   - Custom metrics setup
-   - Comprehensive troubleshooting
-   - Best practices
-   - Production checklist
+
+- Complete installation guide
+- Autoscaling configuration details
+- Resource specifications
+- Monitoring and verification procedures
+- Testing instructions
+- Tuning guidelines
+- Custom metrics setup
+- Comprehensive troubleshooting
+- Best practices
+- Production checklist
 
 17. **setup-hpa.sh** (390+ lines)
-   - Automated setup script
-   - Prerequisites checking
-   - Namespace creation
-   - Metrics Server installation
-   - HPA configuration deployment
-   - Verification and status checking
-   - Rollback capability
-   - Color-coded output
+
+- Automated setup script
+- Prerequisites checking
+- Namespace creation
+- Metrics Server installation
+- HPA configuration deployment
+- Verification and status checking
+- Rollback capability
+- Color-coded output
 
 18. **test-autoscaling.sh** (450+ lines)
-   - Comprehensive load testing
-   - API Gateway testing with hey tool
-   - Worker testing with Redis job generation
-   - Real-time monitoring with metrics display
-   - Automatic report generation
-   - Cool-down period observation
-   - Cleanup on exit
+
+- Comprehensive load testing
+- API Gateway testing with hey tool
+- Worker testing with Redis job generation
+- Real-time monitoring with metrics display
+- Automatic report generation
+- Cool-down period observation
+- Cleanup on exit
 
 ## Autoscaling Strategies
 
 ### API Gateway Strategy
 
 **Horizontal Scaling:**
+
 - Metric-driven: CPU, Memory, Request rate
 - Aggressive scale-up for traffic spikes (100% / 30s)
 - Conservative scale-down to prevent flapping (10% / 5m)
 - Production: 3-15 replicas for high availability
 
 **Resource Allocation:**
+
 - Burstable: Requests set to handle normal load
 - Limits allow 4x burst capacity for traffic spikes
 - Production gets enhanced resources (750m-3000m CPU)
 
 **High Availability:**
+
 - PDB ensures minimum 1 pod always available
 - Zero-downtime deployments during maintenance
 - Service continuity during node operations
@@ -146,17 +158,20 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ### Worker Strategy
 
 **Queue-Based Scaling:**
+
 - Primary triggers: Queue depth and queue age
 - Scales with job backlog, not just resource usage
 - Slower scale-up (50% / 60s) for batch workloads
 - Very conservative scale-down (10% / 10m)
 
 **Resource Allocation:**
+
 - Higher CPU allocation for compute-intensive tasks
 - Memory limits prevent OOM during job processing
 - Production: Enhanced to 1500m-6000m CPU
 
 **Flexibility:**
+
 - PDB allows full disruption (minAvailable=0)
 - Jobs are retriable, so workers can be interrupted
 - Prioritizes cluster operations over job processing
@@ -164,11 +179,13 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ### Database Strategy
 
 **Static Resources:**
+
 - No HPA (databases need stable resources)
 - VPA in recommendation mode only
 - Manual scaling based on VPA insights
 
 **Protection:**
+
 - PDB prevents any disruption (minAvailable=1)
 - High resource limits for performance
 - Production: 2000m-6000m CPU, 4Gi-12Gi Memory
@@ -176,11 +193,13 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ### Cache Strategy
 
 **Moderate Resources:**
+
 - Redis: Lightweight CPU, memory-focused
 - Static replicas (no HPA)
 - PDB protects during maintenance
 
 **Configuration:**
+
 - MaxMemory policy: allkeys-lru
 - Optimized for cache use case
 - No persistence (RDB/AOF disabled)
@@ -188,18 +207,21 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ## Environment Configurations
 
 ### Development
+
 - **API Gateway:** 1-3 replicas, 250m-1000m CPU, 256Mi-1Gi Memory
 - **Worker:** 1-2 replicas, 500m-2000m CPU, 512Mi-2Gi Memory
 - **Thresholds:** Relaxed (80% CPU) for resource efficiency
 - **Use Case:** Local testing, debugging, feature development
 
 ### Staging
+
 - **API Gateway:** 2-6 replicas, 500m-2000m CPU, 512Mi-2Gi Memory
 - **Worker:** 1-3 replicas, 1000m-4000m CPU, 1Gi-4Gi Memory
 - **Thresholds:** Production-like for realistic testing
 - **Use Case:** Pre-production validation, load testing
 
 ### Production
+
 - **API Gateway:** 3-15 replicas, 750m-3000m CPU, 768Mi-3Gi Memory
 - **Worker:** 2-8 replicas, 1500m-6000m CPU, 1.5Gi-6Gi Memory
 - **Thresholds:** Aggressive (65-75% CPU) for performance
@@ -208,37 +230,44 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ## Key Features
 
 ### 1. Multi-Metric Autoscaling
+
 - CPU and Memory utilization
 - Custom application metrics (requests/sec, queue depth)
 - Composite scaling decisions
 
 ### 2. Behavior Control
+
 - Separate scale-up and scale-down policies
 - Stabilization windows to prevent flapping
 - Rate limiting (percent and absolute pod counts)
 
 ### 3. Resource Optimization
+
 - VPA recommendations for continuous improvement
 - Environment-specific resource allocations
 - Namespace-level ResourceQuota and LimitRange
 
 ### 4. High Availability
+
 - PodDisruptionBudgets for critical services
 - Multi-replica deployments
 - Zero-downtime maintenance
 
 ### 5. Monitoring & Observability
+
 - Metrics Server for resource metrics
 - Prometheus integration (optional)
 - ServiceMonitor for custom metrics
 - Real-time status monitoring
 
 ### 6. Environment Management
+
 - Kustomize-based configuration
 - Environment overlays (dev, staging, prod)
 - Easy switching between environments
 
 ### 7. Production Ready
+
 - Security contexts and RBAC
 - Health checks (liveness, readiness, startup)
 - Graceful termination
@@ -247,6 +276,7 @@ Complete Kubernetes autoscaling and resource optimization configurations have be
 ## Usage Examples
 
 ### Quick Start
+
 ```bash
 # Install metrics server and apply base config
 ./setup-hpa.sh dev
@@ -259,6 +289,7 @@ kubectl apply -k k8s/performance/overlays/prod/
 ```
 
 ### Monitoring
+
 ```bash
 # Watch HPA status
 kubectl get hpa -n voiceassist --watch
@@ -271,6 +302,7 @@ kubectl describe vpa voiceassist-server-vpa -n voiceassist
 ```
 
 ### Troubleshooting
+
 ```bash
 # Verify metrics server
 kubectl top nodes
@@ -298,18 +330,21 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Performance Characteristics
 
 ### Scaling Response Times
+
 - **API Gateway Scale-Up:** 30-60 seconds (pod startup + readiness)
 - **API Gateway Scale-Down:** 5-10 minutes (stabilization)
 - **Worker Scale-Up:** 60-120 seconds (job queue detection)
 - **Worker Scale-Down:** 10-20 minutes (conservative)
 
 ### Resource Efficiency
+
 - **Base Load:** Minimal resources (dev config)
 - **Normal Load:** Requests guarantee smooth operation
 - **Peak Load:** Limits allow 2-4x burst capacity
 - **Idle Periods:** Scales down to minimum replicas
 
 ### Cost Optimization
+
 - Development: Minimal resources (~2 vCPUs total)
 - Staging: Moderate resources (~5 vCPUs total)
 - Production: Scales with demand (3-30+ vCPUs peak)
@@ -317,18 +352,21 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Testing Strategy
 
 ### Load Testing
+
 - API Gateway: HTTP load with hey/Apache Bench
 - Worker: Redis job queue flooding
 - Duration: 10 minutes sustained load
 - Cool-down: 5 minutes to observe scale-down
 
 ### Metrics Validation
+
 - Real-time pod count monitoring
 - HPA status tracking (current/desired replicas)
 - CPU/Memory utilization reporting
 - Timestamp-based event logging
 
 ### Automated Verification
+
 - Prerequisites checking
 - Metrics Server availability
 - HPA configuration validation
@@ -338,11 +376,13 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Integration Points
 
 ### Required
+
 - Kubernetes 1.23+ cluster
 - kubectl CLI tool
 - Metrics Server (included)
 
 ### Optional
+
 - Prometheus for custom metrics
 - Prometheus Adapter for external metrics
 - Grafana for visualization
@@ -350,6 +390,7 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 - VPA for resource recommendations
 
 ### Application Requirements
+
 - Health check endpoints (/health, /ready)
 - Metrics endpoint (/metrics) for Prometheus
 - Graceful shutdown handling (SIGTERM)
@@ -358,24 +399,28 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Production Readiness
 
 ### Security
+
 - RBAC configured for all components
 - Security contexts (non-root, read-only FS)
 - No privilege escalation
 - Seccomp profiles applied
 
 ### Reliability
+
 - Health checks at all levels
 - PodDisruptionBudgets for HA
 - Resource guarantees via requests
 - Resource limits prevent runaway processes
 
 ### Observability
+
 - Metrics collection configured
 - HPA status exposed
 - VPA recommendations available
 - Event logging enabled
 
 ### Operations
+
 - Automated setup scripts
 - Rollback capability
 - Testing tools included
@@ -385,6 +430,7 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Next Steps
 
 1. **Deploy to Development:**
+
    ```bash
    ./setup-hpa.sh dev
    ./test-autoscaling.sh dev
@@ -401,6 +447,7 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
    - Update HPA with custom metrics
 
 4. **Deploy to Production:**
+
    ```bash
    ./setup-hpa.sh prod
    # Monitor closely for 48 hours
@@ -414,6 +461,7 @@ kubectl get events -n voiceassist --sort-by='.lastTimestamp'
 ## Conclusion
 
 This comprehensive autoscaling configuration provides:
+
 - Production-ready Kubernetes HPA and resource management
 - Environment-specific optimizations (dev, staging, prod)
 - Automated setup and testing tools

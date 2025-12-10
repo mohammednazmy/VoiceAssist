@@ -3,107 +3,42 @@ Conversation branching API endpoints.
 
 This module provides REST API endpoints for conversation branching functionality,
 allowing users to fork conversations at any message point and navigate between branches.
+
+Note: Pydantic schemas are now defined in app/api/conversations/schemas.py
 """
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
+from app.api.conversation_schemas.schemas import (
+    BranchInfo,
+    BranchResponse,
+    ConversationResponse,
+    ConversationSettingsSchema,
+    ConversationsListResponse,
+    CreateBranchRequest,
+    CreateConversationRequest,
+    CreateMessageRequest,
+    EditMessageRequest,
+    MessageResponse,
+    MessagesListResponse,
+    SessionEventResponse,
+    UpdateConversationRequest,
+)
 from app.core.api_envelope import ErrorCodes, error_response, success_response
-from app.core.database import get_db
+from app.core.database import get_db, transaction
 from app.core.dependencies import get_current_user
 from app.core.logging import get_logger
 from app.models.message import Message
 from app.models.session import Session as ChatSession
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 logger = get_logger(__name__)
-
-
-# Pydantic Schemas
-class CreateConversationRequest(BaseModel):
-    """Request to create a new conversation"""
-
-    title: str = Field(..., description="Conversation title")
-    folder_id: Optional[str] = Field(None, description="Optional folder ID to organize conversation")
-
-
-class UpdateConversationRequest(BaseModel):
-    """Request to update a conversation"""
-
-    title: Optional[str] = Field(None, description="New conversation title")
-    archived: Optional[bool] = Field(None, description="Archive status")
-    folder_id: Optional[str] = Field(None, description="Move to folder")
-
-
-class ConversationResponse(BaseModel):
-    """Response containing conversation details"""
-
-    id: str
-    userId: str
-    title: str
-    archived: bool = False
-    messageCount: int = 0
-    folderId: Optional[str] = None
-    createdAt: str
-    updatedAt: str
-
-
-class ConversationsListResponse(BaseModel):
-    """Paginated list of conversations"""
-
-    items: List[ConversationResponse]
-    total: int
-    page: int
-    pageSize: int
-
-
-class CreateBranchRequest(BaseModel):
-    """Request to create a new conversation branch"""
-
-    parent_message_id: str = Field(..., description="UUID of the message to branch from")
-    initial_message: Optional[str] = Field(None, description="Optional first message in the new branch")
-
-
-class BranchResponse(BaseModel):
-    """Response containing branch details"""
-
-    branch_id: str = Field(..., description="Unique identifier for the branch")
-    session_id: str = Field(..., description="Session (conversation) ID")
-    parent_message_id: str = Field(..., description="Parent message UUID")
-    created_at: str = Field(..., description="ISO 8601 timestamp")
-    message_count: int = Field(default=0, description="Number of messages in branch")
-
-
-class BranchInfo(BaseModel):
-    """Information about a conversation branch"""
-
-    branch_id: str = Field(..., description="Branch identifier")
-    parent_message_id: Optional[str] = Field(None, description="Parent message UUID")
-    message_count: int = Field(..., description="Number of messages in branch")
-    created_at: str = Field(..., description="ISO 8601 timestamp of first message")
-    last_activity: str = Field(..., description="ISO 8601 timestamp of last message")
-
-
-class MessageResponse(BaseModel):
-    """Message response with branching fields"""
-
-    id: str
-    session_id: str
-    role: str
-    content: str
-    parent_message_id: Optional[str] = None
-    branch_id: Optional[str] = None
-    client_message_id: Optional[str] = None
-    created_at: str
-    tokens: Optional[int] = None
-    model: Optional[str] = None
-    is_duplicate: bool = False  # True if this was a duplicate idempotent request
 
 
 # Helper Functions
@@ -274,7 +209,7 @@ async def create_conversation(
                 ),
             )
 
-    # Create new session
+    # Create new session with transaction management
     new_session = ChatSession(
         user_id=current_user.id,
         title=request.title,
@@ -282,10 +217,11 @@ async def create_conversation(
         archived=0,  # 0 = not archived, 1 = archived (Integer column)
     )
 
-    db.add(new_session)
-    db.commit()
-    db.refresh(new_session)
+    with transaction(db):
+        db.add(new_session)
+        # Transaction context manager handles commit/rollback
 
+    db.refresh(new_session)
     logger.info(f"Created conversation {new_session.id} for user {current_user.id}")
 
     return success_response(
@@ -422,7 +358,9 @@ async def update_conversation(
         else:
             session.folder_id = None
 
-    db.commit()
+    with transaction(db):
+        pass  # Changes tracked by session, committed by transaction
+
     db.refresh(session)
 
     # Get message count
@@ -441,6 +379,54 @@ async def update_conversation(
             createdAt=session.created_at.isoformat() + "Z",
             updatedAt=session.updated_at.isoformat() + "Z",
         )
+    )
+
+
+@router.delete("/all")
+async def delete_all_conversations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Delete ALL conversations for the current user.
+
+    This is a destructive operation that removes all conversations and their messages.
+    Used for bulk cleanup / account reset scenarios.
+
+    Args:
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        Success response with count of deleted conversations
+    """
+    # Get all user's conversations
+    user_sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).all()
+
+    session_ids = [s.id for s in user_sessions]
+
+    if not session_ids:
+        return success_response(data={"deleted_count": 0, "message": "No conversations to delete"})
+
+    # Delete all messages and sessions atomically
+    with transaction(db):
+        # Delete messages first (foreign key constraint)
+        deleted_messages = (
+            db.query(Message).filter(Message.session_id.in_(session_ids)).delete(synchronize_session=False)
+        )
+
+        # Delete all sessions
+        deleted_count = (
+            db.query(ChatSession).filter(ChatSession.user_id == current_user.id).delete(synchronize_session=False)
+        )
+
+    logger.info(f"Deleted {deleted_count} conversations and {deleted_messages} messages for user {current_user.id}")
+
+    return success_response(
+        data={
+            "deleted_count": deleted_count,
+            "message": f"Successfully deleted {deleted_count} conversation(s)",
+        }
     )
 
 
@@ -475,12 +461,10 @@ async def delete_conversation(
 
     session = get_session_or_404(db, conv_uuid, current_user)
 
-    # Delete all messages first (cascade should handle this, but being explicit)
-    db.query(Message).filter(Message.session_id == session.id).delete()
-
-    # Delete the session
-    db.delete(session)
-    db.commit()
+    # Delete all messages and session atomically
+    with transaction(db):
+        db.query(Message).filter(Message.session_id == session.id).delete()
+        db.delete(session)
 
     logger.info(f"Deleted conversation {conversation_id}")
 
@@ -571,12 +555,6 @@ async def get_messages(
         for msg in messages
     ]
 
-    class MessagesListResponse(BaseModel):
-        items: List[MessageResponse]
-        total: int
-        page: int
-        pageSize: int
-
     return success_response(
         data=MessagesListResponse(
             items=message_responses,
@@ -585,28 +563,6 @@ async def get_messages(
             pageSize=pageSize,
         )
     )
-
-
-class CreateMessageRequest(BaseModel):
-    """Request to create a new message with optional idempotency"""
-
-    content: str = Field(..., description="Message content")
-    role: str = Field(default="user", description="Message role (user, assistant, system)")
-    branch_id: Optional[str] = Field(None, description="Branch ID for branched messages")
-    parent_message_id: Optional[str] = Field(None, description="Parent message ID for threaded messages")
-    client_message_id: Optional[str] = Field(
-        None,
-        description="Client-generated ID for idempotent message creation. "
-        "If provided and a message with this ID already exists in the "
-        "same conversation/branch, the existing message is returned.",
-    )
-    metadata: Optional[dict] = Field(None, description="Additional message metadata")
-
-
-class EditMessageRequest(BaseModel):
-    """Request to edit a message"""
-
-    content: str = Field(..., description="New message content")
 
 
 @router.post("/{conversation_id}/messages")
@@ -1105,20 +1061,6 @@ async def get_branch_messages(
 # ============================================================================
 
 
-class SessionEventResponse(BaseModel):
-    """Response schema for session events."""
-
-    id: str
-    conversation_id: str
-    session_id: Optional[str] = None
-    branch_id: Optional[str] = None
-    event_type: str
-    payload: Optional[dict] = None
-    source: Optional[str] = None
-    trace_id: Optional[str] = None
-    created_at: str
-
-
 @router.get("/{conversation_id}/events")
 async def get_conversation_events(
     conversation_id: str,
@@ -1213,32 +1155,6 @@ async def get_conversation_events(
 # ============================================================================
 # Conversation Settings API (P1 feature)
 # ============================================================================
-
-
-class ConversationSettingsSchema(BaseModel):
-    """Schema for per-conversation settings."""
-
-    llm_mode: Optional[str] = Field(
-        None,
-        description="LLM mode: 'default', 'creative', 'precise', 'balanced'",
-    )
-    system_prompt: Optional[str] = Field(
-        None,
-        description="Custom system prompt for this conversation",
-    )
-    voice_style: Optional[str] = Field(
-        None,
-        description="Voice style: 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'",
-    )
-    voice_speed: Optional[float] = Field(None, ge=0.5, le=2.0, description="Voice speed multiplier")
-    language: Optional[str] = Field(None, description="Preferred language code (e.g., 'en', 'es', 'fr')")
-    auto_tts: Optional[bool] = Field(None, description="Automatically read assistant responses aloud")
-    context_window: Optional[int] = Field(
-        None, ge=1, le=100, description="Number of previous messages to include as context"
-    )
-    temperature: Optional[float] = Field(None, ge=0.0, le=2.0, description="LLM temperature setting")
-    max_tokens: Optional[int] = Field(None, ge=100, le=8000, description="Max tokens for responses")
-    custom: Optional[dict] = Field(None, description="Custom settings for extensions")
 
 
 @router.get("/{conversation_id}/settings")

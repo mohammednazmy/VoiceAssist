@@ -275,6 +275,7 @@ async def oauth_callback(
             hashed_password=None,  # No password for OAuth users
             is_active=True,
             is_admin=False,
+            admin_role="user",
             oauth_provider=provider,
             oauth_provider_id=provider_user_id,
         )

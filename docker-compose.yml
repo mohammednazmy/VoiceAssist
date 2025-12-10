@@ -28,6 +28,7 @@ services:
   # ===================================
 
   # PostgreSQL - Main database with pgvector extension
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   postgres:
     image: pgvector/pgvector:pg16
     container_name: voiceassist-postgres
@@ -39,8 +40,6 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./infrastructure/docker/init-scripts:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
     networks:
       - database-network
     healthcheck:
@@ -51,14 +50,13 @@ services:
     restart: unless-stopped
 
   # Redis - Cache and session storage
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   redis:
     image: redis:7-alpine
     container_name: voiceassist-redis
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - redis-data:/data
-    ports:
-      - "6379:6379"
     networks:
       - database-network
     healthcheck:
@@ -69,14 +67,12 @@ services:
     restart: unless-stopped
 
   # Qdrant - Vector database for semantic search
+  # Note: ports are configured in docker-compose.override.yml to avoid conflicts
   qdrant:
-    image: qdrant/qdrant:v1.7.4
+    image: qdrant/qdrant:v1.15.2
     container_name: voiceassist-qdrant
     volumes:
       - qdrant-data:/qdrant/storage
-    ports:
-      - "6333:6333"
-      - "6334:6334"
     networks:
       - database-network
     environment:
@@ -111,10 +107,29 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ENVIRONMENT=${ENVIRONMENT}
       - DEBUG=${DEBUG}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5173,http://frontend-gateway:8080}
       - NEXTCLOUD_URL=${NEXTCLOUD_URL}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      # OAuth Providers
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_OAUTH_REDIRECT_URI=${GOOGLE_OAUTH_REDIRECT_URI}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
+      - MICROSOFT_OAUTH_REDIRECT_URI=${MICROSOFT_OAUTH_REDIRECT_URI}
+      # TTS and STT
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      # Calendar Integration
+      - CALENDAR_ENCRYPTION_KEY=${CALENDAR_ENCRYPTION_KEY}
+      # Web Search
+      - SERPAPI_API_KEY=${SERPAPI_API_KEY}
+      # WebSocket Latency Optimization (controlled by feature flags)
+      - WS_COMPRESSION_ENABLED=${WS_COMPRESSION_ENABLED:-false}
+      - WS_AUDIO_PREBUFFER_CHUNKS=${WS_AUDIO_PREBUFFER_CHUNKS:-3}
+      - WS_AUDIO_PREBUFFER_TIMEOUT_MS=${WS_AUDIO_PREBUFFER_TIMEOUT_MS:-500}
+      - WS_ADAPTIVE_CHUNK_DEFAULT=${WS_ADAPTIVE_CHUNK_DEFAULT:-2048}
     ports:
       - "8000:8000"
     networks:
@@ -219,3 +234,69 @@ services:
   # - admin-api
   # - prometheus
   # - grafana
+
+  # =============================
+  # Frontend applications bundle
+  # =============================
+  web-app:
+    build:
+      context: .
+      dockerfile: apps/web-app/Dockerfile
+    container_name: voiceassist-web-app
+    environment:
+      - VITE_API_BASE_URL=http://frontend-gateway:8080/api
+      - VITE_APP_ENV=${ENVIRONMENT:-development}
+    networks:
+      - voiceassist-network
+
+  admin-panel:
+    build:
+      context: .
+      dockerfile: apps/admin-panel/Dockerfile
+    container_name: voiceassist-admin-panel
+    environment:
+      - VITE_API_BASE_URL=http://frontend-gateway:8080/api
+      - VITE_APP_ENV=${ENVIRONMENT:-development}
+    networks:
+      - voiceassist-network
+
+  docs-site:
+    build:
+      context: .
+      dockerfile: apps/docs-site/Dockerfile
+    container_name: voiceassist-docs-site
+    environment:
+      - NODE_ENV=production
+    networks:
+      - voiceassist-network
+
+  frontend-gateway:
+    image: nginx:stable-alpine
+    container_name: voiceassist-frontend-gateway
+    volumes:
+      - ./infrastructure/docker/frontend-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      voiceassist-server:
+        condition: service_started
+      web-app:
+        condition: service_started
+      admin-panel:
+        condition: service_started
+      docs-site:
+        condition: service_started
+    networks:
+      - voiceassist-network
+
+  frontend-metrics:
+    image: nginx/nginx-prometheus-exporter:1.3.0
+    container_name: voiceassist-frontend-metrics
+    command:
+      - "-nginx.scrape-uri=http://frontend-gateway:8080/stub_status"
+    ports:
+      - "9113:9113"
+    depends_on:
+      - frontend-gateway
+    networks:
+      - voiceassist-network

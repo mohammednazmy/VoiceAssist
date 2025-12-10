@@ -139,9 +139,7 @@ class IntentClassifier:
         # Get the highest scoring intent
         if max(intent_scores.values()) > 0:
             best_intent = max(intent_scores.items(), key=lambda x: x[1])[0]
-            logger.debug(
-                f"Intent classified as '{best_intent}' with score {intent_scores[best_intent]}"
-            )
+            logger.debug(f"Intent classified as '{best_intent}' with score {intent_scores[best_intent]}")
             return best_intent  # type: ignore
 
         # Default to "other" if no keywords matched

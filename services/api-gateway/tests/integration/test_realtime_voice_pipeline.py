@@ -84,14 +84,10 @@ class TestRealtimeVoiceServiceConfiguration:
             "expires_at": 1700000000,
         }
 
-        with async_patch.object(
-            service, "create_openai_ephemeral_session", new_callable=AsyncMock
-        ) as mock_create:
+        with async_patch.object(service, "create_openai_ephemeral_session", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = mock_openai_response
 
-            config = await service.generate_session_config(
-                user_id="test-user-123", conversation_id="conv-456"
-            )
+            config = await service.generate_session_config(user_id="test-user-123", conversation_id="conv-456")
 
             # Verify required fields
             assert "url" in config
@@ -140,9 +136,7 @@ class TestRealtimeVoiceServiceConfiguration:
             "expires_at": 1700000000,
         }
 
-        with async_patch.object(
-            service, "create_openai_ephemeral_session", new_callable=AsyncMock
-        ) as mock_create:
+        with async_patch.object(service, "create_openai_ephemeral_session", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = mock_openai_response
 
             config = await service.generate_session_config(
@@ -186,9 +180,7 @@ class TestRealtimeVoiceServiceConfiguration:
             "expires_at": 1700000000,
         }
 
-        with async_patch.object(
-            service, "create_openai_ephemeral_session", new_callable=AsyncMock
-        ) as mock_create:
+        with async_patch.object(service, "create_openai_ephemeral_session", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = mock_openai_response
 
             # Invalid voice should fall back to "alloy"
@@ -217,27 +209,19 @@ class TestRealtimeVoiceServiceConfiguration:
             "expires_at": 1700000000,
         }
 
-        with async_patch.object(
-            service, "create_openai_ephemeral_session", new_callable=AsyncMock
-        ) as mock_create:
+        with async_patch.object(service, "create_openai_ephemeral_session", new_callable=AsyncMock) as mock_create:
             mock_create.return_value = mock_openai_response
 
             # Low sensitivity (0) should give high threshold (0.9)
-            config_low = await service.generate_session_config(
-                user_id="test", vad_sensitivity=0
-            )
+            config_low = await service.generate_session_config(user_id="test", vad_sensitivity=0)
             assert config_low["voice_config"]["turn_detection"]["threshold"] == 0.9
 
             # High sensitivity (100) should give low threshold (0.1)
-            config_high = await service.generate_session_config(
-                user_id="test", vad_sensitivity=100
-            )
+            config_high = await service.generate_session_config(user_id="test", vad_sensitivity=100)
             assert config_high["voice_config"]["turn_detection"]["threshold"] == 0.1
 
             # Mid sensitivity (50) should give mid threshold (0.5)
-            config_mid = await service.generate_session_config(
-                user_id="test", vad_sensitivity=50
-            )
+            config_mid = await service.generate_session_config(user_id="test", vad_sensitivity=50)
             assert config_mid["voice_config"]["turn_detection"]["threshold"] == 0.5
 
             # Default (None) should give 0.5
@@ -275,9 +259,7 @@ class TestRealtimeVoiceServiceConfiguration:
         assert "voice mode" in instructions.lower()
 
         # With conversation ID
-        instructions_with_conv = service.get_session_instructions(
-            conversation_id="conv-123"
-        )
+        instructions_with_conv = service.get_session_instructions(conversation_id="conv-123")
         assert "conv-123" in instructions_with_conv
 
 
@@ -439,17 +421,15 @@ class TestVoiceAPIEndpoints:
         return {"Authorization": "Bearer test-token"}
 
     def test_realtime_session_endpoint_exists(self, client):
-        """Test /voice/realtime-session endpoint exists."""
+        """Test /api/voice/realtime-session endpoint exists."""
         # Test without auth (should fail with 401 or 403)
-        response = client.post("/voice/realtime-session", json={})
+        response = client.post("/api/voice/realtime-session", json={})
         assert response.status_code in [
             401,
             403,
         ], f"Expected 401/403, got {response.status_code}"
 
-    @pytest.mark.skip(
-        reason="Requires test user and auth setup. Enable when auth fixtures are available."
-    )
+    @pytest.mark.skip(reason="Requires test user and auth setup. Enable when auth fixtures are available.")
     def test_realtime_session_response_structure(self, client, auth_headers):
         """Test /voice/realtime-session returns correct structure."""
         response = client.post(
@@ -509,9 +489,7 @@ class TestRealtimeVoiceLiveIntegration:
 
         assert service.is_enabled() is True
 
-        config = await service.generate_session_config(
-            user_id="live-test-user", conversation_id=None
-        )
+        config = await service.generate_session_config(user_id="live-test-user", conversation_id=None)
 
         # Verify config structure
         assert config["url"].startswith("wss://")
@@ -523,9 +501,7 @@ class TestRealtimeVoiceLiveIntegration:
 
         # Verify auth structure (should have ephemeral token, NOT raw API key)
         assert config["auth"]["type"] == "ephemeral_token"
-        assert config["auth"]["token"].startswith(
-            "ek_"
-        )  # OpenAI ephemeral tokens start with ek_
+        assert config["auth"]["token"].startswith("ek_")  # OpenAI ephemeral tokens start with ek_
 
         # Verify voice config
         voice_config = config["voice_config"]

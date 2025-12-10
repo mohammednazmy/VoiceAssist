@@ -298,7 +298,9 @@ export class CircularWaveformVisualizer {
     this.audioContext = new AudioContext();
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = 512;
-    this.dataArray = new Uint8Array(new ArrayBuffer(this.analyser.frequencyBinCount));
+    this.dataArray = new Uint8Array(
+      new ArrayBuffer(this.analyser.frequencyBinCount),
+    );
   }
 
   async connect(stream: MediaStream): Promise<void> {

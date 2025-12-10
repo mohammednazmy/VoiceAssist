@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from "react";
 import { useVoiceMetrics, SessionStats } from "../../hooks/useVoiceMetrics";
-import { useWebVitals, WebVitalsMetrics } from "../../hooks/useWebVitals";
+import { useWebVitals } from "../../hooks/useWebVitals";
 
 // Metric card component
 interface MetricCardProps {

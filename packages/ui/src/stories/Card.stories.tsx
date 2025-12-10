@@ -2,7 +2,7 @@
  * Card Component Stories
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react";
 import {
   Card,
   CardHeader,
@@ -10,31 +10,31 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from '../components/Card';
-import { Button } from '../components/Button';
+} from "../components/Card";
+import { Button } from "../components/Button";
 
 const meta = {
-  title: 'Components/Card',
+  title: "Components/Card",
   component: Card,
   parameters: {
-    layout: 'centered',
+    layout: "centered",
     docs: {
       description: {
         component:
-          'A flexible container component for grouping related content. Supports multiple variants and composition patterns.',
+          "A flexible container component for grouping related content. Supports multiple variants and composition patterns.",
       },
     },
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['default', 'bordered', 'elevated'],
-      description: 'The visual variant',
+      control: "select",
+      options: ["default", "bordered", "elevated"],
+      description: "The visual variant",
     },
     hoverable: {
-      control: 'boolean',
-      description: 'Show hover effect',
+      control: "boolean",
+      description: "Show hover effect",
     },
   },
 } satisfies Meta<typeof Card>;
@@ -70,7 +70,9 @@ export const AllVariants: Story = {
       <Card variant="default">
         <CardHeader>
           <CardTitle>Default Card</CardTitle>
-          <CardDescription>Standard card with border and shadow</CardDescription>
+          <CardDescription>
+            Standard card with border and shadow
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-text-secondary">This is a default card variant.</p>
@@ -83,7 +85,9 @@ export const AllVariants: Story = {
           <CardDescription>Card with prominent border</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-text-secondary">This is a bordered card variant.</p>
+          <p className="text-text-secondary">
+            This is a bordered card variant.
+          </p>
         </CardContent>
       </Card>
 
@@ -93,7 +97,9 @@ export const AllVariants: Story = {
           <CardDescription>Card with elevated shadow</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-text-secondary">This is an elevated card variant.</p>
+          <p className="text-text-secondary">
+            This is an elevated card variant.
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -131,7 +137,7 @@ export const Hoverable: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Cards with hover effects for interactive use cases.',
+        story: "Cards with hover effects for interactive use cases.",
       },
     },
   },
@@ -160,7 +166,7 @@ export const WithImage: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Card with an image header for richer visual presentation.',
+        story: "Card with an image header for richer visual presentation.",
       },
     },
   },
@@ -170,14 +176,15 @@ export const SimpleCard: Story = {
   render: () => (
     <Card className="w-64 p-6">
       <p className="text-text-primary">
-        Simple card without using the composition components. Just plain content.
+        Simple card without using the composition components. Just plain
+        content.
       </p>
     </Card>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Simple card using direct children instead of composition.',
+        story: "Simple card using direct children instead of composition.",
       },
     },
   },
@@ -202,7 +209,8 @@ export const GridLayout: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'Cards arranged in a grid layout for feature showcases or dashboards.',
+        story:
+          "Cards arranged in a grid layout for feature showcases or dashboards.",
       },
     },
   },
@@ -237,16 +245,14 @@ export const DashboardCard: Story = {
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold text-text-primary">1,247</div>
-        <p className="text-sm text-success-600 mt-1">
-          ↑ 12% from last month
-        </p>
+        <p className="text-sm text-success-600 mt-1">↑ 12% from last month</p>
       </CardContent>
     </Card>
   ),
   parameters: {
     docs: {
       description: {
-        story: 'Healthcare dashboard card example with metrics.',
+        story: "Healthcare dashboard card example with metrics.",
       },
     },
   },

@@ -3,20 +3,20 @@
  * Announces dynamic content changes to screen readers
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export interface LiveRegionProps {
   message?: string;
-  politeness?: 'polite' | 'assertive';
+  politeness?: "polite" | "assertive";
   clearDelay?: number;
 }
 
 export function LiveRegion({
-  message = '',
-  politeness = 'polite',
+  message = "",
+  politeness = "polite",
   clearDelay = 3000,
 }: LiveRegionProps) {
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {
     if (message) {
@@ -24,7 +24,7 @@ export function LiveRegion({
 
       // Clear announcement after delay to allow re-announcement
       const timer = setTimeout(() => {
-        setAnnouncement('');
+        setAnnouncement("");
       }, clearDelay);
 
       return () => clearTimeout(timer);
@@ -46,8 +46,8 @@ export function LiveRegion({
 /**
  * Hook for managing announcements
  */
-export function useAnnouncer(politeness: 'polite' | 'assertive' = 'polite') {
-  const [announcement, setAnnouncement] = useState('');
+export function useAnnouncer(politeness: "polite" | "assertive" = "polite") {
+  const [announcement, setAnnouncement] = useState("");
 
   const announce = (message: string) => {
     setAnnouncement(message);
@@ -56,6 +56,8 @@ export function useAnnouncer(politeness: 'polite' | 'assertive' = 'polite') {
   return {
     announcement,
     announce,
-    LiveRegion: () => <LiveRegion message={announcement} politeness={politeness} />,
+    LiveRegion: () => (
+      <LiveRegion message={announcement} politeness={politeness} />
+    ),
   };
 }

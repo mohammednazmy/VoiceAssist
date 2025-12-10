@@ -1,9 +1,10 @@
 # VoiceAssist - Enterprise Medical AI Assistant
 
 **Backend Status:** ✅ PRODUCTION READY (15/15 phases complete - 100%)
-**Frontend Status:** 🚧 IN PROGRESS (Milestone 1: Phases 0-2 complete, Phase 3 starting)
+**Frontend Status:** 🚧 IN PROGRESS (Milestone 1: Phases 0-3.5 complete)
+**Voice Mode:** ✅ ENHANCED (10-phase enhancement complete - emotion, dictation, analytics)
 **Architecture:** HIPAA-compliant microservices with Docker Compose & Kubernetes
-**Version:** 2.0
+**Version:** 2.1
 
 [![Backend CI](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/ci.yml/badge.svg)](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/ci.yml)
 [![Frontend CI](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/mohammednazmy/VoiceAssist/actions/workflows/frontend-ci.yml)
@@ -23,6 +24,7 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 **Backend V2 (Production Ready):**
 
 - ✅ All 15 development phases complete (Phases 0-15)
+- 📁 Archived phase-by-phase summaries are available in [docs/archive/](docs/archive/)
 - ✅ 35,000+ lines of production-quality code
 - ✅ 250+ automated tests with 95% coverage
 - ✅ Full HIPAA compliance (42/42 requirements met)
@@ -42,16 +44,32 @@ VoiceAssist is an enterprise-grade, HIPAA-compliant medical AI assistant platfor
 
 See [docs/client-implementation/](docs/client-implementation/) for the complete frontend roadmap.
 
+### Documentation Links
+
+- **High-level API overview:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md) (use for concepts, endpoint groups, and quick lookups)
+- **REST API reference:** [docs/api-reference/rest-api.md](docs/api-reference/rest-api.md) (use for request/response details and examples)
+- **API Gateway service guide:** [services/api-gateway/README.md](services/api-gateway/README.md)
+- **Package READMEs:** `packages/*/README.md` for shared libraries (api-client, config, design-tokens, telemetry, types, ui, utils)
+
+### For AI Agents
+
+If you're an AI coding assistant (Claude, GPT, Copilot, etc.), start here:
+
+- **[AI Agent Onboarding Guide](docs/ai/AGENT_ONBOARDING.md)** - Quick context, repository structure, critical rules, and common tasks
+- **[Implementation Status](docs/overview/IMPLEMENTATION_STATUS.md)** - Single source of truth for component status
+- **Key Rule:** Use `services/api-gateway/` for backend work (NOT `server/` which is deprecated)
+
 ### Key Highlights
 
 - ✅ **Production Ready** - Complete with HA/DR, monitoring, and security hardening
 - 🏥 **Healthcare Focused** - HIPAA-compliant with PHI data protection
-- 🎤 **Voice Interface** - Advanced voice recognition and natural language processing
+- 🎤 **Voice Interface** - Advanced voice recognition with emotion detection and backchanneling
 - 📚 **Medical Knowledge** - RAG-powered medical information retrieval
-- 🔐 **Enterprise Security** - Zero-trust architecture with audit logging
+- 🏨 **EHR Integration** - Epic FHIR read/write operations with voice-driven orders
+- 🔐 **Enterprise Security** - Zero-trust architecture with comprehensive audit logging
 - 📊 **Full Observability** - Prometheus, Grafana, Jaeger, and Loki
 - 🚀 **High Availability** - PostgreSQL replication, automated backups, failover
-- 🧪 **Comprehensive Tests** - 50+ E2E, integration, and voice tests
+- 🧪 **Comprehensive Tests** - 550+ automated tests with 95% coverage
 
 ---
 
@@ -256,6 +274,41 @@ VoiceAssist/
 - 🔍 **Vector Search** - Semantic search using Qdrant
 - 💬 **Chat Interface** - Conversational AI with context
 
+### Voice Mode Enhancement (✅ Complete - 2025-12-03)
+
+A comprehensive 10-phase enhancement transforming voice mode into a human-like conversational partner:
+
+| Phase | Feature                | Description                                        |
+| ----- | ---------------------- | -------------------------------------------------- |
+| 1     | Emotional Intelligence | Hume AI emotion detection, adaptive responses      |
+| 2     | Backchanneling         | Natural verbal acknowledgments ("uh-huh", "I see") |
+| 3     | Prosody Analysis       | Speech rate, pitch, urgency detection              |
+| 4     | Memory & Context       | Three-tier memory (Redis, PostgreSQL, Qdrant)      |
+| 5     | Turn-Taking            | Fluid conversation transitions                     |
+| 6     | Response Timing        | Human-like delays, thinking fillers                |
+| 7     | Conversational Repair  | Graceful misunderstanding handling                 |
+| 8     | Medical Dictation      | SOAP notes, voice commands, medical vocabulary     |
+| 9     | Patient Context        | HIPAA-compliant patient data integration           |
+| 10    | Analytics & Feedback   | Session metrics, user feedback collection          |
+
+**Documentation:** [VOICE_MODE_ENHANCEMENT_10_PHASE.md](docs/VOICE_MODE_ENHANCEMENT_10_PHASE.md)
+
+### Epic FHIR Integration (✅ Complete - 2025-12-04)
+
+Comprehensive EHR integration enabling voice-driven clinical workflows:
+
+| Component           | Capability                                                  |
+| ------------------- | ----------------------------------------------------------- |
+| Read Operations     | Patient, Observation, MedicationRequest, AllergyIntolerance |
+| Write Operations    | MedicationRequest, ServiceRequest, DocumentReference (ETag) |
+| Voice Commands      | "Prescribe amoxicillin 500mg twice daily", "Order CBC stat" |
+| Order Confirmation  | Duplicate detection, conflict checks, confirmation workflow |
+| Provider Monitoring | Circuit breaker, health checks, fallback activation         |
+| Chaos Engineering   | Resilience testing (outage simulation, latency injection)   |
+| Audit Logging       | HIPAA-compliant event capture for all EHR operations        |
+
+**Documentation:** [Epic FHIR Operational Runbook](docs/operations/epic-fhir-runbook.md)
+
 ### Enterprise Features
 
 - 🔐 **HIPAA Compliance** - PHI data encryption, audit logs, BAA available
@@ -322,7 +375,7 @@ pnpm test           # Run all tests
 
 ### Architecture & Design
 
-- [System Architecture](docs/ARCHITECTURE_V2.md)
+- [System Architecture](docs/UNIFIED_ARCHITECTURE.md)
 - [Security & Compliance](docs/SECURITY_COMPLIANCE.md)
 - [HIPAA Compliance Matrix](docs/HIPAA_COMPLIANCE_MATRIX.md)
 
@@ -638,8 +691,8 @@ Built with:
 
 ---
 
-**Version:** 2.0
-**Last Updated:** 2025-11-21
-**Status:** Production Ready (Phase 13 Complete)
+**Version:** 2.1
+**Last Updated:** 2025-12-03
+**Status:** Production Ready (All 15 Phases Complete + Voice Mode 10-Phase Enhancement)
 
 For the latest updates, see [CHANGELOG.md](CHANGELOG.md)
