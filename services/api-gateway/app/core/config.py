@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 5
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 hour for development (was 5 min)
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60
 
     # Session timeout settings
