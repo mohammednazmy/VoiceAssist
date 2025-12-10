@@ -19,6 +19,7 @@ import { useAuthStore } from "../stores/authStore";
 import { useAuth } from "./useAuth";
 import { createAttachmentsApi } from "../lib/api/attachmentsApi";
 import { websocketLog } from "../lib/logger";
+import { resolveApiBaseUrl } from "../lib/api";
 
 const DEFAULT_GATEWAY = "https://api.voiceassist.example.com";
 
@@ -48,9 +49,41 @@ interface UseChatSessionReturn {
 // WebSocket URL - configurable per environment
 const DEFAULT_WS_PATH = "/api/realtime/ws";
 
-const WS_URL = (() => {
-  if (import.meta.env.VITE_WS_URL) {
-    return import.meta.env.VITE_WS_URL;
+function resolveRealtimeWsUrl(): string {
+  const envWsUrl = import.meta.env.VITE_WS_URL as string | undefined;
+  const isProdWsHost =
+    typeof envWsUrl === "string" &&
+    (envWsUrl.includes("assist.asimo.io") ||
+      envWsUrl.includes("voiceassist.example.com"));
+
+  if (typeof window !== "undefined") {
+    const { origin, protocol, host } = window.location;
+    const isLocalOrigin =
+      origin.startsWith("http://localhost") ||
+      origin.startsWith("http://127.0.0.1");
+
+    // Dev/local where env points at localhost (e.g. ws://localhost:8000) -> trust env
+    if (envWsUrl && (!isLocalOrigin || !isProdWsHost)) {
+      return envWsUrl;
+    }
+
+    // Local Docker: localhost origin but env points at prod host (assist.asimo.io)
+    // or env missing -> use same host as the frontend (gateway) for /api/realtime/ws
+    if (isLocalOrigin) {
+      const wsScheme = protocol === "https:" ? "wss" : "ws";
+      return `${wsScheme}://${host}${DEFAULT_WS_PATH}`;
+    }
+
+    // Hosted env with no explicit WS URL: derive from current origin
+    if (!envWsUrl) {
+      const wsScheme = protocol === "https:" ? "wss" : "ws";
+      return `${wsScheme}://${host}${DEFAULT_WS_PATH}`;
+    }
+  }
+
+  // Non-browser / tests: prefer env when provided and not clearly prod-on-local
+  if (envWsUrl && !isProdWsHost) {
+    return envWsUrl;
   }
 
   if (import.meta.env.DEV) {
@@ -58,7 +91,9 @@ const WS_URL = (() => {
   }
 
   return `wss://api.voiceassist.example.com${DEFAULT_WS_PATH}`;
-})();
+}
+
+const WS_URL = resolveRealtimeWsUrl();
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -108,10 +143,9 @@ export function useChatSession(
   const { apiClient } = useAuth();
 
   // Create attachments API client
-  const attachmentsApi = createAttachmentsApi(
-    import.meta.env.VITE_API_URL || DEFAULT_GATEWAY,
-    () => tokens?.accessToken || null,
-  );
+  const attachmentsApi = createAttachmentsApi(resolveApiBaseUrl(), () => {
+    return tokens?.accessToken || null;
+  });
 
   // Track previous initialMessages to avoid infinite loops from array reference changes
   const prevInitialMessagesRef = useRef<string>("");

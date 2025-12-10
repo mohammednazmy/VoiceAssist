@@ -76,6 +76,11 @@ const IntegrationsPage = lazy(() =>
     default: m.IntegrationsPage,
   })),
 );
+const HealthCheckPage = lazy(() =>
+  import("./pages/HealthCheckPage").then((m) => ({
+    default: m.HealthCheckPage,
+  })),
+);
 
 export function AppRoutes() {
   return (
@@ -105,6 +110,7 @@ export function AppRoutes() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/clinical-context" element={<ClinicalContextPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/debug/health" element={<HealthCheckPage />} />
 
           {/* Admin routes - redirect to external admin panel */}
           <Route path="/admin/*" element={<AdminRedirect />} />
