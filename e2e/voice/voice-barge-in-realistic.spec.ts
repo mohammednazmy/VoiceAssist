@@ -30,8 +30,17 @@ import {
   getVoiceModeDebugState,
   setupBargeInConsoleCapture,
   injectAuthFromFile,
+  waitForAudioEverPlayed,
+  getVoiceTestHarnessState,
 } from "./utils/test-setup";
 import { createMetricsCollector } from "./utils/voice-test-metrics";
+import {
+  measureBargeInLatency,
+  assertBargeInLatency,
+  generateLatencyReport,
+  LATENCY_TARGETS,
+  waitForBargeInAndMeasure,
+} from "./utils/latency-measurement";
 
 // Resolve auth state path relative to project root
 const AUTH_STATE_PATH = path.resolve(process.cwd(), "e2e/.auth/user.json");
@@ -180,12 +189,49 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
       `Barge-in latency too high in realistic flow: ${conv.averageBargeInLatencyMs.toFixed(0)}ms`,
     ).toBeLessThanOrEqual(2000);
 
+    // NEW: Measure latency using the test harness for more accurate metrics
+    const latencyMetrics = await measureBargeInLatency(page);
+    if (latencyMetrics) {
+      console.log("\n=== LATENCY METRICS (from test harness) ===");
+      console.log(`Speech detected at: ${latencyMetrics.speechDetectedAt.toFixed(1)}`);
+      console.log(`Fade started at: ${latencyMetrics.fadeStartedAt?.toFixed(1) ?? "N/A"}`);
+      console.log(`Audio silent at: ${latencyMetrics.audioSilentAt?.toFixed(1) ?? "N/A"}`);
+      console.log(`Detection to fade: ${latencyMetrics.detectionToFadeMs?.toFixed(1) ?? "N/A"}ms`);
+      console.log(`Fade to silence: ${latencyMetrics.fadeToSilenceMs?.toFixed(1) ?? "N/A"}ms`);
+      console.log(`Total latency: ${latencyMetrics.totalLatencyMs?.toFixed(1) ?? "N/A"}ms`);
+      console.log(`Was playing: ${latencyMetrics.wasPlaying}`);
+      console.log(`Active sources at trigger: ${latencyMetrics.activeSourcesAtTrigger}`);
+
+      // Validate against latency targets (relaxed 3x for initial baseline)
+      const latencyAssertion = await assertBargeInLatency(page, {
+        p50: LATENCY_TARGETS.bargeIn.p50 * 3, // 300ms instead of 100ms
+        detectionToFade: LATENCY_TARGETS.bargeIn.detectionToFade * 3, // 30ms instead of 10ms
+        fadeToSilence: LATENCY_TARGETS.bargeIn.fadeToSilence * 3, // 150ms instead of 50ms
+      });
+
+      if (!latencyAssertion.pass) {
+        console.log("\n=== LATENCY TARGET WARNINGS ===");
+        for (const failure of latencyAssertion.failures) {
+          console.warn(`  ⚠️ ${failure}`);
+        }
+        // For now, just warn - don't fail the test until we have baseline
+      } else {
+        console.log("\n✓ All latency targets met!");
+      }
+    }
+
+    // Generate full latency report
+    const latencyReport = await generateLatencyReport(page);
+    console.log("\n" + latencyReport);
+
     await context.close();
   });
 
   /**
    * Test that audio IMMEDIATELY stops on barge-in (not gradual)
    * The barge-in latency should be very low (<100ms perceived)
+   *
+   * NEW: Uses test harness timestamps for accurate latency measurement
    */
   test("barge-in should have low latency (<200ms to mute)", async ({
     browser,
@@ -214,31 +260,58 @@ test.describe("Voice Mode Barge-In - Realistic Flow", () => {
     const voiceReadyResult = await waitForVoiceModeReady(page, 30000);
     expect(voiceReadyResult.ready).toBe(true);
 
-    // Wait for AI to play audio
-    const aiPlayingResult = await waitForAIPlayingAudio(page, 45000);
-    if (!aiPlayingResult.success) {
+    // Get initial barge-in count
+    const initialHarness = await getVoiceTestHarnessState(page);
+    const initialBargeInCount = initialHarness?.metrics.bargeInCount ?? 0;
+
+    // Wait for AI to play audio using the new historical tracking
+    // This catches instant barge-in scenarios where audio starts and stops before polling
+    const aiPlayingResult = await waitForAudioEverPlayed(page, 45000);
+    if (!aiPlayingResult.success && !aiPlayingResult.wasInstantBargeIn) {
       console.log("[TEST] AI never started playing - skipping latency test");
       test.skip();
       return;
     }
 
-    // Record timestamp when AI is playing
-    const aiPlayingTimestamp = Date.now();
-    console.log(`[TEST] AI playing at timestamp: ${aiPlayingTimestamp}`);
+    console.log(`[TEST] Audio detection result:`, {
+      wasEverPlaying: aiPlayingResult.wasEverPlaying,
+      totalChunksReceived: aiPlayingResult.totalChunksReceived,
+      wasInstantBargeIn: aiPlayingResult.wasInstantBargeIn,
+    });
 
-    // Wait for barge-in and measure how long until audio stops
-    const audioStopResult = await waitForAudioToStop(page, 5000);
-    const audioStopTimestamp = Date.now();
-    const bargeInLatency = audioStopTimestamp - aiPlayingTimestamp;
+    // Wait for barge-in to complete and measure latency
+    const bargeInMeasurement = await waitForBargeInAndMeasure(
+      page,
+      initialBargeInCount,
+      10000
+    );
 
-    console.log(`[TEST] Barge-in latency: ${bargeInLatency}ms`);
+    console.log(`[TEST] Barge-in measurement:`, {
+      completed: bargeInMeasurement.completed,
+      meetsTargets: bargeInMeasurement.meetsTargets,
+      latencyMetrics: bargeInMeasurement.latencyMetrics,
+      failures: bargeInMeasurement.failures,
+    });
 
-    // The looped audio should trigger barge-in and audio should stop
-    expect(audioStopResult.success).toBe(true);
+    // Barge-in should have completed
+    expect(bargeInMeasurement.completed).toBe(true);
 
-    // Barge-in latency should be reasonable (within 2 seconds for test purposes)
-    // In production, we want <100ms but tests have overhead
-    expect(bargeInLatency).toBeLessThan(2000);
+    // Check latency from test harness (more accurate than Date.now() polling)
+    if (bargeInMeasurement.latencyMetrics?.totalLatencyMs !== null) {
+      const latencyMs = bargeInMeasurement.latencyMetrics.totalLatencyMs!;
+      console.log(`[TEST] Accurate barge-in latency: ${latencyMs.toFixed(1)}ms`);
+
+      // Relaxed target: 200ms for tests (actual target is 100ms)
+      expect(latencyMs, `Barge-in latency ${latencyMs}ms exceeds 200ms target`).toBeLessThan(200);
+    } else {
+      // Fall back to checking audio stopped
+      const audioStopResult = await waitForAudioToStop(page, 5000);
+      expect(audioStopResult.success).toBe(true);
+    }
+
+    // Generate latency report for diagnostics
+    const report = await generateLatencyReport(page);
+    console.log("\n" + report);
 
     await context.close();
   });

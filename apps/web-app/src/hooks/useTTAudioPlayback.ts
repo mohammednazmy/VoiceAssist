@@ -197,6 +197,42 @@ export interface TTAudioPlaybackOptions {
  */
 export type AudioChunkData = string | Uint8Array;
 
+/**
+ * Historical audio metrics for E2E test validation.
+ * Tracks cumulative state that persists across state updates.
+ */
+export interface AudioHistoryMetrics {
+  /** Whether audio has EVER played in this session (not just currently playing) */
+  wasEverPlaying: boolean;
+  /** Total audio chunks received from backend */
+  totalChunksReceived: number;
+  /** Total chunks successfully scheduled for playback */
+  totalChunksScheduled: number;
+  /** Total chunks dropped due to barge-in */
+  totalChunksDropped: number;
+  /** Peak number of concurrent audio sources */
+  peakActiveSourcesCount: number;
+}
+
+/**
+ * Timestamped events for latency measurement.
+ * All timestamps are from performance.now() for high precision.
+ */
+export interface AudioTimestamps {
+  /** When last audio chunk was received */
+  lastChunkReceived: number | null;
+  /** When last audio was scheduled to AudioContext */
+  lastChunkScheduled: number | null;
+  /** When fadeOut() was called (barge-in start) */
+  lastFadeStarted: number | null;
+  /** When activeSourcesCount reached 0 after barge-in */
+  lastAudioSilent: number | null;
+  /** When playback first started in this stream */
+  playbackStarted: number | null;
+  /** When stream was reset */
+  lastReset: number | null;
+}
+
 export interface TTAudioPlaybackReturn {
   // State
   playbackState: TTPlaybackState;
@@ -222,6 +258,12 @@ export interface TTAudioPlaybackReturn {
   queueDurationMs: number;
   /** Total overflow events since reset */
   overflowCount: number;
+
+  // Historical metrics for E2E testing
+  /** Cumulative audio history metrics */
+  audioHistory: AudioHistoryMetrics;
+  /** Timestamped events for latency measurement */
+  timestamps: AudioTimestamps;
 
   // Actions
   /**
@@ -449,6 +491,27 @@ export function useTTAudioPlayback(
   // during a single barge-in sequence (e.g., fadeOut calls it, then stop() calls it again)
   const interruptCallbackFiredRef = useRef(false);
 
+  // E2E Test Harness: Historical metrics tracking
+  // These refs track cumulative state that persists across React state updates
+  const audioHistoryRef = useRef<AudioHistoryMetrics>({
+    wasEverPlaying: false,
+    totalChunksReceived: 0,
+    totalChunksScheduled: 0,
+    totalChunksDropped: 0,
+    peakActiveSourcesCount: 0,
+  });
+
+  // E2E Test Harness: Timestamps for latency measurement
+  // All timestamps use performance.now() for high precision
+  const timestampsRef = useRef<AudioTimestamps>({
+    lastChunkReceived: null,
+    lastChunkScheduled: null,
+    lastFadeStarted: null,
+    lastAudioSilent: null,
+    playbackStarted: null,
+    lastReset: null,
+  });
+
   // Scheduling watchdog ref (Natural Conversation Flow: Phase 1.3)
   const watchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
@@ -615,6 +678,9 @@ export function useTTAudioPlayback(
             const ttfa = firstChunkTimeRef.current - streamStartTimeRef.current;
             setTtfaMs(ttfa);
             playbackStartTimeRef.current = Date.now();
+            // E2E Test Harness: Track playback start timestamp and mark as ever playing
+            timestampsRef.current.playbackStarted = performance.now();
+            audioHistoryRef.current.wasEverPlaying = true;
             voiceLog.debug(`[TTAudioPlayback] TTFA: ${ttfa}ms`);
             voiceLog.debug(`[TTAudioPlayback] TTFA: ${ttfa}ms`);
             onPlaybackStart?.();
@@ -664,6 +730,13 @@ export function useTTAudioPlayback(
 
           // Track active sources for cleanup
           activeSourcesRef.current.add(source);
+          // E2E Test Harness: Track peak active sources and scheduled chunks
+          audioHistoryRef.current.totalChunksScheduled++;
+          timestampsRef.current.lastChunkScheduled = performance.now();
+          const currentActiveSources = activeSourcesRef.current.size;
+          if (currentActiveSources > audioHistoryRef.current.peakActiveSourcesCount) {
+            audioHistoryRef.current.peakActiveSourcesCount = currentActiveSources;
+          }
           source.onended = () => {
             // Check if source is still in set before deleting
             // (it may have been cleared by stop() or fadeOut())
@@ -673,6 +746,10 @@ export function useTTAudioPlayback(
             }
 
             const remainingCount = activeSourcesRef.current.size;
+            // E2E Test Harness: Track when audio becomes silent (for barge-in latency)
+            if (remainingCount === 0 && bargeInActiveRef.current) {
+              timestampsRef.current.lastAudioSilent = performance.now();
+            }
             // Only log when the source was tracked (reduces spam after barge-in)
             if (wasInSet) {
               voiceLog.debug(`[TTAudioPlayback] Source ended`, {
@@ -855,9 +932,15 @@ export function useTTAudioPlayback(
         });
       }
 
+      // E2E Test Harness: Track chunk received timestamp
+      timestampsRef.current.lastChunkReceived = performance.now();
+      audioHistoryRef.current.totalChunksReceived++;
+
       // Drop audio chunks if barge-in is active
       // This prevents stale audio from cancelled responses from playing
       if (bargeInActiveRef.current) {
+        // E2E Test Harness: Track dropped chunks
+        audioHistoryRef.current.totalChunksDropped++;
         voiceLog.debug(
           "[TTAudioPlayback] Dropping audio chunk - barge-in active",
         );
@@ -1128,6 +1211,9 @@ export function useTTAudioPlayback(
       // This prevents audio from being queued during the fade
       bargeInActiveRef.current = true;
 
+      // E2E Test Harness: Track when fade started (for barge-in latency measurement)
+      timestampsRef.current.lastFadeStarted = performance.now();
+
       if (!gainNodeRef.current || !audioContextRef.current) {
         // No active audio context, just stop immediately
         stop();
@@ -1206,6 +1292,9 @@ export function useTTAudioPlayback(
    */
   const reset = useCallback(() => {
     stop();
+
+    // E2E Test Harness: Track reset timestamp
+    timestampsRef.current.lastReset = performance.now();
 
     // Clear barge-in flag AFTER stop() - we're starting a new response
     // This allows new audio chunks to be queued for the new response
@@ -1416,6 +1505,11 @@ export function useTTAudioPlayback(
       queueLength,
       queueDurationMs,
       overflowCount,
+
+      // E2E Test Harness: Historical metrics and timestamps
+      // These are read from refs to provide accurate real-time values
+      audioHistory: audioHistoryRef.current,
+      timestamps: timestampsRef.current,
 
       // Actions
       queueAudioChunk,

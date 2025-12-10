@@ -319,12 +319,7 @@ export function HomePage() {
               variant="elevated"
               hoverable
               className="cursor-pointer transition-all hover:scale-[1.02]"
-              onClick={() =>
-                window.open(
-                  import.meta.env.VITE_ADMIN_URL || "https://admin.asimo.io",
-                  "_blank",
-                )
-              }
+              onClick={() => navigate("/admin")}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">

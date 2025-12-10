@@ -1052,6 +1052,9 @@ export function useThinkerTalkerVoiceMode(
     onSpeechStart: () => {
       voiceLog.debug("[TTVoiceMode] Silero VAD: Speech started");
 
+      // E2E Test Harness: Record speech detection timestamp
+      const speechDetectedAt = performance.now();
+
       // Debounce to prevent multiple rapid barge-ins
       const now = Date.now();
       if (now - lastBargeInTimeRef.current < BARGE_IN_DEBOUNCE_MS) {
@@ -1086,6 +1089,19 @@ export function useThinkerTalkerVoiceMode(
         audioPlaybackRef.current.fadeOut(30);
         // Notify backend to cancel response generation
         sessionRef.current.bargeIn();
+
+        // E2E Test Harness: Record barge-in event for latency measurement
+        // Access window.__voiceTestHarness and record the event
+        if (typeof window !== "undefined") {
+          const harness = (window as unknown as {
+            __voiceTestHarness?: {
+              recordBargeIn: (speechDetectedAt: number) => void;
+            };
+          }).__voiceTestHarness;
+          if (harness?.recordBargeIn) {
+            harness.recordBargeIn(speechDetectedAt);
+          }
+        }
         // Rollback guard: if no transcript or pipeline transition in 500ms, resume
         clearSileroRollbackTimeout();
         sileroRollbackTimeoutRef.current = window.setTimeout(() => {
@@ -1356,6 +1372,86 @@ export function useThinkerTalkerVoiceMode(
       window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
     ).__voiceModeDebug = voiceModeDebug;
 
+    // E2E Test Harness: Comprehensive test state for accurate validation
+    // This exposes historical state tracking and timestamps for latency measurement
+    // Unlike __voiceModeDebug which uses React state, this uses refs for real-time accuracy
+    interface BargeInLogEntry {
+      timestamp: number;
+      speechDetectedAt: number;
+      fadeStartedAt: number | null;
+      audioSilentAt: number | null;
+      latencyMs: number | null;
+      wasPlaying: boolean;
+      activeSourcesAtTrigger: number;
+    }
+
+    const voiceTestHarness = {
+      // Historical audio tracking (not just snapshots)
+      audioHistory: audioPlayback.audioHistory,
+
+      // Timestamped events for latency measurement
+      timestamps: {
+        ...audioPlayback.timestamps,
+        // Add VAD timestamps
+        lastSpeechDetected: sileroVAD.isSpeaking ? performance.now() : null,
+      },
+
+      // Barge-in event log (for debugging test failures)
+      bargeInLog: [] as BargeInLogEntry[],
+
+      // Helper to record barge-in event
+      recordBargeIn: (speechDetectedAt: number) => {
+        const debugState = audioPlayback.getDebugState();
+        const timestamps = audioPlayback.timestamps;
+        const entry: BargeInLogEntry = {
+          timestamp: performance.now(),
+          speechDetectedAt,
+          fadeStartedAt: timestamps.lastFadeStarted,
+          audioSilentAt: timestamps.lastAudioSilent,
+          latencyMs: timestamps.lastFadeStarted
+            ? timestamps.lastFadeStarted - speechDetectedAt
+            : null,
+          wasPlaying: debugState.isPlayingRef || debugState.activeSourcesCount > 0,
+          activeSourcesAtTrigger: debugState.activeSourcesCount,
+        };
+        voiceTestHarness.bargeInLog.push(entry);
+        // Keep only last 20 entries to prevent memory leak
+        if (voiceTestHarness.bargeInLog.length > 20) {
+          voiceTestHarness.bargeInLog.shift();
+        }
+        return entry;
+      },
+
+      // Quick access to latest barge-in latency
+      get lastBargeInLatencyMs(): number | null {
+        const last = voiceTestHarness.bargeInLog[voiceTestHarness.bargeInLog.length - 1];
+        return last?.latencyMs ?? null;
+      },
+
+      // Convenience: Was audio EVER playing this session?
+      get wasEverPlaying(): boolean {
+        return audioPlayback.audioHistory.wasEverPlaying;
+      },
+
+      // Convenience: Get playback state from refs (not React state)
+      getPlaybackState: () => audioPlayback.getDebugState(),
+
+      // Pipeline state for multi-turn tracking
+      pipelineState: session.pipelineState,
+
+      // Transcript tracking
+      lastTranscriptComplete: session.transcript || null,
+      partialTranscript: session.partialTranscript,
+
+      // Session metrics
+      metrics: session.metrics,
+    };
+
+    // Expose test harness for E2E tests
+    (
+      window as unknown as { __voiceTestHarness?: typeof voiceTestHarness }
+    ).__voiceTestHarness = voiceTestHarness;
+
     // Log for debugging
     voiceLog.debug("[TTVoiceMode] Debug state exposed", {
       isPlaying: voiceModeDebug.isPlaying,
@@ -1368,6 +1464,9 @@ export function useThinkerTalkerVoiceMode(
         delete (
           window as unknown as { __voiceModeDebug?: typeof voiceModeDebug }
         ).__voiceModeDebug;
+        delete (
+          window as unknown as { __voiceTestHarness?: typeof voiceTestHarness }
+        ).__voiceTestHarness;
       }
     };
   }, [
@@ -1376,6 +1475,8 @@ export function useThinkerTalkerVoiceMode(
     audioPlayback.ttfaMs,
     audioPlayback.queueLength,
     audioPlayback.queueDurationMs,
+    audioPlayback.audioHistory,
+    audioPlayback.timestamps,
     session.pipelineState,
     session.isConnected,
     session.isSpeaking,
@@ -1384,8 +1485,11 @@ export function useThinkerTalkerVoiceMode(
     session.metrics.successfulBargeInCount,
     session.partialTranscript,
     session.partialAIResponse,
+    session.transcript,
+    session.metrics,
     sileroVAD.isListening,
     sileroVAD.lastSpeechProbability,
+    sileroVAD.isSpeaking,
   ]);
 
   // Memoized return value

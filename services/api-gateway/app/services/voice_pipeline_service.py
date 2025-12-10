@@ -2327,6 +2327,12 @@ class VoicePipelineSession:
 
         # Return to listening
         async with self._state_lock:
+            # CRITICAL: If barge-in occurred during our wait, don't touch STT
+            # The barge_in() method already created a new session
+            if self._cancelled:
+                logger.info("[Pipeline] Barge-in occurred during echo settle - skipping STT restart")
+                return
+
             self._state = PipelineState.LISTENING
 
             # ALWAYS restart STT session when transitioning from SPEAKING to LISTENING

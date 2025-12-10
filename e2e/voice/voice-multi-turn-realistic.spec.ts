@@ -20,8 +20,9 @@
  */
 
 import { type Page } from "@playwright/test";
-import { test, expect, isLiveMode } from "./utils/test-setup";
+import { test, expect, isLiveMode, getVoiceTestHarnessState, VoiceTestHarnessState } from "./utils/test-setup";
 import { createMetricsCollector } from "./utils/voice-test-metrics";
+import { generateLatencyReport } from "./utils/latency-measurement";
 
 // Constants for timing
 const TURN_TIMEOUT = 45000; // 45s per turn (includes AI thinking + speaking)
@@ -172,6 +173,132 @@ function createNewTurn(turnNumber: number): TurnState {
 }
 
 /**
+ * NEW: Wait for a turn to complete using ref-based state tracking via __voiceTestHarness.
+ * This is more reliable than console log parsing because it uses real-time ref values
+ * rather than async React state updates.
+ *
+ * @param page - Playwright page
+ * @param turnNumber - Which turn to wait for
+ * @param timeout - Maximum time to wait
+ * @returns Success status and diagnostic info
+ */
+async function waitForCompleteTurnViaHarness(
+  page: Page,
+  turnNumber: number,
+  timeout = TURN_TIMEOUT
+): Promise<{
+  success: boolean;
+  reason?: string;
+  harness: VoiceTestHarnessState | null;
+  pipelineStates: string[];
+}> {
+  const startTime = Date.now();
+  const pipelineStates: string[] = [];
+  let lastPipelineState = "";
+  let speechDetected = false;
+  let audioReceived = false;
+  let audioPlayed = false;
+  let turnStartTranscriptCount = 0;
+  let transcriptReceived = false;
+
+  console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Starting...`);
+
+  // Get initial state
+  const initialHarness = await getVoiceTestHarnessState(page);
+  if (initialHarness) {
+    turnStartTranscriptCount = initialHarness.metrics.transcriptCount || 0;
+    lastPipelineState = initialHarness.pipelineState;
+    console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Initial state - pipeline=${lastPipelineState}, transcripts=${turnStartTranscriptCount}`);
+  }
+
+  while (Date.now() - startTime < timeout) {
+    const harness = await getVoiceTestHarnessState(page);
+    if (!harness) {
+      await page.waitForTimeout(200);
+      continue;
+    }
+
+    // Track pipeline state transitions
+    if (harness.pipelineState !== lastPipelineState) {
+      const transition = `${lastPipelineState || "unknown"} -> ${harness.pipelineState}`;
+      pipelineStates.push(transition);
+      console.log(`[Multi-Turn Harness] Turn ${turnNumber}: State transition: ${transition}`);
+      lastPipelineState = harness.pipelineState;
+    }
+
+    // Check if audio was ever received (backend is sending response)
+    if (!audioReceived && harness.audioHistory.totalChunksReceived > 0) {
+      audioReceived = true;
+      console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Audio chunks received: ${harness.audioHistory.totalChunksReceived}`);
+    }
+
+    // Check if audio was played (not just received)
+    if (!audioPlayed && harness.wasEverPlaying) {
+      audioPlayed = true;
+      console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Audio playback started`);
+    }
+
+    // Check if transcript was received for this turn
+    const currentTranscriptCount = harness.metrics.transcriptCount || 0;
+    if (!transcriptReceived && currentTranscriptCount > turnStartTranscriptCount) {
+      transcriptReceived = true;
+      console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Transcript received (count: ${currentTranscriptCount})`);
+    }
+
+    // Turn is complete when:
+    // 1. We transitioned through processing -> speaking -> listening
+    // 2. Audio was played
+    // 3. Transcript was received
+    // 4. We're back in listening state
+    const isBackToListening = harness.pipelineState === "listening";
+    const hasFullCycle = pipelineStates.some(s => s.includes("-> speaking")) &&
+                         pipelineStates.some(s => s.includes("speaking ->"));
+
+    if (isBackToListening && hasFullCycle && transcriptReceived && audioPlayed) {
+      console.log(`[Multi-Turn Harness] Turn ${turnNumber}: COMPLETE in ${Date.now() - startTime}ms`);
+      return {
+        success: true,
+        harness,
+        pipelineStates,
+      };
+    }
+
+    await page.waitForTimeout(200);
+  }
+
+  // Timeout - gather diagnostic info
+  const finalHarness = await getVoiceTestHarnessState(page);
+  const diagnostic = [
+    `Turn ${turnNumber} timed out after ${timeout}ms`,
+    `Pipeline states seen: ${pipelineStates.join(", ") || "none"}`,
+    `Current state: ${finalHarness?.pipelineState || "unknown"}`,
+    `Audio received: ${audioReceived} (${finalHarness?.audioHistory.totalChunksReceived || 0} chunks)`,
+    `Audio played: ${audioPlayed} (wasEverPlaying=${finalHarness?.wasEverPlaying})`,
+    `Transcript received: ${transcriptReceived}`,
+  ];
+
+  // Identify where it got stuck
+  if (!pipelineStates.some(s => s.includes("-> processing"))) {
+    diagnostic.push("STUCK AT: Never entered processing state");
+  } else if (!pipelineStates.some(s => s.includes("-> speaking"))) {
+    diagnostic.push("STUCK AT: Never entered speaking state");
+  } else if (!transcriptReceived) {
+    diagnostic.push("STUCK AT: Waiting for transcript (THE BUG SCENARIO)");
+  } else if (!audioPlayed) {
+    diagnostic.push("STUCK AT: Waiting for audio playback");
+  } else if (!pipelineStates.some(s => s.includes("speaking ->"))) {
+    diagnostic.push("STUCK AT: AI still speaking / never stopped");
+  }
+
+  return {
+    success: false,
+    reason: diagnostic.join("\n"),
+    harness: finalHarness,
+    pipelineStates,
+  };
+}
+
+/**
  * Wait for a specific condition with timeout
  */
 async function waitForCondition(
@@ -294,6 +421,88 @@ test.describe("Multi-Turn Voice Conversation (Real Audio)", () => {
     // No need to force flags - tests work with production defaults
     await page.addInitScript(() => {
     });
+  });
+
+  /**
+   * NEW TEST: Uses ref-based state tracking via __voiceTestHarness
+   * This is more reliable than console log parsing for detecting turn completion.
+   *
+   * The key improvement is using:
+   * - wasEverPlaying (ref-based, not React state)
+   * - audioHistory.totalChunksReceived (tracks all audio)
+   * - pipelineState (direct from debug state)
+   */
+  test("completes 2 turns using ref-based state tracking (harness test)", async ({
+    page,
+  }) => {
+    // Navigate to app
+    await page.goto("/");
+
+    // Wait for and click the voice card
+    const voiceCard = page.getByTestId("chat-with-voice-card");
+    await expect(voiceCard).toBeVisible({ timeout: 15000 });
+    await voiceCard.click();
+
+    // Wait for unified chat container
+    await expect(page.getByTestId("unified-chat-container")).toBeVisible({ timeout: 15000 });
+
+    // Open voice mode
+    const voiceToggle = page.getByTestId("voice-mode-toggle");
+    await expect(voiceToggle).toBeVisible({ timeout: 10000 });
+    await voiceToggle.click();
+
+    // Wait for voice mode to reach listening state
+    console.log("[Multi-Turn Harness Test] Waiting for voice mode to be ready...");
+    const isListening = await waitForListeningState(page, 20000);
+    expect(isListening, "Voice mode should reach listening state").toBe(true);
+    console.log("[Multi-Turn Harness Test] Voice mode ready - listening for audio");
+
+    // ========== TURN 1 (using harness) ==========
+    console.log("\n[Multi-Turn Harness Test] ========== TURN 1 (Harness) ==========");
+    const turn1Result = await waitForCompleteTurnViaHarness(page, 1);
+
+    console.log("[Multi-Turn Harness Test] Turn 1 result:");
+    console.log(`  Success: ${turn1Result.success}`);
+    console.log(`  Pipeline states: ${turn1Result.pipelineStates.join(", ")}`);
+    if (turn1Result.harness) {
+      console.log(`  Audio chunks received: ${turn1Result.harness.audioHistory.totalChunksReceived}`);
+      console.log(`  Audio was played: ${turn1Result.harness.wasEverPlaying}`);
+    }
+
+    expect(turn1Result.success, turn1Result.reason || "Turn 1 should complete").toBe(true);
+    console.log("[Multi-Turn Harness Test] Turn 1 completed successfully!\n");
+
+    // Brief pause to reset audio history for turn 2
+    await page.waitForTimeout(1000);
+
+    // ========== TURN 2 (using harness) - THE BUG SCENARIO ==========
+    console.log("\n[Multi-Turn Harness Test] ========== TURN 2 (Harness - BUG SCENARIO) ==========");
+    console.log("[Multi-Turn Harness Test] This is where the multi-turn bug manifested.");
+    console.log("[Multi-Turn Harness Test] Using ref-based tracking to catch instant barge-in.\n");
+
+    const turn2Result = await waitForCompleteTurnViaHarness(page, 2);
+
+    console.log("[Multi-Turn Harness Test] Turn 2 result:");
+    console.log(`  Success: ${turn2Result.success}`);
+    console.log(`  Pipeline states: ${turn2Result.pipelineStates.join(", ")}`);
+    if (turn2Result.harness) {
+      console.log(`  Audio chunks received: ${turn2Result.harness.audioHistory.totalChunksReceived}`);
+      console.log(`  Audio was played: ${turn2Result.harness.wasEverPlaying}`);
+      console.log(`  Barge-in events: ${turn2Result.harness.bargeInLog.length}`);
+    }
+
+    expect(turn2Result.success, turn2Result.reason || "Turn 2 should complete").toBe(true);
+    console.log("[Multi-Turn Harness Test] Turn 2 completed successfully!\n");
+
+    // ========== VALIDATION ==========
+    console.log("\n[Multi-Turn Harness Test] ========== VALIDATION ==========");
+
+    // Generate latency report
+    const latencyReport = await generateLatencyReport(page);
+    console.log("\n" + latencyReport);
+
+    console.log("\n[Multi-Turn Harness Test] ========== TEST PASSED ==========");
+    console.log("[Multi-Turn Harness Test] Multi-turn conversation with ref-based tracking works!");
   });
 
   test("completes 2 conversation turns sequentially (the multi-turn bug scenario)", async ({

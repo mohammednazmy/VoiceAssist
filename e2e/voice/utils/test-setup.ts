@@ -1378,6 +1378,218 @@ export async function attachDebugReport(
 }
 
 // ============================================================================
+// Voice Test Harness Types (window.__voiceTestHarness from useThinkerTalkerVoiceMode)
+// ============================================================================
+
+/**
+ * Historical audio metrics for E2E test validation.
+ * Tracks cumulative state that persists across React state updates.
+ */
+export interface AudioHistoryMetrics {
+  /** Whether audio has EVER played in this session (not just currently playing) */
+  wasEverPlaying: boolean;
+  /** Total audio chunks received from backend */
+  totalChunksReceived: number;
+  /** Total chunks successfully scheduled for playback */
+  totalChunksScheduled: number;
+  /** Total chunks dropped due to barge-in */
+  totalChunksDropped: number;
+  /** Peak number of concurrent audio sources */
+  peakActiveSourcesCount: number;
+}
+
+/**
+ * Timestamped events for latency measurement.
+ * All timestamps are from performance.now() for high precision.
+ */
+export interface AudioTimestamps {
+  /** When last audio chunk was received */
+  lastChunkReceived: number | null;
+  /** When last audio was scheduled to AudioContext */
+  lastChunkScheduled: number | null;
+  /** When fadeOut() was called (barge-in start) */
+  lastFadeStarted: number | null;
+  /** When activeSourcesCount reached 0 after barge-in */
+  lastAudioSilent: number | null;
+  /** When playback first started in this stream */
+  playbackStarted: number | null;
+  /** When stream was reset */
+  lastReset: number | null;
+  /** When last speech was detected (from VAD) */
+  lastSpeechDetected: number | null;
+}
+
+/**
+ * Barge-in log entry for debugging test failures
+ */
+export interface BargeInLogEntry {
+  timestamp: number;
+  speechDetectedAt: number;
+  fadeStartedAt: number | null;
+  audioSilentAt: number | null;
+  latencyMs: number | null;
+  wasPlaying: boolean;
+  activeSourcesAtTrigger: number;
+}
+
+/**
+ * Voice test harness state from window.__voiceTestHarness
+ */
+export interface VoiceTestHarnessState {
+  /** Historical audio tracking */
+  audioHistory: AudioHistoryMetrics;
+  /** Timestamped events for latency measurement */
+  timestamps: AudioTimestamps;
+  /** Barge-in event log */
+  bargeInLog: BargeInLogEntry[];
+  /** Quick access to latest barge-in latency */
+  lastBargeInLatencyMs: number | null;
+  /** Was audio EVER playing this session? */
+  wasEverPlaying: boolean;
+  /** Pipeline state for multi-turn tracking */
+  pipelineState: string;
+  /** Last completed transcript */
+  lastTranscriptComplete: string | null;
+  /** Current partial transcript */
+  partialTranscript: string;
+  /** Session metrics */
+  metrics: {
+    bargeInCount: number;
+    successfulBargeInCount: number;
+    [key: string]: unknown;
+  };
+}
+
+/**
+ * Get the voice test harness state from window.__voiceTestHarness
+ * This provides historical state tracking and timestamps for accurate latency measurement
+ */
+export async function getVoiceTestHarnessState(page: Page): Promise<VoiceTestHarnessState | null> {
+  return page.evaluate(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const harness = (window as any).__voiceTestHarness;
+    if (!harness) return null;
+
+    // Get playback state from refs
+    let playbackState = null;
+    try {
+      if (typeof harness.getPlaybackState === "function") {
+        playbackState = harness.getPlaybackState();
+      }
+    } catch {
+      // getPlaybackState may not be available
+    }
+
+    return {
+      audioHistory: { ...harness.audioHistory },
+      timestamps: { ...harness.timestamps },
+      bargeInLog: [...(harness.bargeInLog || [])],
+      lastBargeInLatencyMs: harness.lastBargeInLatencyMs,
+      wasEverPlaying: harness.wasEverPlaying,
+      pipelineState: harness.pipelineState,
+      lastTranscriptComplete: harness.lastTranscriptComplete,
+      partialTranscript: harness.partialTranscript,
+      metrics: { ...harness.metrics },
+    };
+  });
+}
+
+/**
+ * Wait for AI to be playing audio using historical state tracking.
+ * This is more reliable than polling current state because it catches
+ * instant barge-in scenarios where audio starts and stops before polling.
+ *
+ * Uses wasEverPlaying from __voiceTestHarness which is set the moment
+ * playback starts and never cleared (except on session reset).
+ *
+ * @param page - The Playwright page instance
+ * @param timeout - Maximum time to wait (default: 30000ms)
+ * @returns Object with success status and detailed state info
+ */
+export async function waitForAudioEverPlayed(
+  page: Page,
+  timeout = 30000
+): Promise<{
+  success: boolean;
+  wasEverPlaying: boolean;
+  totalChunksReceived: number;
+  totalChunksScheduled: number;
+  wasInstantBargeIn: boolean;
+  harness: VoiceTestHarnessState | null;
+  attempts: number;
+}> {
+  const startTime = Date.now();
+  let attempts = 0;
+
+  while (Date.now() - startTime < timeout) {
+    attempts++;
+    const harness = await getVoiceTestHarnessState(page);
+
+    if (harness) {
+      const { audioHistory, bargeInLog } = harness;
+
+      console.log(
+        `[BARGE-IN-TEST] Attempt ${attempts}: wasEverPlaying=${harness.wasEverPlaying}, ` +
+          `totalChunksReceived=${audioHistory.totalChunksReceived}, ` +
+          `totalChunksScheduled=${audioHistory.totalChunksScheduled}, ` +
+          `pipelineState=${harness.pipelineState}`
+      );
+
+      // Success conditions:
+      // 1. Audio was ever playing (set immediately when playback starts)
+      // 2. OR we received audio chunks (even if instant barge-in stopped them)
+      if (harness.wasEverPlaying || audioHistory.totalChunksReceived > 0) {
+        // Check if this was an instant barge-in (audio received but never played)
+        const wasInstantBargeIn =
+          audioHistory.totalChunksReceived > 0 &&
+          !harness.wasEverPlaying;
+
+        // Also check if audio was stopped due to barge-in before playing
+        const droppedDueToBargeIn = audioHistory.totalChunksDropped > 0;
+
+        console.log(
+          `[BARGE-IN-TEST] SUCCESS after ${attempts} attempts: ` +
+            `wasEverPlaying=${harness.wasEverPlaying}, ` +
+            `wasInstantBargeIn=${wasInstantBargeIn}, ` +
+            `droppedDueToBargeIn=${droppedDueToBargeIn}`
+        );
+
+        return {
+          success: true,
+          wasEverPlaying: harness.wasEverPlaying,
+          totalChunksReceived: audioHistory.totalChunksReceived,
+          totalChunksScheduled: audioHistory.totalChunksScheduled,
+          wasInstantBargeIn: wasInstantBargeIn || droppedDueToBargeIn,
+          harness,
+          attempts,
+        };
+      }
+    } else {
+      console.log(`[BARGE-IN-TEST] Attempt ${attempts}: __voiceTestHarness not available yet`);
+    }
+
+    await page.waitForTimeout(200);
+  }
+
+  const finalHarness = await getVoiceTestHarnessState(page);
+  console.log(
+    `[BARGE-IN-TEST] TIMEOUT after ${attempts} attempts. ` +
+      `Final: wasEverPlaying=${finalHarness?.wasEverPlaying}, ` +
+      `totalChunksReceived=${finalHarness?.audioHistory?.totalChunksReceived}`
+  );
+
+  return {
+    success: false,
+    wasEverPlaying: finalHarness?.wasEverPlaying || false,
+    totalChunksReceived: finalHarness?.audioHistory?.totalChunksReceived || 0,
+    totalChunksScheduled: finalHarness?.audioHistory?.totalChunksScheduled || 0,
+    wasInstantBargeIn: false,
+    harness: finalHarness,
+    attempts,
+  };
+}
+
+// ============================================================================
 // Voice Mode Debug State Helpers (uses window.__voiceModeDebug from useThinkerTalkerVoiceMode)
 // ============================================================================
 

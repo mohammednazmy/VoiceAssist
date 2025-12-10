@@ -1,8 +1,3 @@
-/**
- * Performance Optimizations
- * Lazy loading routes for better code splitting
- */
-
 import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -44,23 +39,6 @@ const ClinicalContextPage = lazy(() =>
     default: m.ClinicalContextPage,
   })),
 );
-// Redirect to external admin panel at admin.asimo.io
-function AdminRedirect() {
-  const location = useLocation();
-  useEffect(() => {
-    const adminPath = location.pathname.replace("/admin", "");
-    const adminUrl = import.meta.env.VITE_ADMIN_URL || "https://admin.asimo.io";
-    window.location.href = `${adminUrl}${adminPath || "/dashboard"}`;
-  }, [location.pathname]);
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
-        <p className="text-neutral-600">Redirecting to Admin Panel...</p>
-      </div>
-    </div>
-  );
-}
 const OAuthCallbackPage = lazy(() =>
   import("./pages/OAuthCallbackPage").then((m) => ({
     default: m.OAuthCallbackPage,
@@ -76,6 +54,21 @@ const IntegrationsPage = lazy(() =>
     default: m.IntegrationsPage,
   })),
 );
+
+// Redirect /admin routes to external/local admin panel (e.g. Docker gateway)
+function AdminRedirect() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const adminUrl =
+      import.meta.env.VITE_ADMIN_URL || "http://localhost:8080/admin";
+    // Always send to the admin panel root; let that app handle its own routing
+    // This makes http://localhost:5173/admin behave like http://localhost:8080/admin
+    window.location.href = adminUrl;
+  }, [location.pathname]);
+
+  return <PageLoader />;
+}
 
 export function AppRoutes() {
   return (
@@ -106,7 +99,7 @@ export function AppRoutes() {
           <Route path="/clinical-context" element={<ClinicalContextPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
 
-          {/* Admin routes - redirect to external admin panel */}
+          {/* Admin routes - redirect to admin panel (Docker/Nginx gateway) */}
           <Route path="/admin/*" element={<AdminRedirect />} />
         </Route>
 
