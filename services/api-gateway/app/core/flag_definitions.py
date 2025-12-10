@@ -1564,6 +1564,117 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["TalkerService", "VoiceSettings"],
             ),
         ),
+        #
+        # Barge-In Improvement Plan v3 Flags
+        # Reference: docs/planning/VOICE_MODE_BARGE_IN_IMPROVEMENT_PLAN_V3.md
+        # ---------------------------------------------------------------------
+        "voice_semantic_vad": FeatureFlagDefinition(
+            name="backend.voice_semantic_vad",
+            description=(
+                "[Barge-In v3 - Workstream 1] Enable semantic VAD for thinking pause detection. "
+                "Distinguishes natural 'thinking' pauses from end-of-utterance based on linguistic "
+                "context (trailing conjunctions, incomplete sentences, filler words). Prevents "
+                "premature AI response during user's natural speech pauses."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["SemanticVADService", "ContinuationDetector"],
+                other_flags=["backend.voice_continuation_detection"],
+            ),
+        ),
+        "voice_graceful_truncation": FeatureFlagDefinition(
+            name="backend.voice_graceful_truncation",
+            description=(
+                "[Barge-In v3 - Workstream 2] Enable graceful audio truncation at sentence boundaries. "
+                "When barge-in occurs, stops TTS at the nearest sentence/clause boundary rather than "
+                "mid-word. Provides smoother interruption experience and maintains conversational flow."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["GracefulTruncationService", "TalkerService", "useTTAudioPlayback"],
+                other_flags=["backend.voice_instant_barge_in"],
+            ),
+        ),
+        "voice_speculative_continuation": FeatureFlagDefinition(
+            name="backend.voice_speculative_continuation",
+            description=(
+                "[Barge-In v3 - Workstream 3] Enable speculative follow-up generation. "
+                "Pre-generates likely follow-up responses during user speech to reduce latency. "
+                "Uses context prediction to speculatively prepare TTS audio for common patterns."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["SpeculativeContinuationService", "ThinkerService"],
+                other_flags=["backend.voice_v4_tts_cache"],
+            ),
+        ),
+        "voice_duplex_stt": FeatureFlagDefinition(
+            name="backend.voice_duplex_stt",
+            description=(
+                "[Barge-In v3 - Workstream 4] Enable parallel dual-stream STT for transcript accuracy. "
+                "Runs two STT streams during barge-in: one for user speech, one for confirmation. "
+                "Improves transcript accuracy by cross-referencing results and filtering echo."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["DuplexSTTService", "TranscriptSyncService"],
+                other_flags=["backend.voice_v4_parallel_stt"],
+            ),
+        ),
+        "voice_barge_in_quality_preset": FeatureFlagDefinition(
+            name="backend.voice_barge_in_quality_preset",
+            description=(
+                "[Barge-In v3 - Workstream 5] User-selectable barge-in quality preset. "
+                "Options: 'responsive' (fast barge-in, may cut mid-word), "
+                "'balanced' (default, sentence-aware), 'smooth' (waits for natural break). "
+                "Allows users to tune barge-in behavior to their preference."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.STRING,
+            default_value="balanced",
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                allowed_values=["responsive", "balanced", "smooth"],
+                docs_url="https://assistdocs.asimo.io/voice/barge-in-improvements",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=["VoiceSettings", "BargeInClassifier"],
+            ),
+        ),
     },
     # -------------------------------------------------------------------------
     # Admin Flags - Admin panel features

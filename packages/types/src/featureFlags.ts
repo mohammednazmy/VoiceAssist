@@ -1476,6 +1476,118 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_silero_vad_enabled"],
       },
     },
+
+    // =========================================================================
+    // Barge-In Improvement Plan v3 Flags
+    // Reference: docs/planning/VOICE_MODE_BARGE_IN_IMPROVEMENT_PLAN_V3.md
+    // =========================================================================
+    voice_semantic_vad: {
+      name: "backend.voice_semantic_vad",
+      description:
+        "[Barge-In v3 - Workstream 1] Enable semantic VAD for thinking pause detection. " +
+        "Distinguishes natural 'thinking' pauses from end-of-utterance based on linguistic " +
+        "context (trailing conjunctions, incomplete sentences, filler words). Prevents " +
+        "premature AI response during user's natural speech pauses.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-improvements",
+      },
+      dependencies: {
+        services: ["api-gateway"],
+        components: ["SemanticVADService", "ContinuationDetector"],
+        otherFlags: ["backend.voice_continuation_detection"],
+      },
+    },
+    voice_graceful_truncation: {
+      name: "backend.voice_graceful_truncation",
+      description:
+        "[Barge-In v3 - Workstream 2] Enable graceful audio truncation at sentence boundaries. " +
+        "When barge-in occurs, stops TTS at the nearest sentence/clause boundary rather than " +
+        "mid-word. Provides smoother interruption experience and maintains conversational flow.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-improvements",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "GracefulTruncationService",
+          "TalkerService",
+          "useTTAudioPlayback",
+        ],
+        otherFlags: ["backend.voice_instant_barge_in"],
+      },
+    },
+    voice_speculative_continuation: {
+      name: "backend.voice_speculative_continuation",
+      description:
+        "[Barge-In v3 - Workstream 3] Enable speculative follow-up generation. " +
+        "Pre-generates likely follow-up responses during user speech to reduce latency. " +
+        "Uses context prediction to speculatively prepare TTS audio for common patterns.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "low" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-improvements",
+      },
+      dependencies: {
+        services: ["api-gateway"],
+        components: ["SpeculativeContinuationService", "ThinkerService"],
+        otherFlags: ["backend.voice_v4_tts_cache"],
+      },
+    },
+    voice_duplex_stt: {
+      name: "backend.voice_duplex_stt",
+      description:
+        "[Barge-In v3 - Workstream 4] Enable parallel dual-stream STT for transcript accuracy. " +
+        "Runs two STT streams during barge-in: one for user speech, one for confirmation. " +
+        "Improves transcript accuracy by cross-referencing results and filtering echo.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-improvements",
+      },
+      dependencies: {
+        services: ["api-gateway"],
+        components: ["DuplexSTTService", "TranscriptSyncService"],
+        otherFlags: ["backend.voice_v4_parallel_stt"],
+      },
+    },
+    voice_barge_in_quality_preset: {
+      name: "backend.voice_barge_in_quality_preset",
+      description:
+        "[Barge-In v3 - Workstream 5] User-selectable barge-in quality preset. " +
+        "Options: 'responsive' (fast barge-in, may cut mid-word), " +
+        "'balanced' (default, sentence-aware), 'smooth' (waits for natural break). " +
+        "Allows users to tune barge-in behavior to their preference.",
+      category: "backend" as const,
+      type: "string" as const,
+      defaultValue: "balanced",
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        allowedValues: ["responsive", "balanced", "smooth"],
+        docsUrl: "https://assistdocs.asimo.io/voice/barge-in-improvements",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["VoiceSettings", "BargeInClassifier"],
+        otherFlags: [],
+      },
+    },
   },
 
   // -------------------------------------------------------------------------
