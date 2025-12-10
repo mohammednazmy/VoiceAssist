@@ -1,0 +1,4188 @@
+{
+  "generated_at": "2025-11-27T12:24:10.879136Z",
+  "app_name": "VoiceAssist API Gateway",
+  "app_version": "0.1.0",
+  "openapi_version": "3.1.0",
+  "openapi_url": "/openapi.json",
+  "docs_url": "/docs",
+  "redoc_url": "/redoc",
+  "summary": {
+    "total_routes": 98,
+    "total_tags": 9,
+    "tags": [
+      "admin",
+      "authentication",
+      "conversations",
+      "health",
+      "integrations",
+      "observability",
+      "untagged",
+      "users",
+      "voice"
+    ]
+  },
+  "routes_by_tag": {
+    "admin": [
+      {
+        "path": "/api/admin/cache/clear",
+        "method": "POST",
+        "operation_id": "clear_cache_api_admin_cache_clear_post",
+        "summary": "Clear Cache",
+        "description": "Clear all caches (L1 and L2).\n\nWARNING: This will clear ALL cached data and may temporarily\nimpact performance while caches are repopulated.\n\nReturns:\n    Success status",
+        "tags": [
+          "admin",
+          "cache"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/admin/cache/invalidate",
+        "method": "POST",
+        "operation_id": "invalidate_cache_pattern_api_admin_cache_invalidate_post",
+        "summary": "Invalidate Cache Pattern",
+        "description": "Invalidate cache entries matching a pattern.\n\nExamples:\n- \"rag_query:*\" - All RAG query caches\n- \"user:*\" - All user data caches\n- \"search_results:*\" - All search result caches\n\nReturns:\n    Number of keys deleted",
+        "tags": [
+          "admin",
+          "cache"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/cache/stats",
+        "method": "GET",
+        "operation_id": "get_cache_stats_api_admin_cache_stats_get",
+        "summary": "Get Cache Stats",
+        "description": "Get cache statistics for monitoring.\n\nReturns:\n    Cache stats including L1 and L2 metrics",
+        "tags": [
+          "admin",
+          "cache"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags",
+        "method": "GET",
+        "operation_id": "list_feature_flags_api_admin_feature_flags_get",
+        "summary": "List Feature Flags",
+        "description": "List all feature flags.\n\nReturns all feature flags with their current state.\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags",
+        "method": "POST",
+        "operation_id": "create_feature_flag_api_admin_feature_flags_post",
+        "summary": "Create Feature Flag",
+        "description": "Create a new feature flag.\n\nCreates a new feature flag with the specified configuration.\n\nArgs:\n    flag_data: Feature flag configuration\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags/{flag_name}",
+        "method": "DELETE",
+        "operation_id": "delete_feature_flag_api_admin_feature_flags__flag_name__delete",
+        "summary": "Delete Feature Flag",
+        "description": "Delete a feature flag.\n\nPermanently deletes a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags/{flag_name}",
+        "method": "GET",
+        "operation_id": "get_feature_flag_api_admin_feature_flags__flag_name__get",
+        "summary": "Get Feature Flag",
+        "description": "Get a specific feature flag.\n\nReturns detailed information about a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags/{flag_name}",
+        "method": "PATCH",
+        "operation_id": "update_feature_flag_api_admin_feature_flags__flag_name__patch",
+        "summary": "Update Feature Flag",
+        "description": "Update an existing feature flag.\n\nUpdates one or more fields of a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n    flag_update: Fields to update\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/feature-flags/{flag_name}/toggle",
+        "method": "POST",
+        "operation_id": "toggle_feature_flag_api_admin_feature_flags__flag_name__toggle_post",
+        "summary": "Toggle Feature Flag",
+        "description": "Toggle a boolean feature flag.\n\nQuickly toggle a boolean feature flag between enabled and disabled.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+        "tags": [
+          "admin",
+          "feature-flags"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/kb/documents",
+        "method": "GET",
+        "operation_id": "list_documents_api_admin_kb_documents_get",
+        "summary": "List Documents",
+        "description": "List all documents in the knowledge base.\n\nReturns document metadata including:\n- Document ID\n- Title\n- Source type\n- Upload date\n- Number of chunks indexed\n\nArgs:\n    skip: Number of documents to skip (pagination)\n    limit: Maximum number of documents to return (max 1000)\n    source_type: Filter by source type (optional)\n    db: Database session\n\nReturns:\n    List of documents with metadata",
+        "tags": [
+          "admin",
+          "kb"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 3,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/kb/documents",
+        "method": "POST",
+        "operation_id": "upload_document_api_admin_kb_documents_post",
+        "summary": "Upload Document",
+        "description": "Upload and index a document to the knowledge base.\n\nSupports:\n- Text files (.txt)\n- PDF files (.pdf)\n\nThe document will be:\n1. Extracted (text/PDF)\n2. Chunked into segments\n3. Embedded using OpenAI\n4. Stored in Qdrant vector database\n\nArgs:\n    file: Document file to upload\n    title: Document title (defaults to filename)\n    source_type: Type of source (uploaded, guideline, journal, etc.)\n    db: Database session\n\nReturns:\n    Upload result with document ID and indexing status",
+        "tags": [
+          "admin",
+          "kb"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/kb/documents/{document_id}",
+        "method": "DELETE",
+        "operation_id": "delete_document_api_admin_kb_documents__document_id__delete",
+        "summary": "Delete Document",
+        "description": "Delete a document from the knowledge base.\n\nRemoves all document chunks from the vector database.\n\nArgs:\n    document_id: Document identifier\n    db: Database session\n\nReturns:\n    Deletion status",
+        "tags": [
+          "admin",
+          "kb"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/kb/documents/{document_id}",
+        "method": "GET",
+        "operation_id": "get_document_api_admin_kb_documents__document_id__get",
+        "summary": "Get Document",
+        "description": "Get detailed information about a specific document.\n\nReturns document metadata and chunk information.\n\nArgs:\n    document_id: Document identifier\n    db: Database session\n\nReturns:\n    Document details",
+        "tags": [
+          "admin",
+          "kb"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/audit-logs",
+        "method": "GET",
+        "operation_id": "get_audit_logs_api_admin_panel_audit_logs_get",
+        "summary": "Get Audit Logs",
+        "description": "Return audit log entries with filtering and pagination from database.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 4,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/metrics",
+        "method": "GET",
+        "operation_id": "get_system_metrics_api_admin_panel_metrics_get",
+        "summary": "Get System Metrics",
+        "description": "Return system metrics for dashboard charts with caching.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/summary",
+        "method": "GET",
+        "operation_id": "get_system_summary_api_admin_panel_summary_get",
+        "summary": "Get System Summary",
+        "description": "Return a simple system summary for the admin dashboard.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/users",
+        "method": "GET",
+        "operation_id": "list_users_api_admin_panel_users_get",
+        "summary": "List Users",
+        "description": "List users with pagination and filtering.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 5,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/users/{user_id}",
+        "method": "DELETE",
+        "operation_id": "delete_user_api_admin_panel_users__user_id__delete",
+        "summary": "Delete User",
+        "description": "Delete a user (soft delete by deactivating).",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/users/{user_id}",
+        "method": "GET",
+        "operation_id": "get_user_api_admin_panel_users__user_id__get",
+        "summary": "Get User",
+        "description": "Get a single user by ID.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/users/{user_id}",
+        "method": "PUT",
+        "operation_id": "update_user_api_admin_panel_users__user_id__put",
+        "summary": "Update User",
+        "description": "Update a user's information.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/admin/panel/websocket-status",
+        "method": "GET",
+        "operation_id": "get_websocket_status_api_admin_panel_websocket_status_get",
+        "summary": "Get Websocket Status",
+        "description": "Return WebSocket connection status for admin dashboard.",
+        "tags": [
+          "admin",
+          "panel"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      }
+    ],
+    "authentication": [
+      {
+        "path": "/api/auth/login",
+        "method": "POST",
+        "operation_id": "login_api_auth_login_post",
+        "summary": "Login",
+        "description": "Login with email and password to receive JWT tokens\n\n- **email**: User's email address\n- **password**: User's password\n\nReturns access token (15 min) and refresh token (7 days)\n\nRate limit: 10 login attempts per minute per IP",
+        "tags": [
+          "authentication"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/auth/logout",
+        "method": "POST",
+        "operation_id": "logout_api_auth_logout_post",
+        "summary": "Logout",
+        "description": "Logout current user\n\nNote: In a stateless JWT system, logout is primarily handled client-side\nby discarding the tokens. This endpoint exists for consistency and\ncould be extended to maintain a token blacklist in Redis if needed.",
+        "tags": [
+          "authentication"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/auth/me",
+        "method": "GET",
+        "operation_id": "get_current_user_info_api_auth_me_get",
+        "summary": "Get Current User Info",
+        "description": "Get current authenticated user's information\n\nRequires valid access token in Authorization header",
+        "tags": [
+          "authentication"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/auth/oauth/{provider}/authorize",
+        "method": "GET",
+        "operation_id": "oauth_authorize_api_auth_oauth__provider__authorize_get",
+        "summary": "Oauth Authorize",
+        "description": "Get OAuth authorization URL for the specified provider\n\nReturns a URL that the frontend should redirect to for OAuth login.\n\n- **provider**: \"google\" or \"microsoft\"\n\nReturns: { data: { url: string } }\n\nRate limit: 30 requests per minute per IP",
+        "tags": [
+          "authentication",
+          "oauth"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/auth/oauth/{provider}/callback",
+        "method": "POST",
+        "operation_id": "oauth_callback_api_auth_oauth__provider__callback_post",
+        "summary": "Oauth Callback",
+        "description": "Handle OAuth callback and exchange code for tokens\n\n- **provider**: \"google\" or \"microsoft\"\n- **code**: Authorization code from OAuth provider (in request body)\n\nReturns JWT tokens for the authenticated user.\n\nRate limit: 10 requests per minute per IP",
+        "tags": [
+          "authentication",
+          "oauth"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/auth/oauth/{provider}/status",
+        "method": "GET",
+        "operation_id": "oauth_provider_status_api_auth_oauth__provider__status_get",
+        "summary": "Oauth Provider Status",
+        "description": "Check if an OAuth provider is configured\n\nReturns whether the specified provider is available for login.\n\n- **provider**: \"google\" or \"microsoft\"",
+        "tags": [
+          "authentication",
+          "oauth"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/auth/refresh",
+        "method": "POST",
+        "operation_id": "refresh_token_api_auth_refresh_post",
+        "summary": "Refresh Token",
+        "description": "Get a new access token using a refresh token\n\n- **refresh_token**: Valid refresh token\n\nReturns new access token and refresh token pair\n\nRate limit: 20 requests per minute per IP",
+        "tags": [
+          "authentication"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/auth/register",
+        "method": "POST",
+        "operation_id": "register_api_auth_register_post",
+        "summary": "Register",
+        "description": "Register a new user account\n\n- **email**: Valid email address (must be unique)\n- **password**: Password (minimum 8 characters)\n- **full_name**: User's full name\n\nRate limit: 5 registrations per hour per IP",
+        "tags": [
+          "authentication"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      }
+    ],
+    "conversations": [
+      {
+        "path": "/api/conversations",
+        "method": "GET",
+        "operation_id": "list_conversations_api_conversations_get",
+        "summary": "List Conversations",
+        "description": "List all conversations for the current user.\n\nReturns paginated list of conversations with message counts and metadata.\n\nArgs:\n    page: Page number (1-indexed)\n    pageSize: Number of items per page\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PaginatedResponse with conversations",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations",
+        "method": "POST",
+        "operation_id": "create_conversation_api_conversations_post",
+        "summary": "Create Conversation",
+        "description": "Create a new conversation.\n\nArgs:\n    request: Conversation creation request\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with new conversation details",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}",
+        "method": "DELETE",
+        "operation_id": "delete_conversation_api_conversations__conversation_id__delete",
+        "summary": "Delete Conversation",
+        "description": "Delete a conversation and all its messages.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Success response\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}",
+        "method": "GET",
+        "operation_id": "get_conversation_api_conversations__conversation_id__get",
+        "summary": "Get Conversation",
+        "description": "Get a specific conversation by ID.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with conversation details\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}",
+        "method": "PATCH",
+        "operation_id": "update_conversation_api_conversations__conversation_id__patch",
+        "summary": "Update Conversation",
+        "description": "Update a conversation's metadata.\n\nArgs:\n    conversation_id: UUID of the conversation\n    request: Update request with fields to change\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with updated conversation details\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/events",
+        "method": "GET",
+        "operation_id": "get_conversation_events_api_conversations__conversation_id__events_get",
+        "summary": "Get Conversation Events",
+        "description": "Get events for a conversation (for session inspection/debugging).\n\nThis endpoint returns structured events logged during conversation/voice\nsessions, useful for debugging, performance analysis, and session replay.\n\nArgs:\n    conversation_id: UUID of the conversation\n    event_types: Optional comma-separated list of event types to filter\n    since: Optional ISO timestamp to filter events after\n    limit: Max events to return (default 100, max 1000)\n    offset: Pagination offset\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of SessionEventResponse objects\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 5,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/messages",
+        "method": "GET",
+        "operation_id": "get_messages_api_conversations__conversation_id__messages_get",
+        "summary": "Get Messages",
+        "description": "Get all messages in a conversation (main branch).\n\nReturns paginated list of messages in chronological order.\n\nArgs:\n    conversation_id: UUID of the conversation\n    page: Page number (1-indexed)\n    pageSize: Number of messages per page\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PaginatedResponse with messages\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 3,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/messages",
+        "method": "POST",
+        "operation_id": "create_message_api_conversations__conversation_id__messages_post",
+        "summary": "Create Message",
+        "description": "Create a new message in a conversation with optional idempotency.\n\nIf `client_message_id` is provided, this endpoint is idempotent:\n- If a message with the same (conversation_id, branch_id, client_message_id)\n  already exists, the existing message is returned without creating a duplicate.\n- This allows safe retries without creating duplicate messages.\n\nArgs:\n    conversation_id: UUID of the conversation\n    request: Message creation request\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    MessageResponse with the created (or existing) message\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation\n    400: Invalid request (e.g., invalid UUIDs)",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/messages/{message_id}",
+        "method": "DELETE",
+        "operation_id": "delete_message_api_conversations__conversation_id__messages__message_id__delete",
+        "summary": "Delete Message",
+        "description": "Delete a message.\n\nArgs:\n    conversation_id: UUID of the conversation\n    message_id: UUID of the message to delete\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Success response\n\nRaises:\n    404: Conversation or message not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/messages/{message_id}",
+        "method": "PATCH",
+        "operation_id": "edit_message_api_conversations__conversation_id__messages__message_id__patch",
+        "summary": "Edit Message",
+        "description": "Edit a message's content.\n\nArgs:\n    conversation_id: UUID of the conversation\n    message_id: UUID of the message to edit\n    request: Edit request with new content\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    MessageResponse with updated message\n\nRaises:\n    404: Conversation or message not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/settings",
+        "method": "GET",
+        "operation_id": "get_conversation_settings_api_conversations__conversation_id__settings_get",
+        "summary": "Get Conversation Settings",
+        "description": "Get settings for a conversation.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationSettingsSchema with current settings\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/settings",
+        "method": "PATCH",
+        "operation_id": "patch_conversation_settings_api_conversations__conversation_id__settings_patch",
+        "summary": "Patch Conversation Settings",
+        "description": "Partially update settings for a conversation (same as PUT for this use case).\n\nArgs:\n    conversation_id: UUID of the conversation\n    settings: Settings to update (only non-None values are applied)\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated ConversationSettingsSchema\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{conversation_id}/settings",
+        "method": "PUT",
+        "operation_id": "update_conversation_settings_api_conversations__conversation_id__settings_put",
+        "summary": "Update Conversation Settings",
+        "description": "Update settings for a conversation.\n\nArgs:\n    conversation_id: UUID of the conversation\n    settings: New settings to apply\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated ConversationSettingsSchema\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{session_id}/branches",
+        "method": "GET",
+        "operation_id": "list_branches_api_conversations__session_id__branches_get",
+        "summary": "List Branches",
+        "description": "List all branches in a conversation.\n\nReturns metadata about each branch including message count and timestamps.\n\nArgs:\n    session_id: UUID of the conversation session\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of BranchInfo objects\n\nRaises:\n    404: Session not found\n    403: User doesn't own the session",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{session_id}/branches",
+        "method": "POST",
+        "operation_id": "create_branch_api_conversations__session_id__branches_post",
+        "summary": "Create Branch",
+        "description": "Create a new conversation branch from a specific message.\n\nThis endpoint allows forking a conversation at any message point,\ncreating an alternative conversation path.\n\nArgs:\n    session_id: UUID of the conversation session\n    request: Branch creation request with parent_message_id\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    BranchResponse with branch_id and metadata\n\nRaises:\n    404: Session or parent message not found\n    403: User doesn't own the session",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/conversations/{session_id}/branches/{branch_id}/messages",
+        "method": "GET",
+        "operation_id": "get_branch_messages_api_conversations__session_id__branches__branch_id__messages_get",
+        "summary": "Get Branch Messages",
+        "description": "Get all messages in a specific branch.\n\nReturns messages in chronological order for the specified branch.\n\nArgs:\n    session_id: UUID of the conversation session\n    branch_id: Branch identifier (use \"main\" for main conversation)\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of MessageResponse objects\n\nRaises:\n    404: Session not found\n    403: User doesn't own the session",
+        "tags": [
+          "conversations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      }
+    ],
+    "health": [
+      {
+        "path": "/health",
+        "method": "GET",
+        "operation_id": "health_check_health_get",
+        "summary": "Health Check",
+        "description": "Basic health check endpoint\nReturns 200 if the service is running\n\nRate limit: 100 requests per minute",
+        "tags": [
+          "health"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/health/detailed",
+        "method": "GET",
+        "operation_id": "detailed_health_check_health_detailed_get",
+        "summary": "Detailed Health Check",
+        "description": "Detailed health check endpoint\nReturns comprehensive health information about all components\n\nRate limit: 50 requests per minute",
+        "tags": [
+          "health"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/health/openai",
+        "method": "GET",
+        "operation_id": "openai_health_check_health_openai_get",
+        "summary": "Openai Health Check",
+        "description": "OpenAI API connectivity health check.\n\nTests that the configured OPENAI_API_KEY is valid and can connect\nto OpenAI's API by making a cheap models.list() call.\n\nRate limit: 10 requests per minute (to avoid wasting API quota)\n\nReturns:\n    200: OpenAI API is accessible and key is valid\n    503: OpenAI API is not accessible or key is invalid/missing\n\nResponse body:\n    - status: \"ok\" or \"error\"\n    - configured: whether OPENAI_API_KEY is set\n    - accessible: whether API call succeeded (only if configured)\n    - latency_ms: API call latency in milliseconds (only if accessible)\n    - error: error message (only if failed)\n    - timestamp: Unix timestamp\n\nNote: This endpoint does NOT reveal the API key value.",
+        "tags": [
+          "health"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/ready",
+        "method": "GET",
+        "operation_id": "readiness_check_ready_get",
+        "summary": "Readiness Check",
+        "description": "Readiness check endpoint\nVerifies connectivity to all dependencies (Postgres, Redis, Qdrant, Nextcloud)\nReturns 200 if all dependencies are accessible, 503 otherwise\n\nRate limit: 100 requests per minute",
+        "tags": [
+          "health"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      }
+    ],
+    "integrations": [
+      {
+        "path": "/api/integrations/calendar/calendars",
+        "method": "GET",
+        "operation_id": "list_calendars_api_integrations_calendar_calendars_get",
+        "summary": "List Calendars",
+        "description": "List all available calendars for the authenticated user.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/integrations/calendar/events",
+        "method": "GET",
+        "operation_id": "list_events_api_integrations_calendar_events_get",
+        "summary": "List Events",
+        "description": "List calendar events within a date range.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 3,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/calendar/events",
+        "method": "POST",
+        "operation_id": "create_event_api_integrations_calendar_events_post",
+        "summary": "Create Event",
+        "description": "Create a new calendar event.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/calendar/events/{event_uid}",
+        "method": "DELETE",
+        "operation_id": "delete_event_api_integrations_calendar_events__event_uid__delete",
+        "summary": "Delete Event",
+        "description": "Delete a calendar event.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/calendar/events/{event_uid}",
+        "method": "PUT",
+        "operation_id": "update_event_api_integrations_calendar_events__event_uid__put",
+        "summary": "Update Event",
+        "description": "Update an existing calendar event.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/email/folders",
+        "method": "GET",
+        "operation_id": "list_email_folders_api_integrations_email_folders_get",
+        "summary": "List Email Folders",
+        "description": "List mailbox folders.\n\nNOTE: This is a skeleton implementation. Email configuration\nneeds to be set up per-user in production.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/integrations/email/messages",
+        "method": "GET",
+        "operation_id": "list_email_messages_api_integrations_email_messages_get",
+        "summary": "List Email Messages",
+        "description": "List recent email messages from a folder.\n\nNOTE: This is a skeleton implementation for Phase 6 MVP.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/email/send",
+        "method": "POST",
+        "operation_id": "send_email_api_integrations_email_send_post",
+        "summary": "Send Email",
+        "description": "Send an email.\n\nNOTE: This is a skeleton implementation for Phase 6 MVP.\n\nRequires authentication.",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/files/index",
+        "method": "POST",
+        "operation_id": "index_specific_file_api_integrations_files_index_post",
+        "summary": "Index Specific File",
+        "description": "Index a specific Nextcloud file into the knowledge base.\n\nUseful for manually triggering indexing of a single document.\n\nRequires authentication (admin role recommended).",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/integrations/files/scan-and-index",
+        "method": "POST",
+        "operation_id": "scan_and_index_files_api_integrations_files_scan_and_index_post",
+        "summary": "Scan And Index Files",
+        "description": "Scan Nextcloud directories and auto-index medical documents.\n\nThis endpoint triggers a full scan of configured watch directories\nand indexes all supported medical documents into the knowledge base.\n\nRequires authentication (admin role recommended).",
+        "tags": [
+          "integrations"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      }
+    ],
+    "observability": [
+      {
+        "path": "/metrics",
+        "method": "GET",
+        "operation_id": "prometheus_metrics_metrics_get",
+        "summary": "Prometheus Metrics",
+        "description": "Expose Prometheus metrics in text format.\n\nThis endpoint is scraped by Prometheus server for monitoring.\nNo authentication required (should be secured at infrastructure level).\n\nBefore generating metrics, updates:\n- Connection pool statistics (P2.5)\n- Business metrics (P3.3): DAU, MAU, system uptime\n\nReturns:\n    Prometheus-formatted metrics",
+        "tags": [
+          "observability"
+        ],
+        "deprecated": false,
+        "security": [],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      }
+    ],
+    "untagged": [
+      {
+        "path": "/api/attachments/{attachment_id}",
+        "method": "DELETE",
+        "operation_id": "delete_attachment_api_attachments__attachment_id__delete",
+        "summary": "Delete Attachment",
+        "description": "Delete an attachment.\n\nArgs:\n    attachment_id: Attachment UUID\n    db: Database session\n    current_user: Authenticated user",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "204",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/attachments/{attachment_id}/download",
+        "method": "GET",
+        "operation_id": "download_attachment_api_attachments__attachment_id__download_get",
+        "summary": "Download Attachment",
+        "description": "Download an attachment file.\n\nArgs:\n    attachment_id: Attachment UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    File stream",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/clinical-contexts",
+        "method": "POST",
+        "operation_id": "create_clinical_context_api_clinical_contexts_post",
+        "summary": "Create Clinical Context",
+        "description": "Create or update clinical context for the current user.\n\nArgs:\n    context: Clinical context data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/clinical-contexts/current",
+        "method": "GET",
+        "operation_id": "get_current_clinical_context_api_clinical_contexts_current_get",
+        "summary": "Get Current Clinical Context",
+        "description": "Get clinical context for the current user.\n\nArgs:\n    session_id: Optional session ID to filter by\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record or None if not found",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/clinical-contexts/{context_id}",
+        "method": "DELETE",
+        "operation_id": "delete_clinical_context_api_clinical_contexts__context_id__delete",
+        "summary": "Delete Clinical Context",
+        "description": "Delete a clinical context.\n\nArgs:\n    context_id: Clinical context UUID\n    db: Database session\n    current_user: Authenticated user",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "204",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/clinical-contexts/{context_id}",
+        "method": "GET",
+        "operation_id": "get_clinical_context_api_clinical_contexts__context_id__get",
+        "summary": "Get Clinical Context",
+        "description": "Get a specific clinical context by ID.\n\nArgs:\n    context_id: Clinical context UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/clinical-contexts/{context_id}",
+        "method": "PUT",
+        "operation_id": "update_clinical_context_api_clinical_contexts__context_id__put",
+        "summary": "Update Clinical Context",
+        "description": "Update a clinical context.\n\nArgs:\n    context_id: Clinical context UUID\n    context_update: Updated clinical context data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated clinical context record",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders",
+        "method": "GET",
+        "operation_id": "list_folders_api_folders_get",
+        "summary": "List Folders",
+        "description": "List all folders for the current user.\n\nArgs:\n    parent_id: Optional parent folder ID to filter by\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of folders",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders",
+        "method": "POST",
+        "operation_id": "create_folder_api_folders_post",
+        "summary": "Create Folder",
+        "description": "Create a new conversation folder.\n\nArgs:\n    folder: Folder data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Created folder",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders/tree",
+        "method": "GET",
+        "operation_id": "get_folder_tree_api_folders_tree_get",
+        "summary": "Get Folder Tree",
+        "description": "Get entire folder tree for the current user.\n\nArgs:\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Hierarchical folder tree",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/folders/{folder_id}",
+        "method": "DELETE",
+        "operation_id": "delete_folder_api_folders__folder_id__delete",
+        "summary": "Delete Folder",
+        "description": "Delete a folder.\nAll child folders and sessions will be orphaned (parent_folder_id = NULL).\n\nArgs:\n    folder_id: Folder UUID\n    db: Database session\n    current_user: Authenticated user",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "204",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders/{folder_id}",
+        "method": "GET",
+        "operation_id": "get_folder_api_folders__folder_id__get",
+        "summary": "Get Folder",
+        "description": "Get a specific folder by ID.\n\nArgs:\n    folder_id: Folder UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Folder details",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders/{folder_id}",
+        "method": "PUT",
+        "operation_id": "update_folder_api_folders__folder_id__put",
+        "summary": "Update Folder",
+        "description": "Update a folder.\n\nArgs:\n    folder_id: Folder UUID\n    folder_update: Updated folder data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated folder",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/folders/{folder_id}/move/{target_folder_id}",
+        "method": "POST",
+        "operation_id": "move_folder_api_folders__folder_id__move__target_folder_id__post",
+        "summary": "Move Folder",
+        "description": "Move a folder to a new parent folder.\n\nArgs:\n    folder_id: Folder UUID to move\n    target_folder_id: New parent folder UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated folder",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/messages/{message_id}/attachments",
+        "method": "GET",
+        "operation_id": "list_attachments_api_messages__message_id__attachments_get",
+        "summary": "List Attachments",
+        "description": "List all attachments for a message.\n\nArgs:\n    message_id: Message UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of attachment metadata",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/messages/{message_id}/attachments",
+        "method": "POST",
+        "operation_id": "upload_attachment_api_messages__message_id__attachments_post",
+        "summary": "Upload Attachment",
+        "description": "Upload a file attachment to a message.\n\nArgs:\n    message_id: Message UUID\n    file: File to upload\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Attachment metadata",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/sessions/{session_id}/export/markdown",
+        "method": "GET",
+        "operation_id": "export_markdown_api_sessions__session_id__export_markdown_get",
+        "summary": "Export Markdown",
+        "description": "Export conversation as Markdown file.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Markdown file",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/sessions/{session_id}/export/pdf",
+        "method": "GET",
+        "operation_id": "export_pdf_api_sessions__session_id__export_pdf_get",
+        "summary": "Export Pdf",
+        "description": "Export conversation as PDF file.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PDF file",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/sessions/{session_id}/share",
+        "method": "POST",
+        "operation_id": "create_share_link_api_sessions__session_id__share_post",
+        "summary": "Create Share Link",
+        "description": "Create a shareable link for a conversation.\n\nArgs:\n    session_id: Session UUID\n    share_request: Share configuration\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Share link details",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "201",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/sessions/{session_id}/share/{share_token}",
+        "method": "DELETE",
+        "operation_id": "revoke_share_link_api_sessions__session_id__share__share_token__delete",
+        "summary": "Revoke Share Link",
+        "description": "Revoke a share link.\n\nArgs:\n    session_id: Session UUID\n    share_token: Share token to revoke\n    db: Database session\n    current_user: Authenticated user",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "204",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/sessions/{session_id}/shares",
+        "method": "GET",
+        "operation_id": "list_share_links_api_sessions__session_id__shares_get",
+        "summary": "List Share Links",
+        "description": "List all active share links for a conversation.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of share links",
+        "tags": [],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/shared/{share_token}",
+        "method": "GET",
+        "operation_id": "get_shared_conversation_api_shared__share_token__get",
+        "summary": "Get Shared Conversation",
+        "description": "Access a shared conversation.\n\nArgs:\n    share_token: Share token from URL\n    password: Optional password for protected shares\n    db: Database session\n\nReturns:\n    Shared conversation details",
+        "tags": [],
+        "deprecated": false,
+        "security": [],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      }
+    ],
+    "users": [
+      {
+        "path": "/api/users/",
+        "method": "GET",
+        "operation_id": "list_users_api_users__get",
+        "summary": "List Users",
+        "description": "List all users (admin only)\n\n- **skip**: Number of records to skip (pagination)\n- **limit**: Maximum number of records to return\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 2,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/me",
+        "method": "DELETE",
+        "operation_id": "delete_current_user_account_api_users_me_delete",
+        "summary": "Delete Current User Account",
+        "description": "Deactivate current user's account\n\nThis marks the account as inactive rather than deleting it\n(soft delete for data retention and audit purposes)\n\nRequires valid access token",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/users/me",
+        "method": "GET",
+        "operation_id": "get_current_user_profile_api_users_me_get",
+        "summary": "Get Current User Profile",
+        "description": "Get current user's profile information\n\nRequires valid access token",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": false,
+        "responses": [
+          "200"
+        ]
+      },
+      {
+        "path": "/api/users/me",
+        "method": "PUT",
+        "operation_id": "update_current_user_profile_api_users_me_put",
+        "summary": "Update Current User Profile",
+        "description": "Update current user's profile\n\n- **full_name**: New full name (optional)\n- **email**: New email address (optional, must be unique)\n\nRequires valid access token",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/me/change-password",
+        "method": "POST",
+        "operation_id": "change_password_api_users_me_change_password_post",
+        "summary": "Change Password",
+        "description": "Change current user's password\n\n- **old_password**: Current password for verification\n- **new_password**: New password (minimum 8 characters)\n\nRequires valid access token",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}",
+        "method": "GET",
+        "operation_id": "get_user_by_id_api_users__user_id__get",
+        "summary": "Get User By Id",
+        "description": "Get user by ID (admin only)\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}",
+        "method": "PATCH",
+        "operation_id": "update_user_api_users__user_id__patch",
+        "summary": "Update User",
+        "description": "Update user properties (admin only)\n\nSupports updating:\n- is_active: boolean\n- is_admin: boolean\n- full_name: string\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}/activate",
+        "method": "PUT",
+        "operation_id": "activate_user_api_users__user_id__activate_put",
+        "summary": "Activate User",
+        "description": "Activate a user account (admin only)\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}/deactivate",
+        "method": "PUT",
+        "operation_id": "deactivate_user_api_users__user_id__deactivate_put",
+        "summary": "Deactivate User",
+        "description": "Deactivate a user account (admin only)\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}/promote-admin",
+        "method": "PUT",
+        "operation_id": "promote_to_admin_api_users__user_id__promote_admin_put",
+        "summary": "Promote To Admin",
+        "description": "Grant admin privileges to a user (admin only)\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/users/{user_id}/revoke-admin",
+        "method": "PUT",
+        "operation_id": "revoke_admin_privileges_api_users__user_id__revoke_admin_put",
+        "summary": "Revoke Admin Privileges",
+        "description": "Revoke admin privileges from a user (admin only)\n\nRequires admin privileges",
+        "tags": [
+          "users"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 1,
+        "request_body": false,
+        "responses": [
+          "200",
+          "422"
+        ]
+      }
+    ],
+    "voice": [
+      {
+        "path": "/api/voice/metrics",
+        "method": "POST",
+        "operation_id": "post_voice_metrics_api_voice_metrics_post",
+        "summary": "Submit voice session metrics",
+        "description": "Submit timing and count metrics from a voice session",
+        "tags": [
+          "voice"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/voice/realtime-session",
+        "method": "POST",
+        "operation_id": "create_realtime_session_api_voice_realtime_session_post",
+        "summary": "Create Realtime API session",
+        "description": "Generate session config for OpenAI Realtime API voice mode",
+        "tags": [
+          "voice"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/voice/relay",
+        "method": "POST",
+        "operation_id": "relay_voice_transcript_api_voice_relay_post",
+        "summary": "Relay final voice transcript to RAG",
+        "description": "Persists the user transcript, runs RAG, persists assistant reply, and returns the answer.",
+        "tags": [
+          "voice"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/voice/synthesize",
+        "method": "POST",
+        "operation_id": "synthesize_speech_api_voice_synthesize_post",
+        "summary": "Synthesize speech from text",
+        "description": "Convert text to speech using OpenAI TTS API",
+        "tags": [
+          "voice"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      },
+      {
+        "path": "/api/voice/transcribe",
+        "method": "POST",
+        "operation_id": "transcribe_audio_api_voice_transcribe_post",
+        "summary": "Transcribe audio to text",
+        "description": "Convert audio file to text using OpenAI Whisper API",
+        "tags": [
+          "voice"
+        ],
+        "deprecated": false,
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": 0,
+        "request_body": true,
+        "responses": [
+          "200",
+          "422"
+        ]
+      }
+    ]
+  },
+  "all_routes": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "operation_id": "health_check_health_get",
+      "summary": "Health Check",
+      "description": "Basic health check endpoint\nReturns 200 if the service is running\n\nRate limit: 100 requests per minute",
+      "tags": [
+        "health"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/ready",
+      "method": "GET",
+      "operation_id": "readiness_check_ready_get",
+      "summary": "Readiness Check",
+      "description": "Readiness check endpoint\nVerifies connectivity to all dependencies (Postgres, Redis, Qdrant, Nextcloud)\nReturns 200 if all dependencies are accessible, 503 otherwise\n\nRate limit: 100 requests per minute",
+      "tags": [
+        "health"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/health/openai",
+      "method": "GET",
+      "operation_id": "openai_health_check_health_openai_get",
+      "summary": "Openai Health Check",
+      "description": "OpenAI API connectivity health check.\n\nTests that the configured OPENAI_API_KEY is valid and can connect\nto OpenAI's API by making a cheap models.list() call.\n\nRate limit: 10 requests per minute (to avoid wasting API quota)\n\nReturns:\n    200: OpenAI API is accessible and key is valid\n    503: OpenAI API is not accessible or key is invalid/missing\n\nResponse body:\n    - status: \"ok\" or \"error\"\n    - configured: whether OPENAI_API_KEY is set\n    - accessible: whether API call succeeded (only if configured)\n    - latency_ms: API call latency in milliseconds (only if accessible)\n    - error: error message (only if failed)\n    - timestamp: Unix timestamp\n\nNote: This endpoint does NOT reveal the API key value.",
+      "tags": [
+        "health"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/health/detailed",
+      "method": "GET",
+      "operation_id": "detailed_health_check_health_detailed_get",
+      "summary": "Detailed Health Check",
+      "description": "Detailed health check endpoint\nReturns comprehensive health information about all components\n\nRate limit: 50 requests per minute",
+      "tags": [
+        "health"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/metrics",
+      "method": "GET",
+      "operation_id": "prometheus_metrics_metrics_get",
+      "summary": "Prometheus Metrics",
+      "description": "Expose Prometheus metrics in text format.\n\nThis endpoint is scraped by Prometheus server for monitoring.\nNo authentication required (should be secured at infrastructure level).\n\nBefore generating metrics, updates:\n- Connection pool statistics (P2.5)\n- Business metrics (P3.3): DAU, MAU, system uptime\n\nReturns:\n    Prometheus-formatted metrics",
+      "tags": [
+        "observability"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/auth/register",
+      "method": "POST",
+      "operation_id": "register_api_auth_register_post",
+      "summary": "Register",
+      "description": "Register a new user account\n\n- **email**: Valid email address (must be unique)\n- **password**: Password (minimum 8 characters)\n- **full_name**: User's full name\n\nRate limit: 5 registrations per hour per IP",
+      "tags": [
+        "authentication"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "operation_id": "login_api_auth_login_post",
+      "summary": "Login",
+      "description": "Login with email and password to receive JWT tokens\n\n- **email**: User's email address\n- **password**: User's password\n\nReturns access token (15 min) and refresh token (7 days)\n\nRate limit: 10 login attempts per minute per IP",
+      "tags": [
+        "authentication"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "operation_id": "refresh_token_api_auth_refresh_post",
+      "summary": "Refresh Token",
+      "description": "Get a new access token using a refresh token\n\n- **refresh_token**: Valid refresh token\n\nReturns new access token and refresh token pair\n\nRate limit: 20 requests per minute per IP",
+      "tags": [
+        "authentication"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "operation_id": "logout_api_auth_logout_post",
+      "summary": "Logout",
+      "description": "Logout current user\n\nNote: In a stateless JWT system, logout is primarily handled client-side\nby discarding the tokens. This endpoint exists for consistency and\ncould be extended to maintain a token blacklist in Redis if needed.",
+      "tags": [
+        "authentication"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "operation_id": "get_current_user_info_api_auth_me_get",
+      "summary": "Get Current User Info",
+      "description": "Get current authenticated user's information\n\nRequires valid access token in Authorization header",
+      "tags": [
+        "authentication"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/auth/oauth/{provider}/authorize",
+      "method": "GET",
+      "operation_id": "oauth_authorize_api_auth_oauth__provider__authorize_get",
+      "summary": "Oauth Authorize",
+      "description": "Get OAuth authorization URL for the specified provider\n\nReturns a URL that the frontend should redirect to for OAuth login.\n\n- **provider**: \"google\" or \"microsoft\"\n\nReturns: { data: { url: string } }\n\nRate limit: 30 requests per minute per IP",
+      "tags": [
+        "authentication",
+        "oauth"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/auth/oauth/{provider}/callback",
+      "method": "POST",
+      "operation_id": "oauth_callback_api_auth_oauth__provider__callback_post",
+      "summary": "Oauth Callback",
+      "description": "Handle OAuth callback and exchange code for tokens\n\n- **provider**: \"google\" or \"microsoft\"\n- **code**: Authorization code from OAuth provider (in request body)\n\nReturns JWT tokens for the authenticated user.\n\nRate limit: 10 requests per minute per IP",
+      "tags": [
+        "authentication",
+        "oauth"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/auth/oauth/{provider}/status",
+      "method": "GET",
+      "operation_id": "oauth_provider_status_api_auth_oauth__provider__status_get",
+      "summary": "Oauth Provider Status",
+      "description": "Check if an OAuth provider is configured\n\nReturns whether the specified provider is available for login.\n\n- **provider**: \"google\" or \"microsoft\"",
+      "tags": [
+        "authentication",
+        "oauth"
+      ],
+      "deprecated": false,
+      "security": [],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "method": "GET",
+      "operation_id": "get_current_user_profile_api_users_me_get",
+      "summary": "Get Current User Profile",
+      "description": "Get current user's profile information\n\nRequires valid access token",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "method": "PUT",
+      "operation_id": "update_current_user_profile_api_users_me_put",
+      "summary": "Update Current User Profile",
+      "description": "Update current user's profile\n\n- **full_name**: New full name (optional)\n- **email**: New email address (optional, must be unique)\n\nRequires valid access token",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "method": "DELETE",
+      "operation_id": "delete_current_user_account_api_users_me_delete",
+      "summary": "Delete Current User Account",
+      "description": "Deactivate current user's account\n\nThis marks the account as inactive rather than deleting it\n(soft delete for data retention and audit purposes)\n\nRequires valid access token",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/users/me/change-password",
+      "method": "POST",
+      "operation_id": "change_password_api_users_me_change_password_post",
+      "summary": "Change Password",
+      "description": "Change current user's password\n\n- **old_password**: Current password for verification\n- **new_password**: New password (minimum 8 characters)\n\nRequires valid access token",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/",
+      "method": "GET",
+      "operation_id": "list_users_api_users__get",
+      "summary": "List Users",
+      "description": "List all users (admin only)\n\n- **skip**: Number of records to skip (pagination)\n- **limit**: Maximum number of records to return\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}",
+      "method": "GET",
+      "operation_id": "get_user_by_id_api_users__user_id__get",
+      "summary": "Get User By Id",
+      "description": "Get user by ID (admin only)\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}",
+      "method": "PATCH",
+      "operation_id": "update_user_api_users__user_id__patch",
+      "summary": "Update User",
+      "description": "Update user properties (admin only)\n\nSupports updating:\n- is_active: boolean\n- is_admin: boolean\n- full_name: string\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}/activate",
+      "method": "PUT",
+      "operation_id": "activate_user_api_users__user_id__activate_put",
+      "summary": "Activate User",
+      "description": "Activate a user account (admin only)\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}/deactivate",
+      "method": "PUT",
+      "operation_id": "deactivate_user_api_users__user_id__deactivate_put",
+      "summary": "Deactivate User",
+      "description": "Deactivate a user account (admin only)\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}/promote-admin",
+      "method": "PUT",
+      "operation_id": "promote_to_admin_api_users__user_id__promote_admin_put",
+      "summary": "Promote To Admin",
+      "description": "Grant admin privileges to a user (admin only)\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}/revoke-admin",
+      "method": "PUT",
+      "operation_id": "revoke_admin_privileges_api_users__user_id__revoke_admin_put",
+      "summary": "Revoke Admin Privileges",
+      "description": "Revoke admin privileges from a user (admin only)\n\nRequires admin privileges",
+      "tags": [
+        "users"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations",
+      "method": "GET",
+      "operation_id": "list_conversations_api_conversations_get",
+      "summary": "List Conversations",
+      "description": "List all conversations for the current user.\n\nReturns paginated list of conversations with message counts and metadata.\n\nArgs:\n    page: Page number (1-indexed)\n    pageSize: Number of items per page\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PaginatedResponse with conversations",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations",
+      "method": "POST",
+      "operation_id": "create_conversation_api_conversations_post",
+      "summary": "Create Conversation",
+      "description": "Create a new conversation.\n\nArgs:\n    request: Conversation creation request\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with new conversation details",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}",
+      "method": "GET",
+      "operation_id": "get_conversation_api_conversations__conversation_id__get",
+      "summary": "Get Conversation",
+      "description": "Get a specific conversation by ID.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with conversation details\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}",
+      "method": "PATCH",
+      "operation_id": "update_conversation_api_conversations__conversation_id__patch",
+      "summary": "Update Conversation",
+      "description": "Update a conversation's metadata.\n\nArgs:\n    conversation_id: UUID of the conversation\n    request: Update request with fields to change\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationResponse with updated conversation details\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}",
+      "method": "DELETE",
+      "operation_id": "delete_conversation_api_conversations__conversation_id__delete",
+      "summary": "Delete Conversation",
+      "description": "Delete a conversation and all its messages.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Success response\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/messages",
+      "method": "GET",
+      "operation_id": "get_messages_api_conversations__conversation_id__messages_get",
+      "summary": "Get Messages",
+      "description": "Get all messages in a conversation (main branch).\n\nReturns paginated list of messages in chronological order.\n\nArgs:\n    conversation_id: UUID of the conversation\n    page: Page number (1-indexed)\n    pageSize: Number of messages per page\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PaginatedResponse with messages\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 3,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/messages",
+      "method": "POST",
+      "operation_id": "create_message_api_conversations__conversation_id__messages_post",
+      "summary": "Create Message",
+      "description": "Create a new message in a conversation with optional idempotency.\n\nIf `client_message_id` is provided, this endpoint is idempotent:\n- If a message with the same (conversation_id, branch_id, client_message_id)\n  already exists, the existing message is returned without creating a duplicate.\n- This allows safe retries without creating duplicate messages.\n\nArgs:\n    conversation_id: UUID of the conversation\n    request: Message creation request\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    MessageResponse with the created (or existing) message\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation\n    400: Invalid request (e.g., invalid UUIDs)",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/messages/{message_id}",
+      "method": "PATCH",
+      "operation_id": "edit_message_api_conversations__conversation_id__messages__message_id__patch",
+      "summary": "Edit Message",
+      "description": "Edit a message's content.\n\nArgs:\n    conversation_id: UUID of the conversation\n    message_id: UUID of the message to edit\n    request: Edit request with new content\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    MessageResponse with updated message\n\nRaises:\n    404: Conversation or message not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/messages/{message_id}",
+      "method": "DELETE",
+      "operation_id": "delete_message_api_conversations__conversation_id__messages__message_id__delete",
+      "summary": "Delete Message",
+      "description": "Delete a message.\n\nArgs:\n    conversation_id: UUID of the conversation\n    message_id: UUID of the message to delete\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Success response\n\nRaises:\n    404: Conversation or message not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{session_id}/branches",
+      "method": "POST",
+      "operation_id": "create_branch_api_conversations__session_id__branches_post",
+      "summary": "Create Branch",
+      "description": "Create a new conversation branch from a specific message.\n\nThis endpoint allows forking a conversation at any message point,\ncreating an alternative conversation path.\n\nArgs:\n    session_id: UUID of the conversation session\n    request: Branch creation request with parent_message_id\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    BranchResponse with branch_id and metadata\n\nRaises:\n    404: Session or parent message not found\n    403: User doesn't own the session",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{session_id}/branches",
+      "method": "GET",
+      "operation_id": "list_branches_api_conversations__session_id__branches_get",
+      "summary": "List Branches",
+      "description": "List all branches in a conversation.\n\nReturns metadata about each branch including message count and timestamps.\n\nArgs:\n    session_id: UUID of the conversation session\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of BranchInfo objects\n\nRaises:\n    404: Session not found\n    403: User doesn't own the session",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{session_id}/branches/{branch_id}/messages",
+      "method": "GET",
+      "operation_id": "get_branch_messages_api_conversations__session_id__branches__branch_id__messages_get",
+      "summary": "Get Branch Messages",
+      "description": "Get all messages in a specific branch.\n\nReturns messages in chronological order for the specified branch.\n\nArgs:\n    session_id: UUID of the conversation session\n    branch_id: Branch identifier (use \"main\" for main conversation)\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of MessageResponse objects\n\nRaises:\n    404: Session not found\n    403: User doesn't own the session",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/events",
+      "method": "GET",
+      "operation_id": "get_conversation_events_api_conversations__conversation_id__events_get",
+      "summary": "Get Conversation Events",
+      "description": "Get events for a conversation (for session inspection/debugging).\n\nThis endpoint returns structured events logged during conversation/voice\nsessions, useful for debugging, performance analysis, and session replay.\n\nArgs:\n    conversation_id: UUID of the conversation\n    event_types: Optional comma-separated list of event types to filter\n    since: Optional ISO timestamp to filter events after\n    limit: Max events to return (default 100, max 1000)\n    offset: Pagination offset\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of SessionEventResponse objects\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 5,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/settings",
+      "method": "GET",
+      "operation_id": "get_conversation_settings_api_conversations__conversation_id__settings_get",
+      "summary": "Get Conversation Settings",
+      "description": "Get settings for a conversation.\n\nArgs:\n    conversation_id: UUID of the conversation\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    ConversationSettingsSchema with current settings\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/settings",
+      "method": "PUT",
+      "operation_id": "update_conversation_settings_api_conversations__conversation_id__settings_put",
+      "summary": "Update Conversation Settings",
+      "description": "Update settings for a conversation.\n\nArgs:\n    conversation_id: UUID of the conversation\n    settings: New settings to apply\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated ConversationSettingsSchema\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/conversations/{conversation_id}/settings",
+      "method": "PATCH",
+      "operation_id": "patch_conversation_settings_api_conversations__conversation_id__settings_patch",
+      "summary": "Patch Conversation Settings",
+      "description": "Partially update settings for a conversation (same as PUT for this use case).\n\nArgs:\n    conversation_id: UUID of the conversation\n    settings: Settings to update (only non-None values are applied)\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated ConversationSettingsSchema\n\nRaises:\n    404: Conversation not found\n    403: User doesn't own the conversation",
+      "tags": [
+        "conversations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/voice/transcribe",
+      "method": "POST",
+      "operation_id": "transcribe_audio_api_voice_transcribe_post",
+      "summary": "Transcribe audio to text",
+      "description": "Convert audio file to text using OpenAI Whisper API",
+      "tags": [
+        "voice"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/voice/synthesize",
+      "method": "POST",
+      "operation_id": "synthesize_speech_api_voice_synthesize_post",
+      "summary": "Synthesize speech from text",
+      "description": "Convert text to speech using OpenAI TTS API",
+      "tags": [
+        "voice"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/voice/realtime-session",
+      "method": "POST",
+      "operation_id": "create_realtime_session_api_voice_realtime_session_post",
+      "summary": "Create Realtime API session",
+      "description": "Generate session config for OpenAI Realtime API voice mode",
+      "tags": [
+        "voice"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/voice/metrics",
+      "method": "POST",
+      "operation_id": "post_voice_metrics_api_voice_metrics_post",
+      "summary": "Submit voice session metrics",
+      "description": "Submit timing and count metrics from a voice session",
+      "tags": [
+        "voice"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/voice/relay",
+      "method": "POST",
+      "operation_id": "relay_voice_transcript_api_voice_relay_post",
+      "summary": "Relay final voice transcript to RAG",
+      "description": "Persists the user transcript, runs RAG, persists assistant reply, and returns the answer.",
+      "tags": [
+        "voice"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/kb/documents",
+      "method": "POST",
+      "operation_id": "upload_document_api_admin_kb_documents_post",
+      "summary": "Upload Document",
+      "description": "Upload and index a document to the knowledge base.\n\nSupports:\n- Text files (.txt)\n- PDF files (.pdf)\n\nThe document will be:\n1. Extracted (text/PDF)\n2. Chunked into segments\n3. Embedded using OpenAI\n4. Stored in Qdrant vector database\n\nArgs:\n    file: Document file to upload\n    title: Document title (defaults to filename)\n    source_type: Type of source (uploaded, guideline, journal, etc.)\n    db: Database session\n\nReturns:\n    Upload result with document ID and indexing status",
+      "tags": [
+        "admin",
+        "kb"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/kb/documents",
+      "method": "GET",
+      "operation_id": "list_documents_api_admin_kb_documents_get",
+      "summary": "List Documents",
+      "description": "List all documents in the knowledge base.\n\nReturns document metadata including:\n- Document ID\n- Title\n- Source type\n- Upload date\n- Number of chunks indexed\n\nArgs:\n    skip: Number of documents to skip (pagination)\n    limit: Maximum number of documents to return (max 1000)\n    source_type: Filter by source type (optional)\n    db: Database session\n\nReturns:\n    List of documents with metadata",
+      "tags": [
+        "admin",
+        "kb"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 3,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/kb/documents/{document_id}",
+      "method": "DELETE",
+      "operation_id": "delete_document_api_admin_kb_documents__document_id__delete",
+      "summary": "Delete Document",
+      "description": "Delete a document from the knowledge base.\n\nRemoves all document chunks from the vector database.\n\nArgs:\n    document_id: Document identifier\n    db: Database session\n\nReturns:\n    Deletion status",
+      "tags": [
+        "admin",
+        "kb"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/kb/documents/{document_id}",
+      "method": "GET",
+      "operation_id": "get_document_api_admin_kb_documents__document_id__get",
+      "summary": "Get Document",
+      "description": "Get detailed information about a specific document.\n\nReturns document metadata and chunk information.\n\nArgs:\n    document_id: Document identifier\n    db: Database session\n\nReturns:\n    Document details",
+      "tags": [
+        "admin",
+        "kb"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/calendar/calendars",
+      "method": "GET",
+      "operation_id": "list_calendars_api_integrations_calendar_calendars_get",
+      "summary": "List Calendars",
+      "description": "List all available calendars for the authenticated user.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/integrations/calendar/events",
+      "method": "GET",
+      "operation_id": "list_events_api_integrations_calendar_events_get",
+      "summary": "List Events",
+      "description": "List calendar events within a date range.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 3,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/calendar/events",
+      "method": "POST",
+      "operation_id": "create_event_api_integrations_calendar_events_post",
+      "summary": "Create Event",
+      "description": "Create a new calendar event.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/calendar/events/{event_uid}",
+      "method": "PUT",
+      "operation_id": "update_event_api_integrations_calendar_events__event_uid__put",
+      "summary": "Update Event",
+      "description": "Update an existing calendar event.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/calendar/events/{event_uid}",
+      "method": "DELETE",
+      "operation_id": "delete_event_api_integrations_calendar_events__event_uid__delete",
+      "summary": "Delete Event",
+      "description": "Delete a calendar event.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/files/scan-and-index",
+      "method": "POST",
+      "operation_id": "scan_and_index_files_api_integrations_files_scan_and_index_post",
+      "summary": "Scan And Index Files",
+      "description": "Scan Nextcloud directories and auto-index medical documents.\n\nThis endpoint triggers a full scan of configured watch directories\nand indexes all supported medical documents into the knowledge base.\n\nRequires authentication (admin role recommended).",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/files/index",
+      "method": "POST",
+      "operation_id": "index_specific_file_api_integrations_files_index_post",
+      "summary": "Index Specific File",
+      "description": "Index a specific Nextcloud file into the knowledge base.\n\nUseful for manually triggering indexing of a single document.\n\nRequires authentication (admin role recommended).",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/email/folders",
+      "method": "GET",
+      "operation_id": "list_email_folders_api_integrations_email_folders_get",
+      "summary": "List Email Folders",
+      "description": "List mailbox folders.\n\nNOTE: This is a skeleton implementation. Email configuration\nneeds to be set up per-user in production.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/integrations/email/messages",
+      "method": "GET",
+      "operation_id": "list_email_messages_api_integrations_email_messages_get",
+      "summary": "List Email Messages",
+      "description": "List recent email messages from a folder.\n\nNOTE: This is a skeleton implementation for Phase 6 MVP.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/integrations/email/send",
+      "method": "POST",
+      "operation_id": "send_email_api_integrations_email_send_post",
+      "summary": "Send Email",
+      "description": "Send an email.\n\nNOTE: This is a skeleton implementation for Phase 6 MVP.\n\nRequires authentication.",
+      "tags": [
+        "integrations"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/summary",
+      "method": "GET",
+      "operation_id": "get_system_summary_api_admin_panel_summary_get",
+      "summary": "Get System Summary",
+      "description": "Return a simple system summary for the admin dashboard.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/websocket-status",
+      "method": "GET",
+      "operation_id": "get_websocket_status_api_admin_panel_websocket_status_get",
+      "summary": "Get Websocket Status",
+      "description": "Return WebSocket connection status for admin dashboard.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/users",
+      "method": "GET",
+      "operation_id": "list_users_api_admin_panel_users_get",
+      "summary": "List Users",
+      "description": "List users with pagination and filtering.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 5,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/users/{user_id}",
+      "method": "GET",
+      "operation_id": "get_user_api_admin_panel_users__user_id__get",
+      "summary": "Get User",
+      "description": "Get a single user by ID.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/users/{user_id}",
+      "method": "PUT",
+      "operation_id": "update_user_api_admin_panel_users__user_id__put",
+      "summary": "Update User",
+      "description": "Update a user's information.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/users/{user_id}",
+      "method": "DELETE",
+      "operation_id": "delete_user_api_admin_panel_users__user_id__delete",
+      "summary": "Delete User",
+      "description": "Delete a user (soft delete by deactivating).",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/metrics",
+      "method": "GET",
+      "operation_id": "get_system_metrics_api_admin_panel_metrics_get",
+      "summary": "Get System Metrics",
+      "description": "Return system metrics for dashboard charts with caching.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/panel/audit-logs",
+      "method": "GET",
+      "operation_id": "get_audit_logs_api_admin_panel_audit_logs_get",
+      "summary": "Get Audit Logs",
+      "description": "Return audit log entries with filtering and pagination from database.",
+      "tags": [
+        "admin",
+        "panel"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 4,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/cache/stats",
+      "method": "GET",
+      "operation_id": "get_cache_stats_api_admin_cache_stats_get",
+      "summary": "Get Cache Stats",
+      "description": "Get cache statistics for monitoring.\n\nReturns:\n    Cache stats including L1 and L2 metrics",
+      "tags": [
+        "admin",
+        "cache"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/admin/cache/clear",
+      "method": "POST",
+      "operation_id": "clear_cache_api_admin_cache_clear_post",
+      "summary": "Clear Cache",
+      "description": "Clear all caches (L1 and L2).\n\nWARNING: This will clear ALL cached data and may temporarily\nimpact performance while caches are repopulated.\n\nReturns:\n    Success status",
+      "tags": [
+        "admin",
+        "cache"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/admin/cache/invalidate",
+      "method": "POST",
+      "operation_id": "invalidate_cache_pattern_api_admin_cache_invalidate_post",
+      "summary": "Invalidate Cache Pattern",
+      "description": "Invalidate cache entries matching a pattern.\n\nExamples:\n- \"rag_query:*\" - All RAG query caches\n- \"user:*\" - All user data caches\n- \"search_results:*\" - All search result caches\n\nReturns:\n    Number of keys deleted",
+      "tags": [
+        "admin",
+        "cache"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags",
+      "method": "GET",
+      "operation_id": "list_feature_flags_api_admin_feature_flags_get",
+      "summary": "List Feature Flags",
+      "description": "List all feature flags.\n\nReturns all feature flags with their current state.\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags",
+      "method": "POST",
+      "operation_id": "create_feature_flag_api_admin_feature_flags_post",
+      "summary": "Create Feature Flag",
+      "description": "Create a new feature flag.\n\nCreates a new feature flag with the specified configuration.\n\nArgs:\n    flag_data: Feature flag configuration\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags/{flag_name}",
+      "method": "GET",
+      "operation_id": "get_feature_flag_api_admin_feature_flags__flag_name__get",
+      "summary": "Get Feature Flag",
+      "description": "Get a specific feature flag.\n\nReturns detailed information about a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags/{flag_name}",
+      "method": "PATCH",
+      "operation_id": "update_feature_flag_api_admin_feature_flags__flag_name__patch",
+      "summary": "Update Feature Flag",
+      "description": "Update an existing feature flag.\n\nUpdates one or more fields of a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n    flag_update: Fields to update\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags/{flag_name}",
+      "method": "DELETE",
+      "operation_id": "delete_feature_flag_api_admin_feature_flags__flag_name__delete",
+      "summary": "Delete Feature Flag",
+      "description": "Delete a feature flag.\n\nPermanently deletes a feature flag.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/admin/feature-flags/{flag_name}/toggle",
+      "method": "POST",
+      "operation_id": "toggle_feature_flag_api_admin_feature_flags__flag_name__toggle_post",
+      "summary": "Toggle Feature Flag",
+      "description": "Toggle a boolean feature flag.\n\nQuickly toggle a boolean feature flag between enabled and disabled.\n\nArgs:\n    flag_name: Unique feature flag identifier\n\nRequires: Admin authentication",
+      "tags": [
+        "admin",
+        "feature-flags"
+      ],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/messages/{message_id}/attachments",
+      "method": "POST",
+      "operation_id": "upload_attachment_api_messages__message_id__attachments_post",
+      "summary": "Upload Attachment",
+      "description": "Upload a file attachment to a message.\n\nArgs:\n    message_id: Message UUID\n    file: File to upload\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Attachment metadata",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/messages/{message_id}/attachments",
+      "method": "GET",
+      "operation_id": "list_attachments_api_messages__message_id__attachments_get",
+      "summary": "List Attachments",
+      "description": "List all attachments for a message.\n\nArgs:\n    message_id: Message UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of attachment metadata",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/attachments/{attachment_id}",
+      "method": "DELETE",
+      "operation_id": "delete_attachment_api_attachments__attachment_id__delete",
+      "summary": "Delete Attachment",
+      "description": "Delete an attachment.\n\nArgs:\n    attachment_id: Attachment UUID\n    db: Database session\n    current_user: Authenticated user",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/attachments/{attachment_id}/download",
+      "method": "GET",
+      "operation_id": "download_attachment_api_attachments__attachment_id__download_get",
+      "summary": "Download Attachment",
+      "description": "Download an attachment file.\n\nArgs:\n    attachment_id: Attachment UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    File stream",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/clinical-contexts",
+      "method": "POST",
+      "operation_id": "create_clinical_context_api_clinical_contexts_post",
+      "summary": "Create Clinical Context",
+      "description": "Create or update clinical context for the current user.\n\nArgs:\n    context: Clinical context data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/clinical-contexts/current",
+      "method": "GET",
+      "operation_id": "get_current_clinical_context_api_clinical_contexts_current_get",
+      "summary": "Get Current Clinical Context",
+      "description": "Get clinical context for the current user.\n\nArgs:\n    session_id: Optional session ID to filter by\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record or None if not found",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/clinical-contexts/{context_id}",
+      "method": "GET",
+      "operation_id": "get_clinical_context_api_clinical_contexts__context_id__get",
+      "summary": "Get Clinical Context",
+      "description": "Get a specific clinical context by ID.\n\nArgs:\n    context_id: Clinical context UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Clinical context record",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/clinical-contexts/{context_id}",
+      "method": "PUT",
+      "operation_id": "update_clinical_context_api_clinical_contexts__context_id__put",
+      "summary": "Update Clinical Context",
+      "description": "Update a clinical context.\n\nArgs:\n    context_id: Clinical context UUID\n    context_update: Updated clinical context data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated clinical context record",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/clinical-contexts/{context_id}",
+      "method": "DELETE",
+      "operation_id": "delete_clinical_context_api_clinical_contexts__context_id__delete",
+      "summary": "Delete Clinical Context",
+      "description": "Delete a clinical context.\n\nArgs:\n    context_id: Clinical context UUID\n    db: Database session\n    current_user: Authenticated user",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders",
+      "method": "POST",
+      "operation_id": "create_folder_api_folders_post",
+      "summary": "Create Folder",
+      "description": "Create a new conversation folder.\n\nArgs:\n    folder: Folder data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Created folder",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders",
+      "method": "GET",
+      "operation_id": "list_folders_api_folders_get",
+      "summary": "List Folders",
+      "description": "List all folders for the current user.\n\nArgs:\n    parent_id: Optional parent folder ID to filter by\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of folders",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders/tree",
+      "method": "GET",
+      "operation_id": "get_folder_tree_api_folders_tree_get",
+      "summary": "Get Folder Tree",
+      "description": "Get entire folder tree for the current user.\n\nArgs:\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Hierarchical folder tree",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 0,
+      "request_body": false,
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "path": "/api/folders/{folder_id}",
+      "method": "GET",
+      "operation_id": "get_folder_api_folders__folder_id__get",
+      "summary": "Get Folder",
+      "description": "Get a specific folder by ID.\n\nArgs:\n    folder_id: Folder UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Folder details",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders/{folder_id}",
+      "method": "PUT",
+      "operation_id": "update_folder_api_folders__folder_id__put",
+      "summary": "Update Folder",
+      "description": "Update a folder.\n\nArgs:\n    folder_id: Folder UUID\n    folder_update: Updated folder data\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated folder",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders/{folder_id}",
+      "method": "DELETE",
+      "operation_id": "delete_folder_api_folders__folder_id__delete",
+      "summary": "Delete Folder",
+      "description": "Delete a folder.\nAll child folders and sessions will be orphaned (parent_folder_id = NULL).\n\nArgs:\n    folder_id: Folder UUID\n    db: Database session\n    current_user: Authenticated user",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/folders/{folder_id}/move/{target_folder_id}",
+      "method": "POST",
+      "operation_id": "move_folder_api_folders__folder_id__move__target_folder_id__post",
+      "summary": "Move Folder",
+      "description": "Move a folder to a new parent folder.\n\nArgs:\n    folder_id: Folder UUID to move\n    target_folder_id: New parent folder UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Updated folder",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_id}/export/markdown",
+      "method": "GET",
+      "operation_id": "export_markdown_api_sessions__session_id__export_markdown_get",
+      "summary": "Export Markdown",
+      "description": "Export conversation as Markdown file.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Markdown file",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_id}/export/pdf",
+      "method": "GET",
+      "operation_id": "export_pdf_api_sessions__session_id__export_pdf_get",
+      "summary": "Export Pdf",
+      "description": "Export conversation as PDF file.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    PDF file",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_id}/share",
+      "method": "POST",
+      "operation_id": "create_share_link_api_sessions__session_id__share_post",
+      "summary": "Create Share Link",
+      "description": "Create a shareable link for a conversation.\n\nArgs:\n    session_id: Session UUID\n    share_request: Share configuration\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    Share link details",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": true,
+      "responses": [
+        "201",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/shared/{share_token}",
+      "method": "GET",
+      "operation_id": "get_shared_conversation_api_shared__share_token__get",
+      "summary": "Get Shared Conversation",
+      "description": "Access a shared conversation.\n\nArgs:\n    share_token: Share token from URL\n    password: Optional password for protected shares\n    db: Database session\n\nReturns:\n    Shared conversation details",
+      "tags": [],
+      "deprecated": false,
+      "security": [],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_id}/share/{share_token}",
+      "method": "DELETE",
+      "operation_id": "revoke_share_link_api_sessions__session_id__share__share_token__delete",
+      "summary": "Revoke Share Link",
+      "description": "Revoke a share link.\n\nArgs:\n    session_id: Session UUID\n    share_token: Share token to revoke\n    db: Database session\n    current_user: Authenticated user",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 2,
+      "request_body": false,
+      "responses": [
+        "204",
+        "422"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_id}/shares",
+      "method": "GET",
+      "operation_id": "list_share_links_api_sessions__session_id__shares_get",
+      "summary": "List Share Links",
+      "description": "List all active share links for a conversation.\n\nArgs:\n    session_id: Session UUID\n    db: Database session\n    current_user: Authenticated user\n\nReturns:\n    List of share links",
+      "tags": [],
+      "deprecated": false,
+      "security": [
+        {
+          "HTTPBearer": []
+        }
+      ],
+      "parameters": 1,
+      "request_body": false,
+      "responses": [
+        "200",
+        "422"
+      ]
+    }
+  ]
+}

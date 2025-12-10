@@ -1,0 +1,137 @@
+name: OpenAI Integration Verification
+
+# This workflow verifies that the OpenAI API key is properly configured and working.
+# It is triggered MANUALLY via workflow_dispatch to avoid unnecessary API costs.
+#
+# Prerequisites:
+#   - Repository secret: OPENAI_API_KEY (required)
+#   - Repository secret: OPENAI_PROJECT (optional, for project-scoped keys)
+#
+# Usage:
+#   1. Go to Actions tab in GitHub
+#   2. Select "OpenAI Integration Verification" workflow
+#   3. Click "Run workflow"
+#   4. Select branch and click "Run workflow"
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_live_tests:
+        description: "Run live OpenAI integration tests (makes API calls)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  verify-openai:
+    name: Verify OpenAI Configuration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: "services/api-gateway/requirements.txt"
+
+      - name: Check for OpenAI API key
+        run: |
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "::error::OPENAI_API_KEY secret is not set!"
+            echo ""
+            echo "To fix this:"
+            echo "1. Go to repository Settings > Secrets and variables > Actions"
+            echo "2. Add a new repository secret named OPENAI_API_KEY"
+            echo "3. Set its value to your OpenAI API key (starts with sk-)"
+            exit 1
+          fi
+          echo "OPENAI_API_KEY secret is configured"
+
+      - name: Create .env file
+        run: |
+          # Create minimal .env for the verification script
+          # NOTE: Only the key is passed, never logged or printed
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+          if [ -n "${{ secrets.OPENAI_PROJECT }}" ]; then
+            echo "OPENAI_PROJECT=${{ secrets.OPENAI_PROJECT }}" >> .env
+          fi
+          # Add other required vars with defaults for CI
+          echo "ENVIRONMENT=ci" >> .env
+          echo "DEBUG=false" >> .env
+          echo "SECRET_KEY=ci-test-key-not-for-production" >> .env
+          echo "JWT_SECRET=ci-test-jwt-not-for-production" >> .env
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/test" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+          echo "QDRANT_HOST=localhost" >> .env
+          echo "QDRANT_PORT=6333" >> .env
+
+      - name: Install backend dependencies
+        run: |
+          cd services/api-gateway
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run OpenAI key check script
+        run: |
+          echo "Running OpenAI API key verification..."
+          make check-openai
+
+      - name: Run OpenAI unit tests
+        run: |
+          cd services/api-gateway
+          source venv/bin/activate
+          export PYTHONPATH=.
+          echo "Running OpenAI configuration tests (unit tests only)..."
+          pytest tests/integration/test_openai_config.py -v -k "not TestOpenAILiveIntegration"
+
+      - name: Run OpenAI live integration tests
+        if: ${{ inputs.run_live_tests == 'true' }}
+        env:
+          LIVE_OPENAI_TESTS: "1"
+        run: |
+          cd services/api-gateway
+          source venv/bin/activate
+          export PYTHONPATH=.
+          echo "Running live OpenAI integration tests..."
+          echo "NOTE: These tests make actual API calls to OpenAI"
+          pytest tests/integration/test_openai_config.py::TestOpenAILiveIntegration -v
+
+      - name: Run health endpoint tests
+        run: |
+          cd services/api-gateway
+          source venv/bin/activate
+          export PYTHONPATH=.
+          echo "Running health endpoint tests..."
+          pytest tests/integration/test_health_endpoint.py -v
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "========================================"
+          echo "OpenAI Integration Verification Summary"
+          echo "========================================"
+          echo ""
+          echo "If all steps passed:"
+          echo "  - OPENAI_API_KEY is properly configured"
+          echo "  - Configuration tests passed"
+          if [ "${{ inputs.run_live_tests }}" == "true" ]; then
+            echo "  - Live API tests passed (key is valid and working)"
+          else
+            echo "  - Live API tests were skipped"
+          fi
+          echo "  - Health endpoint tests passed"
+          echo ""
+          echo "The OpenAI integration is ready for use."

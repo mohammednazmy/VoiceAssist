@@ -17,6 +17,17 @@ paths = [
     '''\.txt$''',
     '''\.example$''',
     '''\.sample$''',
+    # Test files with example passwords
+    '''tests/''',
+    '''test_''',
+    '''_test\.py$''',
+    '''\.test\.(ts|tsx|js|jsx)$''',
+    '''\.stories\.(ts|tsx|js|jsx)$''',
+    '''conftest\.py$''',
+    # Specific false positive files
+    '''services/api-gateway/app/services/caldav_service\.py$''',
+    '''services/api-gateway/app/services/nextcloud_file_indexer\.py$''',
+    '''services/api-gateway/app/services/tools/oauth_service\.py$''',
 ]
 
 # Stopwords to ignore

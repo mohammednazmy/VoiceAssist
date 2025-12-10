@@ -1,0 +1,8 @@
+{
+  "path": "services/api-gateway/app/api/__init__.py",
+  "language": "python",
+  "size": 24,
+  "last_modified": "2025-11-21T15:01:50.837Z",
+  "lines": 2,
+  "content": "\"\"\"API route modules\"\"\"\n"
+}

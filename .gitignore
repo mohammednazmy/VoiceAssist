@@ -17,6 +17,7 @@ build/
 .env.local
 .env.*.local
 *.env
+e2e/.env*
 
 # IDEs
 .vscode/
@@ -29,6 +30,9 @@ build/
 # Logs
 *.log
 logs/
+# Allow source-controlled log components in the admin panel UI
+!apps/admin-panel/src/components/logs/
+!apps/admin-panel/src/components/logs/*
 *.log.*
 
 # Data directories
@@ -48,11 +52,22 @@ out/
 build/
 dist/
 
+apps/docs-site/public/search-index.json
+
+artifacts/
+
+
+# Turbo
+.turbo/
+
 # Testing
 .coverage
 htmlcov/
 .pytest_cache/
 coverage/
+playwright-report/
+test-results/
+e2e/.auth/
 
 # Docker
 *.pid
@@ -92,3 +107,6 @@ __MACOSX/
 # Jaeger observability data
 infrastructure/observability/jaeger/data/
 infrastructure/observability/jaeger/key/
+apps/web-app/dev-dist/
+.ai/
+apps/docs-site/public/agent/repo-index.json

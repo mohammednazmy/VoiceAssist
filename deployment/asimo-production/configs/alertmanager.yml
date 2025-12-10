@@ -1,0 +1,62 @@
+# AlertManager Configuration for VoiceAssist
+
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: "localhost:25"
+  smtp_from: "alertmanager@asimo.io"
+  smtp_require_tls: false
+
+# The root route with all parameters, which are inherited by the child routes
+route:
+  receiver: "default"
+  group_by: ["alertname", "cluster", "service"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  routes:
+    - match:
+        severity: critical
+      receiver: "critical"
+      continue: true
+    - match:
+        severity: warning
+      receiver: "warning"
+    - match:
+        compliance: hipaa
+      receiver: "hipaa-compliance"
+
+receivers:
+  - name: "default"
+    email_configs:
+      - to: "admin@asimo.io"
+        send_resolved: true
+        headers:
+          subject: "[VoiceAssist] {{ .GroupLabels.alertname }}"
+
+  - name: "critical"
+    email_configs:
+      - to: "admin@asimo.io"
+        send_resolved: true
+        headers:
+          subject: "[CRITICAL] VoiceAssist Alert: {{ .GroupLabels.alertname }}"
+
+  - name: "warning"
+    email_configs:
+      - to: "admin@asimo.io"
+        send_resolved: true
+        headers:
+          subject: "[WARNING] VoiceAssist: {{ .GroupLabels.alertname }}"
+
+  - name: "hipaa-compliance"
+    email_configs:
+      - to: "admin@asimo.io,compliance@asimo.io"
+        send_resolved: true
+        headers:
+          subject: "[HIPAA COMPLIANCE] VoiceAssist Security Alert"
+
+inhibit_rules:
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname", "cluster", "service"]

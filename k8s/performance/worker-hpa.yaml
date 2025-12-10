@@ -78,10 +78,10 @@ spec:
       stabilizationWindowSeconds: 30
       policies:
         - type: Percent
-          value: 50  # Increase by 50% of current pods
+          value: 50 # Increase by 50% of current pods
           periodSeconds: 60
         - type: Pods
-          value: 1  # Add at least 1 pod
+          value: 1 # Add at least 1 pod
           periodSeconds: 60
       # Use the policy that scales faster
       selectPolicy: Max
@@ -93,10 +93,10 @@ spec:
       stabilizationWindowSeconds: 600
       policies:
         - type: Percent
-          value: 10  # Remove 10% of current pods
-          periodSeconds: 600  # Every 10 minutes
+          value: 10 # Remove 10% of current pods
+          periodSeconds: 600 # Every 10 minutes
         - type: Pods
-          value: 1  # Remove maximum 1 pod at once
+          value: 1 # Remove maximum 1 pod at once
           periodSeconds: 600
       # Use the policy that scales slower
       selectPolicy: Min

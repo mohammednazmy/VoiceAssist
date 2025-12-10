@@ -1,0 +1,21 @@
+/**
+ * VoiceAssist UI Global Styles
+ * Tailwind CSS imports and custom styles
+ */
+
+@import './theme-variables.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background-primary text-text-primary;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}

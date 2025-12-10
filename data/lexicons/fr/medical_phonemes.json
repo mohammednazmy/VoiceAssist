@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 10,
+    "last_updated": "2024-12-04",
+    "language": "fr",
+    "alphabet": "ipa",
+    "status": "in_progress",
+    "categories": ["drug_names", "conditions", "anatomy"]
+  },
+  "diabète": "djaˈbɛt",
+  "hypertension": "ipɛʁtɑ̃sjɔ̃",
+  "cœur": "kœʁ",
+  "poumon": "pumɔ̃",
+  "foie": "fwa",
+  "rein": "ʁɛ̃",
+  "estomac": "ɛstɔma",
+  "cerveau": "sɛʁvo",
+  "douleur": "dulœʁ",
+  "fièvre": "fjɛvʁ"
+}

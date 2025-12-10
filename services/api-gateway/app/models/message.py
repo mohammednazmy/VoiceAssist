@@ -1,13 +1,14 @@
 """
 Message model for conversation history
 """
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Integer, Boolean
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
-from datetime import datetime
+
 import uuid
+from datetime import datetime
 
 from app.core.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 
 class Message(Base):
@@ -15,12 +16,51 @@ class Message(Base):
 
     __tablename__ = "messages"
 
+    # Table-level constraints for idempotency
+    __table_args__ = (
+        # Unique constraint for idempotent message creation
+        # Only enforced when client_message_id is NOT NULL
+        UniqueConstraint(
+            "session_id",
+            "branch_id",
+            "client_message_id",
+            name="uq_message_idempotency",
+        ),
+        # Partial index for faster idempotency lookups
+        Index(
+            "ix_message_idempotency_lookup",
+            "session_id",
+            "branch_id",
+            "client_message_id",
+            postgresql_where="client_message_id IS NOT NULL",
+        ),
+    )
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Message content
     role = Column(String(50), nullable=False)  # 'user', 'assistant', 'system', 'tool'
     content = Column(Text, nullable=False)
+
+    # Conversation branching support
+    parent_message_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    branch_id = Column(String(100), nullable=True, index=True)  # Identifies which branch this message belongs to
+
+    # Idempotency support - client-provided message ID for deduplication
+    client_message_id = Column(
+        String(100), nullable=True, index=True
+    )  # Client-generated ID for idempotent message creation
 
     # Tool usage tracking
     tool_calls = Column(JSONB, nullable=True)  # Tool calls made in this message
@@ -36,6 +76,14 @@ class Message(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    # Relationships
+    attachments = relationship(
+        "MessageAttachment",
+        back_populates="message",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     def __repr__(self):
         return f"<Message(id={self.id}, session_id={self.session_id}, role={self.role})>"

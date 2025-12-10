@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2181,SC2086,SC2155
 
 # VoiceAssist HPA Setup Script
 # Installs and configures Horizontal Pod Autoscaling for VoiceAssist

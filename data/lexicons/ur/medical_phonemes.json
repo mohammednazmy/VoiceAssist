@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 10,
+    "last_updated": "2024-12-04",
+    "language": "ur",
+    "alphabet": "ipa",
+    "status": "in_progress",
+    "categories": ["drug_names", "conditions", "anatomy"],
+    "note": "Urdu uses Arabic script. RTL support required."
+  },
+  "ذیابیطس": "zɪjɑːbiːtəs",
+  "ہائی بلڈ پریشر": "ɦɑːiː bləɖ preʃər",
+  "دل": "dɪl",
+  "پھیپھڑے": "pʰeːpʰɽeː",
+  "جگر": "d͡ʒɪɡər",
+  "گردہ": "ɡʊrdɑː",
+  "پیٹ": "peːʈ",
+  "دماغ": "dɪmɑːɣ",
+  "درد": "dərd",
+  "بخار": "bʊxɑːr"
+}

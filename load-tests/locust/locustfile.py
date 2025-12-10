@@ -85,9 +85,34 @@ class RegularUserTasks(TaskSet):
 
     @task(10)
     def check_history(self):
-        """Check conversation history (placeholder)."""
-        # TODO: Implement when history endpoint is available
-        pass
+        """Check conversation history."""
+        if not hasattr(self, 'tokens') or not self.tokens:
+            return
+
+        headers = AuthHelper.get_auth_headers(self.tokens.get('access_token'))
+
+        with self.client.get(
+            config.ENDPOINTS["conversations"],
+            headers=headers,
+            params={"page": 1, "pageSize": 10},
+            name="/api/conversations [list]",
+            catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+                # Store conversation IDs for other tasks
+                try:
+                    data = response.json()
+                    if data.get("data", {}).get("items"):
+                        self.conversation_ids = [
+                            item["id"] for item in data["data"]["items"]
+                        ]
+                except Exception:
+                    pass
+            elif response.status_code == 401:
+                response.failure("Unauthorized - token expired")
+            else:
+                response.failure(f"Failed: {response.status_code}")
 
     @task(5)
     def view_profile(self):
@@ -175,15 +200,83 @@ class PowerUserTasks(TaskSet):
 
     @task(15)
     def integration_actions(self):
-        """Use integrations (placeholder)."""
-        # TODO: Implement when integration endpoints are available
-        pass
+        """Use integrations - list calendar events."""
+        if not hasattr(self, 'tokens') or not self.tokens:
+            return
+
+        headers = AuthHelper.get_auth_headers(self.tokens.get('access_token'))
+
+        # Test calendar integration
+        with self.client.get(
+            config.ENDPOINTS["integrations_calendar"],
+            headers=headers,
+            name="/api/integrations/calendar [list]",
+            catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            elif response.status_code == 401:
+                response.failure("Unauthorized - token expired")
+            elif response.status_code == 404:
+                # Integration not configured - still valid
+                response.success()
+            else:
+                response.failure(f"Failed: {response.status_code}")
 
     @task(10)
     def export_data(self):
-        """Export conversation data (placeholder)."""
-        # TODO: Implement when export endpoint is available
-        pass
+        """Export conversation data as markdown."""
+        if not hasattr(self, 'tokens') or not self.tokens:
+            return
+
+        # Need a conversation ID to export
+        if not hasattr(self, 'conversation_ids') or not self.conversation_ids:
+            # First get conversations to find one to export
+            headers = AuthHelper.get_auth_headers(self.tokens.get('access_token'))
+            with self.client.get(
+                config.ENDPOINTS["conversations"],
+                headers=headers,
+                params={"page": 1, "pageSize": 5},
+                name="/api/conversations [for-export]",
+                catch_response=True
+            ) as response:
+                if response.status_code == 200:
+                    response.success()
+                    try:
+                        data = response.json()
+                        if data.get("data", {}).get("items"):
+                            self.conversation_ids = [
+                                item["id"] for item in data["data"]["items"]
+                            ]
+                    except Exception:
+                        return
+                else:
+                    response.failure(f"Failed to get conversations: {response.status_code}")
+                    return
+
+        if not self.conversation_ids:
+            return
+
+        # Export a random conversation
+        session_id = random.choice(self.conversation_ids)
+        headers = AuthHelper.get_auth_headers(self.tokens.get('access_token'))
+
+        export_url = config.ENDPOINTS["export_markdown"].format(session_id=session_id)
+        with self.client.get(
+            export_url,
+            headers=headers,
+            name="/api/sessions/{id}/export/markdown",
+            catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            elif response.status_code == 401:
+                response.failure("Unauthorized - token expired")
+            elif response.status_code == 404:
+                # Conversation may have been deleted
+                response.success()
+            else:
+                response.failure(f"Failed: {response.status_code}")
 
     @task(5)
     def check_metrics(self):
@@ -273,9 +366,28 @@ class AdminUserTasks(TaskSet):
 
     @task(15)
     def manage_users(self):
-        """Manage users (placeholder)."""
-        # TODO: Implement when user management endpoints are available
-        pass
+        """Manage users - list users as admin."""
+        if not hasattr(self, 'tokens') or not self.tokens:
+            return
+
+        headers = AuthHelper.get_auth_headers(self.tokens.get('access_token'))
+
+        with self.client.get(
+            config.ENDPOINTS["admin_users"],
+            headers=headers,
+            params={"page": 1, "pageSize": 20},
+            name="/api/admin/users [list]",
+            catch_response=True
+        ) as response:
+            if response.status_code == 200:
+                response.success()
+            elif response.status_code == 401:
+                response.failure("Unauthorized - token expired")
+            elif response.status_code == 403:
+                # Not admin - expected for some test users
+                response.success()
+            else:
+                response.failure(f"Failed: {response.status_code}")
 
     @task(10)
     def cache_management(self):

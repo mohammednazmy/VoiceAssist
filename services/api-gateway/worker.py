@@ -14,13 +14,10 @@ Environment:
     - OPENAI_API_KEY
     - QDRANT_URL
 """
-import asyncio
-import logging
-from arq import run_worker
-from arq.connections import RedisSettings
 
-from app.services.document_queue import WorkerSettings
 from app.core.logging import get_logger
+from app.services.document_queue import WorkerSettings
+from arq import run_worker
 
 logger = get_logger(__name__)
 

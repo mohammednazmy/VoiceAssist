@@ -33,7 +33,7 @@ steady-state-hypothesis:
           password: "testpass"
         timeout: 5
         expect:
-          - status: [200, 401]  # Either success or auth failure is fine
+          - status: [200, 401] # Either success or auth failure is fine
 
 method:
   - name: "stop-redis-container"
@@ -54,7 +54,7 @@ method:
         url: "${api_url}/health"
         timeout: 5
         expect:
-          - status: [200, 503]  # May report degraded health
+          - status: [200, 503] # May report degraded health
 
   - name: "test-endpoint-without-cache"
     type: probe
@@ -69,7 +69,7 @@ method:
         password: "wrong"
       timeout: 10
       expect:
-        - status: 401  # Should still validate auth
+        - status: 401 # Should still validate auth
 
 rollbacks:
   - name: "restart-redis-container"

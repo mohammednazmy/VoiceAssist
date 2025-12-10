@@ -1,3 +1,25 @@
+---
+title: Technical Architecture
+slug: client-implementation/technical-architecture
+summary: "**Date:** 2025-11-21"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - technical
+  - architecture
+category: planning
+ai_summary: >-
+  Version: 1.0 Date: 2025-11-21 Status: Draft - Awaiting Team Review --- 1.
+  Architecture Overview 2. Monorepo Structure 3. Shared Packages 4. State
+  Management 5. API Communication 6. Real-time Communication 7. Authentication &
+  Authorization 8. Routing & Navigation 9. Performance Optimization 10. Se...
+---
+
 # VoiceAssist Client Applications - Technical Architecture
 
 **Version:** 1.0
@@ -235,6 +257,7 @@ VoiceAssist/
 ### Package Manager: pnpm with Workspaces
 
 **Why pnpm?**
+
 - Faster than npm/yarn (symlinked node_modules)
 - Disk space efficient (global store)
 - Strict dependency resolution
@@ -245,8 +268,8 @@ VoiceAssist/
 ```yaml
 # pnpm-workspace.yaml
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - "apps/*"
+  - "packages/*"
 ```
 
 ```json
@@ -276,6 +299,7 @@ packages:
 ### Build Orchestration: Turborepo
 
 **Why Turborepo?**
+
 - Intelligent task caching
 - Parallel execution
 - Remote caching support
@@ -328,59 +352,53 @@ packages:
 ```tsx
 // packages/ui/src/components/Button/Button.tsx
 
-import { forwardRef } from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
+import { forwardRef } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../../utils/cn";
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
   {
     variants: {
       variant: {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600',
-        secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus-visible:ring-gray-500',
-        outline: 'border border-gray-300 bg-transparent hover:bg-gray-100 focus-visible:ring-gray-500',
-        ghost: 'hover:bg-gray-100 hover:text-gray-900',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
+        primary: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600",
+        secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus-visible:ring-gray-500",
+        outline: "border border-gray-300 bg-transparent hover:bg-gray-100 focus-visible:ring-gray-500",
+        ghost: "hover:bg-gray-100 hover:text-gray-900",
+        danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
       },
       size: {
-        sm: 'h-9 px-3',
-        md: 'h-10 px-4',
-        lg: 'h-11 px-8',
-        icon: 'h-10 w-10',
+        sm: "h-9 px-3",
+        md: "h-10 px-4",
+        lg: "h-11 px-8",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
-      variant: 'primary',
-      size: 'md',
+      variant: "primary",
+      size: "md",
     },
-  }
+  },
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
+    return <button className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  },
 );
 
-Button.displayName = 'Button';
+Button.displayName = "Button";
 ```
 
 **Component Organization:**
 
 Each component follows this structure:
+
 ```
 Button/
 ├── Button.tsx           # Main component
@@ -395,7 +413,7 @@ Button/
 ```tsx
 // packages/ui/src/hooks/useMediaQuery.ts
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -411,15 +429,15 @@ export function useMediaQuery(query: string): boolean {
       setMatches(event.matches);
     };
 
-    media.addEventListener('change', listener);
-    return () => media.removeEventListener('change', listener);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
   }, [query]);
 
   return matches;
 }
 
 // Usage example
-const isMobile = useMediaQuery('(max-width: 768px)');
+const isMobile = useMediaQuery("(max-width: 768px)");
 ```
 
 ### 3.2 Types Package (@voiceassist/types)
@@ -434,7 +452,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   specialty?: string;
   licenseNumber?: string;
   institution?: string;
@@ -448,7 +466,7 @@ export interface User {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-  tokenType: 'Bearer';
+  tokenType: "Bearer";
   expiresIn: number;
 }
 
@@ -457,7 +475,7 @@ export interface AuthTokens {
 export interface ChatMessage {
   id: string;
   sessionId: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   citations?: Citation[];
   attachments?: Attachment[];
@@ -468,13 +486,13 @@ export interface ChatMessage {
 
 export interface Citation {
   id: string;
-  sourceType: 'textbook' | 'journal' | 'guideline' | 'uptodate' | 'note' | 'trial';
+  sourceType: "textbook" | "journal" | "guideline" | "uptodate" | "note" | "trial";
   title: string;
   subtitle?: string;
   authors?: string[];
   publicationYear?: number;
-  recommendationClass?: 'I' | 'IIa' | 'IIb' | 'III';
-  evidenceLevel?: 'A' | 'B' | 'C';
+  recommendationClass?: "I" | "IIa" | "IIb" | "III";
+  evidenceLevel?: "A" | "B" | "C";
   doi?: string;
   pmid?: string;
   url?: string;
@@ -485,18 +503,39 @@ export interface Citation {
 // packages/types/src/events/websocket.ts
 
 export type ClientEvent =
-  | { type: 'session.start'; sessionId?: string; mode: string; clinicalContext?: any }
-  | { type: 'message.send'; sessionId: string; content: string; attachments?: string[] }
-  | { type: 'audio.chunk'; sessionId: string; data: ArrayBuffer }
-  | { type: 'generation.stop'; sessionId: string };
+  | {
+      type: "session.start";
+      sessionId?: string;
+      mode: string;
+      clinicalContext?: any;
+    }
+  | {
+      type: "message.send";
+      sessionId: string;
+      content: string;
+      attachments?: string[];
+    }
+  | { type: "audio.chunk"; sessionId: string; data: ArrayBuffer }
+  | { type: "generation.stop"; sessionId: string };
 
 export type ServerEvent =
-  | { type: 'session.started'; sessionId: string }
-  | { type: 'message.delta'; sessionId: string; messageId: string; role: string; contentDelta: string }
-  | { type: 'message.complete'; sessionId: string; messageId: string }
-  | { type: 'citation.list'; sessionId: string; messageId: string; citations: Citation[] }
-  | { type: 'audio.chunk'; sessionId: string; data: ArrayBuffer }
-  | { type: 'error'; code: string; message: string };
+  | { type: "session.started"; sessionId: string }
+  | {
+      type: "message.delta";
+      sessionId: string;
+      messageId: string;
+      role: string;
+      contentDelta: string;
+    }
+  | { type: "message.complete"; sessionId: string; messageId: string }
+  | {
+      type: "citation.list";
+      sessionId: string;
+      messageId: string;
+      citations: Citation[];
+    }
+  | { type: "audio.chunk"; sessionId: string; data: ArrayBuffer }
+  | { type: "error"; code: string; message: string };
 ```
 
 ### 3.3 API Client Package (@voiceassist/api-client)
@@ -506,16 +545,16 @@ export type ServerEvent =
 ```tsx
 // packages/api-client/src/client.ts
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import { useAuth } from '@voiceassist/stores'; // Import from shared store
+import axios, { AxiosInstance, AxiosError } from "axios";
+import { useAuth } from "@voiceassist/stores"; // Import from shared store
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -530,7 +569,7 @@ apiClient.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor - Handle token refresh
@@ -547,7 +586,7 @@ apiClient.interceptors.response.use(
         const { refreshToken } = useAuth.getState();
 
         if (!refreshToken) {
-          throw new Error('No refresh token');
+          throw new Error("No refresh token");
         }
 
         // Refresh token
@@ -558,13 +597,13 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed, logout user
         useAuth.getState().logout();
-        window.location.href = '/login';
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Error handler helper
@@ -575,19 +614,19 @@ export function handleApiError(error: unknown): string {
     }
 
     if (error.response?.status === 404) {
-      return 'Resource not found';
+      return "Resource not found";
     }
 
     if (error.response?.status === 500) {
-      return 'Server error. Please try again later.';
+      return "Server error. Please try again later.";
     }
 
-    if (error.code === 'ECONNABORTED') {
-      return 'Request timeout. Please try again.';
+    if (error.code === "ECONNABORTED") {
+      return "Request timeout. Please try again.";
     }
   }
 
-  return 'An unexpected error occurred';
+  return "An unexpected error occurred";
 }
 ```
 
@@ -598,6 +637,7 @@ export function handleApiError(error: unknown): string {
 ### Global State: Zustand
 
 **Why Zustand?**
+
 - Simple API, minimal boilerplate
 - No providers needed
 - TypeScript-friendly
@@ -610,10 +650,10 @@ export function handleApiError(error: unknown): string {
 ```tsx
 // packages/stores/src/authStore.ts
 
-import { create } from 'zustand';
-import { persist, devtools } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import type { User, AuthTokens } from '@voiceassist/types';
+import { create } from "zustand";
+import { persist, devtools } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import type { User, AuthTokens } from "@voiceassist/types";
 
 interface AuthState {
   user: User | null;
@@ -673,7 +713,7 @@ export const useAuth = create<AuthStore>()(
         refreshToken: async () => {
           const { tokens } = get();
           if (!tokens?.refreshToken) {
-            throw new Error('No refresh token');
+            throw new Error("No refresh token");
           }
 
           const response = await authApi.refresh(tokens.refreshToken);
@@ -685,16 +725,16 @@ export const useAuth = create<AuthStore>()(
         },
       })),
       {
-        name: 'voiceassist-auth',
+        name: "voiceassist-auth",
         partialize: (state) => ({
           user: state.user,
           tokens: state.tokens,
           isAuthenticated: state.isAuthenticated,
         }),
-      }
+      },
     ),
-    { name: 'AuthStore' }
-  )
+    { name: "AuthStore" },
+  ),
 );
 ```
 
@@ -703,10 +743,10 @@ export const useAuth = create<AuthStore>()(
 ```tsx
 // apps/web-app/src/stores/chatStore.ts
 
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import type { ChatMessage, Conversation } from '@voiceassist/types';
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import type { ChatMessage, Conversation } from "@voiceassist/types";
 
 interface ChatState {
   conversations: Conversation[];
@@ -782,8 +822,8 @@ export const useChat = create<ChatStore>()(
         });
       },
     })),
-    { name: 'ChatStore' }
-  )
+    { name: "ChatStore" },
+  ),
 );
 ```
 
@@ -806,8 +846,8 @@ VITE_WS_URL=wss://voice.asimo.io
 ```tsx
 // packages/api-client/src/chat.ts
 
-import { apiClient, handleApiError } from './client';
-import type { Conversation, ChatMessage } from '@voiceassist/types';
+import { apiClient, handleApiError } from "./client";
+import type { Conversation, ChatMessage } from "@voiceassist/types";
 
 export const chatApi = {
   /**
@@ -815,7 +855,7 @@ export const chatApi = {
    */
   getConversations: async (): Promise<Conversation[]> => {
     try {
-      const response = await apiClient.get<Conversation[]>('/api/conversations');
+      const response = await apiClient.get<Conversation[]>("/api/conversations");
       return response.data;
     } catch (error) {
       throw new Error(handleApiError(error));
@@ -834,9 +874,7 @@ export const chatApi = {
    * Get messages for a conversation
    */
   getMessages: async (conversationId: string): Promise<ChatMessage[]> => {
-    const response = await apiClient.get<ChatMessage[]>(
-      `/api/conversations/${conversationId}/messages`
-    );
+    const response = await apiClient.get<ChatMessage[]>(`/api/conversations/${conversationId}/messages`);
     return response.data;
   },
 
@@ -852,23 +890,17 @@ export const chatApi = {
    */
   uploadFile: async (file: File): Promise<{ id: string; url: string }> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
-    const response = await apiClient.post<{ id: string; url: string }>(
-      '/api/files/upload',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / (progressEvent.total || 1)
-          );
-          console.log(`Upload progress: ${percentCompleted}%`);
-        },
-      }
-    );
+    const response = await apiClient.post<{ id: string; url: string }>("/api/files/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+        console.log(`Upload progress: ${percentCompleted}%`);
+      },
+    });
 
     return response.data;
   },
@@ -884,7 +916,7 @@ export const chatApi = {
 ```tsx
 // packages/api-client/src/websocket.ts
 
-import type { ClientEvent, ServerEvent } from '@voiceassist/types';
+import type { ClientEvent, ServerEvent } from "@voiceassist/types";
 
 export class WebSocketManager {
   private ws: WebSocket | null = null;
@@ -902,7 +934,7 @@ export class WebSocketManager {
         this.ws = new WebSocket(this.url);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
+          console.log("WebSocket connected");
           this.reconnectAttempts = 0;
           this.startPing();
           resolve();
@@ -913,17 +945,17 @@ export class WebSocketManager {
             const data: ServerEvent = JSON.parse(event.data);
             this.emit(data.type, data);
           } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
+            console.error("Failed to parse WebSocket message:", error);
           }
         };
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+          console.error("WebSocket error:", error);
           reject(error);
         };
 
         this.ws.onclose = () => {
-          console.log('WebSocket closed');
+          console.log("WebSocket closed");
           this.stopPing();
           this.attemptReconnect();
         };
@@ -946,7 +978,7 @@ export class WebSocketManager {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(event));
     } else {
-      console.warn('WebSocket not connected, cannot send:', event);
+      console.warn("WebSocket not connected, cannot send:", event);
     }
   }
 
@@ -979,7 +1011,7 @@ export class WebSocketManager {
 
   private startPing(): void {
     this.pingInterval = setInterval(() => {
-      this.send({ type: 'ping' } as any);
+      this.send({ type: "ping" } as any);
     }, 30000); // Ping every 30 seconds
   }
 
@@ -992,7 +1024,7 @@ export class WebSocketManager {
 
   private attemptReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
+      console.error("Max reconnection attempts reached");
       return;
     }
 
@@ -1003,7 +1035,7 @@ export class WebSocketManager {
 
     setTimeout(() => {
       this.connect().catch((error) => {
-        console.error('Reconnection failed:', error);
+        console.error("Reconnection failed:", error);
       });
     }, delay);
   }
@@ -1016,18 +1048,63 @@ export class WebSocketManager {
 
 ---
 
-*Due to length, I'll create the remaining sections in focused documents. This Technical Architecture document continues with sections on Security, Testing, Build & Deployment, etc. Should I continue with the complete Technical Architecture, or move to other documents?*
+_Due to length, I'll create the remaining sections in focused documents. This Technical Architecture document continues with sections on Security, Testing, Build & Deployment, etc. Should I continue with the complete Technical Architecture, or move to other documents?_
+
+---
+
+## 13. Internationalization (i18n)
+
+### i18n Foundation
+
+**Current Implementation:**
+
+- ✅ Locale configuration module: `packages/config/i18n.ts`
+- ✅ Supported locales: English (default), Arabic, Spanish, French
+- ✅ RTL support scaffolding for Arabic
+- ✅ Locale metadata: date/time formats, text direction, support status
+
+**Locale Configuration:**
+
+```typescript
+import { SupportedLocale, DEFAULT_LOCALE, detectBrowserLocale, getLocaleMetadata } from "@voiceassist/config/i18n";
+
+// Detect user's locale
+const userLocale = detectBrowserLocale(); // Falls back to 'en'
+
+// Get locale metadata
+const metadata = getLocaleMetadata(SupportedLocale.Arabic);
+// { code: 'ar', direction: 'rtl', isRTL: true, ... }
+```
+
+**Implementation Roadmap:**
+
+1. **Phase 1** (Current): Locale scaffolding and configuration
+2. **Phase 2** (Planned): Integration with i18next or react-intl
+3. **Phase 3** (Planned): Translation keys and message catalogs
+4. **Phase 4** (Planned): Medical content localization (Arabic priority)
+5. **Phase 5** (Planned): Dynamic locale switching and persistence
+
+**Extension Points:**
+
+- `packages/config/i18n.ts` - Core configuration
+- Future: `packages/i18n/` - Translation library integration
+- Future: `apps/*/locales/` - Translation files per application
+
+See [WEB_APP_FEATURE_SPECS.md](WEB_APP_FEATURE_SPECS.md) for detailed i18n requirements.
+
+---
 
 **Current Status:**
+
 - ✅ MASTER_IMPLEMENTATION_PLAN.md (20,000+ words)
 - ⏳ WEB_APP_FEATURE_SPECS.md (Started - 3 features detailed)
 - ⏳ TECHNICAL_ARCHITECTURE.md (In progress - Core sections complete)
+- ✅ i18n foundation added (2025-11-22)
 
 Next up:
+
 - Complete Technical Architecture
 - Create Admin Panel specs
 - Create Integration Guide
 - Create Development Workflow
 - Update existing README files
-
-Should I continue?

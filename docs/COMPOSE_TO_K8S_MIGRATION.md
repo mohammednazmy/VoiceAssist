@@ -1,3 +1,33 @@
+---
+title: Compose To K8s Migration
+slug: compose-to-k8s-migration
+summary: >-
+  This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to
+  Kubernetes (Phases 11-14). The migration maintains the **separate Nextclo...
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - compose
+  - k8s
+  - migration
+category: reference
+component: "infra/k8s"
+relatedPaths:
+  - "docker-compose.yml"
+  - "k8s"
+  - "ha-dr"
+ai_summary: >-
+  This guide covers migrating VoiceAssist from Docker Compose (Phases 0-10) to
+  Kubernetes (Phases 11-14). The migration maintains the separate Nextcloud and
+  VoiceAssist stacks architecture while adding Kubernetes features like
+  auto-scaling, self-healing, and service mesh. 1. Migration Strategy 2. P...
+---
+
 # Docker Compose to Kubernetes Migration Guide
 
 ## Overview
@@ -103,23 +133,24 @@ export PATH=$PATH:$HOME/.linkerd2/bin
 
 ### Mapping Table
 
-| Docker Compose | Kubernetes | Notes |
-|----------------|-----------|-------|
-| `service` | Deployment + Service | Deployment manages pods, Service provides networking |
-| `build` | Docker build → push to registry → use image | K8s doesn't build, only pulls images |
-| `image` | Pod spec `image` | Same concept |
-| `ports` | Service `type: LoadBalancer` or Ingress | External access |
-| `expose` | Service `type: ClusterIP` | Internal access only |
-| `environment` | ConfigMap + Secret | ConfigMap for config, Secret for sensitive data |
-| `volumes` | PersistentVolumeClaim (PVC) | Persistent storage |
-| `networks` | NetworkPolicy | Control pod-to-pod communication |
-| `depends_on` | Init containers or probes | Ensure dependencies are ready |
-| `restart: always` | Deployment default behavior | K8s auto-restarts failed pods |
-| `scale` | Deployment `replicas` | Manual or HorizontalPodAutoscaler |
+| Docker Compose    | Kubernetes                                  | Notes                                                |
+| ----------------- | ------------------------------------------- | ---------------------------------------------------- |
+| `service`         | Deployment + Service                        | Deployment manages pods, Service provides networking |
+| `build`           | Docker build → push to registry → use image | K8s doesn't build, only pulls images                 |
+| `image`           | Pod spec `image`                            | Same concept                                         |
+| `ports`           | Service `type: LoadBalancer` or Ingress     | External access                                      |
+| `expose`          | Service `type: ClusterIP`                   | Internal access only                                 |
+| `environment`     | ConfigMap + Secret                          | ConfigMap for config, Secret for sensitive data      |
+| `volumes`         | PersistentVolumeClaim (PVC)                 | Persistent storage                                   |
+| `networks`        | NetworkPolicy                               | Control pod-to-pod communication                     |
+| `depends_on`      | Init containers or probes                   | Ensure dependencies are ready                        |
+| `restart: always` | Deployment default behavior                 | K8s auto-restarts failed pods                        |
+| `scale`           | Deployment `replicas`                       | Manual or HorizontalPodAutoscaler                    |
 
 ### Example Conversion
 
 **Docker Compose:**
+
 ```yaml
 services:
   api-gateway:
@@ -136,6 +167,7 @@ services:
 ```
 
 **Kubernetes:**
+
 ```yaml
 # Deployment
 apiVersion: apps/v1
@@ -153,33 +185,33 @@ spec:
         app: api-gateway
     spec:
       containers:
-      - name: api-gateway
-        image: voiceassist/api-gateway:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: voiceassist-secrets
-              key: database-url
-        - name: REDIS_URL
-          valueFrom:
-            configMapKeyRef:
-              name: voiceassist-config
-              key: redis-url
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 10
-          periodSeconds: 5
+        - name: api-gateway
+          image: voiceassist/api-gateway:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: voiceassist-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: voiceassist-config
+                  key: redis-url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
 ---
 # Service
 apiVersion: v1
@@ -190,8 +222,8 @@ spec:
   selector:
     app: api-gateway
   ports:
-  - port: 8000
-    targetPort: 8000
+    - port: 8000
+      targetPort: 8000
   type: ClusterIP
 ---
 # Ingress (external access)
@@ -204,20 +236,20 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - voiceassist.yourdomain.com
-    secretName: voiceassist-tls
+    - hosts:
+        - voiceassist.yourdomain.com
+      secretName: voiceassist-tls
   rules:
-  - host: voiceassist.yourdomain.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api-gateway
-            port:
-              number: 8000
+    - host: voiceassist.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8000
 ```
 
 ---
@@ -354,7 +386,7 @@ spec:
   resources:
     requests:
       storage: 50Gi
-  storageClassName: standard  # Or your cloud provider's storage class
+  storageClassName: standard # Or your cloud provider's storage class
 ---
 # qdrant-pvc.yaml
 apiVersion: v1
@@ -415,34 +447,34 @@ spec:
         app: nextcloud-db
     spec:
       containers:
-      - name: postgres
-        image: postgres:15-alpine
-        env:
-        - name: POSTGRES_DB
-          value: "nextcloud"
-        - name: POSTGRES_USER
-          value: "nextcloud"
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: nextcloud-secrets
-              key: postgres-password
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1"
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_DB
+              value: "nextcloud"
+            - name: POSTGRES_USER
+              value: "nextcloud"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-secrets
+                  key: postgres-password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
       volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: nextcloud-db-pvc
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: nextcloud-db-pvc
 ---
 # k8s/nextcloud/nextcloud-db-service.yaml
 apiVersion: v1
@@ -454,8 +486,8 @@ spec:
   selector:
     app: nextcloud-db
   ports:
-  - port: 5432
-    targetPort: 5432
+    - port: 5432
+      targetPort: 5432
   type: ClusterIP
 ---
 # k8s/nextcloud/nextcloud-deployment.yaml
@@ -475,61 +507,61 @@ spec:
         app: nextcloud
     spec:
       containers:
-      - name: nextcloud
-        image: nextcloud:latest
-        env:
-        - name: POSTGRES_HOST
-          value: "nextcloud-db"
-        - name: POSTGRES_DB
-          value: "nextcloud"
-        - name: POSTGRES_USER
-          value: "nextcloud"
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: nextcloud-secrets
-              key: postgres-password
-        - name: NEXTCLOUD_ADMIN_USER
-          value: "admin"
-        - name: NEXTCLOUD_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: nextcloud-secrets
-              key: admin-password
-        - name: NEXTCLOUD_TRUSTED_DOMAINS
-          value: "nextcloud.yourdomain.com"
-        - name: OVERWRITEPROTOCOL
-          value: "https"
-        - name: OVERWRITEHOST
-          value: "nextcloud.yourdomain.com"
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nextcloud-data
-          mountPath: /var/www/html
-        livenessProbe:
-          httpGet:
-            path: /status.php
-            port: 80
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /status.php
-            port: 80
-          initialDelaySeconds: 10
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "1"
-          limits:
-            memory: "4Gi"
-            cpu: "2"
+        - name: nextcloud
+          image: nextcloud:latest
+          env:
+            - name: POSTGRES_HOST
+              value: "nextcloud-db"
+            - name: POSTGRES_DB
+              value: "nextcloud"
+            - name: POSTGRES_USER
+              value: "nextcloud"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-secrets
+                  key: postgres-password
+            - name: NEXTCLOUD_ADMIN_USER
+              value: "admin"
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-secrets
+                  key: admin-password
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              value: "nextcloud.yourdomain.com"
+            - name: OVERWRITEPROTOCOL
+              value: "https"
+            - name: OVERWRITEHOST
+              value: "nextcloud.yourdomain.com"
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nextcloud-data
+              mountPath: /var/www/html
+          livenessProbe:
+            httpGet:
+              path: /status.php
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /status.php
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
       volumes:
-      - name: nextcloud-data
-        persistentVolumeClaim:
-          claimName: nextcloud-data-pvc
+        - name: nextcloud-data
+          persistentVolumeClaim:
+            claimName: nextcloud-data-pvc
 ---
 # k8s/nextcloud/nextcloud-service.yaml
 apiVersion: v1
@@ -541,8 +573,8 @@ spec:
   selector:
     app: nextcloud
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80
   type: ClusterIP
 ---
 # k8s/nextcloud/nextcloud-ingress.yaml
@@ -557,20 +589,20 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - nextcloud.yourdomain.com
-    secretName: nextcloud-tls
+    - hosts:
+        - nextcloud.yourdomain.com
+      secretName: nextcloud-tls
   rules:
-  - host: nextcloud.yourdomain.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: nextcloud
-            port:
-              number: 80
+    - host: nextcloud.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud
+                port:
+                  number: 80
 ```
 
 ```bash
@@ -594,7 +626,7 @@ metadata:
   name: postgres
   namespace: voiceassist
 spec:
-  replicas: 1  # For HA, use StatefulSet with replication
+  replicas: 1 # For HA, use StatefulSet with replication
   selector:
     matchLabels:
       app: postgres
@@ -604,37 +636,37 @@ spec:
         app: postgres
     spec:
       containers:
-      - name: postgres
-        image: pgvector/pgvector:pg16
-        env:
-        - name: POSTGRES_DB
-          valueFrom:
-            configMapKeyRef:
-              name: voiceassist-config
-              key: postgres-db
-        - name: POSTGRES_USER
-          value: "voiceassist"
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: voiceassist-secrets
-              key: database-password
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "1"
-          limits:
-            memory: "4Gi"
-            cpu: "2"
+        - name: postgres
+          image: pgvector/pgvector:pg16
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: voiceassist-config
+                  key: postgres-db
+            - name: POSTGRES_USER
+              value: "voiceassist"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: voiceassist-secrets
+                  key: database-password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
       volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
 ---
 # k8s/voiceassist/postgres-service.yaml
 apiVersion: v1
@@ -646,8 +678,8 @@ spec:
   selector:
     app: postgres
   ports:
-  - port: 5432
-    targetPort: 5432
+    - port: 5432
+      targetPort: 5432
   type: ClusterIP
 ---
 # k8s/voiceassist/api-gateway-deployment.yaml
@@ -666,37 +698,37 @@ spec:
       labels:
         app: api-gateway
       annotations:
-        linkerd.io/inject: enabled  # Enable service mesh
+        linkerd.io/inject: enabled # Enable service mesh
     spec:
       containers:
-      - name: api-gateway
-        image: voiceassist/api-gateway:latest
-        ports:
-        - containerPort: 8000
-        envFrom:
-        - configMapRef:
-            name: voiceassist-config
-        - secretRef:
-            name: voiceassist-secrets
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 10
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1"
+        - name: api-gateway
+          image: voiceassist/api-gateway:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: voiceassist-config
+            - secretRef:
+                name: voiceassist-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1"
 ---
 # k8s/voiceassist/api-gateway-service.yaml
 apiVersion: v1
@@ -708,8 +740,8 @@ spec:
   selector:
     app: api-gateway
   ports:
-  - port: 8000
-    targetPort: 8000
+    - port: 8000
+      targetPort: 8000
   type: ClusterIP
 ---
 # k8s/voiceassist/api-gateway-ingress.yaml
@@ -723,20 +755,20 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - voiceassist.yourdomain.com
-    secretName: voiceassist-tls
+    - hosts:
+        - voiceassist.yourdomain.com
+      secretName: voiceassist-tls
   rules:
-  - host: voiceassist.yourdomain.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api-gateway
-            port:
-              number: 8000
+    - host: voiceassist.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 8000
 ```
 
 ```bash
@@ -818,18 +850,18 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
 ```
 
 ### PodDisruptionBudget
@@ -861,7 +893,7 @@ metadata:
   namespace: voiceassist
 spec:
   serviceName: postgres
-  replicas: 3  # 1 primary + 2 replicas
+  replicas: 3 # 1 primary + 2 replicas
   selector:
     matchLabels:
       app: postgres
@@ -871,36 +903,36 @@ spec:
         app: postgres
     spec:
       containers:
-      - name: postgres
-        image: bitnami/postgresql-repmgr:15
-        env:
-        - name: POSTGRESQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: voiceassist-secrets
-              key: database-password
-        - name: REPMGR_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: voiceassist-secrets
-              key: repmgr-password
-        - name: REPMGR_PRIMARY_HOST
-          value: "postgres-0.postgres.voiceassist.svc.cluster.local"
-        - name: REPMGR_PARTNER_NODES
-          value: "postgres-0.postgres.voiceassist.svc.cluster.local,postgres-1.postgres.voiceassist.svc.cluster.local,postgres-2.postgres.voiceassist.svc.cluster.local"
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: data
-          mountPath: /bitnami/postgresql
+        - name: postgres
+          image: bitnami/postgresql-repmgr:15
+          env:
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: voiceassist-secrets
+                  key: database-password
+            - name: REPMGR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: voiceassist-secrets
+                  key: repmgr-password
+            - name: REPMGR_PRIMARY_HOST
+              value: "postgres-0.postgres.voiceassist.svc.cluster.local"
+            - name: REPMGR_PARTNER_NODES
+              value: "postgres-0.postgres.voiceassist.svc.cluster.local,postgres-1.postgres.voiceassist.svc.cluster.local,postgres-2.postgres.voiceassist.svc.cluster.local"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql
   volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 50Gi
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
 ```
 
 ---
@@ -1121,6 +1153,7 @@ kubectl get secret voiceassist-secrets -n voiceassist -o yaml
 ## Next Steps
 
 After successful Kubernetes migration:
+
 1. Fine-tune resource requests/limits
 2. Implement GitOps (Flux/ArgoCD)
 3. Set up cost monitoring

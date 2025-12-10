@@ -1,0 +1,42 @@
+{
+  "name": "smoke",
+  "description": "Fast critical path tests for PR validation (~5 minutes)",
+  "timeout": 300000,
+  "combinations": [
+    {
+      "name": "baseline",
+      "description": "All defaults - production configuration",
+      "flags": {}
+    },
+    {
+      "name": "vad-disabled",
+      "description": "Silero VAD completely disabled",
+      "flags": {
+        "backend.voice_silero_vad_enabled": false
+      }
+    },
+    {
+      "name": "instant-barge-disabled",
+      "description": "Instant barge-in via Deepgram SpeechStarted disabled",
+      "flags": {
+        "backend.voice_instant_barge_in": false
+      }
+    },
+    {
+      "name": "high-threshold",
+      "description": "Less sensitive VAD (fewer false positives, may miss quiet speech)",
+      "flags": {
+        "backend.voice_silero_positive_threshold": 0.7,
+        "backend.voice_silero_playback_threshold_boost": 0.2
+      }
+    },
+    {
+      "name": "low-threshold",
+      "description": "More sensitive VAD (catches quiet speech, more false positives)",
+      "flags": {
+        "backend.voice_silero_positive_threshold": 0.3,
+        "backend.voice_silero_playback_threshold_boost": 0.1
+      }
+    }
+  ]
+}

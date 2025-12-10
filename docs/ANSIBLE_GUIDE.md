@@ -1,3 +1,30 @@
+---
+title: Ansible Guide
+slug: ansible-guide
+summary: "1. [Overview](#overview)"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - frontend
+  - ai-agents
+tags:
+  - ansible
+  - guide
+category: operations
+component: "infra/ansible"
+relatedPaths:
+  - "infrastructure/ansible/playbooks"
+  - "infrastructure/ansible/roles"
+ai_summary: >-
+  1. Overview 2. Playbook Structure 3. Role Documentation 4. Inventory
+  Management 5. Variables and Secrets 6. Running Playbooks 7. HIPAA Compliance
+  Configuration 8. Best Practices 9. Troubleshooting Ansible is used to
+  configure and maintain VoiceAssist servers after they've been provisioned by
+  Terr...
+---
+
 # Ansible Guide
 
 ## Table of Contents
@@ -137,6 +164,7 @@ infrastructure/ansible/
 Performs base system configuration for all servers.
 
 **Tasks:**
+
 - Update and upgrade system packages
 - Configure timezone and NTP
 - Create system users and groups
@@ -145,6 +173,7 @@ Performs base system configuration for all servers.
 - Install essential utilities
 
 **Files:**
+
 ```
 roles/common/
 ├── tasks/
@@ -156,6 +185,7 @@ roles/common/
 ```
 
 **Key Tasks** (`tasks/main.yml`):
+
 ```yaml
 ---
 - name: Update apt cache
@@ -202,6 +232,7 @@ roles/common/
 ```
 
 **Variables** (`defaults/main.yml`):
+
 ```yaml
 ---
 system_timezone: UTC
@@ -215,6 +246,7 @@ app_home: /opt/voiceassist
 Implements security hardening and HIPAA compliance requirements.
 
 **Tasks:**
+
 - Configure UFW firewall
 - Install and configure fail2ban
 - Harden SSH configuration
@@ -225,6 +257,7 @@ Implements security hardening and HIPAA compliance requirements.
 - Configure log rotation
 
 **Key Tasks** (`tasks/main.yml`):
+
 ```yaml
 ---
 - name: Install security packages
@@ -245,9 +278,9 @@ Implements security hardening and HIPAA compliance requirements.
     port: "{{ item }}"
     proto: tcp
   loop:
-    - "22"    # SSH
-    - "80"    # HTTP
-    - "443"   # HTTPS
+    - "22" # SSH
+    - "80" # HTTP
+    - "443" # HTTPS
 
 - name: Enable UFW
   community.general.ufw:
@@ -260,36 +293,37 @@ Implements security hardening and HIPAA compliance requirements.
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
-    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
-    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
-    - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
-    - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
-    - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
-    - { regexp: '^#?Protocol', line: 'Protocol 2' }
+    - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+    - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+    - { regexp: "^#?PubkeyAuthentication", line: "PubkeyAuthentication yes" }
+    - { regexp: "^#?X11Forwarding", line: "X11Forwarding no" }
+    - { regexp: "^#?MaxAuthTries", line: "MaxAuthTries 3" }
+    - { regexp: "^#?Protocol", line: "Protocol 2" }
   notify: restart sshd
 
 - name: Configure fail2ban
   ansible.builtin.template:
     src: fail2ban-jail.local.j2
     dest: /etc/fail2ban/jail.local
-    mode: '0644'
+    mode: "0644"
   notify: restart fail2ban
 
 - name: Configure auditd rules for HIPAA
   ansible.builtin.template:
     src: audit-rules.j2
     dest: /etc/audit/rules.d/voiceassist.rules
-    mode: '0640'
+    mode: "0640"
   notify: restart auditd
 
 - name: Enable automatic security updates
   ansible.builtin.template:
     src: 50unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
-    mode: '0644'
+    mode: "0644"
 ```
 
 **HIPAA Audit Rules** (`templates/audit-rules.j2`):
+
 ```bash
 # VoiceAssist HIPAA Audit Rules
 
@@ -322,14 +356,15 @@ Implements security hardening and HIPAA compliance requirements.
 ```
 
 **Variables** (`defaults/main.yml`):
+
 ```yaml
 ---
 # Firewall ports
 firewall_allowed_ports:
-  - 22    # SSH
-  - 80    # HTTP
-  - 443   # HTTPS
-  - 6443  # Kubernetes API
+  - 22 # SSH
+  - 80 # HTTP
+  - 443 # HTTPS
+  - 6443 # Kubernetes API
 
 # fail2ban settings
 fail2ban_maxretry: 3
@@ -350,6 +385,7 @@ audit_log_retention_days: 90
 Installs and configures Docker for container workloads.
 
 **Tasks:**
+
 - Install Docker CE
 - Configure Docker daemon
 - Set up Docker logging
@@ -358,6 +394,7 @@ Installs and configures Docker for container workloads.
 - Set resource limits
 
 **Key Tasks** (`tasks/main.yml`):
+
 ```yaml
 ---
 - name: Install Docker dependencies
@@ -394,14 +431,14 @@ Installs and configures Docker for container workloads.
   ansible.builtin.template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
-    mode: '0644'
+    mode: "0644"
   notify: restart docker
 
 - name: Create Docker systemd directory
   ansible.builtin.file:
     path: /etc/systemd/system/docker.service.d
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Add user to docker group
   ansible.builtin.user:
@@ -418,6 +455,7 @@ Installs and configures Docker for container workloads.
 ```
 
 **Docker Daemon Configuration** (`templates/daemon.json.j2`):
+
 ```json
 {
   "log-driver": "json-file",
@@ -441,6 +479,7 @@ Installs and configures Docker for container workloads.
 ```
 
 **Variables** (`defaults/main.yml`):
+
 ```yaml
 ---
 docker_users:
@@ -456,6 +495,7 @@ docker_log_max_file: 3
 Installs Kubernetes tools (kubectl, helm) and configures cluster access.
 
 **Tasks:**
+
 - Install kubectl
 - Install helm
 - Configure kubeconfig
@@ -463,6 +503,7 @@ Installs Kubernetes tools (kubectl, helm) and configures cluster access.
 - Install k9s for cluster management
 
 **Key Tasks** (`tasks/main.yml`):
+
 ```yaml
 ---
 - name: Add Kubernetes GPG key
@@ -485,7 +526,7 @@ Installs Kubernetes tools (kubectl, helm) and configures cluster access.
   ansible.builtin.get_url:
     url: "https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz"
     dest: /tmp/helm.tar.gz
-    mode: '0644'
+    mode: "0644"
 
 - name: Extract helm
   ansible.builtin.unarchive:
@@ -497,14 +538,14 @@ Installs Kubernetes tools (kubectl, helm) and configures cluster access.
   ansible.builtin.copy:
     src: /tmp/linux-amd64/helm
     dest: /usr/local/bin/helm
-    mode: '0755'
+    mode: "0755"
     remote_src: yes
 
 - name: Create kubeconfig directory
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/.kube"
     state: directory
-    mode: '0700'
+    mode: "0700"
 
 - name: Configure kubectl completion
   ansible.builtin.lineinfile:
@@ -516,11 +557,12 @@ Installs Kubernetes tools (kubectl, helm) and configures cluster access.
   ansible.builtin.get_url:
     url: "https://github.com/derailed/k9s/releases/download/v{{ k9s_version }}/k9s_Linux_amd64.tar.gz"
     dest: /tmp/k9s.tar.gz
-    mode: '0644'
+    mode: "0644"
   when: install_k9s | default(true)
 ```
 
 **Variables** (`defaults/main.yml`):
+
 ```yaml
 ---
 kubectl_version: "1.28.0-00"
@@ -534,12 +576,14 @@ install_k9s: true
 Installs and configures monitoring agents.
 
 **Tasks:**
+
 - Install Prometheus node exporter
 - Configure log forwarding to Loki
 - Set up metrics collection
 - Configure health checks
 
 **Key Tasks** (`tasks/main.yml`):
+
 ```yaml
 ---
 - name: Create node_exporter user
@@ -553,7 +597,7 @@ Installs and configures monitoring agents.
   ansible.builtin.get_url:
     url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
     dest: /tmp/node_exporter.tar.gz
-    mode: '0644'
+    mode: "0644"
 
 - name: Extract node_exporter
   ansible.builtin.unarchive:
@@ -565,14 +609,14 @@ Installs and configures monitoring agents.
   ansible.builtin.copy:
     src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
     dest: /usr/local/bin/node_exporter
-    mode: '0755'
+    mode: "0755"
     remote_src: yes
 
 - name: Create node_exporter systemd service
   ansible.builtin.template:
     src: node_exporter.service.j2
     dest: /etc/systemd/system/node_exporter.service
-    mode: '0644'
+    mode: "0644"
   notify: restart node_exporter
 
 - name: Enable and start node_exporter
@@ -584,6 +628,7 @@ Installs and configures monitoring agents.
 ```
 
 **Variables** (`defaults/main.yml`):
+
 ```yaml
 ---
 node_exporter_version: "1.6.1"
@@ -595,6 +640,7 @@ node_exporter_port: 9100
 ### Inventory Structure
 
 **Development** (`inventories/dev/hosts.yml`):
+
 ```yaml
 ---
 all:
@@ -618,6 +664,7 @@ all:
 ```
 
 **Production** (`inventories/production/hosts.yml`):
+
 ```yaml
 ---
 all:
@@ -647,6 +694,7 @@ all:
 ### Group Variables
 
 **All Hosts** (`inventories/production/group_vars/all.yml`):
+
 ```yaml
 ---
 # System configuration
@@ -667,6 +715,7 @@ log_retention_days: 90
 ```
 
 **Docker Hosts** (`inventories/production/group_vars/docker_hosts.yml`):
+
 ```yaml
 ---
 docker_users:
@@ -696,37 +745,43 @@ Ansible uses the following precedence (highest to lowest):
 ### Managing Secrets with Ansible Vault
 
 **Create encrypted file:**
+
 ```bash
 ansible-vault create inventories/production/group_vars/vault.yml
 ```
 
 **Edit encrypted file:**
+
 ```bash
 ansible-vault edit inventories/production/group_vars/vault.yml
 ```
 
 **Encrypt existing file:**
+
 ```bash
 ansible-vault encrypt inventories/production/group_vars/secrets.yml
 ```
 
 **Decrypt file:**
+
 ```bash
 ansible-vault decrypt inventories/production/group_vars/secrets.yml
 ```
 
 **Example vault file** (`group_vars/vault.yml`):
+
 ```yaml
 ---
 vault_db_password: "super_secret_password"
 vault_api_key: "secret_api_key"
 vault_ssl_private_key: |
-  -----BEGIN PRIVATE KEY-----
-  ...
-  -----END PRIVATE KEY-----
+  -----BEGIN EXAMPLE KEY (NOT REAL)-----
+  <your-base64-encoded-key-content-here>
+  -----END EXAMPLE KEY (NOT REAL)-----
 ```
 
 **Using vault variables:**
+
 ```yaml
 ---
 # Reference vault variables
@@ -735,6 +790,7 @@ api_key: "{{ vault_api_key }}"
 ```
 
 **Running playbook with vault:**
+
 ```bash
 # Prompt for vault password
 ansible-playbook -i inventories/production site.yml --ask-vault-pass
@@ -772,18 +828,18 @@ ansible-playbook -i inventories/production site.yml --check --diff
 
 ### Common Options
 
-| Option | Description |
-|--------|-------------|
-| `-i` | Specify inventory file |
-| `--tags` | Run only tasks with specific tags |
-| `--skip-tags` | Skip tasks with specific tags |
-| `--limit` | Limit to specific hosts or groups |
-| `--check` | Dry run without making changes |
-| `--diff` | Show differences for changed files |
-| `-v`, `-vv`, `-vvv` | Increase verbosity |
-| `--ask-become-pass` | Prompt for sudo password |
-| `--ask-vault-pass` | Prompt for vault password |
-| `--start-at-task` | Start at specific task |
+| Option              | Description                        |
+| ------------------- | ---------------------------------- |
+| `-i`                | Specify inventory file             |
+| `--tags`            | Run only tasks with specific tags  |
+| `--skip-tags`       | Skip tasks with specific tags      |
+| `--limit`           | Limit to specific hosts or groups  |
+| `--check`           | Dry run without making changes     |
+| `--diff`            | Show differences for changed files |
+| `-v`, `-vv`, `-vvv` | Increase verbosity                 |
+| `--ask-become-pass` | Prompt for sudo password           |
+| `--ask-vault-pass`  | Prompt for vault password          |
+| `--start-at-task`   | Start at specific task             |
 
 ### Running Specific Roles
 
@@ -865,15 +921,15 @@ ansible -i inventories/dev all -m systemd -a "name=docker state=restarted" --bec
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
       loop:
-        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
-        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
-        - { regexp: '^#?Protocol', line: 'Protocol 2' }
+        - { regexp: "^#?PermitRootLogin", line: "PermitRootLogin no" }
+        - { regexp: "^#?PasswordAuthentication", line: "PasswordAuthentication no" }
+        - { regexp: "^#?Protocol", line: "Protocol 2" }
 
     - name: Configure password policy
       ansible.builtin.lineinfile:
         path: /etc/pam.d/common-password
-        regexp: '^password.*pam_unix.so'
-        line: 'password required pam_unix.so obscure sha512 minlen=12'
+        regexp: "^password.*pam_unix.so"
+        line: "password required pam_unix.so obscure sha512 minlen=12"
 
     - name: Set password expiration
       ansible.builtin.lineinfile:
@@ -881,9 +937,9 @@ ansible -i inventories/dev all -m systemd -a "name=docker state=restarted" --bec
         regexp: "{{ item.regexp }}"
         line: "{{ item.line }}"
       loop:
-        - { regexp: '^PASS_MAX_DAYS', line: 'PASS_MAX_DAYS 90' }
-        - { regexp: '^PASS_MIN_DAYS', line: 'PASS_MIN_DAYS 1' }
-        - { regexp: '^PASS_WARN_AGE', line: 'PASS_WARN_AGE 14' }
+        - { regexp: "^PASS_MAX_DAYS", line: "PASS_MAX_DAYS 90" }
+        - { regexp: "^PASS_MIN_DAYS", line: "PASS_MIN_DAYS 1" }
+        - { regexp: "^PASS_WARN_AGE", line: "PASS_WARN_AGE 14" }
 
     - name: Configure audit rules
       ansible.builtin.copy:
@@ -995,11 +1051,13 @@ cert: "/etc/ssl/certs/app.crt"
 #### Issue: SSH Connection Failed
 
 **Error:**
+
 ```
 fatal: [host]: UNREACHABLE! => {"msg": "Failed to connect to the host via ssh"}
 ```
 
 **Solutions:**
+
 ```bash
 # Test SSH connectivity
 ssh -i ~/.ssh/id_rsa ubuntu@host-ip
@@ -1017,11 +1075,13 @@ ansible-playbook -i inventories/dev site.yml -vvv
 #### Issue: Permission Denied
 
 **Error:**
+
 ```
 fatal: [host]: FAILED! => {"msg": "Missing sudo password"}
 ```
 
 **Solutions:**
+
 ```bash
 # Prompt for sudo password
 ansible-playbook -i inventories/dev site.yml --ask-become-pass
@@ -1034,11 +1094,13 @@ sudo visudo
 #### Issue: Module Not Found
 
 **Error:**
+
 ```
 fatal: [host]: FAILED! => {"msg": "The module community.general.ufw was not found"}
 ```
 
 **Solutions:**
+
 ```bash
 # Install required collections
 ansible-galaxy collection install community.general
@@ -1050,11 +1112,13 @@ ansible-galaxy collection install -r requirements.yml
 #### Issue: Variable Not Defined
 
 **Error:**
+
 ```
 fatal: [host]: FAILED! => {"msg": "The task includes an option with an undefined variable"}
 ```
 
 **Solutions:**
+
 ```yaml
 # Use default filter
 variable: "{{ undefined_var | default('default_value') }}"

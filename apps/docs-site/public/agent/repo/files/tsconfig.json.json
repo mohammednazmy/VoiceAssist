@@ -1,0 +1,8 @@
+{
+  "path": "tsconfig.json",
+  "language": "json",
+  "size": 554,
+  "last_modified": "2025-11-27T21:30:40.998Z",
+  "lines": 21,
+  "content": "{\n  \"$schema\": \"https://json.schemastore.org/tsconfig\",\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"lib\": [\"ES2022\", \"DOM\", \"DOM.Iterable\"],\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"bundler\",\n    \"esModuleInterop\": true,\n    \"strict\": true,\n    \"skipLibCheck\": true,\n    \"forceConsistentCasingInFileNames\": true,\n    \"resolveJsonModule\": true,\n    \"isolatedModules\": true,\n    \"jsx\": \"react-jsx\",\n    \"declaration\": true,\n    \"declarationMap\": true,\n    \"sourceMap\": true\n  },\n  \"exclude\": [\"node_modules\", \"dist\", \".next\", \"coverage\"]\n}\n"
+}

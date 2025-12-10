@@ -3,12 +3,12 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - main      # Production deployment
-      - develop   # Staging deployment
+      - main # Production deployment
+      - develop # Staging deployment
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
         type: choice
         options:
@@ -62,7 +62,7 @@ jobs:
 
       - name: Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./services/api-gateway
           file: ./services/api-gateway/Dockerfile
@@ -85,7 +85,7 @@ jobs:
           output-file: sbom-api-gateway.spdx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-api-gateway
           path: sbom-api-gateway.spdx.json
@@ -131,7 +131,7 @@ jobs:
 
       - name: Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./services/api-gateway
           file: ./services/api-gateway/Dockerfile.worker
@@ -154,7 +154,7 @@ jobs:
           output-file: sbom-worker.spdx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-worker
           path: sbom-worker.spdx.json
@@ -333,7 +333,7 @@ jobs:
 
       - name: Upload backup artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-backup-${{ github.sha }}
           path: backup-*.yaml
@@ -390,7 +390,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |

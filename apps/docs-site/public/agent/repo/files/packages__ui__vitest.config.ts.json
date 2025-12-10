@@ -1,0 +1,8 @@
+{
+  "path": "packages/ui/vitest.config.ts",
+  "language": "typescript",
+  "size": 673,
+  "last_modified": "2025-11-27T02:50:32.096Z",
+  "lines": 32,
+  "content": "import { defineConfig } from \"vitest/config\";\nimport react from \"@vitejs/plugin-react-swc\";\nimport path from \"path\";\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    globals: true,\n    environment: \"jsdom\",\n    setupFiles: [\"./src/test/setup.ts\"],\n    css: true,\n    testTimeout: 10000,\n    hookTimeout: 10000,\n    pool: \"threads\",\n    poolOptions: {\n      threads: {\n        singleThread: true,\n      },\n    },\n    include: [\"src/**/*.test.{ts,tsx}\"],\n  },\n  resolve: {\n    alias: {\n      \"@\": path.resolve(__dirname, \"./src\"),\n      \"@voiceassist/design-tokens\": path.resolve(\n        __dirname,\n        \"../design-tokens/src\",\n      ),\n    },\n  },\n});\n"
+}

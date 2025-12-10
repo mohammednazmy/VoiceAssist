@@ -55,7 +55,7 @@ EOF
             *) log_error "Unknown option: $1"; exit 1 ;;
         esac
     done
-    
+
     if [[ -z "$DOMAIN" ]] || [[ -z "$EMAIL" ]]; then
         log_error "Missing required arguments"
         exit 1
@@ -64,22 +64,22 @@ EOF
 
 install_certbot() {
     log_info "Installing Certbot..."
-    
+
     if command -v certbot &> /dev/null; then
         log_info "Certbot already installed"
         return 0
     fi
-    
+
     # Install certbot
     apt-get update
     apt-get install -y certbot python3-certbot-nginx
-    
+
     log_success "Certbot installed successfully"
 }
 
 create_nginx_config() {
     log_info "Creating nginx configuration..."
-    
+
     cat > /etc/nginx/sites-available/voiceassist << EOF
 # VoiceAssist Production Nginx Configuration
 
@@ -88,12 +88,12 @@ server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
-    
+
     # Let's Encrypt challenge
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
-    
+
     # Redirect all other requests to HTTPS
     location / {
         return 301 https://\$server_name\$request_uri;
@@ -105,11 +105,11 @@ server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
     server_name $DOMAIN;
-    
+
     # SSL certificates (will be configured by certbot)
     ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
-    
+
     # SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384;
@@ -118,13 +118,13 @@ server {
     ssl_session_timeout 10m;
     ssl_stapling on;
     ssl_stapling_verify on;
-    
+
     # Security headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
-    
+
     # API Gateway proxy
     location / {
         proxy_pass http://localhost:8000;
@@ -136,13 +136,13 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
-        
+
         # Timeouts
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
-    
+
     # WebSocket support
     location /api/realtime/ws {
         proxy_pass http://localhost:8000;
@@ -153,31 +153,31 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        
+
         # WebSocket timeouts
         proxy_read_timeout 3600s;
         proxy_send_timeout 3600s;
     }
-    
+
     # Monitoring endpoints
     location /grafana/ {
         proxy_pass http://localhost:3001/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
     }
-    
+
     location /prometheus/ {
         proxy_pass http://localhost:9090/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
     }
-    
+
     location /jaeger/ {
         proxy_pass http://localhost:16686/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
     }
-    
+
     # Health check endpoint
     location /health {
         access_log off;
@@ -185,38 +185,38 @@ server {
     }
 }
 EOF
-    
+
     # Enable site
     ln -sf /etc/nginx/sites-available/voiceassist /etc/nginx/sites-enabled/
-    
+
     # Test nginx config
     nginx -t
-    
+
     log_success "Nginx configuration created"
 }
 
 obtain_certificate() {
     log_info "Obtaining SSL certificate from Let's Encrypt..."
-    
+
     # Create webroot directory
     mkdir -p /var/www/certbot
-    
+
     # Build certbot command
     local certbot_cmd="certbot certonly --webroot -w /var/www/certbot"
     certbot_cmd="$certbot_cmd -d $DOMAIN"
     certbot_cmd="$certbot_cmd --email $EMAIL"
     certbot_cmd="$certbot_cmd --agree-tos"
     certbot_cmd="$certbot_cmd --non-interactive"
-    
+
     if $STAGING; then
         certbot_cmd="$certbot_cmd --staging"
         log_warning "Using staging server (test certificates)"
     fi
-    
+
     if $FORCE_RENEW; then
         certbot_cmd="$certbot_cmd --force-renewal"
     fi
-    
+
     # Run certbot
     if $certbot_cmd; then
         log_success "SSL certificate obtained successfully"
@@ -232,7 +232,7 @@ obtain_certificate() {
 
 setup_auto_renewal() {
     log_info "Setting up automatic certificate renewal..."
-    
+
     # Create renewal script
     cat > /opt/voiceassist/renew-ssl.sh << 'EOF'
 #!/bin/bash
@@ -247,39 +247,39 @@ else
     echo "$(date): SSL certificate renewal failed" >> /var/log/voiceassist-ssl-renewal.log
 fi
 EOF
-    
+
     chmod +x /opt/voiceassist/renew-ssl.sh
-    
+
     # Create cron job (runs twice daily as recommended by Let's Encrypt)
     local cron_job="0 0,12 * * * /opt/voiceassist/renew-ssl.sh"
-    
+
     # Add to crontab if not already present
     (crontab -l 2>/dev/null | grep -v "renew-ssl.sh"; echo "$cron_job") | crontab -
-    
+
     log_success "Auto-renewal configured (runs twice daily)"
 }
 
 reload_nginx() {
     log_info "Reloading nginx with new SSL configuration..."
-    
+
     systemctl reload nginx
-    
+
     log_success "Nginx reloaded successfully"
 }
 
 verify_ssl() {
     log_info "Verifying SSL configuration..."
-    
+
     # Wait for nginx to fully reload
     sleep 2
-    
+
     # Test HTTPS connection
     if curl -sSf "https://$DOMAIN/health" > /dev/null 2>&1; then
         log_success "SSL is working correctly"
     else
         log_warning "SSL verification failed - check nginx and certificate"
     fi
-    
+
     # Display certificate info
     log_info "Certificate details:"
     echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -dates
@@ -306,7 +306,7 @@ main() {
     log_info "SSL/TLS Setup with Let's Encrypt"
     log_info "=========================================="
     log_info ""
-    
+
     parse_arguments "$@"
     install_certbot
     create_nginx_config

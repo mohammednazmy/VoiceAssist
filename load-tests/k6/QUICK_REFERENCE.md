@@ -1,6 +1,7 @@
 # K6 Load Tests - Quick Reference Card
 
 ## Installation
+
 ```bash
 # macOS
 brew install k6
@@ -16,6 +17,7 @@ k6 version
 ## Quick Commands
 
 ### Run Tests
+
 ```bash
 # Quick validation (10 min)
 ./run-quick-test.sh
@@ -34,11 +36,13 @@ k6 run 07-websocket-test.js  # 5 min  - Real-time
 ```
 
 ### Custom URL
+
 ```bash
 k6 run --env BASE_URL=https://api.example.com 02-load-test.js
 ```
 
 ### View Results
+
 ```bash
 # Summary
 cat ../results/load-test-summary.json | jq .
@@ -53,19 +57,20 @@ ls -la ../results/
 
 ## Test Matrix
 
-| Test | VUs | Duration | P95 Target | Error Target | When |
-|------|-----|----------|------------|--------------|------|
-| Smoke | 5 | 1m | <500ms | <1% | Every deploy |
-| Load | 0-100 | 9m | <800ms | <5% | Daily |
-| Stress | 0-500 | 22m | <2000ms | <10% | Weekly |
-| Spike | 50-500-50 | 8m | <1500ms | <15% | Pre-event |
-| Endurance | 100 | 30m | <1000ms | <5% | Weekly |
-| Scenarios | 50 | 10m | <1000ms | <5% | Post-feature |
-| WebSocket | 0-50 | 5m | <200ms* | <1% | Post-voice |
+| Test      | VUs       | Duration | P95 Target | Error Target | When         |
+| --------- | --------- | -------- | ---------- | ------------ | ------------ |
+| Smoke     | 5         | 1m       | <500ms     | <1%          | Every deploy |
+| Load      | 0-100     | 9m       | <800ms     | <5%          | Daily        |
+| Stress    | 0-500     | 22m      | <2000ms    | <10%         | Weekly       |
+| Spike     | 50-500-50 | 8m       | <1500ms    | <15%         | Pre-event    |
+| Endurance | 100       | 30m      | <1000ms    | <5%          | Weekly       |
+| Scenarios | 50        | 10m      | <1000ms    | <5%          | Post-feature |
+| WebSocket | 0-50      | 5m       | <200ms\*   | <1%          | Post-voice   |
 
-*WebSocket P95 is for message latency
+\*WebSocket P95 is for message latency
 
 ## File Structure
+
 ```
 load-tests/k6/
 ├── config.js                # Shared config
@@ -88,6 +93,7 @@ load-tests/k6/
 ```
 
 ## Common Options
+
 ```bash
 # Custom VUs
 k6 run --vus 50 02-load-test.js
@@ -111,26 +117,31 @@ k6 run --http-debug 01-smoke-test.js
 ## Thresholds
 
 ### Smoke Test (Strict)
+
 - P95: <500ms, P99: <1000ms
 - Errors: <1%
 - Rate: >1 req/s
 
 ### Load Test (Balanced)
+
 - P95: <800ms, P99: <1500ms
 - Errors: <5%
 - Rate: >10 req/s
 
 ### Stress Test (Relaxed)
+
 - P95: <2000ms, P99: <5000ms
 - Errors: <10%
 - Rate: >50 req/s
 
 ### WebSocket
+
 - Connect: <1000ms
 - Latency: <200ms
 - Messages: >100 sent/received
 
 ## Environment Variables
+
 ```bash
 # Set base URL
 export BASE_URL=http://localhost:8000
@@ -143,6 +154,7 @@ k6 run --env BASE_URL=http://localhost:8000 02-load-test.js
 ## Troubleshooting
 
 ### Connection Refused
+
 ```bash
 # Check server
 curl http://localhost:8000/health
@@ -152,6 +164,7 @@ cat config.js | grep BASE_URL
 ```
 
 ### High Errors
+
 ```bash
 # Check server logs
 docker-compose logs -f voiceassist-server
@@ -161,6 +174,7 @@ docker stats
 ```
 
 ### Timeouts
+
 ```javascript
 // Edit config.js
 TIMEOUTS: {
@@ -172,6 +186,7 @@ TIMEOUTS: {
 ## Integration
 
 ### Docker
+
 ```bash
 docker run --rm -v $(pwd):/scripts \
   -e BASE_URL=http://host.docker.internal:8000 \
@@ -179,6 +194,7 @@ docker run --rm -v $(pwd):/scripts \
 ```
 
 ### CI/CD (GitHub Actions)
+
 ```yaml
 - name: Run smoke test
   run: k6 run load-tests/k6/01-smoke-test.js
@@ -187,6 +203,7 @@ docker run --rm -v $(pwd):/scripts \
 ```
 
 ## Monitoring Setup
+
 ```bash
 # Start monitoring stack
 docker-compose up -d influxdb grafana
@@ -201,35 +218,37 @@ open http://localhost:3000
 
 ## Performance Targets
 
-| Endpoint | Target | Threshold |
-|----------|--------|-----------|
-| /health | <100ms | <200ms |
-| /api/chat/message | <500ms | <1000ms |
-| /api/admin/kb/documents | <300ms | <600ms |
-| WebSocket connect | <500ms | <1000ms |
-| WebSocket message | <50ms | <200ms |
+| Endpoint                | Target | Threshold |
+| ----------------------- | ------ | --------- |
+| /health                 | <100ms | <200ms    |
+| /api/chat/message       | <500ms | <1000ms   |
+| /api/admin/kb/documents | <300ms | <600ms    |
+| WebSocket connect       | <500ms | <1000ms   |
+| WebSocket message       | <50ms  | <200ms    |
 
 ## Test Schedule
 
-| Day | Test |
-|-----|------|
-| Every deploy | Smoke |
-| Daily | Load |
-| Monday | Endurance |
-| Wednesday | Stress |
-| Friday | Full suite |
-| Pre-event | Spike |
-| Post-feature | Scenarios |
+| Day          | Test       |
+| ------------ | ---------- |
+| Every deploy | Smoke      |
+| Daily        | Load       |
+| Monday       | Endurance  |
+| Wednesday    | Stress     |
+| Friday       | Full suite |
+| Pre-event    | Spike      |
+| Post-feature | Scenarios  |
 
 ## Grading System
 
 Tests provide automatic grading (A-D):
+
 - **A**: Excellent performance
 - **B**: Good performance, minor issues
 - **C**: Acceptable but needs improvement
 - **D**: Poor performance, action required
 
 View grades:
+
 ```bash
 cat ../results/stress-test-summary.json | jq '.breaking_point_analysis'
 cat ../results/spike-test-summary.json | jq '.spike_analysis'
@@ -238,6 +257,7 @@ cat ../results/spike-test-summary.json | jq '.spike_analysis'
 ## Key Metrics
 
 ### HTTP Metrics
+
 - `http_req_duration` - Request duration
 - `http_req_failed` - Error rate
 - `http_reqs` - Request rate
@@ -245,12 +265,14 @@ cat ../results/spike-test-summary.json | jq '.spike_analysis'
 - `vus` - Active virtual users
 
 ### Custom Metrics
+
 - `sessions_created` - New sessions
 - `messages_sent` - Chat messages sent
 - `query_errors` - Query failures
 - `ws_message_latency` - WebSocket latency
 
 ### View Metrics
+
 ```bash
 # All metrics
 cat ../results/load-test-full.json | jq '.metrics | keys'

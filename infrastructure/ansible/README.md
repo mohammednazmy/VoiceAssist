@@ -90,6 +90,7 @@ ansible/
 Base system configuration for all servers.
 
 **Tasks:**
+
 - System package updates
 - Essential utilities installation
 - Timezone and NTP configuration
@@ -97,6 +98,7 @@ Base system configuration for all servers.
 - Directory structure setup
 
 **Usage:**
+
 ```bash
 ansible-playbook -i inventories/dev site.yml --tags common
 ```
@@ -106,6 +108,7 @@ ansible-playbook -i inventories/dev site.yml --tags common
 HIPAA-compliant security hardening.
 
 **Tasks:**
+
 - UFW firewall configuration
 - fail2ban installation
 - SSH hardening
@@ -114,6 +117,7 @@ HIPAA-compliant security hardening.
 - Password policies
 
 **Usage:**
+
 ```bash
 ansible-playbook -i inventories/production site.yml --tags security
 ```
@@ -123,12 +127,14 @@ ansible-playbook -i inventories/production site.yml --tags security
 Docker container runtime setup.
 
 **Tasks:**
+
 - Docker CE installation
 - Daemon configuration
 - User permissions
 - Log rotation setup
 
 **Usage:**
+
 ```bash
 ansible-playbook -i inventories/dev site.yml --tags docker
 ```
@@ -138,12 +144,14 @@ ansible-playbook -i inventories/dev site.yml --tags docker
 Kubernetes tools installation.
 
 **Tasks:**
+
 - kubectl installation
 - helm installation
 - kubeconfig setup
 - k9s installation (optional)
 
 **Usage:**
+
 ```bash
 ansible-playbook -i inventories/staging site.yml --tags kubernetes
 ```
@@ -153,11 +161,13 @@ ansible-playbook -i inventories/staging site.yml --tags kubernetes
 Observability agent setup.
 
 **Tasks:**
+
 - Prometheus node exporter
 - Log forwarding configuration
 - Health check setup
 
 **Usage:**
+
 ```bash
 ansible-playbook -i inventories/production site.yml --tags monitoring
 ```
@@ -167,6 +177,7 @@ ansible-playbook -i inventories/production site.yml --tags monitoring
 ### Development Inventory
 
 `inventories/dev/hosts.yml`:
+
 ```yaml
 all:
   vars:
@@ -189,6 +200,7 @@ all:
 ### Production Inventory
 
 `inventories/production/hosts.yml`:
+
 ```yaml
 all:
   vars:
@@ -498,18 +510,21 @@ ansible -i inventories/dev k8s_nodes -m debug -a "var=hostvars[inventory_hostnam
 ## Performance Tips
 
 1. **Use pipelining**:
+
    ```ini
    [ssh_connection]
    pipelining = True
    ```
 
 2. **Increase forks**:
+
    ```ini
    [defaults]
    forks = 20
    ```
 
 3. **Use fact caching**:
+
    ```ini
    [defaults]
    gathering = smart
@@ -534,6 +549,7 @@ ansible -i inventories/dev k8s_nodes -m debug -a "var=hostvars[inventory_hostnam
 ## Support
 
 For issues or questions:
+
 - Create GitHub issue
 - Contact DevOps team
 - Check [Troubleshooting Guide](../../docs/ANSIBLE_GUIDE.md#troubleshooting)

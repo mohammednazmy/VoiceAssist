@@ -1,0 +1,21 @@
+{
+  "_meta": {
+    "version": "0.1.0",
+    "term_count": 10,
+    "last_updated": "2024-12-04",
+    "language": "de",
+    "alphabet": "ipa",
+    "status": "in_progress",
+    "categories": ["drug_names", "conditions", "anatomy"]
+  },
+  "diabetes": "diaˈbeːtəs",
+  "bluthochdruck": "ˈbluːtˌhɔxdʁʊk",
+  "herz": "hɛʁt͡s",
+  "lunge": "ˈlʊŋə",
+  "leber": "ˈleːbɐ",
+  "niere": "ˈniːʁə",
+  "magen": "ˈmaːɡn̩",
+  "gehirn": "ɡəˈhɪʁn",
+  "schmerz": "ʃmɛʁt͡s",
+  "fieber": "ˈfiːbɐ"
+}

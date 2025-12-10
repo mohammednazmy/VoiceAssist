@@ -1,0 +1,14 @@
+Sample Medical Document
+
+This is a test document for E2E testing purposes.
+
+Section 1: Overview
+This document contains sample medical information used to test the document upload functionality.
+
+Section 2: Contents
+- Item 1: Test data point
+- Item 2: Additional test information
+- Item 3: More sample content
+
+Section 3: Conclusion
+This document is used exclusively for automated testing and does not contain real medical information.

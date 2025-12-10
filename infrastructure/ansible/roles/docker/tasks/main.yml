@@ -58,7 +58,7 @@
           "buildkit": true
         }
       }
-    mode: '0644'
+    mode: "0644"
   notify: restart docker
   tags: [docker]
 
@@ -86,7 +86,7 @@
   ansible.builtin.get_url:
     url: "https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64"
     dest: /usr/local/bin/docker-compose
-    mode: '0755'
+    mode: "0755"
   tags: [docker-compose]
 
 - name: Verify Docker installation

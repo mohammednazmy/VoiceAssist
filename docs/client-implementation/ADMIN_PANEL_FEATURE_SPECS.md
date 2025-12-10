@@ -1,3 +1,28 @@
+---
+title: Admin Panel Feature Specs
+slug: client-implementation/admin-panel-feature-specs
+summary: "**Document Version:** 1.0.0"
+status: stable
+stability: production
+owner: frontend
+lastUpdated: "2025-11-27"
+audience:
+  - devops
+  - sre
+  - ai-agents
+tags:
+  - admin
+  - panel
+  - feature
+  - specs
+category: planning
+ai_summary: >-
+  Document Version: 1.0.0 Last Updated: 2025-11-21 Status: Final Specification
+  Target Release: v1.0.0 --- 1. Overview 2. Dashboard Features 3. Knowledge Base
+  Management 4. AI Model Configuration 5. Analytics 6. Integration Management 7.
+  Technical Implementation 8. Testing Strategy --- The VoiceAssi...
+---
+
 # VoiceAssist Admin Panel - Feature Specifications
 
 **Document Version:** 1.0.0
@@ -27,34 +52,41 @@
 The VoiceAssist Admin Panel is built with modern web technologies optimized for administrative interfaces and data visualization:
 
 **Core Framework:**
+
 - React 18.2+ with TypeScript 5.0+
 - Vite 5.0+ (build tool and dev server)
 - React Router v6 (client-side routing)
 
 **UI Framework:**
+
 - Tailwind CSS 3.4+ (utility-first styling)
 - Tremor 3.x (dashboard and chart components)
 - Headless UI (accessible component primitives)
 - Heroicons (icon library)
 
 **Data Management:**
+
 - TanStack Table v8 (advanced table functionality)
 - TanStack Query v5 (server state management)
 - Zustand (client state management)
 
 **Visualization:**
+
 - Recharts 2.x (charts via Tremor)
 - D3.js 7.x (custom visualizations)
 
 **Real-time Communication:**
+
 - Socket.io Client 4.x (WebSocket connections)
 - Server-Sent Events (SSE) for updates
 
 **Form Management:**
+
 - React Hook Form 7.x
 - Zod (schema validation)
 
 **Development Tools:**
+
 - ESLint + Prettier
 - Vitest (unit testing)
 - Playwright (e2e testing)
@@ -63,26 +95,31 @@ The VoiceAssist Admin Panel is built with modern web technologies optimized for 
 ### 1.2 Design Principles
 
 **1. Information Density**
+
 - Maximize useful information per screen
 - Use progressive disclosure for complex data
 - Implement responsive tables and charts
 
 **2. Real-time Updates**
+
 - Live metrics without page refresh
 - WebSocket connections for critical data
 - Optimistic UI updates
 
 **3. Performance**
+
 - Virtualized tables for large datasets
 - Lazy loading of heavy components
 - Code splitting by route
 
 **4. Accessibility**
+
 - WCAG 2.1 AA compliance
 - Keyboard navigation throughout
 - Screen reader optimized
 
 **5. Error Handling**
+
 - Graceful degradation
 - Clear error messages
 - Retry mechanisms
@@ -125,6 +162,7 @@ The VoiceAssist Admin Panel is built with modern web technologies optimized for 
 #### Specification
 
 Display key system metrics updated in real-time via WebSocket:
+
 - Active sessions count
 - Requests per minute
 - Average response time
@@ -132,6 +170,7 @@ Display key system metrics updated in real-time via WebSocket:
 - Cost per hour
 
 **Visual Design:**
+
 - 5 metric cards in a grid layout
 - Large numbers with trend indicators
 - Sparkline charts showing 1-hour history
@@ -317,8 +356,8 @@ export const RealTimeMetrics: React.FC = () => {
 
 ```typescript
 // src/hooks/useWebSocket.ts
-import { useEffect, useState, useRef } from 'react';
-import io, { Socket } from 'socket.io-client';
+import { useEffect, useState, useRef } from "react";
+import io, { Socket } from "socket.io-client";
 
 interface UseWebSocketOptions {
   reconnect?: boolean;
@@ -332,10 +371,7 @@ interface UseWebSocketReturn<T> {
   emit: (event: string, data: any) => void;
 }
 
-export function useWebSocket<T = any>(
-  event: string,
-  options: UseWebSocketOptions = {}
-): UseWebSocketReturn<T> {
+export function useWebSocket<T = any>(event: string, options: UseWebSocketOptions = {}): UseWebSocketReturn<T> {
   const { reconnect = true, reconnectInterval = 5000 } = options;
 
   const [data, setData] = useState<T | null>(null);
@@ -345,24 +381,24 @@ export function useWebSocket<T = any>(
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:5056', {
+    const socket = io(import.meta.env.VITE_WEBSOCKET_URL || "http://localhost:5056", {
       reconnection: reconnect,
       reconnectionDelay: reconnectInterval,
-      transports: ['websocket'],
+      transports: ["websocket"],
     });
 
     socketRef.current = socket;
 
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       setIsConnected(true);
       setError(null);
     });
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       setIsConnected(false);
     });
 
-    socket.on('error', (err: Error) => {
+    socket.on("error", (err: Error) => {
       setError(err);
     });
 
@@ -498,6 +534,7 @@ describe('RealTimeMetrics', () => {
 #### Specification
 
 Visual indicators for critical system components:
+
 - API server status
 - Database connection
 - Redis cache
@@ -505,6 +542,7 @@ Visual indicators for critical system components:
 - External integrations (Nextcloud, email)
 
 **Visual Design:**
+
 - Status badges with icons (check/warning/error)
 - Last check timestamp
 - Response time for each component
@@ -674,12 +712,12 @@ export const SystemHealthIndicators: React.FC = () => {
 
 ```typescript
 // src/services/api/admin.ts
-import { apiClient } from './client';
-import type { HealthStatus } from '@/types/health';
+import { apiClient } from "./client";
+import type { HealthStatus } from "@/types/health";
 
 export const adminApi = {
   async getSystemHealth(): Promise<HealthStatus> {
-    const response = await apiClient.get<HealthStatus>('/api/admin/health');
+    const response = await apiClient.get<HealthStatus>("/api/admin/health");
     return response.data;
   },
 
@@ -693,7 +731,7 @@ export const adminApi = {
 
 ```typescript
 // src/types/health.ts
-export type ComponentStatus = 'healthy' | 'degraded' | 'down';
+export type ComponentStatus = "healthy" | "degraded" | "down";
 
 export interface ComponentHealth {
   name: string;
@@ -809,6 +847,7 @@ describe('SystemHealthIndicators', () => {
 #### Specification
 
 Real-time table of active user sessions:
+
 - Session ID
 - User ID / Anonymous
 - Start time
@@ -819,6 +858,7 @@ Real-time table of active user sessions:
 - Actions (view details, terminate)
 
 **Visual Design:**
+
 - Paginated table with live updates
 - Color-coded by activity level
 - Expandable rows for session details
@@ -1118,7 +1158,7 @@ export interface ActiveSession {
   sessionId: string;
   userId: string | null;
   startTime: string;
-  currentActivity: 'idle' | 'chatting' | 'searching' | 'listening';
+  currentActivity: "idle" | "chatting" | "searching" | "listening";
   messagesSent: number;
   tokenUsage: number;
   ipAddress?: string;
@@ -1156,12 +1196,14 @@ export function formatDuration(ms: number): string {
 #### Specification
 
 Interactive charts showing API usage patterns:
+
 - Requests per hour (last 24h)
 - Requests by endpoint
 - Requests by status code
 - Requests by client type
 
 **Visual Design:**
+
 - Area chart for time series
 - Bar chart for endpoint comparison
 - Donut chart for status codes
@@ -1331,9 +1373,7 @@ export const adminApi = {
   // ... existing methods
 
   async getAPIUsage(timeRange: string): Promise<APIUsageData> {
-    const response = await apiClient.get<APIUsageData>(
-      `/api/admin/usage?range=${timeRange}`
-    );
+    const response = await apiClient.get<APIUsageData>(`/api/admin/usage?range=${timeRange}`);
     return response.data;
   },
 };
@@ -1382,6 +1422,7 @@ export interface APIUsageData {
 #### Specification
 
 Real-time cost monitoring across all services:
+
 - OpenAI API costs (by model)
 - ElevenLabs TTS costs
 - Vector database costs
@@ -1390,6 +1431,7 @@ Real-time cost monitoring across all services:
 - Budget alerts
 
 **Visual Design:**
+
 - Cost breakdown donut chart
 - Trend line chart
 - Cost per user metric
@@ -1598,6 +1640,7 @@ export interface CostData {
 #### Specification
 
 Real-time alert notification system:
+
 - System errors
 - Performance degradation
 - Budget warnings
@@ -1605,6 +1648,7 @@ Real-time alert notification system:
 - Custom alerts
 
 **Visual Design:**
+
 - Toast notifications for new alerts
 - Alert center with history
 - Severity levels (info, warning, error, critical)
@@ -1786,19 +1830,19 @@ export const AlertNotifications: React.FC = () => {
 
 ```typescript
 // src/hooks/useToast.ts
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface Toast {
   id: string;
   title: string;
   message: string;
-  severity: 'info' | 'warning' | 'error' | 'critical';
+  severity: "info" | "warning" | "error" | "critical";
   duration?: number;
 }
 
 interface ToastStore {
   toasts: Toast[];
-  addToast: (toast: Omit<Toast, 'id'>) => void;
+  addToast: (toast: Omit<Toast, "id">) => void;
   removeToast: (id: string) => void;
 }
 
@@ -1816,8 +1860,7 @@ export const useToastStore = create<ToastStore>((set) => ({
       }, toast.duration);
     }
   },
-  removeToast: (id) =>
-    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }));
 
 export function useToast() {
@@ -1836,7 +1879,7 @@ export function useToast() {
 // src/types/alerts.ts
 export interface Alert {
   id: string;
-  severity: 'info' | 'warning' | 'error' | 'critical';
+  severity: "info" | "warning" | "error" | "critical";
   title: string;
   message: string;
   timestamp: string;
@@ -1857,6 +1900,7 @@ export interface Alert {
 #### Specification
 
 Common administrative actions in one place:
+
 - Restart services
 - Clear caches
 - Reindex knowledge base
@@ -1865,6 +1909,7 @@ Common administrative actions in one place:
 - System maintenance mode
 
 **Visual Design:**
+
 - Grid of action cards
 - Confirmation modals for destructive actions
 - Progress indicators
@@ -2158,12 +2203,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
 #### Specification
 
 Create and manage system-wide announcements:
+
 - Scheduled maintenance notices
 - Feature announcements
 - System updates
 - Emergency alerts
 
 **Visual Design:**
+
 - Banner display on all pages
 - Create/edit announcement form
 - Schedule future announcements
@@ -2376,7 +2423,7 @@ export interface Announcement {
   id: string;
   title: string;
   message: string;
-  type: 'update' | 'feature' | 'maintenance' | 'emergency';
+  type: "update" | "feature" | "maintenance" | "emergency";
   scheduled: boolean;
   scheduledFor: string | null;
   createdAt: string;
@@ -2398,6 +2445,7 @@ export interface Announcement {
 #### Specification
 
 Comprehensive table for managing all knowledge base documents:
+
 - Document title, source, specialty
 - Upload date, file size, status
 - Number of chunks/embeddings
@@ -2406,6 +2454,7 @@ Comprehensive table for managing all knowledge base documents:
 - Bulk operations
 
 **Visual Design:**
+
 - TanStack Table with virtual scrolling
 - Expandable rows for document details
 - Multi-column sorting
@@ -2863,7 +2912,7 @@ export interface KBDocument {
   uploadDate: string;
   fileSize: number;
   chunkCount: number;
-  status: 'indexed' | 'indexing' | 'failed' | 'pending';
+  status: "indexed" | "indexing" | "failed" | "pending";
   metadata?: Record<string, any>;
 }
 ```
@@ -2879,6 +2928,7 @@ export interface KBDocument {
 #### Specification
 
 Upload multiple documents simultaneously:
+
 - Drag-and-drop zone
 - File type validation (PDF, DOCX, TXT, MD)
 - Metadata entry for each file
@@ -2886,6 +2936,7 @@ Upload multiple documents simultaneously:
 - Auto-categorization suggestions
 
 **Visual Design:**
+
 - Drag-and-drop area
 - File list with individual progress bars
 - Metadata form for each file
@@ -3221,6 +3272,7 @@ Due to length constraints, I'll continue with the remaining features. This docum
 3. **Knowledge Base Management** (2 of 12 features: 3.1-3.2 completed)
 
 The document is structured to be comprehensive with:
+
 - Complete TypeScript/React component code
 - Tremor chart examples
 - TanStack Table implementations
@@ -3230,4 +3282,3 @@ The document is structured to be comprehensive with:
 - Accessibility notes
 
 Would you like me to continue with the remaining features (3.3-6.6) to complete the full 38-feature specification?
-

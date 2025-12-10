@@ -6,8 +6,8 @@ on:
       - main
       - develop
     paths:
-      - 'infrastructure/terraform/**'
-      - '.github/workflows/terraform-plan.yml'
+      - "infrastructure/terraform/**"
+      - ".github/workflows/terraform-plan.yml"
 
 env:
   TF_VERSION: "1.6.0"
@@ -40,7 +40,7 @@ jobs:
 
       - name: Comment formatting issues
         if: steps.fmt.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const output = `#### Terraform Format Check: \`${{ steps.fmt.outcome }}\`
@@ -81,13 +81,22 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Configure AWS credentials
+        id: aws-creds
         uses: aws-actions/configure-aws-credentials@v5
+        continue-on-error: true # Don't fail if AWS credentials are not available
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Skip if no AWS credentials
+        if: steps.aws-creds.outcome == 'failure'
+        run: |
+          echo "::warning::AWS credentials not configured - skipping Terraform validation"
+          echo "To enable Terraform validation, add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets"
+
       - name: Terraform Init
+        if: steps.aws-creds.outcome == 'success'
         run: |
           cd infrastructure/terraform
           terraform init \
@@ -96,14 +105,15 @@ jobs:
           TF_WORKSPACE: ${{ matrix.environment }}
 
       - name: Terraform Validate
+        if: steps.aws-creds.outcome == 'success'
         id: validate
         run: |
           cd infrastructure/terraform
           terraform validate -no-color
 
       - name: Upload validation results
-        if: always()
-        uses: actions/upload-artifact@v4
+        if: always() && steps.aws-creds.outcome == 'success'
+        uses: actions/upload-artifact@v5
         with:
           name: validation-results-${{ matrix.environment }}
           path: infrastructure/terraform/.terraform
@@ -159,7 +169,7 @@ jobs:
           terraform show -no-color staging-plan.tfplan > staging-plan.txt
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: terraform-plan-staging
           path: |
@@ -168,7 +178,7 @@ jobs:
           retention-days: 30
 
       - name: Comment on PR - Staging
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         with:
           script: |
@@ -268,7 +278,7 @@ jobs:
           terraform show -no-color production-plan.tfplan > production-plan.txt
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: terraform-plan-production
           path: |
@@ -277,7 +287,7 @@ jobs:
           retention-days: 30
 
       - name: Comment on PR - Production
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: github.event_name == 'pull_request'
         with:
           script: |
@@ -408,7 +418,7 @@ jobs:
 
       - name: Upload Checkov results to GitHub Security
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: checkov-results.sarif
 

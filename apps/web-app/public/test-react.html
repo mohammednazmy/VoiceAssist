@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>React Test</title>
+    <style>
+        body {
+            font-family: system-ui;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+        #root {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+        .test {
+            padding: 20px;
+            margin: 10px 0;
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple React Render Test</h1>
+    <div class="test">
+        <strong>This is static HTML - if you see this, HTML/CSS works!</strong>
+    </div>
+
+    <div id="root">
+        <div class="test" style="background: #fff3cd; border-color: #ff9800;">
+            <strong>Waiting for React to mount...</strong>
+        </div>
+    </div>
+
+    <script type="module">
+        import React from '/node_modules/.vite/deps/react.js?v=6d614eda';
+        import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js?v=6d614eda';
+
+        console.log('React loaded:', !!React);
+        console.log('ReactDOM loaded:', !!ReactDOM);
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+
+        root.render(
+            React.createElement('div', { className: 'test', style: { background: '#d4edda', borderColor: '#4CAF50' } },
+                React.createElement('h2', null, '✅ React is rendering!'),
+                React.createElement('p', null, 'If you see this, React + ReactDOM are working correctly.'),
+                React.createElement('p', null, 'The issue is likely in the VoiceAssist app code, not React itself.')
+            )
+        );
+
+        console.log('React render called');
+    </script>
+</body>
+</html>

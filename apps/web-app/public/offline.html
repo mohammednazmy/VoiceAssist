@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceAssist - Offline</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: #f3f4f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      color: #6b7280;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: #6b7280;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .features {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .features h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 12px;
+    }
+
+    .features ul {
+      list-style: none;
+    }
+
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #4b5563;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .features li:last-child {
+      margin-bottom: 0;
+    }
+
+    .check {
+      width: 16px;
+      height: 16px;
+      color: #10b981;
+      flex-shrink: 0;
+    }
+
+    .retry-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: #5a67d8;
+    }
+
+    .retry-btn:active {
+      transform: scale(0.98);
+    }
+
+    .status {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .status.online {
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+      </svg>
+    </div>
+
+    <h1>You're Offline</h1>
+    <p>Don't worry! VoiceAssist works offline too. Your voice recordings will sync automatically when you're back online.</p>
+
+    <div class="features">
+      <h2>What you can do offline:</h2>
+      <ul>
+        <li>
+          <svg class="check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Record voice messages
+        </li>
+        <li>
+          <svg class="check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          View cached conversations
+        </li>
+        <li>
+          <svg class="check" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Manage pending recordings
+        </li>
+      </ul>
+    </div>
+
+    <button class="retry-btn" onclick="window.location.reload()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      Try Again
+    </button>
+
+    <p class="status" id="status">Waiting for connection...</p>
+  </div>
+
+  <script>
+    // Update status when online
+    function updateStatus() {
+      const statusEl = document.getElementById('status');
+      if (navigator.onLine) {
+        statusEl.textContent = 'Connection restored! Click to reload.';
+        statusEl.classList.add('online');
+      } else {
+        statusEl.textContent = 'Waiting for connection...';
+        statusEl.classList.remove('online');
+      }
+    }
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
+
+    // Auto-reload when back online
+    window.addEventListener('online', () => {
+      setTimeout(() => window.location.reload(), 1000);
+    });
+  </script>
+</body>
+</html>

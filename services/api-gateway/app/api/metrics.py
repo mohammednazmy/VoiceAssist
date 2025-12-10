@@ -10,32 +10,27 @@ Metrics include:
 - External API performance
 - Business metrics (P3.3)
 """
-from datetime import datetime, timedelta
-from fastapi import APIRouter, Response, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func, distinct
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from app.core.database import get_db_pool_stats, get_redis_pool_stats, get_db
+import time
+from datetime import datetime, timezone
+
+from app.core.business_metrics import active_users_daily, active_users_monthly, system_uptime_seconds, version_info
+from app.core.database import get_db, get_db_pool_stats, get_redis_pool_stats
 from app.core.metrics import (
-    db_pool_size,
-    db_pool_checked_out,
     db_pool_checked_in,
+    db_pool_checked_out,
     db_pool_overflow,
+    db_pool_size,
     db_pool_utilization_percent,
-    redis_pool_max_connections,
-    redis_pool_in_use,
     redis_pool_available,
-)
-from app.core.business_metrics import (
-    active_users_daily,
-    active_users_monthly,
-    kb_documents_total,
-    system_uptime_seconds,
-    version_info,
+    redis_pool_in_use,
+    redis_pool_max_connections,
 )
 from app.models.user import User
-import time
+from fastapi import APIRouter, Depends, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from sqlalchemy import distinct, func
+from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/metrics", tags=["observability"])
 
@@ -80,17 +75,13 @@ async def prometheus_metrics(db: Session = Depends(get_db)):
     # Update business metrics (P3.3)
     try:
         # Calculate Daily Active Users (users who logged in today)
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-        dau_count = db.query(func.count(distinct(User.id))).filter(
-            User.last_login >= today_start
-        ).scalar() or 0
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        dau_count = db.query(func.count(distinct(User.id))).filter(User.last_login >= today_start).scalar() or 0
         active_users_daily.set(dau_count)
 
         # Calculate Monthly Active Users (users who logged in this month)
-        month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        mau_count = db.query(func.count(distinct(User.id))).filter(
-            User.last_login >= month_start
-        ).scalar() or 0
+        month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        mau_count = db.query(func.count(distinct(User.id))).filter(User.last_login >= month_start).scalar() or 0
         active_users_monthly.set(mau_count)
 
         # System uptime in seconds
@@ -98,15 +89,12 @@ async def prometheus_metrics(db: Session = Depends(get_db)):
         system_uptime_seconds.set(uptime)
 
         # Version info
-        version_info.info({
-            "version": "0.1.0",
-            "environment": "development"
-        })
+        version_info.info({"version": "0.1.0", "environment": "development"})
 
         # Knowledge base metrics (placeholder for now - will be populated by upload endpoint)
         # kb_documents_total and kb_chunks_total are already tracked in admin_kb.py
 
-    except Exception as e:
+    except Exception:
         # If business metrics collection fails, continue with other metrics
         pass
 

@@ -15,17 +15,17 @@ Future enhancements:
 - Intelligent chunking (semantic boundaries)
 - Multi-format support (DOCX, HTML, etc.)
 """
-import hashlib
-import uuid
-from datetime import datetime
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
-import logging
 
+import logging
+import uuid
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+import openai
 from pypdf import PdfReader
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
-import openai
+from qdrant_client.models import Distance, PointStruct, VectorParams
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DocumentChunk:
     """Represents a chunk of a document with metadata."""
+
     chunk_id: str
     document_id: str
     content: str
@@ -43,6 +44,7 @@ class DocumentChunk:
 @dataclass
 class IndexingResult:
     """Result of document indexing operation."""
+
     document_id: str
     success: bool
     chunks_indexed: int
@@ -62,7 +64,7 @@ class KBIndexer:
         collection_name: str = "medical_kb",
         chunk_size: int = 500,
         chunk_overlap: int = 50,
-        embedding_model: str = "text-embedding-3-small"
+        embedding_model: str = "text-embedding-3-small",
     ):
         """
         Initialize KB Indexer.
@@ -93,7 +95,7 @@ class KBIndexer:
                 # Create collection with vector size for text-embedding-3-small (1536)
                 self.qdrant_client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=VectorParams(size=1536, distance=Distance.COSINE)
+                    vectors_config=VectorParams(size=1536, distance=Distance.COSINE),
                 )
                 logger.info(f"Created Qdrant collection: {self.collection_name}")
             else:
@@ -114,6 +116,7 @@ class KBIndexer:
         """
         try:
             import io
+
             pdf_file = io.BytesIO(pdf_bytes)
             reader = PdfReader(pdf_file)
 
@@ -145,7 +148,7 @@ class KBIndexer:
         text_length = len(text)
 
         for i in range(0, text_length, self.chunk_size - self.chunk_overlap):
-            chunk_text = text[i:i + self.chunk_size]
+            chunk_text = text[i : i + self.chunk_size]
 
             # Skip very small chunks at the end
             if len(chunk_text) < 50:
@@ -161,8 +164,8 @@ class KBIndexer:
                     **metadata,
                     "chunk_index": i // (self.chunk_size - self.chunk_overlap),
                     "char_start": i,
-                    "char_end": min(i + self.chunk_size, text_length)
-                }
+                    "char_end": min(i + self.chunk_size, text_length),
+                },
             )
             chunks.append(chunk)
 
@@ -181,10 +184,7 @@ class KBIndexer:
         """
         try:
             # Use OpenAI async client
-            response = await openai.embeddings.create(
-                model=self.embedding_model,
-                input=text
-            )
+            response = await openai.embeddings.create(model=self.embedding_model, input=text)
             embedding = response.data[0].embedding
             return embedding
 
@@ -198,7 +198,7 @@ class KBIndexer:
         document_id: str,
         title: str,
         source_type: str = "uploaded",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> IndexingResult:
         """
         Index a document: chunk, embed, and store in Qdrant.
@@ -219,8 +219,8 @@ class KBIndexer:
                 "document_id": document_id,
                 "title": title,
                 "source_type": source_type,
-                "indexed_at": datetime.utcnow().isoformat(),
-                **(metadata or {})
+                "indexed_at": datetime.now(timezone.utc).isoformat(),
+                **(metadata or {}),
             }
 
             # Chunk the document
@@ -231,7 +231,7 @@ class KBIndexer:
                     document_id=document_id,
                     success=False,
                     chunks_indexed=0,
-                    error_message="No chunks generated from document"
+                    error_message="No chunks generated from document",
                 )
 
             # Generate embeddings and create points for Qdrant
@@ -248,24 +248,17 @@ class KBIndexer:
                         "document_id": chunk.document_id,
                         "content": chunk.content,
                         "chunk_index": chunk.chunk_index,
-                        **chunk.metadata
-                    }
+                        **chunk.metadata,
+                    },
                 )
                 points.append(point)
 
             # Upload to Qdrant
-            self.qdrant_client.upsert(
-                collection_name=self.collection_name,
-                points=points
-            )
+            self.qdrant_client.upsert(collection_name=self.collection_name, points=points)
 
             logger.info(f"Successfully indexed document {document_id} with {len(points)} chunks")
 
-            return IndexingResult(
-                document_id=document_id,
-                success=True,
-                chunks_indexed=len(points)
-            )
+            return IndexingResult(document_id=document_id, success=True, chunks_indexed=len(points))
 
         except Exception as e:
             logger.error(f"Error indexing document {document_id}: {e}", exc_info=True)
@@ -273,7 +266,7 @@ class KBIndexer:
                 document_id=document_id,
                 success=False,
                 chunks_indexed=0,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def index_pdf_document(
@@ -282,7 +275,7 @@ class KBIndexer:
         document_id: str,
         title: str,
         source_type: str = "uploaded",
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> IndexingResult:
         """
         Index a PDF document.
@@ -307,7 +300,7 @@ class KBIndexer:
                 document_id=document_id,
                 title=title,
                 source_type=source_type,
-                metadata=metadata
+                metadata=metadata,
             )
 
         except Exception as e:
@@ -316,7 +309,7 @@ class KBIndexer:
                 document_id=document_id,
                 success=False,
                 chunks_indexed=0,
-                error_message=f"PDF processing failed: {e}"
+                error_message=f"PDF processing failed: {e}",
             )
 
     def delete_document(self, document_id: str) -> bool:
@@ -333,16 +326,7 @@ class KBIndexer:
             # Delete all points with matching document_id
             self.qdrant_client.delete(
                 collection_name=self.collection_name,
-                points_selector={
-                    "filter": {
-                        "must": [
-                            {
-                                "key": "document_id",
-                                "match": {"value": document_id}
-                            }
-                        ]
-                    }
-                }
+                points_selector={"filter": {"must": [{"key": "document_id", "match": {"value": document_id}}]}},
             )
             logger.info(f"Deleted document {document_id} from index")
             return True

@@ -1,0 +1,15 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../",
+    "rootDirs": ["./src", "../types/src"],
+    "lib": ["ES2020", "DOM"],
+    "paths": {
+      "@voiceassist/types": ["../types/src/index.ts"],
+      "@voiceassist/types/*": ["../types/src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

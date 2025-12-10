@@ -8,15 +8,14 @@ Provides endpoints for administrators to manage the multi-level cache:
 
 These endpoints require admin authentication.
 """
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
 
 from app.core.api_envelope import success_response
-from app.core.dependencies import get_current_admin_user
+from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
+from app.core.logging import get_logger
 from app.models.user import User
 from app.services.cache_service import cache_service
-from app.core.logging import get_logger
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/admin/cache", tags=["admin", "cache"])
 logger = get_logger(__name__)
@@ -24,6 +23,7 @@ logger = get_logger(__name__)
 
 class CacheStatsResponse(BaseModel):
     """Cache statistics response."""
+
     l1_size: int
     l1_max_size: int
     l1_utilization: float
@@ -34,12 +34,13 @@ class CacheStatsResponse(BaseModel):
 
 class CacheInvalidateRequest(BaseModel):
     """Request to invalidate cache by pattern."""
+
     pattern: str
 
 
 @router.get("/stats", response_model=dict)
 async def get_cache_stats(
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     Get cache statistics for monitoring.
@@ -64,28 +65,22 @@ async def get_cache_stats(
             extra={
                 "admin_user_id": str(current_admin_user.id),
                 "l1_utilization": response_data.l1_utilization,
-            }
+            },
         )
 
-        return success_response(
-            data=response_data.dict(),
-            version="2.0.0"
-        )
+        return success_response(data=response_data.model_dump(), version="2.0.0")
 
     except Exception as e:
         logger.error(f"Error retrieving cache stats: {e}", exc_info=True)
         return success_response(
-            data={
-                "error": str(e),
-                "message": "Failed to retrieve cache statistics"
-            },
-            version="2.0.0"
+            data={"error": str(e), "message": "Failed to retrieve cache statistics"},
+            version="2.0.0",
         )
 
 
 @router.post("/clear", response_model=dict)
 async def clear_cache(
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     Clear all caches (L1 and L2).
@@ -96,6 +91,8 @@ async def clear_cache(
     Returns:
         Success status
     """
+    ensure_admin_privileges(current_admin_user)
+
     try:
         success = await cache_service.clear()
 
@@ -105,15 +102,15 @@ async def clear_cache(
                 "admin_user_id": str(current_admin_user.id),
                 "admin_email": current_admin_user.email,
                 "success": success,
-            }
+            },
         )
 
         return success_response(
             data={
                 "success": success,
-                "message": "All caches cleared successfully" if success else "Failed to clear caches"
+                "message": ("All caches cleared successfully" if success else "Failed to clear caches"),
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
     except Exception as e:
@@ -122,16 +119,16 @@ async def clear_cache(
             data={
                 "success": False,
                 "error": str(e),
-                "message": "Failed to clear caches"
+                "message": "Failed to clear caches",
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
 
 @router.post("/invalidate", response_model=dict)
 async def invalidate_cache_pattern(
     pattern: str = Query(..., description="Redis key pattern to invalidate (e.g., 'rag_query:*')"),
-    current_admin_user: User = Depends(get_current_admin_user)
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
 ):
     """
     Invalidate cache entries matching a pattern.
@@ -144,6 +141,8 @@ async def invalidate_cache_pattern(
     Returns:
         Number of keys deleted
     """
+    ensure_admin_privileges(current_admin_user)
+
     try:
         deleted_count = await cache_service.delete_pattern(pattern)
 
@@ -153,16 +152,16 @@ async def invalidate_cache_pattern(
                 "admin_user_id": str(current_admin_user.id),
                 "pattern": pattern,
                 "deleted_count": deleted_count,
-            }
+            },
         )
 
         return success_response(
             data={
                 "pattern": pattern,
                 "deleted_count": deleted_count,
-                "message": f"Invalidated {deleted_count} cache entries matching pattern '{pattern}'"
+                "message": f"Invalidated {deleted_count} cache entries matching pattern '{pattern}'",
             },
-            version="2.0.0"
+            version="2.0.0",
         )
 
     except Exception as e:
@@ -172,7 +171,143 @@ async def invalidate_cache_pattern(
                 "pattern": pattern,
                 "deleted_count": 0,
                 "error": str(e),
-                "message": "Failed to invalidate cache pattern"
+                "message": "Failed to invalidate cache pattern",
             },
-            version="2.0.0"
+            version="2.0.0",
+        )
+
+
+class NamespaceStats(BaseModel):
+    """Cache stats for a specific namespace."""
+
+    namespace: str
+    key_count: int
+    estimated_size_bytes: int
+
+
+@router.get("/stats/namespaces", response_model=dict)
+async def get_cache_stats_by_namespace(
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
+    """
+    Get cache statistics broken down by namespace.
+
+    Returns:
+        Cache stats organized by namespace (e.g., rag_query, user, search_results)
+    """
+    try:
+        from app.core.database import redis_client
+
+        # Define known namespaces to check
+        namespaces = [
+            "voiceassist:*",
+            "rag_query:*",
+            "search_results:*",
+            "user:*",
+            "session:*",
+            "metrics:*",
+            "admin:*",
+        ]
+
+        namespace_stats = []
+        for ns in namespaces:
+            try:
+                # Count keys matching the namespace pattern
+                cursor = 0
+                key_count = 0
+                while True:
+                    cursor, keys = redis_client.scan(cursor=cursor, match=ns, count=100)
+                    key_count += len(keys)
+                    if cursor == 0:
+                        break
+
+                if key_count > 0:
+                    namespace_stats.append(
+                        NamespaceStats(
+                            namespace=ns.rstrip(":*"),
+                            key_count=key_count,
+                            estimated_size_bytes=key_count * 1024,  # Rough estimate
+                        ).model_dump()
+                    )
+            except Exception as e:
+                logger.warning(f"Error scanning namespace {ns}: {e}")
+                continue
+
+        logger.info(
+            "cache_namespace_stats_retrieved",
+            extra={
+                "admin_user_id": str(current_admin_user.id),
+                "namespace_count": len(namespace_stats),
+            },
+        )
+
+        return success_response(
+            data={
+                "namespaces": namespace_stats,
+                "total_namespaces": len(namespace_stats),
+            },
+            version="2.0.0",
+        )
+
+    except Exception as e:
+        logger.error(f"Error retrieving namespace stats: {e}", exc_info=True)
+        return success_response(
+            data={
+                "namespaces": [],
+                "error": str(e),
+                "message": "Failed to retrieve namespace statistics",
+            },
+            version="2.0.0",
+        )
+
+
+@router.post("/invalidate/namespace", response_model=dict)
+async def invalidate_namespace(
+    namespace: str = Query(..., description="Namespace to invalidate (e.g., 'rag_query', 'search_results')"),
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+):
+    """
+    Invalidate all cache entries in a specific namespace.
+
+    This is a convenience endpoint that invalidates all keys matching {namespace}:*
+
+    Returns:
+        Number of keys deleted
+    """
+    ensure_admin_privileges(current_admin_user)
+
+    try:
+        pattern = f"{namespace}:*"
+        deleted_count = await cache_service.delete_pattern(pattern)
+
+        logger.warning(
+            "cache_namespace_invalidated",
+            extra={
+                "admin_user_id": str(current_admin_user.id),
+                "admin_email": current_admin_user.email,
+                "namespace": namespace,
+                "deleted_count": deleted_count,
+            },
+        )
+
+        return success_response(
+            data={
+                "namespace": namespace,
+                "pattern": pattern,
+                "deleted_count": deleted_count,
+                "message": f"Invalidated {deleted_count} cache entries in namespace '{namespace}'",
+            },
+            version="2.0.0",
+        )
+
+    except Exception as e:
+        logger.error(f"Error invalidating namespace: {e}", exc_info=True)
+        return success_response(
+            data={
+                "namespace": namespace,
+                "deleted_count": 0,
+                "error": str(e),
+                "message": "Failed to invalidate namespace",
+            },
+            version="2.0.0",
         )

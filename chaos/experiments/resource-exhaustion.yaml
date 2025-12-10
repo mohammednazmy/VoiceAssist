@@ -29,7 +29,7 @@ steady-state-hypothesis:
         arguments: ["compose", "ps", "-q", "voiceassist-server"]
         expect:
           - type: string
-            pattern: "[0-9a-f]+"  # Container ID present
+            pattern: "[0-9a-f]+" # Container ID present
 
     - name: "api-responds"
       type: probe
@@ -62,7 +62,7 @@ method:
     provider:
       type: http
       url: "${api_url}/health"
-      timeout: 15  # Longer timeout under stress
+      timeout: 15 # Longer timeout under stress
       expect:
         - status: 200
 

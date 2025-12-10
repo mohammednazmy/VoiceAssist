@@ -3,9 +3,11 @@ Standard API response envelope for consistent responses across all endpoints.
 
 All API responses should use this envelope for consistency and easier client handling.
 """
-from typing import Any, Optional, Dict, List
-from pydantic import BaseModel, model_validator
-from datetime import datetime
+
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class APIEnvelope(BaseModel):
@@ -14,29 +16,32 @@ class APIEnvelope(BaseModel):
 
     Wraps all API responses in a consistent structure with metadata.
     """
+
     success: bool
     data: Optional[Any] = None
     error: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
     timestamp: str
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "data": {"user_id": "123", "email": "user@example.com"},
                 "error": None,
                 "metadata": {
                     "request_id": "550e8400-e29b-41d4-a716-446655440000",
-                    "version": "2.0.0"
+                    "version": "2.0.0",
                 },
-                "timestamp": "2025-11-21T00:00:00.000Z"
+                "timestamp": "2025-11-21T00:00:00.000Z",
             }
         }
+    )
 
 
 class ErrorDetail(BaseModel):
     """Detailed error information."""
+
     code: str  # Machine-readable error code (e.g., "INVALID_PASSWORD")
     message: str  # Human-readable error message
     details: Optional[Dict[str, Any]] = None  # Additional error details
@@ -45,6 +50,7 @@ class ErrorDetail(BaseModel):
 
 class PaginationMetadata(BaseModel):
     """Pagination metadata for list responses."""
+
     page: int
     page_size: int
     total_items: int
@@ -52,7 +58,7 @@ class PaginationMetadata(BaseModel):
     has_next: Optional[bool] = None
     has_prev: Optional[bool] = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def compute_pagination_flags(self):
         """Automatically compute has_next and has_prev if not provided."""
         if self.has_next is None:
@@ -85,8 +91,8 @@ def success_response(
     metadata = {
         "version": version,
         **({"request_id": request_id} if request_id else {}),
-        **({"pagination": pagination.dict()} if pagination else {}),
-        **extra_metadata
+        **({"pagination": pagination.model_dump()} if pagination else {}),
+        **extra_metadata,
     }
 
     return {
@@ -94,7 +100,7 @@ def success_response(
         "data": data,
         "error": None,
         "metadata": metadata if metadata else None,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
@@ -125,29 +131,24 @@ def error_response(
     metadata = {
         "version": version,
         **({"request_id": request_id} if request_id else {}),
-        **extra_metadata
+        **extra_metadata,
     }
 
-    error = {
-        "code": code,
-        "message": message,
-        "details": details,
-        "field": field
-    }
+    error = {"code": code, "message": message, "details": details, "field": field}
 
     return {
         "success": False,
         "data": None,
         "error": error,
         "metadata": metadata if metadata else None,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
 
 
 def validation_error_response(
     errors: List[Dict[str, Any]],
     request_id: Optional[str] = None,
-    version: str = "2.0.0"
+    version: str = "2.0.0",
 ) -> Dict[str, Any]:
     """
     Create a validation error response for multiple field errors.
@@ -165,7 +166,7 @@ def validation_error_response(
         message="One or more fields failed validation",
         details={"errors": errors},
         request_id=request_id,
-        version=version
+        version=version,
     )
 
 
@@ -175,7 +176,7 @@ class ErrorCodes:
 
     # Authentication errors (401)
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
-    TOKEN_EXPIRED = "TOKEN_EXPIRED"
+    TOKEN_EXPIRED = "TOKEN_EXPIRED"  # nosec B105 - This is an error code constant, not a hardcoded password
     TOKEN_INVALID = "TOKEN_INVALID"
     TOKEN_REVOKED = "TOKEN_REVOKED"
     UNAUTHORIZED = "UNAUTHORIZED"

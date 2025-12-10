@@ -1,18 +1,47 @@
+---
+title: Incident Response Runbook
+slug: operations/runbooks/incident-response
+summary: Comprehensive guide for handling incidents in VoiceAssist V2.
+status: stable
+stability: production
+owner: sre
+lastUpdated: "2025-11-27"
+audience:
+  - devops
+  - backend
+  - admin
+  - ai-agents
+tags:
+  - runbook
+  - incident
+  - operations
+  - on-call
+category: debugging
+relatedServices:
+  - api-gateway
+version: 1.0.0
+ai_summary: >-
+  Last Updated: 2025-11-27 Purpose: Comprehensive guide for handling incidents
+  in VoiceAssist V2 --- --- curl -s http://localhost:8000/health | jq '.' docker
+  compose ps docker compose logs --since 10m voiceassist-server | grep -i error
+  curl -s http://localhost:8000/metrics | grep -E "(error|failure...
+---
+
 # Incident Response Runbook
 
-**Last Updated**: 2025-11-21 (Phase 7 - P3.2)
+**Last Updated**: 2025-11-27
 **Purpose**: Comprehensive guide for handling incidents in VoiceAssist V2
 
 ---
 
 ## Incident Severity Levels
 
-| Severity | Description | Response Time | Examples |
-|----------|-------------|---------------|----------|
-| **P1 - Critical** | Complete service outage, data loss risk | 15 minutes | Database down, complete API failure, security breach |
-| **P2 - High** | Major feature broken, significant performance degradation | 1 hour | Authentication failing, voice processing unavailable |
-| **P3 - Medium** | Minor feature broken, degraded performance | 4 hours | Specific API endpoint failing, slow response times |
-| **P4 - Low** | Cosmetic issues, minimal impact | 24 hours | UI glitches, non-critical warnings in logs |
+| Severity          | Description                                               | Response Time | Examples                                             |
+| ----------------- | --------------------------------------------------------- | ------------- | ---------------------------------------------------- |
+| **P1 - Critical** | Complete service outage, data loss risk                   | 15 minutes    | Database down, complete API failure, security breach |
+| **P2 - High**     | Major feature broken, significant performance degradation | 1 hour        | Authentication failing, voice processing unavailable |
+| **P3 - Medium**   | Minor feature broken, degraded performance                | 4 hours       | Specific API endpoint failing, slow response times   |
+| **P4 - Low**      | Cosmetic issues, minimal impact                           | 24 hours      | UI glitches, non-critical warnings in logs           |
 
 ---
 
@@ -44,6 +73,7 @@ curl -s http://localhost:8000/metrics | grep -E "(error|failure)"
 ### 2. Immediate Triage (First 5 Minutes)
 
 **Checklist:**
+
 - [ ] Acknowledge the incident (update status page if available)
 - [ ] Determine severity level using table above
 - [ ] Notify on-call engineer if P1/P2
@@ -265,6 +295,7 @@ docker compose config | grep -A 10 voiceassist-server
 ### When to Escalate
 
 **Escalate Immediately If:**
+
 - Unable to identify root cause within 30 minutes (P1) or 2 hours (P2)
 - Mitigation attempts unsuccessful
 - Data loss suspected
@@ -323,6 +354,7 @@ cat /tmp/escalation_report_$(date +%Y%m%d_%H%M%S).txt
 ### Database Connection Issues
 
 **Symptoms:**
+
 - "Connection pool exhausted" errors
 - "Too many connections" errors
 - Slow response times
@@ -353,6 +385,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 ```
 
 **Resolution:**
+
 ```bash
 # Restart application to reset connection pool
 docker compose restart voiceassist-server
@@ -369,6 +402,7 @@ docker compose up -d voiceassist-server
 ### Memory/Resource Exhaustion
 
 **Symptoms:**
+
 - Container restarts
 - OOMKilled status
 - Slow performance
@@ -408,6 +442,7 @@ watch -n 5 'docker stats --no-stream | grep voiceassist-server'
 ### API Performance Degradation
 
 **Symptoms:**
+
 - Slow response times
 - Timeout errors
 - High request queue
@@ -454,6 +489,7 @@ docker compose exec redis redis-cli CONFIG SET maxmemory-policy allkeys-lru
 ### Security Incidents
 
 **Symptoms:**
+
 - Unusual traffic patterns
 - Unauthorized access attempts
 - Data breach alerts
@@ -499,6 +535,7 @@ docker compose exec redis redis-cli FLUSHALL
 ### Immediate Post-Incident (Within 1 Hour)
 
 **Checklist:**
+
 - [ ] Verify incident fully resolved
 - [ ] Update status page to "Resolved"
 - [ ] Send final communication to stakeholders
@@ -530,6 +567,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 # Post-Mortem: [Incident Title]
 
 ## Incident Details
+
 - **Date**: YYYY-MM-DD
 - **Duration**: X hours Y minutes
 - **Severity**: P1/P2/P3/P4
@@ -537,40 +575,47 @@ docker compose exec postgres psql -U voiceassist -d voiceassist -c \
 - **Participants**: [Names]
 
 ## Impact
+
 - **Users Affected**: [Number or percentage]
 - **Services Affected**: [List]
 - **Financial Impact**: [If applicable]
 - **Data Loss**: None / [Description]
 
 ## Timeline
-| Time | Event |
-|------|-------|
-| HH:MM | Incident began |
+
+| Time  | Event                       |
+| ----- | --------------------------- |
+| HH:MM | Incident began              |
 | HH:MM | Detected by [person/system] |
-| HH:MM | Initial response started |
-| HH:MM | Root cause identified |
-| HH:MM | Mitigation deployed |
-| HH:MM | Incident resolved |
+| HH:MM | Initial response started    |
+| HH:MM | Root cause identified       |
+| HH:MM | Mitigation deployed         |
+| HH:MM | Incident resolved           |
 
 ## Root Cause
+
 [Detailed explanation of what caused the incident]
 
 ## What Went Well
+
 - [Things that worked during response]
 - [Effective tools/processes]
 
 ## What Went Wrong
+
 - [Issues encountered during response]
 - [Gaps in tooling/process]
 
 ## Action Items
-| Action | Owner | Due Date | Priority |
-|--------|-------|----------|----------|
-| [Preventive measure] | [Name] | [Date] | P1/P2/P3 |
-| [Monitoring improvement] | [Name] | [Date] | P1/P2/P3 |
-| [Documentation update] | [Name] | [Date] | P1/P2/P3 |
+
+| Action                   | Owner  | Due Date | Priority |
+| ------------------------ | ------ | -------- | -------- |
+| [Preventive measure]     | [Name] | [Date]   | P1/P2/P3 |
+| [Monitoring improvement] | [Name] | [Date]   | P1/P2/P3 |
+| [Documentation update]   | [Name] | [Date]   | P1/P2/P3 |
 
 ## Lessons Learned
+
 - [Key takeaway 1]
 - [Key takeaway 2]
 - [Key takeaway 3]
@@ -776,22 +821,22 @@ fi
 
 ### Primary Contacts
 
-| Role | Contact | Availability |
-|------|---------|--------------|
-| **On-Call Engineer** | PagerDuty alert | 24/7 |
-| **Backup On-Call** | PagerDuty escalation | 24/7 |
-| **Engineering Manager** | ops-manager@voiceassist.local | Business hours |
-| **DevOps Lead** | devops-lead@voiceassist.local | Business hours + on-call |
-| **Database Admin** | dba-oncall@voiceassist.local | 24/7 |
-| **Security Team** | security@voiceassist.local | 24/7 for P1 security |
+| Role                    | Contact                       | Availability             |
+| ----------------------- | ----------------------------- | ------------------------ |
+| **On-Call Engineer**    | PagerDuty alert               | 24/7                     |
+| **Backup On-Call**      | PagerDuty escalation          | 24/7                     |
+| **Engineering Manager** | ops-manager@voiceassist.local | Business hours           |
+| **DevOps Lead**         | devops-lead@voiceassist.local | Business hours + on-call |
+| **Database Admin**      | dba-oncall@voiceassist.local  | 24/7                     |
+| **Security Team**       | security@voiceassist.local    | 24/7 for P1 security     |
 
 ### Escalation Contacts
 
-| Level | Contact | When to Escalate |
-|-------|---------|------------------|
-| **L1** | On-Call Engineer | Initial response |
-| **L2** | Team Lead | No resolution in 30 min (P1) or 2 hrs (P2) |
-| **L3** | Engineering Manager | No resolution in 1 hr (P1) or 4 hrs (P2) |
+| Level  | Contact              | When to Escalate                                   |
+| ------ | -------------------- | -------------------------------------------------- |
+| **L1** | On-Call Engineer     | Initial response                                   |
+| **L2** | Team Lead            | No resolution in 30 min (P1) or 2 hrs (P2)         |
+| **L3** | Engineering Manager  | No resolution in 1 hr (P1) or 4 hrs (P2)           |
 | **L4** | VP Engineering / CTO | Major outage > 2 hours, data loss, security breach |
 
 ### External Contacts

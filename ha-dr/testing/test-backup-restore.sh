@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2086,SC2181
 # Comprehensive Backup/Restore Testing Procedure (Phase 12 - HA/DR)
 
 set -e

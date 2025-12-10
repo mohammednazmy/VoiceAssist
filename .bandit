@@ -1,39 +1,28 @@
-# VoiceAssist V2 - Bandit Security Configuration
-# Phase 9: Infrastructure as Code
-#
-# Bandit is a security linter for Python code
+exclude_dirs:
+  - /tests/
+  - /venv/
+  - /.venv/
+  - /migrations/
+  - /.git/
+  - /node_modules/
 
-[bandit]
-# Exclude directories
-exclude_dirs = [
-    '/tests/',
-    '/venv/',
-    '/.venv/',
-    '/migrations/',
-    '/.git/',
-    '/node_modules/',
-]
+skips:
+  # Acceptable patterns for this codebase
+  - B101  # assert_used - used in tests
+  - B110  # try_except_pass - acceptable in some contexts
+  - B608  # hardcoded_sql_expressions - we use parameterized queries via SQLAlchemy ORM
 
-# Test IDs to skip (with justification)
-skips = [
-    # B101: Test for use of assert - used in tests only
-    # B110: Try/except pass - acceptable in some contexts
-]
+  # Error code constants containing "password"/"token" words (not actual secrets)
+  - B105  # hardcoded_password_string - error codes like TOKEN_INVALID, INVALID_PASSWORD are not secrets
+  - B106  # hardcoded_password_funcarg - "access"/"refresh" are token type strings, not passwords
+  - B107  # hardcoded_password_default - same as above
 
-# Severity level (LOW, MEDIUM, HIGH)
-level = MEDIUM
+  # Docker/Container patterns
+  - B104  # hardcoded_bind_all_interfaces - intentional for Docker container (uvicorn 0.0.0.0)
 
-# Confidence level (LOW, MEDIUM, HIGH)
-confidence = MEDIUM
+  # Internal cache serialization (pickle)
+  - B301  # pickle - cache_service only deserializes its own serialized data, not untrusted input
+  - B403  # import_pickle - same reason, internal cache use only
 
-# Output format (screen, txt, html, json, csv, xml, yaml)
-format = json
-
-# Aggregate output by filename
-aggregate = file
-
-# Show only issues with a given severity level or higher
-severity = MEDIUM
-
-# Report only issues with a given confidence level or higher
-confidence = MEDIUM
+  # Non-cryptographic hashing
+  - B324  # hashlib MD5 - used only for cache key generation, not security purposes

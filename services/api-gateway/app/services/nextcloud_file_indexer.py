@@ -18,19 +18,19 @@ Future enhancements:
 - Metadata extraction from Nextcloud tags/comments
 - Multi-user file permissions and filtering
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime
-from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-
-from webdav3.client import Client as WebDAVClient
-from webdav3.exceptions import WebDavException
+from typing import Any, Dict, List, Optional, Set
 
 # Import KB indexer from Phase 5
-from app.services.kb_indexer import KBIndexer, IndexingResult
+from app.services.kb_indexer import IndexingResult, KBIndexer
+from webdav3.client import Client as WebDAVClient
+from webdav3.exceptions import WebDavException
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class NextcloudFile:
     """Represents a file in Nextcloud."""
+
     path: str
     name: str
     size: int
@@ -55,7 +56,7 @@ class NextcloudFileIndexer:
     """
 
     # Supported file extensions for indexing
-    SUPPORTED_EXTENSIONS = {'.pdf', '.txt', '.md'}
+    SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md"}
 
     def __init__(
         self,
@@ -64,7 +65,7 @@ class NextcloudFileIndexer:
         password: str,
         qdrant_url: str = "http://qdrant:6333",
         collection_name: str = "medical_kb",
-        watch_directories: Optional[List[str]] = None
+        watch_directories: Optional[List[str]] = None,
     ):
         """
         Initialize Nextcloud file indexer.
@@ -82,21 +83,20 @@ class NextcloudFileIndexer:
         self.password = password
 
         # WebDAV client
-        self.webdav_client = WebDAVClient({
-            'webdav_hostname': webdav_url,
-            'webdav_login': username,
-            'webdav_password': password,
-            'webdav_timeout': 30
-        })
-
-        # KB Indexer from Phase 5
-        self.kb_indexer = KBIndexer(
-            qdrant_url=qdrant_url,
-            collection_name=collection_name
+        self.webdav_client = WebDAVClient(
+            {
+                "webdav_hostname": webdav_url,
+                "webdav_login": username,
+                "webdav_password": password,
+                "webdav_timeout": 30,
+            }
         )
 
+        # KB Indexer from Phase 5
+        self.kb_indexer = KBIndexer(qdrant_url=qdrant_url, collection_name=collection_name)
+
         # Directories to watch for new files
-        self.watch_directories = watch_directories or ['Medical Documents']
+        self.watch_directories = watch_directories or ["Medical Documents"]
 
         # Track indexed files to prevent re-indexing
         self.indexed_files: Set[str] = set()
@@ -118,11 +118,7 @@ class NextcloudFileIndexer:
             logger.error(f"Failed to connect to Nextcloud WebDAV: {e}", exc_info=True)
             return False
 
-    def list_files(
-        self,
-        directory: str = "/",
-        recursive: bool = True
-    ) -> List[NextcloudFile]:
+    def list_files(self, directory: str = "/", recursive: bool = True) -> List[NextcloudFile]:
         """
         List files in a Nextcloud directory.
 
@@ -141,12 +137,12 @@ class NextcloudFileIndexer:
 
             for item in items:
                 # Skip self-reference
-                if item['path'] == directory:
+                if item["path"] == directory:
                     continue
 
                 # Parse item info
-                is_dir = item.get('isdir', False)
-                file_path = item['path']
+                is_dir = item.get("isdir", False)
+                file_path = item["path"]
 
                 if is_dir:
                     # Recurse into subdirectory if requested
@@ -158,10 +154,10 @@ class NextcloudFileIndexer:
                     nextcloud_file = NextcloudFile(
                         path=file_path,
                         name=Path(file_path).name,
-                        size=item.get('size', 0),
-                        modified=datetime.fromisoformat(item.get('modified', datetime.now().isoformat())),
-                        content_type=item.get('content_type'),
-                        is_directory=False
+                        size=item.get("size", 0),
+                        modified=datetime.fromisoformat(item.get("modified", datetime.now().isoformat())),
+                        content_type=item.get("content_type"),
+                        is_directory=False,
                     )
                     files.append(nextcloud_file)
 
@@ -201,11 +197,7 @@ class NextcloudFileIndexer:
 
         return True
 
-    async def index_file(
-        self,
-        file: NextcloudFile,
-        source_type: str = "note"
-    ) -> Optional[IndexingResult]:
+    async def index_file(self, file: NextcloudFile, source_type: str = "note") -> Optional[IndexingResult]:
         """
         Index a single file into the knowledge base.
 
@@ -224,7 +216,7 @@ class NextcloudFileIndexer:
             # Determine file type and index appropriately
             file_ext = Path(file.name).suffix.lower()
 
-            if file_ext == '.pdf':
+            if file_ext == ".pdf":
                 # Index PDF
                 result = await self.kb_indexer.index_pdf_document(
                     pdf_bytes=file_bytes,
@@ -235,13 +227,13 @@ class NextcloudFileIndexer:
                         "nextcloud_path": file.path,
                         "nextcloud_size": file.size,
                         "nextcloud_modified": file.modified.isoformat(),
-                        "indexed_at": datetime.utcnow().isoformat()
-                    }
+                        "indexed_at": datetime.now(timezone.utc).isoformat(),
+                    },
                 )
 
-            elif file_ext in {'.txt', '.md'}:
+            elif file_ext in {".txt", ".md"}:
                 # Index text file
-                content = file_bytes.decode('utf-8', errors='ignore')
+                content = file_bytes.decode("utf-8", errors="ignore")
                 result = await self.kb_indexer.index_document(
                     content=content,
                     document_id=f"nextcloud-{file.path}",
@@ -251,8 +243,8 @@ class NextcloudFileIndexer:
                         "nextcloud_path": file.path,
                         "nextcloud_size": file.size,
                         "nextcloud_modified": file.modified.isoformat(),
-                        "indexed_at": datetime.utcnow().isoformat()
-                    }
+                        "indexed_at": datetime.now(timezone.utc).isoformat(),
+                    },
                 )
 
             else:
@@ -273,11 +265,7 @@ class NextcloudFileIndexer:
             logger.error(f"Error indexing file {file.name}: {e}", exc_info=True)
             return None
 
-    async def scan_and_index(
-        self,
-        source_type: str = "note",
-        force_reindex: bool = False
-    ) -> Dict[str, Any]:
+    async def scan_and_index(self, source_type: str = "note", force_reindex: bool = False) -> Dict[str, Any]:
         """
         Scan watch directories and index all supported files.
 
@@ -321,12 +309,12 @@ class NextcloudFileIndexer:
                     failed_files += 1
 
         summary = {
-            "scan_completed": datetime.utcnow().isoformat(),
+            "scan_completed": datetime.now(timezone.utc).isoformat(),
             "watch_directories": self.watch_directories,
             "total_files_found": total_files,
             "files_indexed": indexed_files,
             "files_skipped": skipped_files,
-            "files_failed": failed_files
+            "files_failed": failed_files,
         }
 
         logger.info(
@@ -336,11 +324,7 @@ class NextcloudFileIndexer:
 
         return summary
 
-    async def index_specific_file(
-        self,
-        file_path: str,
-        source_type: str = "note"
-    ) -> Optional[IndexingResult]:
+    async def index_specific_file(self, file_path: str, source_type: str = "note") -> Optional[IndexingResult]:
         """
         Index a specific file by path.
 
@@ -358,10 +342,10 @@ class NextcloudFileIndexer:
             file = NextcloudFile(
                 path=file_path,
                 name=Path(file_path).name,
-                size=info.get('size', 0),
-                modified=datetime.fromisoformat(info.get('modified', datetime.now().isoformat())),
-                content_type=info.get('content_type'),
-                is_directory=False
+                size=info.get("size", 0),
+                modified=datetime.fromisoformat(info.get("modified", datetime.now().isoformat())),
+                content_type=info.get("content_type"),
+                is_directory=False,
             )
 
             # Index the file

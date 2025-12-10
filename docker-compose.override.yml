@@ -5,26 +5,36 @@ services:
   # API Gateway - Main VoiceAssist server
   voiceassist-server:
     ports:
-      - "8200:8000"  # External 8200 -> Internal 8000 (avoid conflict with other services)
+      - "8200:8000" # External 8200 -> Internal 8000 (avoid conflict with other services)
     restart: unless-stopped
 
   # PostgreSQL - Use custom external port
+  # Added to voiceassist-network for port exposure (database-network is internal)
   postgres:
     ports:
-      - "5433:5432"  # External 5433 -> Internal 5432 (avoid conflict with any existing postgres)
+      - "5433:5432" # External 5433 -> Internal 5432 (avoid conflict with any existing postgres)
+    networks:
+      - database-network
+      - voiceassist-network
     restart: unless-stopped
 
   # Redis - Use custom external port
   redis:
     ports:
-      - "6380:6379"  # External 6380 -> Internal 6379 (avoid conflict with existing redis on 6379)
+      - "6380:6379" # External 6380 -> Internal 6379 (avoid conflict with existing redis on 6379)
+    networks:
+      - database-network
+      - voiceassist-network
     restart: unless-stopped
 
   # Qdrant - Vector database
   qdrant:
     ports:
-      - "6333:6333"  # Should be available
-      - "6334:6334"
+      - "6333:6333" # Qdrant REST API
+      - "6334:6334" # Qdrant gRPC API
+    networks:
+      - database-network
+      - voiceassist-network
     restart: unless-stopped
 
   # Disable the bundled Nextcloud - user already has Nextcloud at asimo.io

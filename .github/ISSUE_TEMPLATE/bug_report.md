@@ -1,9 +1,9 @@
 ---
 name: Bug Report
 about: Create a report to help us improve
-title: '[BUG] '
+title: "[BUG] "
 labels: bug
-assignees: ''
+assignees: ""
 ---
 
 ## Bug Description
@@ -40,6 +40,7 @@ assignees: ''
 ## Logs
 
 <!-- Include relevant logs, error messages, or stack traces -->
+
 ```
 # Paste logs here
 ```

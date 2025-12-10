@@ -75,6 +75,7 @@ terraform/
 Creates complete network infrastructure with public, private, and database subnets.
 
 **Usage:**
+
 ```hcl
 module "vpc" {
   source = "./modules/vpc"
@@ -88,6 +89,7 @@ module "vpc" {
 ```
 
 **Outputs:**
+
 - `vpc_id` - VPC identifier
 - `public_subnet_ids` - Public subnet IDs
 - `private_subnet_ids` - Private subnet IDs
@@ -98,6 +100,7 @@ module "vpc" {
 Creates production-ready Kubernetes cluster.
 
 **Usage:**
+
 ```hcl
 module "eks" {
   source = "./modules/eks"
@@ -114,6 +117,7 @@ module "eks" {
 ```
 
 **Outputs:**
+
 - `cluster_id` - EKS cluster ID
 - `cluster_endpoint` - Cluster API endpoint
 - `cluster_name` - Cluster name
@@ -123,6 +127,7 @@ module "eks" {
 Creates PostgreSQL database with encryption and backups.
 
 **Usage:**
+
 ```hcl
 module "rds" {
   source = "./modules/rds"
@@ -138,6 +143,7 @@ module "rds" {
 ```
 
 **Outputs:**
+
 - `db_instance_address` - Database endpoint
 - `db_instance_port` - Database port
 
@@ -146,6 +152,7 @@ module "rds" {
 Creates Redis cluster with replication.
 
 **Usage:**
+
 ```hcl
 module "elasticache" {
   source = "./modules/elasticache"
@@ -160,6 +167,7 @@ module "elasticache" {
 ```
 
 **Outputs:**
+
 - `redis_endpoint_address` - Redis primary endpoint
 - `redis_endpoint_port` - Redis port
 
@@ -434,6 +442,7 @@ terraform apply
 ## Support
 
 For issues or questions:
+
 - Create GitHub issue
 - Contact DevOps team
 - Check [Troubleshooting Guide](../../docs/TERRAFORM_GUIDE.md#troubleshooting)

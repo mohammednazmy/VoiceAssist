@@ -1,0 +1,8 @@
+{
+  "path": "apps/admin-panel/src/components/shared/DataPanel.tsx",
+  "language": "typescript",
+  "size": 1277,
+  "last_modified": "2025-11-28T04:58:57.572Z",
+  "lines": 50,
+  "content": "/**\n * DataPanel - Section container with optional header and actions\n */\nimport { ReactNode } from \"react\";\n\ninterface DataPanelProps {\n  title?: string;\n  subtitle?: string;\n  headerAction?: ReactNode;\n  children: ReactNode;\n  className?: string;\n  noPadding?: boolean;\n}\n\nexport function DataPanel({\n  title,\n  subtitle,\n  headerAction,\n  children,\n  className = \"\",\n  noPadding = false,\n}: DataPanelProps) {\n  const hasHeader = title || headerAction;\n\n  return (\n    <div\n      className={`bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden ${className}`}\n    >\n      {hasHeader && (\n        <div className=\"flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 border-b border-slate-800 bg-slate-800/30\">\n          <div>\n            {title && (\n              <h3 className=\"text-sm font-semibold text-slate-200\">{title}</h3>\n            )}\n            {subtitle && (\n              <p className=\"text-xs text-slate-500 mt-0.5\">{subtitle}</p>\n            )}\n          </div>\n          {headerAction && (\n            <div className=\"flex items-center gap-2 flex-shrink-0\">\n              {headerAction}\n            </div>\n          )}\n        </div>\n      )}\n      <div className={noPadding ? \"\" : \"p-4\"}>{children}</div>\n    </div>\n  );\n}\n"
+}

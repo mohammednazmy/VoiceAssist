@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to apply changes to'
+        description: "Environment to apply changes to"
         required: true
         type: choice
         options:
           - staging
           - production
       auto_approve:
-        description: 'Auto-approve apply (use with caution)'
+        description: "Auto-approve apply (use with caution)"
         required: false
         type: boolean
         default: false
@@ -20,7 +20,7 @@ on:
     branches:
       - main
     paths:
-      - 'infrastructure/terraform/**'
+      - "infrastructure/terraform/**"
 
 env:
   TF_VERSION: "1.6.0"
@@ -107,7 +107,7 @@ jobs:
           terraform show -no-color staging-apply.tfplan > staging-plan-review.txt
 
       - name: Upload plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: staging-apply-plan
           path: |
@@ -135,7 +135,7 @@ jobs:
           cat outputs.json
 
       - name: Upload outputs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: staging-terraform-outputs
           path: infrastructure/terraform/outputs.json
@@ -194,7 +194,7 @@ jobs:
           terraform state pull > terraform-state-backup-$(date +%Y%m%d-%H%M%S).json
 
       - name: Upload state backup
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-state-backup-${{ github.run_number }}
           path: infrastructure/terraform/terraform-state-backup-*.json
@@ -226,7 +226,7 @@ jobs:
           terraform show -no-color production-apply.tfplan > production-plan-review.txt
 
       - name: Upload plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-apply-plan
           path: |
@@ -261,7 +261,7 @@ jobs:
           cat outputs.json
 
       - name: Upload outputs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-terraform-outputs
           path: infrastructure/terraform/outputs.json
@@ -303,7 +303,7 @@ jobs:
 
       - name: Upload deployment summary
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: production-deployment-summary
           path: infrastructure/terraform/deployment-summary.md
@@ -361,7 +361,7 @@ jobs:
       - name: Download terraform outputs
         uses: actions/download-artifact@v6
         with:
-          pattern: '*-terraform-outputs'
+          pattern: "*-terraform-outputs"
 
       - name: Verify EKS cluster
         run: |
@@ -418,7 +418,7 @@ jobs:
           EOF
 
       - name: Upload verification report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: infrastructure-verification-report
           path: infrastructure-report.md
@@ -452,7 +452,7 @@ jobs:
       - name: Download state backup
         uses: actions/download-artifact@v6
         with:
-          pattern: 'production-state-backup-*'
+          pattern: "production-state-backup-*"
 
       - name: Terraform Init
         run: |

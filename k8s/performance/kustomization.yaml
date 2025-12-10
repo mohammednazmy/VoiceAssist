@@ -35,6 +35,9 @@ resources:
   # PodDisruptionBudgets
   - pod-disruption-budget.yaml
 
+  # Frontend gateway + metrics
+  - frontend-gateway.yaml
+
   # Metrics Server (if not already installed)
   # Uncomment if needed:
   # - metrics-server.yaml
@@ -59,6 +62,7 @@ images:
     newTag: latest
   - name: voiceassist-worker
     newTag: latest
+
 
 # Patches for environment-specific modifications
 # These are applied via overlays (see below)

@@ -1,3 +1,28 @@
+---
+title: Phase Template
+slug: phase-template
+summary: "[One paragraph describing what this phase accomplishes]"
+status: stable
+stability: production
+owner: docs
+lastUpdated: "2025-11-27"
+audience:
+  - human
+  - ai-agents
+tags:
+  - phase
+  - template
+category: planning
+component: "platform/planning"
+relatedPaths:
+  - "docs/phases"
+ai_summary: >-
+  [One paragraph describing what this phase accomplishes] [X-Y] hours - Phase
+  [N-1] completed - [Specific service/dependency requirements] - [ ] Previous
+  phase complete - [ ] All services running - [ ] [Specific prerequisites
+  verified] [Description] Verify: [Description with code examples] [Wrap-up...
+---
+
 # Phase [NUMBER]: [NAME]
 
 ## Goal
@@ -30,6 +55,7 @@
 ```
 
 **Verify:**
+
 ```bash
 # Verification commands
 ```
@@ -71,6 +97,7 @@
 ## Troubleshooting
 
 ### [Common Issue 1]
+
 ```bash
 # Solution
 ```

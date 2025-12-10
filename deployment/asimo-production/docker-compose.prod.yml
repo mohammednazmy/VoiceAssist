@@ -1,0 +1,133 @@
+# VoiceAssist Production Docker Compose Override
+#
+# This file contains production-specific overrides for the main docker-compose.yml
+#
+# Usage: docker compose -f docker-compose.yml -f deployment/asimo-production/docker-compose.prod.yml up -d
+
+version: "3.8"
+
+services:
+  # ===================================
+  # VoiceAssist API Gateway (Production)
+  # ===================================
+  voiceassist-server:
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,api"
+
+  # ===================================
+  # PostgreSQL (Production)
+  # ===================================
+  postgres:
+    restart: always
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    environment:
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,database"
+
+  # ===================================
+  # Redis (Production)
+  # ===================================
+  redis:
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,cache"
+
+  # ===================================
+  # Qdrant (Production)
+  # ===================================
+  qdrant:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,vector-db"
+
+  # ===================================
+  # Nextcloud (Production)
+  # ===================================
+  nextcloud:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,nextcloud"
+
+  nextcloud-db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "voiceassist,production,nextcloud-db"

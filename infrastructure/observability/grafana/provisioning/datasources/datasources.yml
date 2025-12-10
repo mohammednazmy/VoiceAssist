@@ -36,8 +36,8 @@ datasources:
     jsonData:
       tracesToLogs:
         datasourceUid: loki
-        tags: ['container', 'service']
-        mappedTags: [{ key: 'service.name', value: 'service' }]
+        tags: ["container", "service"]
+        mappedTags: [{ key: "service.name", value: "service" }]
         mapTagNamesEnabled: true
-        spanStartTimeShift: '-1h'
-        spanEndTimeShift: '1h'
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
