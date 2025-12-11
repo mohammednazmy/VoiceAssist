@@ -355,6 +355,18 @@ VAD_MIN_ENERGY_THRESHOLD=-50
 VAD_MAX_ENERGY_THRESHOLD=-20
 VAD_MIN_SILENCE_DURATION=200
 VAD_MAX_SILENCE_DURATION=1500
+
+## Dictation Mode and Endpointing
+
+When the Thinker/Talker pipeline runs in **dictation mode**, VAD presets are also used to tune how the backend decides that an utterance has finished:
+
+- The pipeline maps the active preset’s `silence_duration_ms` (or a user‑defined custom silence duration) into:
+  - **STT endpointing window** (`endpointing_ms`): how long server‑side silence is allowed before Deepgram emits a speech end event.
+  - **Utterance end window** (`utterance_end_ms`): an additional buffer that lets clinicians pause mid‑thought without prematurely finalizing the note.
+- In practice:
+  - **Sensitive/Balanced** → shorter endpointing (≈400–800 ms) for snappy dictation.
+  - **Relaxed/Accessibility** → longer endpointing (up to ≈1200 ms) and a larger utterance window (up to ≈2500 ms) for thoughtful speech or noisy wards.
+- These values are derived from the same presets defined in `AdaptiveVADService.PRESETS`, so frontend VAD behavior and backend endpointing stay aligned.
 ```
 
 ## Frontend Integration

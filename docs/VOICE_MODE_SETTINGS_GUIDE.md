@@ -174,12 +174,37 @@ After calibration, the system uses a custom threshold tuned to your voice:
 - **Store Key**: `personalizedVadThreshold`
 - **Range**: 0.0-1.0 (null if not calibrated)
 
+When `personalizedVadThreshold` is non-null:
+
+- The **Voice Detection Sensitivity** slider label changes to
+  **“Voice Detection Sensitivity (personalized baseline)”**.
+- The slider no longer moves around a generic global default; instead it
+  adjusts Silero’s positive speech threshold and minimum speech duration
+  **relative to your calibrated baseline**, within safe bounds.
+
+This means:
+
+- Middle (50%) ≈ your personalized baseline
+- Moving left makes the system less sensitive (higher threshold, longer
+  minimum speech window)
+- Moving right makes it more sensitive (lower threshold, shorter window)
+
 ### Adaptive Learning
 
 When enabled, the system continuously learns from your voice patterns and subtly adjusts thresholds over time.
 
 - **Default**: Enabled
 - **Store Key**: `enableBehaviorLearning`
+
+> **For admins / ops:** Voice calibration and the sensitivity slider sit on top of
+> environment-level presets controlled via feature flags. See the
+> “Voice AEC & Dictation Presets” section in the admin feature flags guide
+> (`docs/admin-guide/feature-flags/admin-panel-guide.md#voice-aec--dictation-presets`)
+> for how to choose between dictation-focused vs conversation-focused defaults
+> using:
+> - `backend.voice_barge_in_quality_preset`
+> - `backend.voice_v4_audio_processing`
+> - `backend.voice_aec_capability_tuning`
 
 ---
 
@@ -375,6 +400,12 @@ Settings are managed by a Zustand store with persistence:
 ```
 apps/web-app/src/stores/voiceSettingsStore.ts
 ```
+
+Relevant keys for VAD configuration:
+
+- `vadSensitivity` (0–100): Maps to Silero VAD sensitivity on the client (lower threshold + shorter min-speech window for higher values).
+- `vadCalibrated`, `lastCalibrationDate`, `personalizedVadThreshold`: Updated when Silero noise calibration completes; used to show calibration state in the UI.
+- `enableOfflineFallback`: Controls whether the client will fall back to a simpler RMS-based VAD when Silero is unavailable.
 
 ### Component Locations
 

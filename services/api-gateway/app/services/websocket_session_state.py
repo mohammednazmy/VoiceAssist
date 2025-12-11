@@ -105,7 +105,8 @@ class WebSocketSessionState:
     conversation_id: Optional[str] = None
 
     # Connection state
-    pipeline_state: str = "idle"  # idle, listening, processing, speaking
+    # Canonical voice/pipeline state (idle, listening, processing, speaking, cancelled, error)
+    pipeline_state: str = "idle"
     connection_state: str = "disconnected"  # connected, ready, disconnected
 
     # Sequence tracking
@@ -134,6 +135,10 @@ class WebSocketSessionState:
     language: Optional[str] = None
     vad_sensitivity: Optional[float] = None
 
+    # Privacy preferences for this session
+    # When False, transcripts/responses are not persisted for recovery.
+    store_transcript_history: bool = True
+
     # Recovery metadata
     recovery_attempts: int = 0
     last_recovery_at: Optional[float] = None
@@ -160,6 +165,7 @@ class WebSocketSessionState:
             "voice_id": self.voice_id,
             "language": self.language,
             "vad_sensitivity": self.vad_sensitivity,
+            "store_transcript_history": self.store_transcript_history,
             "recovery_attempts": self.recovery_attempts,
             "last_recovery_at": self.last_recovery_at,
         }
@@ -187,6 +193,7 @@ class WebSocketSessionState:
             voice_id=data.get("voice_id"),
             language=data.get("language"),
             vad_sensitivity=data.get("vad_sensitivity"),
+            store_transcript_history=data.get("store_transcript_history", True),
             recovery_attempts=data.get("recovery_attempts", 0),
             last_recovery_at=data.get("last_recovery_at"),
         )
@@ -742,6 +749,7 @@ class WebSocketSessionStateService:
         conversation_id: Optional[str] = None,
         voice_id: Optional[str] = None,
         language: Optional[str] = None,
+        store_transcript_history: bool = True,
     ) -> WebSocketSessionState:
         """
         Create a new session state.
@@ -766,6 +774,7 @@ class WebSocketSessionStateService:
             updated_at=now,
             voice_id=voice_id,
             language=language,
+            store_transcript_history=store_transcript_history,
         )
 
         await self.save_session_state(state)

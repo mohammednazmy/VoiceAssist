@@ -61,7 +61,7 @@ export function ThinkerTalkerVoicePanel({
   const [showSettings, setShowSettings] = useState(false);
 
   // Voice settings from store
-  const { elevenlabsVoiceId, language, vadSensitivity } =
+  const { elevenlabsVoiceId, language, vadSensitivity, setVoiceModeType } =
     useVoiceSettingsStore();
 
   // T/T Voice Mode hook
@@ -134,6 +134,17 @@ export function ThinkerTalkerVoicePanel({
     onClose?.();
   }, [voiceMode, onClose]);
 
+  const handleRetryVoice = useCallback(() => {
+    // Clear the current error, then attempt a fresh connection.
+    // We don't hard-reset messages; this just restarts the voice
+    // session so clinicians can continue dictation or conversation.
+    voiceMode.resetError();
+    if (voiceMode.isConnected) {
+      voiceMode.disconnect();
+    }
+    voiceMode.connect();
+  }, [voiceMode]);
+
   return (
     <div data-testid="thinker-talker-voice-panel">
       <div data-testid="voice-mode-panel" aria-label="Voice mode panel">
@@ -178,6 +189,40 @@ export function ThinkerTalkerVoicePanel({
               }
               thinkingSource={voiceMode.thinkingSource}
             />
+          </div>
+        )}
+
+        {/* High-noise hint: suggest push-to-talk when backend recommends it */}
+        {voiceMode.pushToTalkRecommended && (
+          <div className="mb-2 mt-2 flex items-center justify-between rounded border border-amber-600 bg-amber-900/70 px-3 py-2 text-xs text-amber-50">
+            <p className="mr-3">
+              High background noise detected. Push-to-talk mode is recommended
+              for more reliable voice capture in this environment.
+            </p>
+            <button
+              type="button"
+              onClick={() => setVoiceModeType("push-to-talk")}
+              className="inline-flex items-center rounded bg-amber-600 px-3 py-1 text-xs font-medium text-amber-950 hover:bg-amber-500"
+            >
+              Use push-to-talk
+            </button>
+          </div>
+        )}
+
+        {/* Minimal error affordance */}
+        {voiceMode.error && (
+          <div className="mb-2 mt-2 flex items-center justify-between rounded border border-red-700 bg-red-950/70 px-3 py-2 text-xs text-red-100">
+            <p className="mr-3">
+              Voice had a connection issue. You can safely retry; no audio or
+              transcripts were lost.
+            </p>
+            <button
+              type="button"
+              onClick={handleRetryVoice}
+              className="inline-flex items-center rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-500"
+            >
+              Retry voice
+            </button>
           </div>
         )}
 

@@ -237,6 +237,7 @@ async def startup_event():
         from app.core.database import SessionLocal
         from app.core.flag_definitions import get_all_flags, sync_definitions_to_database
         from app.services.feature_flags import feature_flag_service
+        from app.services.voice_turn_orchestrator import get_voice_turn_orchestrator
 
         # Sync flag definitions to database (creates missing flags)
         db = SessionLocal()
@@ -253,6 +254,39 @@ async def startup_event():
         # Warm the feature flag cache
         flags_cached = await feature_flag_service.warm_cache()
         logger.info("feature_flag_cache_warmed", flags_cached=flags_cached)
+
+        # Align VoiceTurnOrchestrator Hybrid VAD config with the same signal
+        # freshness window used by the Thinker/Talker pipeline so that all
+        # voice paths share a consistent hybrid VAD tuning.
+        try:
+            raw_fresh_ms = await feature_flag_service.get_value(
+                "backend.voice_hybrid_vad_signal_freshness_ms",
+                default=None,
+            )
+            fresh_ms: Optional[int] = None
+            if isinstance(raw_fresh_ms, (int, float)):
+                fresh_ms = int(raw_fresh_ms)
+            elif isinstance(raw_fresh_ms, str) and raw_fresh_ms.strip():
+                try:
+                    fresh_ms = int(float(raw_fresh_ms.strip()))
+                except ValueError:
+                    fresh_ms = None
+
+            if fresh_ms is not None:
+                # Clamp to the same safe range used in the pipeline.
+                fresh_ms = max(100, min(2000, fresh_ms))
+                orchestrator = get_voice_turn_orchestrator()
+                orchestrator.set_signal_freshness_ms(fresh_ms)
+                logger.info(
+                    "voice_turn_orchestrator_hybrid_vad_configured",
+                    signal_freshness_ms=fresh_ms,
+                )
+        except Exception as e:
+            logger.warning(
+                "voice_turn_orchestrator_hybrid_vad_config_failed",
+                error=str(e),
+                exc_info=True,
+            )
 
         # Log flag definitions summary
         all_flags = get_all_flags()

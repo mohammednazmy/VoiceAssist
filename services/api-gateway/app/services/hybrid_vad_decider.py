@@ -22,6 +22,10 @@ from dataclasses import dataclass, field
 from typing import Literal, Optional
 
 from app.core.logging import get_logger
+from app.core.metrics import (
+    voice_barge_in_misfires_total,
+    voice_hybrid_vad_decision_total,
+)
 
 logger = get_logger(__name__)
 
@@ -42,7 +46,14 @@ class VADState:
 
     @property
     def is_fresh(self) -> bool:
-        """Check if VAD state is fresh (less than 300ms old)."""
+        """
+        Check if VAD state is fresh (less than 300ms old).
+
+        NOTE: This helper uses a fixed 300ms window for backwards-compatible
+        sanity checks and unit tests. The HybridVADDecider applies the
+        configurable HybridVADConfig.signal_freshness_ms value when making
+        real barge-in decisions.
+        """
         return (time.time() * 1000 - self.timestamp_ms) < 300
 
 
@@ -57,7 +68,14 @@ class DeepgramEvent:
 
     @property
     def is_fresh(self) -> bool:
-        """Check if Deepgram event is fresh (less than 300ms old)."""
+        """
+        Check if Deepgram event is fresh (less than 300ms old).
+
+        NOTE: This helper uses a fixed 300ms window for backwards-compatible
+        sanity checks and unit tests. The HybridVADDecider applies the
+        configurable HybridVADConfig.signal_freshness_ms value when making
+        real barge-in decisions.
+        """
         return (time.time() * 1000 - self.timestamp_ms) < 300
 
 
@@ -112,6 +130,12 @@ class HybridVADDecider:
 
     def __init__(self, config: Optional[HybridVADConfig] = None):
         self.config = config or HybridVADConfig()
+        # Preserve a copy of the base configuration so we can apply
+        # layered adjustments (e.g., quality preset, AEC quality)
+        # without permanently mutating caller-provided settings.
+        self._base_config = HybridVADConfig(**vars(self.config))
+        self._quality_preset: Optional[str] = None
+        self._current_aec_quality: Optional[str] = None
         self._is_tts_playing: bool = False
         self._last_silero_state: Optional[VADState] = None
         self._last_deepgram_event: Optional[DeepgramEvent] = None
@@ -127,10 +151,182 @@ class HybridVADDecider:
             },
         )
 
+    # ---------------------------------------------------------------------
+    # Configuration tuning helpers
+    # ---------------------------------------------------------------------
+
+    def _recompute_config(self) -> None:
+        """
+        Recompute effective config from base, applying:
+        1) Barge-in quality preset (responsive/balanced/smooth)
+        2) AEC capability-aware tuning (excellent/good/fair/poor)
+
+        This keeps adjustments composable and idempotent.
+        """
+        # Start from immutable base config
+        self.config = HybridVADConfig(**vars(self._base_config))
+
+        # Step 1: Apply quality preset (user preference: latency vs smoothness)
+        if self._quality_preset in {"balanced", "smooth"}:
+            if self._quality_preset == "balanced":
+                # Slightly more conservative than "responsive":
+                # - Require a bit longer speech duration
+                # - Raise hybrid/high-confidence thresholds modestly
+                self.config.min_speech_duration_ms = int(
+                    self.config.min_speech_duration_ms + 30,
+                )
+                self.config.hybrid_score_threshold = min(
+                    0.95,
+                    self.config.hybrid_score_threshold + 0.03,
+                )
+                self.config.high_confidence_threshold = min(
+                    0.95,
+                    self.config.high_confidence_threshold + 0.03,
+                )
+            elif self._quality_preset == "smooth":
+                # Significantly more conservative:
+                # - Longer duration and higher thresholds
+                self.config.min_speech_duration_ms = int(
+                    self.config.min_speech_duration_ms + 60,
+                )
+                self.config.hybrid_score_threshold = min(
+                    0.97,
+                    self.config.hybrid_score_threshold + 0.05,
+                )
+                self.config.high_confidence_threshold = min(
+                    0.97,
+                    self.config.high_confidence_threshold + 0.05,
+                )
+
+            logger.debug(
+                "[HybridVAD] Applied quality preset '%s'",
+                self._quality_preset,
+                extra={
+                    "min_speech_duration_ms": self.config.min_speech_duration_ms,
+                    "hybrid_score_threshold": self.config.hybrid_score_threshold,
+                    "high_confidence_threshold": self.config.high_confidence_threshold,
+                },
+            )
+
+        # Step 2: Apply AEC capability-aware tuning on top
+        if self._current_aec_quality in {"fair", "poor"}:
+            if self._current_aec_quality == "fair":
+                self.config.min_speech_duration_ms = int(
+                    self.config.min_speech_duration_ms + 50,
+                )
+                self.config.hybrid_score_threshold = min(
+                    0.95,
+                    self.config.hybrid_score_threshold + 0.05,
+                )
+                self.config.high_confidence_threshold = min(
+                    0.95,
+                    self.config.high_confidence_threshold + 0.05,
+                )
+                self.config.misfire_rollback_ms = int(
+                    self.config.misfire_rollback_ms + 100,
+                )
+                logger.debug(
+                    "[HybridVAD] Applied AEC quality='fair' config",
+                    extra={
+                        "min_speech_duration_ms": self.config.min_speech_duration_ms,
+                        "hybrid_score_threshold": self.config.hybrid_score_threshold,
+                        "high_confidence_threshold": self.config.high_confidence_threshold,
+                        "misfire_rollback_ms": self.config.misfire_rollback_ms,
+                    },
+                )
+            elif self._current_aec_quality == "poor":
+                self.config.min_speech_duration_ms = int(
+                    self.config.min_speech_duration_ms + 100,
+                )
+                self.config.hybrid_score_threshold = min(
+                    0.99,
+                    self.config.hybrid_score_threshold + 0.1,
+                )
+                self.config.high_confidence_threshold = min(
+                    0.99,
+                    self.config.high_confidence_threshold + 0.1,
+                )
+                self.config.misfire_rollback_ms = int(
+                    self.config.misfire_rollback_ms + 300,
+                )
+                logger.debug(
+                    "[HybridVAD] Applied AEC quality='poor' config",
+                    extra={
+                        "min_speech_duration_ms": self.config.min_speech_duration_ms,
+                        "hybrid_score_threshold": self.config.hybrid_score_threshold,
+                        "high_confidence_threshold": self.config.high_confidence_threshold,
+                        "misfire_rollback_ms": self.config.misfire_rollback_ms,
+                    },
+                )
+
+    def apply_quality_preset(self, preset: Optional[str]) -> None:
+        """
+        Adjust HybridVADConfig thresholds based on barge-in quality preset.
+
+        Presets mirror frontend Silero behavior:
+        - responsive: fastest barge-in, minimal extra constraints
+        - balanced: slightly more conservative (default)
+        - smooth: waits for more natural pauses
+
+        The preset is composed with AEC quality adjustments via _recompute_config().
+        """
+        if not preset:
+            return
+
+        if preset == self._quality_preset:
+            return
+
+        if preset not in {"responsive", "balanced", "smooth"}:
+            logger.debug(
+                "[HybridVAD] Unknown quality preset '%s' - keeping base config",
+                preset,
+            )
+            self._quality_preset = None
+            self._recompute_config()
+            return
+
+        self._quality_preset = preset
+        self._recompute_config()
+
+    def apply_aec_quality(self, quality: Optional[str]) -> None:
+        """
+        Adjust HybridVADConfig thresholds based on AEC capability level.
+
+        The frontend categorizes AEC quality as:
+        - excellent / good: native AEC works well → keep defaults
+        - fair: some echo risk → slightly more conservative barge-in
+        - poor: AEC ineffective → significantly more conservative
+        - unknown: no signal → keep defaults
+        """
+        if quality is None or quality == self._current_aec_quality:
+            return
+
+        self._current_aec_quality = quality
+        # Recompute config with new AEC quality layered on existing preset
+        self._recompute_config()
+        if quality not in {"fair", "poor"}:
+            logger.debug(
+                "[HybridVAD] Using base/preset config for AEC quality=%s",
+                quality,
+            )
+
     def set_tts_playing(self, is_playing: bool) -> None:
         """Update TTS playback state for weight adjustment."""
         self._is_tts_playing = is_playing
         logger.debug(f"[HybridVAD] TTS playing: {is_playing}")
+
+    def set_signal_freshness_ms(self, value: int) -> None:
+        """
+        Update the signal freshness window (ms) for both the effective and base configs.
+
+        This ensures that subsequent quality/AEC recomputations preserve the
+        caller-provided window instead of reverting to the default.
+        """
+        if value <= 0:
+            return
+
+        self.config.signal_freshness_ms = value
+        self._base_config.signal_freshness_ms = value
 
     def update_silero_state(self, state: VADState) -> None:
         """Update the latest Silero VAD state."""
@@ -139,6 +335,22 @@ class HybridVADDecider:
     def update_deepgram_event(self, event: DeepgramEvent) -> None:
         """Update the latest Deepgram event."""
         self._last_deepgram_event = event
+
+    # ---------------------------------------------------------------------
+    # Freshness helpers
+    # ---------------------------------------------------------------------
+
+    def _is_timestamp_fresh(self, timestamp_ms: float) -> bool:
+        """
+        Determine whether a timestamp is fresh based on the configured window.
+
+        Uses HybridVADConfig.signal_freshness_ms instead of a hard-coded
+        constant so deployments can tune hybrid behavior via feature flags.
+        """
+        if timestamp_ms <= 0:
+            return False
+        age_ms = time.time() * 1000 - timestamp_ms
+        return age_ms < self.config.signal_freshness_ms
 
     def decide_barge_in(
         self,
@@ -167,7 +379,7 @@ class HybridVADDecider:
 
         # No VAD data available
         if not silero and not deepgram:
-            return BargeInDecision(
+            decision = BargeInDecision(
                 trigger=False,
                 source="awaiting_transcript",
                 confidence=0.0,
@@ -175,6 +387,12 @@ class HybridVADDecider:
                 deepgram_weight=0.0,
                 reason="No VAD data available",
             )
+            voice_hybrid_vad_decision_total.labels(
+                source=decision.source,
+                silero_fresh="false",
+                deepgram_fresh="false",
+            ).inc()
+            return decision
 
         # Determine weights based on playback state
         if self._is_tts_playing:
@@ -189,8 +407,8 @@ class HybridVADDecider:
             }
 
         # Check freshness
-        silero_fresh = silero and silero.is_fresh if silero else False
-        deepgram_fresh = deepgram and deepgram.is_fresh if deepgram else False
+        silero_fresh = bool(silero and self._is_timestamp_fresh(silero.timestamp_ms))
+        deepgram_fresh = bool(deepgram and self._is_timestamp_fresh(deepgram.timestamp_ms))
 
         # Case 1: Both sources agree - high confidence trigger
         if (
@@ -209,6 +427,11 @@ class HybridVADDecider:
                 reason="Both Silero and Deepgram agree on speech detection",
             )
             self._last_decision = decision
+            voice_hybrid_vad_decision_total.labels(
+                source=decision.source,
+                silero_fresh="true" if silero_fresh else "false",
+                deepgram_fresh="true" if deepgram_fresh else "false",
+            ).inc()
             return decision
 
         # Case 2: Only Silero is fresh
@@ -223,9 +446,14 @@ class HybridVADDecider:
                     reason=f"High confidence Silero ({silero.confidence:.2f}) with stale Deepgram",
                 )
                 self._last_decision = decision
+                voice_hybrid_vad_decision_total.labels(
+                    source=decision.source,
+                    silero_fresh="true",
+                    deepgram_fresh="false",
+                ).inc()
                 return decision
             else:
-                return BargeInDecision(
+                decision = BargeInDecision(
                     trigger=False,
                     source="silero_only",
                     confidence=silero.confidence if silero else 0.0,
@@ -233,24 +461,61 @@ class HybridVADDecider:
                     deepgram_weight=weights["deepgram"],
                     reason="Silero confidence below threshold, awaiting Deepgram",
                 )
+                voice_hybrid_vad_decision_total.labels(
+                    source=decision.source,
+                    silero_fresh="true",
+                    deepgram_fresh="false",
+                ).inc()
+                return decision
 
         # Case 3: Only Deepgram is fresh
         if deepgram_fresh and not silero_fresh:
-            if deepgram and deepgram.is_speech_started:
+            if (
+                deepgram
+                and deepgram.is_speech_started
+                and deepgram.confidence >= self.config.agreement_threshold
+            ):
                 decision = BargeInDecision(
                     trigger=True,
                     source="deepgram_only",
                     confidence=deepgram.confidence,
                     silero_weight=weights["silero"],
                     deepgram_weight=weights["deepgram"],
-                    reason="Deepgram speech started with stale Silero",
+                    reason=(
+                        "Deepgram speech started with stale Silero "
+                        f"(conf={deepgram.confidence:.2f}>=threshold={self.config.agreement_threshold:.2f})"
+                    ),
                 )
                 self._last_decision = decision
+                voice_hybrid_vad_decision_total.labels(
+                    source=decision.source,
+                    silero_fresh="false",
+                    deepgram_fresh="true",
+                ).inc()
+                return decision
+            else:
+                decision = BargeInDecision(
+                    trigger=False,
+                    source="deepgram_only",
+                    confidence=deepgram.confidence if deepgram else 0.0,
+                    silero_weight=weights["silero"],
+                    deepgram_weight=weights["deepgram"],
+                    reason="Deepgram confidence below threshold or no speech started",
+                )
+                voice_hybrid_vad_decision_total.labels(
+                    source=decision.source,
+                    silero_fresh="false",
+                    deepgram_fresh="true",
+                ).inc()
                 return decision
 
         # Case 4: Hybrid weighted scoring
         if silero and silero.is_speaking:
-            deepgram_contrib = weights["deepgram"] if deepgram and deepgram.is_speech_started else 0.0
+            deepgram_contrib = (
+                weights["deepgram"] * deepgram.confidence
+                if deepgram and deepgram.is_speech_started
+                else 0.0
+            )
             hybrid_score = silero.confidence * weights["silero"] + deepgram_contrib
 
             # Check duration requirement
@@ -266,10 +531,15 @@ class HybridVADDecider:
                     reason=f"Hybrid score {hybrid_score:.2f} exceeds threshold",
                 )
                 self._last_decision = decision
+                voice_hybrid_vad_decision_total.labels(
+                    source=decision.source,
+                    silero_fresh="true" if silero_fresh else "false",
+                    deepgram_fresh="true" if deepgram_fresh else "false",
+                ).inc()
                 return decision
 
         # Default: No barge-in
-        return BargeInDecision(
+        decision = BargeInDecision(
             trigger=False,
             source="awaiting_transcript",
             confidence=0.0,
@@ -277,6 +547,12 @@ class HybridVADDecider:
             deepgram_weight=weights["deepgram"],
             reason="Insufficient evidence for barge-in",
         )
+        voice_hybrid_vad_decision_total.labels(
+            source=decision.source,
+            silero_fresh="true" if silero_fresh else "false",
+            deepgram_fresh="true" if deepgram_fresh else "false",
+        ).inc()
+        return decision
 
     def check_misfire_rollback(self, transcript: str) -> bool:
         """
@@ -292,6 +568,7 @@ class HybridVADDecider:
         if elapsed_ms >= self.config.misfire_rollback_ms:
             if not transcript.strip():
                 logger.info(f"[HybridVAD] Misfire detected: No transcript after {elapsed_ms:.0f}ms")
+                voice_barge_in_misfires_total.labels(cause="no_transcript").inc()
                 self._barge_in_pending = False
                 return True
             else:
@@ -314,8 +591,12 @@ class HybridVADDecider:
         """Get current decider statistics."""
         return {
             "is_tts_playing": self._is_tts_playing,
-            "last_silero_fresh": self._last_silero_state.is_fresh if self._last_silero_state else False,
-            "last_deepgram_fresh": self._last_deepgram_event.is_fresh if self._last_deepgram_event else False,
+            "last_silero_fresh": self._is_timestamp_fresh(self._last_silero_state.timestamp_ms)
+            if self._last_silero_state
+            else False,
+            "last_deepgram_fresh": self._is_timestamp_fresh(self._last_deepgram_event.timestamp_ms)
+            if self._last_deepgram_event
+            else False,
             "last_decision": self._last_decision.source if self._last_decision else None,
             "barge_in_pending": self._barge_in_pending,
         }

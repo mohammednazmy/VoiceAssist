@@ -137,6 +137,12 @@ class TTSessionConfig:
     personalized_vad_threshold: Optional[float] = None
     enable_behavior_learning: bool = True
 
+    # Optional VAD preset metadata (mirrors frontend VAD presets) for use in
+    # backend dictation/endpointing tuning when the pipeline is in DICTATION mode.
+    vad_preset: Optional[str] = None
+    vad_custom_energy_threshold_db: Optional[float] = None
+    vad_custom_silence_duration_ms: Optional[int] = None
+
     # Phase 9: Offline/fallback settings
     enable_offline_fallback: bool = True
     tts_cache_enabled: bool = True
@@ -145,6 +151,11 @@ class TTSessionConfig:
     enable_sentiment_tracking: bool = True
     enable_discourse_analysis: bool = True
     enable_response_recommendations: bool = True
+
+    # Privacy settings
+    # When False, transcripts/responses are not persisted in Redis for
+    # WebSocket recovery and are omitted from recovery payloads.
+    store_transcript_history: bool = True
 
     # Binary Protocol (WebSocket Efficiency - Feature Flag Controlled)
     binary_protocol_enabled: bool = False  # Set via feature flag negotiation
@@ -342,6 +353,9 @@ class ThinkerTalkerWebSocketHandler:
                 voice_id=self.config.voice_id,
                 tts_model=self.config.tts_model,
                 barge_in_enabled=self.config.barge_in_enabled,
+                personalized_vad_threshold=self.config.personalized_vad_threshold,
+                vad_preset=self.config.vad_preset,
+                vad_custom_silence_duration_ms=self.config.vad_custom_silence_duration_ms,
                 enable_continuation_detection=False,
                 enable_utterance_aggregation=False,
                 utterance_aggregation_window_ms=int(aggregation_window_ms),
@@ -437,6 +451,7 @@ class ThinkerTalkerWebSocketHandler:
                 conversation_id=self.config.conversation_id,
                 voice_id=self.config.voice_id,
                 language=self.config.language,
+                store_transcript_history=self.config.store_transcript_history,
             )
             logger.debug(f"[WS Recovery] Created session state: {self.config.session_id}")
         except Exception as e:
@@ -799,9 +814,30 @@ class ThinkerTalkerWebSocketHandler:
                 if "vad_sensitivity" in advanced_settings:
                     self.config.vad_sensitivity = advanced_settings["vad_sensitivity"]
                 if "personalized_vad_threshold" in advanced_settings:
-                    self.config.personalized_vad_threshold = advanced_settings["personalized_vad_threshold"]
+                    value = advanced_settings["personalized_vad_threshold"]
+                    self.config.personalized_vad_threshold = value
+                    # Keep the pipeline config in sync so analytics can
+                    # log the personalized threshold at session end.
+                    if self._pipeline_session is not None:
+                        self._pipeline_session.config.personalized_vad_threshold = value
                 if "enable_behavior_learning" in advanced_settings:
                     self.config.enable_behavior_learning = advanced_settings["enable_behavior_learning"]
+
+                # Optional VAD preset metadata used for dictation endpoint tuning.
+                if "vad_preset" in advanced_settings:
+                    preset = advanced_settings["vad_preset"]
+                    if isinstance(preset, str) and preset:
+                        self.config.vad_preset = preset
+                        if self._pipeline_session is not None:
+                            self._pipeline_session.config.vad_preset = preset
+                if "vad_custom_silence_duration_ms" in advanced_settings:
+                    value = advanced_settings["vad_custom_silence_duration_ms"]
+                    if isinstance(value, (int, float)):
+                        # Clamp to the same safe range used by AdaptiveVADService/custom presets.
+                        clamped = max(200, min(1500, int(value)))
+                        self.config.vad_custom_silence_duration_ms = clamped
+                        if self._pipeline_session is not None:
+                            self._pipeline_session.config.vad_custom_silence_duration_ms = clamped
 
                 # Phase 9: Offline
                 if "enable_offline_fallback" in advanced_settings:
@@ -816,6 +852,15 @@ class ThinkerTalkerWebSocketHandler:
                     self.config.enable_discourse_analysis = advanced_settings["enable_discourse_analysis"]
                 if "enable_response_recommendations" in advanced_settings:
                     self.config.enable_response_recommendations = advanced_settings["enable_response_recommendations"]
+
+                # Privacy settings (maps from frontend VoicePrivacySettings)
+                # When disabled, transcripts/responses are not persisted for recovery.
+                if "store_transcript_history" in advanced_settings:
+                    try:
+                        self.config.store_transcript_history = bool(advanced_settings["store_transcript_history"])
+                    except Exception:
+                        # Be conservative: default to True if value is malformed
+                        self.config.store_transcript_history = True
 
                 logger.info(f"Applied advanced settings: {advanced_settings}")
 
@@ -950,14 +995,32 @@ class ThinkerTalkerWebSocketHandler:
                 self.config._audio_sequence_in = result.session_state.last_audio_seq_in
                 self.config._audio_sequence_out = result.session_state.last_audio_seq_out
 
-            # Send resume acknowledgment
+            # Determine privacy preference for this recovered session
+            store_history = True
+            if result.session_state is not None:
+                try:
+                    store_history = bool(result.session_state.store_transcript_history)
+                except Exception:
+                    store_history = True
+
+            # Compute canonical pipeline state for recovery snapshot
+            pipeline_state = (
+                result.session_state.pipeline_state
+                if result.session_state is not None
+                else "idle"
+            )
+
+            # Send resume acknowledgment (recovery snapshot)
             resume_ack = {
                 "type": "session.resume.ack",
                 "recovery_state": result.state.value,
                 "conversation_id": (result.session_state.conversation_id if result.session_state else None),
-                "partial_transcript": self._partial_transcript,
-                "partial_response": self._partial_response,
-                "missed_message_count": len(result.missed_messages),
+                # Respect per-session privacy preference: when history is disabled,
+                # omit transcript content from recovery payloads.
+                "partial_transcript": self._partial_transcript if store_history else "",
+                "partial_response": self._partial_response if store_history else "",
+                "missed_message_count": len(result.missed_messages) if store_history else 0,
+                "pipeline_state": pipeline_state,
             }
 
             await self._send_message(resume_ack)
@@ -1045,7 +1108,8 @@ class ThinkerTalkerWebSocketHandler:
             "is_speaking": true,             # Frontend VAD speaking state
             "speech_duration_ms": 250,       # Duration of current speech
             "is_playback_active": false,     # Whether AI is speaking
-            "effective_threshold": 0.5       # Current VAD threshold (may be boosted)
+            "effective_threshold": 0.5,      # Current VAD threshold (may be boosted)
+            "aec_quality": "good"            # Optional AEC quality: excellent/good/fair/poor/unknown
         }
         """
         silero_confidence = message.get("silero_confidence", 0.0)
@@ -1053,6 +1117,8 @@ class ThinkerTalkerWebSocketHandler:
         speech_duration_ms = message.get("speech_duration_ms", 0)
         is_playback_active = message.get("is_playback_active", False)
         effective_threshold = message.get("effective_threshold", 0.5)
+        aec_quality = message.get("aec_quality")
+        personalized_threshold = message.get("personalized_threshold")
 
         # Store latest VAD state for hybrid decision making
         self._last_vad_state = {
@@ -1061,6 +1127,8 @@ class ThinkerTalkerWebSocketHandler:
             "speech_duration_ms": speech_duration_ms,
             "is_playback_active": is_playback_active,
             "effective_threshold": effective_threshold,
+            "aec_quality": aec_quality,
+            "personalized_threshold": personalized_threshold,
             "timestamp": time.time(),
         }
 
@@ -1071,6 +1139,7 @@ class ThinkerTalkerWebSocketHandler:
                 is_speaking=is_speaking,
                 speech_duration_ms=speech_duration_ms,
                 is_playback_active=is_playback_active,
+                aec_quality=aec_quality,
             )
 
         # Log at debug level (these messages are frequent)
@@ -1174,7 +1243,12 @@ class ThinkerTalkerWebSocketHandler:
                 self._metrics.first_audio_latency_ms = (time.time() - self._metrics.connection_start_time) * 1000
 
     async def _track_partial_messages(self, message: PipelineMessage) -> None:
-        """Track partial transcript and response messages for recovery."""
+        """Track partial transcript and response messages for recovery.
+
+        When store_transcript_history is disabled for this session, we still
+        keep in-memory partials for the current connection but avoid persisting
+        them to Redis to honor privacy preferences.
+        """
         if not self.config.session_recovery_enabled:
             return
 
@@ -1187,7 +1261,10 @@ class ThinkerTalkerWebSocketHandler:
                 self._partial_transcript += delta_text
 
                 # Update session state periodically (every 5 characters)
-                if len(self._partial_transcript) % 5 == 0:
+                if (
+                    self.config.store_transcript_history
+                    and len(self._partial_transcript) % 5 == 0
+                ):
                     await self._session_state_service.update_partial_transcript(
                         self.config.session_id,
                         self._partial_transcript,
@@ -1197,7 +1274,8 @@ class ThinkerTalkerWebSocketHandler:
             elif msg_type == "transcript.complete":
                 # Clear partial transcript on completion
                 self._partial_transcript = ""
-                await self._session_state_service.clear_partial_messages(self.config.session_id)
+                if self.config.store_transcript_history:
+                    await self._session_state_service.clear_partial_messages(self.config.session_id)
 
             elif msg_type == "response.delta":
                 # Accumulate response delta
@@ -1205,7 +1283,10 @@ class ThinkerTalkerWebSocketHandler:
                 self._partial_response += delta_text
 
                 # Update session state periodically (every 10 characters)
-                if len(self._partial_response) % 10 == 0:
+                if (
+                    self.config.store_transcript_history
+                    and len(self._partial_response) % 10 == 0
+                ):
                     await self._session_state_service.update_partial_response(
                         self.config.session_id,
                         self._partial_response,
@@ -1215,7 +1296,8 @@ class ThinkerTalkerWebSocketHandler:
             elif msg_type == "response.complete":
                 # Clear partial response on completion
                 self._partial_response = ""
-                await self._session_state_service.clear_partial_messages(self.config.session_id)
+                if self.config.store_transcript_history:
+                    await self._session_state_service.clear_partial_messages(self.config.session_id)
 
             elif msg_type == "tool.call":
                 # Track tool call in progress
@@ -1307,6 +1389,19 @@ class ThinkerTalkerWebSocketHandler:
             }
 
             if msg_type in bufferable_types:
+                # Honor per-session privacy preference: when transcript history
+                # is disabled, avoid buffering transcript/response content.
+                if (
+                    not self.config.store_transcript_history
+                    and msg_type
+                    in {
+                        "transcript.delta",
+                        "transcript.complete",
+                        "response.delta",
+                        "response.complete",
+                    }
+                ):
+                    return
                 await self._session_state_service.buffer_message(self.config.session_id, message)
         except Exception as e:
             logger.warning(f"Failed to buffer message for recovery: {e}")

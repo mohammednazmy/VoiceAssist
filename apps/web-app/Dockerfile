@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 WORKDIR /workspace
 ENV PNPM_HOME=/usr/local/share/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+# Disable PWA service worker generation inside the Docker builder image to
+# avoid workbox-related build issues. PWA/offline support is considered
+# nice-to-have and remains enabled for local builds.
+ENV DISABLE_PWA_SW=true
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
@@ -10,7 +14,15 @@ COPY packages ./packages
 # Remove production API URLs so app uses relative paths (window.location.origin)
 RUN sed -i '/VITE_API_URL/d' apps/web-app/.env.production && \
     sed -i '/VITE_WS_URL/d' apps/web-app/.env.production
-RUN pnpm install --frozen-lockfile && pnpm --filter voiceassist-web build
+RUN pnpm install --frozen-lockfile && \
+    # Copy Silero/ONNX assets into the web app public directory so they are
+    # served statically from the final nginx image. These paths are referenced
+    # via VITE_SILERO_ONNX_WASM_BASE_URL and VITE_SILERO_VAD_ASSET_BASE_URL.
+    mkdir -p apps/web-app/public/vendor/onnxruntime-web/dist && \
+    cp -R apps/web-app/node_modules/onnxruntime-web/dist/* apps/web-app/public/vendor/onnxruntime-web/dist/ && \
+    mkdir -p apps/web-app/public/vendor/silero-vad && \
+    cp -R apps/web-app/node_modules/@ricky0123/vad-web/dist/* apps/web-app/public/vendor/silero-vad/ && \
+    pnpm --filter voiceassist-web build
 
 FROM nginx:stable-alpine
 WORKDIR /usr/share/nginx/html

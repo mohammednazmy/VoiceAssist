@@ -17,11 +17,15 @@ import { voiceLog } from "../lib/logger";
 // Types
 // ============================================================================
 
+export type AECQuality = "excellent" | "good" | "fair" | "poor" | "unknown";
+
 export interface AECState {
   /** Whether AEC has converged (learned the echo path) */
   isConverged: boolean;
   /** Echo return loss enhancement in dB (higher = better) */
   erleDb: number | null;
+  /** Categorical quality level derived from ERLE */
+  quality: AECQuality;
   /** Whether AEC is active/processing */
   isActive: boolean;
   /** Last update timestamp */
@@ -101,6 +105,7 @@ export function useAECFeedback(
   const [aecState, setAECState] = useState<AECState>({
     isConverged: true, // Default to converged (assume good AEC)
     erleDb: null,
+    quality: "unknown",
     isActive: false,
     lastUpdateMs: 0,
     error: null,
@@ -182,9 +187,12 @@ export function useAECFeedback(
           ? true // If we can't get ERLE, assume converged
           : erleValue >= convergenceThresholdDb;
 
+      const quality = getAECQuality(erleValue);
+
       const newState: AECState = {
         isConverged,
         erleDb: erleValue,
+        quality,
         isActive: aecActive,
         lastUpdateMs: Date.now(),
         error: null,
@@ -195,7 +203,8 @@ export function useAECFeedback(
         if (
           prev.isConverged !== newState.isConverged ||
           prev.erleDb !== newState.erleDb ||
-          prev.isActive !== newState.isActive
+          prev.isActive !== newState.isActive ||
+          prev.quality !== newState.quality
         ) {
           onAECStateChangeRef.current?.(newState);
           return newState;
@@ -266,6 +275,7 @@ export function useAECFeedback(
     setAECState({
       isConverged: true,
       erleDb: null,
+      quality: "unknown",
       isActive: false,
       lastUpdateMs: Date.now(),
       error: null,
@@ -333,7 +343,7 @@ export function isAECStatsSupported(): boolean {
  */
 export function getAECQuality(
   erleDb: number | null,
-): "excellent" | "good" | "fair" | "poor" | "unknown" {
+): AECQuality {
   if (erleDb === null) return "unknown";
   if (erleDb >= 20) return "excellent";
   if (erleDb >= 10) return "good";

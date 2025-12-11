@@ -447,6 +447,14 @@ export function UnifiedInputArea({
           )}
         </div>
       </div>
+
+      {/* Live transcript preview (unified UI) */}
+      {partialTranscript && (
+        <div className="px-4 pb-2 text-xs text-neutral-500">
+          <span className="font-medium">Live transcript:</span>{" "}
+          <span>{partialTranscript}</span>
+        </div>
+      )}
     </div>
   );
 }

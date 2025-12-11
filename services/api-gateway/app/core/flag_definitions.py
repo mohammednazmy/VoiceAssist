@@ -417,6 +417,39 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 components=["VADSettings"],
             ),
         ),
+        "voice_dictation_vad_preset_endpointing": FeatureFlagDefinition(
+            name="backend.voice_dictation_vad_preset_endpointing",
+            description="[Dictation] Use VAD presets (or custom silence) to tune STT endpointing/utterance windows in dictation mode.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/adaptive-vad-presets",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["VoicePipelineService"],
+            ),
+        ),
+        "voice_dictation_endpoint_profile": FeatureFlagDefinition(
+            name="backend.voice_dictation_endpoint_profile",
+            description="[Dictation] Optional endpointing profile for dictation (fast, balanced, careful); refines mapping from VAD presets to endpoint windows.",
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.STRING,
+            default_value="balanced",
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="low",
+                docs_url="https://assistdocs.asimo.io/voice/adaptive-vad-presets",
+                allowed_values=["fast", "balanced", "careful"],
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway"],
+                components=["VoicePipelineService"],
+            ),
+        ),
         "voice_v4_audio_processing": FeatureFlagDefinition(
             name="backend.voice_v4_audio_processing",
             description="[Workstream 2] Audio preprocessing pipeline with AEC, AGC, and noise suppression.",
@@ -1365,6 +1398,32 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 ],
             ),
         ),
+        "voice_aec_capability_tuning": FeatureFlagDefinition(
+            name="backend.voice_aec_capability_tuning",
+            description=(
+                "[Natural Conversation] Enable AEC capability-aware tuning for echo-related "
+                "barge-in thresholds. Uses frontend AEC quality (excellent/good/fair/poor) to "
+                "adjust hybrid VAD thresholds and Silero playback thresholds on devices with "
+                "poor or missing echo cancellation."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=[
+                    "HybridVADDecider",
+                    "VoicePipelineService",
+                    "useThinkerTalkerVoiceMode",
+                ],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
         #
         # Phase 3: Adaptive VAD Flags
         # ---------------------------------------------------------------------
@@ -1457,6 +1516,59 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
                 services=["web-app", "api-gateway"],
                 components=["useSileroVAD", "useThinkerTalkerSession", "voice_pipeline_service"],
                 other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_hybrid_vad_fusion": FeatureFlagDefinition(
+            name="backend.voice_hybrid_vad_fusion",
+            description=(
+                "[Natural Conversation] Enable hybrid VAD fusion combining frontend Silero VAD "
+                "with backend Deepgram VAD using weighted voting. Improves barge-in accuracy "
+                "during AI playback by adjusting weights based on playback state and supporting "
+                "misfire rollback when no valid speech is detected."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.BOOLEAN,
+            default_value=False,
+            default_enabled=False,
+            metadata=FlagMetadata(
+                criticality="medium",
+                docs_url="https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=[
+                    "HybridVADDecider",
+                    "VoicePipelineService",
+                    "useSileroVAD",
+                ],
+                other_flags=["backend.voice_silero_vad_enabled"],
+            ),
+        ),
+        "voice_hybrid_vad_signal_freshness_ms": FeatureFlagDefinition(
+            name="backend.voice_hybrid_vad_signal_freshness_ms",
+            description=(
+                "[Natural Conversation] Signal freshness window (ms) for hybrid VAD fusion. "
+                "Controls how long Silero/Deepgram VAD events are considered valid when "
+                "deciding barge-in during playback. Lower values favor very recent signals; "
+                "higher values tolerate more latency."
+            ),
+            category=FlagCategory.BACKEND,
+            flag_type=FlagType.NUMBER,
+            default_value=300,
+            default_enabled=True,
+            metadata=FlagMetadata(
+                criticality="low",
+                min_value=100,
+                max_value=2000,
+                docs_url="https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+            ),
+            dependencies=FlagDependencies(
+                services=["api-gateway", "web-app"],
+                components=[
+                    "HybridVADDecider",
+                    "VoicePipelineService",
+                ],
+                other_flags=["backend.voice_hybrid_vad_fusion"],
             ),
         ),
         #
@@ -1730,7 +1842,7 @@ FEATURE_FLAGS: Dict[str, Dict[str, FeatureFlagDefinition]] = {
             ),
             category=FlagCategory.BACKEND,
             flag_type=FlagType.STRING,
-            default_value="balanced",
+            default_value="responsive",
             default_enabled=True,
             metadata=FlagMetadata(
                 criticality="low",

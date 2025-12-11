@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db
 from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_viewer
+from app.core.flag_definitions import sync_definitions_to_database
 from app.core.logging import get_logger
 from app.models.feature_flag import FeatureFlagType
 from app.models.user import User
@@ -86,6 +87,18 @@ async def list_feature_flags(
     Requires: Admin authentication
     """
     try:
+        # Ensure all flags defined in code are present in the database so that
+        # newly added flags automatically show up in the admin UI even if the
+        # initial sync on startup failed or has not run yet.
+        try:
+            sync_result = sync_definitions_to_database(db)
+            logger.debug(
+                "feature_flags_synced_on_list",
+                extra={"created": sync_result["created"], "skipped": sync_result["skipped"]},
+            )
+        except Exception as sync_err:  # pragma: no cover - defensive logging
+            logger.warning("Failed to sync flag definitions before listing", exc_info=True, extra={"error": str(sync_err)})
+
         flags = await feature_flag_service.list_flags(db)
 
         flags_data = [flag.to_dict() for flag in flags]

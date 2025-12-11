@@ -121,6 +121,9 @@ export const VAD_PRESET_OPTIONS: {
   icon: string;
   energyThresholdDb: number;
   silenceDurationMs: number;
+  // Helper used to map presets into engine-specific min speech durations.
+  // Mirrors backend AdaptiveVADService presets.
+  minSpeechDurationMs: number;
 }[] = [
   {
     value: "sensitive",
@@ -129,6 +132,7 @@ export const VAD_PRESET_OPTIONS: {
     icon: "🤫",
     energyThresholdDb: -45,
     silenceDurationMs: 300,
+    minSpeechDurationMs: 100,
   },
   {
     value: "balanced",
@@ -137,6 +141,7 @@ export const VAD_PRESET_OPTIONS: {
     icon: "⚖️",
     energyThresholdDb: -35,
     silenceDurationMs: 500,
+    minSpeechDurationMs: 150,
   },
   {
     value: "relaxed",
@@ -145,6 +150,7 @@ export const VAD_PRESET_OPTIONS: {
     icon: "🔊",
     energyThresholdDb: -25,
     silenceDurationMs: 800,
+    minSpeechDurationMs: 200,
   },
   {
     value: "accessibility",
@@ -153,6 +159,7 @@ export const VAD_PRESET_OPTIONS: {
     icon: "♿",
     energyThresholdDb: -42,
     silenceDurationMs: 1000,
+    minSpeechDurationMs: 80,
   },
   {
     value: "custom",
@@ -161,6 +168,7 @@ export const VAD_PRESET_OPTIONS: {
     icon: "⚙️",
     energyThresholdDb: -35,
     silenceDurationMs: 500,
+    minSpeechDurationMs: 150,
   },
 ];
 

@@ -192,6 +192,35 @@ class TestHybridVADDecider:
 
         assert deepgram_event.is_fresh is False
 
+    def test_signal_freshness_uses_config_window(self):
+        """
+        Decider freshness should respect HybridVADConfig.signal_freshness_ms,
+        even though VADState.is_fresh uses a fixed 300ms window.
+
+        A Silero state older than the configured window should not be treated
+        as "fresh" for Silero-only triggers.
+        """
+        config = HybridVADConfig(signal_freshness_ms=100)
+        decider = HybridVADDecider(config=config)
+
+        now_ms = time.time() * 1000
+        silero_state = VADState(
+            confidence=0.95,
+            is_speaking=True,
+            speech_duration_ms=200,
+            timestamp_ms=now_ms - 150,  # > 100ms but < 300ms
+        )
+
+        # Sanity check: dataclass helper still uses 300ms
+        assert silero_state.is_fresh is True
+
+        decision = decider.decide_barge_in(silero_state=silero_state)
+
+        # With a 100ms freshness window, stale Silero should not trigger
+        # a Silero-only barge-in despite high confidence.
+        assert decision.trigger is False
+        assert decision.source == "awaiting_transcript"
+
     # =========================================================================
     # Hybrid Score Tests
     # =========================================================================
@@ -216,6 +245,83 @@ class TestHybridVADDecider:
 
         # Both agree, should have high confidence
         assert decision.confidence >= 0.9
+
+    def test_deepgram_only_respects_confidence(self, decider):
+        """Deepgram-only path should require sufficient confidence."""
+        now_ms = time.time() * 1000
+
+        low_conf_event = DeepgramEvent(
+            is_speech_started=True,
+            is_speech_ended=False,
+            confidence=0.2,
+            timestamp_ms=now_ms,
+        )
+        high_conf_event = DeepgramEvent(
+            is_speech_started=True,
+            is_speech_ended=False,
+            confidence=0.9,
+            timestamp_ms=now_ms,
+        )
+
+        low_decision = decider.decide_barge_in(deepgram_event=low_conf_event)
+        high_decision = decider.decide_barge_in(deepgram_event=high_conf_event)
+
+        assert low_decision.trigger is False
+        assert low_decision.source == "deepgram_only"
+
+        assert high_decision.trigger is True
+        assert high_decision.source == "deepgram_only"
+
+    def test_hybrid_score_uses_deepgram_confidence(self):
+        """
+        Hybrid score should weight Deepgram confidence, so a high-confidence
+        Deepgram event can push the score over the threshold where a low-
+        confidence one would not.
+        """
+        config = HybridVADConfig(
+            silero_weight_normal=0.3,
+            deepgram_weight_normal=0.7,
+            agreement_threshold=0.55,
+            hybrid_score_threshold=0.65,
+        )
+        decider = HybridVADDecider(config=config)
+
+        now_ms = time.time() * 1000
+        silero_state = VADState(
+            confidence=0.5,  # Below agreement_threshold to bypass Case 1
+            is_speaking=True,
+            speech_duration_ms=200,
+            timestamp_ms=now_ms,
+        )
+
+        deepgram_low = DeepgramEvent(
+            is_speech_started=True,
+            is_speech_ended=False,
+            confidence=0.1,
+            timestamp_ms=now_ms,
+        )
+        deepgram_high = DeepgramEvent(
+            is_speech_started=True,
+            is_speech_ended=False,
+            confidence=0.95,
+            timestamp_ms=now_ms,
+        )
+
+        # Low-confidence Deepgram should not reach the hybrid threshold
+        decision_low = decider.decide_barge_in(
+            silero_state=silero_state,
+            deepgram_event=deepgram_low,
+        )
+        assert decision_low.trigger is False
+        assert decision_low.source == "awaiting_transcript"
+
+        # High-confidence Deepgram should push hybrid score over the threshold
+        decision_high = decider.decide_barge_in(
+            silero_state=silero_state,
+            deepgram_event=deepgram_high,
+        )
+        assert decision_high.trigger is True
+        assert decision_high.source == "hybrid"
 
     def test_min_duration_requirement(self, decider):
         """Test minimum speech duration requirement."""

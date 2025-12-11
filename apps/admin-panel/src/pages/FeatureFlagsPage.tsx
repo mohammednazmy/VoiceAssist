@@ -26,6 +26,12 @@ export function FeatureFlagsPage() {
   const { isAdmin } = useAuth();
   const [useSSE, setUseSSE] = useState(true);
   const [activeTab, setActiveTab] = useState<"flags" | "scheduled">("flags");
+  const [showVoiceOnly, setShowVoiceOnly] = useState(false);
+   const [showVoiceFilterSettings, setShowVoiceFilterSettings] =
+    useState(false);
+  const [includeBackendVoice, setIncludeBackendVoice] = useState(true);
+  const [includeUiVoice, setIncludeUiVoice] = useState(true);
+  const [includeWsVoice, setIncludeWsVoice] = useState(true);
 
   const {
     flags,
@@ -189,6 +195,27 @@ export function FeatureFlagsPage() {
     (c) => !c.cancelled && !c.applied,
   ).length;
 
+  const isVoiceFlag = (flag: FeatureFlag) => {
+    const name = flag.name || "";
+    if (includeBackendVoice && name.startsWith("backend.voice_")) {
+      return true;
+    }
+    if (includeUiVoice && name.startsWith("ui.voice_")) {
+      return true;
+    }
+    if (includeWsVoice && name.startsWith("backend.ws_")) {
+      return true;
+    }
+    return false;
+  };
+
+  const voiceFlags = useMemo(
+    () => flags.filter((f) => isVoiceFlag(f)),
+    [flags, includeBackendVoice, includeUiVoice, includeWsVoice],
+  );
+
+  const visibleFlags = showVoiceOnly ? voiceFlags : flags;
+
   // Tab configuration
   const tabs = [
     {
@@ -238,6 +265,27 @@ export function FeatureFlagsPage() {
               onToggleSSE={() => setUseSSE(!useSSE)}
               onReconnect={reconnect}
             />
+            <button
+              type="button"
+              onClick={() => setShowVoiceOnly((prev) => !prev)}
+              className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
+                showVoiceOnly
+                  ? "bg-purple-900/60 border-purple-500 text-purple-100"
+                  : "bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700"
+              }`}
+            >
+              {showVoiceOnly ? "Showing Voice Flags" : "Voice Flags"}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setShowVoiceFilterSettings((prevVisible) => !prevVisible)
+              }
+              className="px-2 py-1.5 text-xs font-medium rounded border border-slate-600 text-slate-300 bg-slate-800 hover:bg-slate-700"
+              aria-label="Configure voice flag filter criteria"
+            >
+              ⚙
+            </button>
             {isAdmin && (
               <button
                 type="button"
@@ -255,8 +303,77 @@ export function FeatureFlagsPage() {
       {/* Error Banner */}
       {error && <ErrorState message={error} onRetry={refreshFlags} />}
 
+      {/* Voice filter criteria configuration */}
+      {showVoiceFilterSettings && (
+        <div className="mt-3 mb-3 rounded border border-slate-700 bg-slate-900/70 px-4 py-3">
+          <p className="text-xs font-medium text-slate-300 mb-2">
+            Voice flag filter criteria
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs text-slate-300">
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800"
+                checked={includeBackendVoice}
+                onChange={(e) => setIncludeBackendVoice(e.target.checked)}
+              />
+              <span>
+                Backend voice flags (<code>backend.voice_*</code>)
+              </span>
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800"
+                checked={includeUiVoice}
+                onChange={(e) => setIncludeUiVoice(e.target.checked)}
+              />
+              <span>
+                Voice UI flags (<code>ui.voice_*</code>)
+              </span>
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input
+                type="checkbox"
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800"
+                checked={includeWsVoice}
+                onChange={(e) => setIncludeWsVoice(e.target.checked)}
+              />
+              <span>
+                WebSocket voice flags (<code>backend.ws_*</code>)
+              </span>
+            </label>
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">
+            These settings control what counts as a “Voice” flag for the quick
+            filter, badge, and stats.
+          </p>
+        </div>
+      )}
+
+      {showVoiceOnly && (
+        <div className="mt-2 mb-3 rounded border border-purple-700 bg-purple-950/40 px-4 py-3 text-xs text-purple-100">
+          <p className="font-semibold text-purple-100">
+            Dictation vs Conversation presets
+          </p>
+          <p className="mt-1 text-purple-100/90">
+            Use <code>responsive</code> on{" "}
+            <code>backend.voice_barge_in_quality_preset</code> for
+            dictation-focused behavior, and <code>balanced</code> or{" "}
+            <code>smooth</code> for more conversational flows.
+          </p>
+          <p className="mt-1 text-purple-200/80">
+            See internal guide{" "}
+            <code>
+              docs/admin-guide/feature-flags/admin-panel-guide.md#voice-aec--dictation-presets
+            </code>{" "}
+            for full recommendations.
+          </p>
+        </div>
+      )}
+
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
         <StatCard
           title="Total Flags"
           value={flags.length}
@@ -282,6 +399,12 @@ export function FeatureFlagsPage() {
           color="purple"
         />
         <StatCard
+          title="Voice Flags"
+          value={voiceFlags.length}
+          icon="🎙️"
+          color="purple"
+        />
+        <StatCard
           title="Scheduled"
           value={pendingScheduledCount}
           icon="📅"
@@ -299,11 +422,20 @@ export function FeatureFlagsPage() {
 
       {/* Flags List - shown when flags tab is active */}
       {activeTab === "flags" && (
-        <DataPanel title={`Feature Flags (${flags.length})`} noPadding>
-          {flags.length === 0 ? (
+        <DataPanel
+          title={`Feature Flags (${visibleFlags.length}${
+            showVoiceOnly ? " • Voice" : ""
+          })`}
+          noPadding
+        >
+          {visibleFlags.length === 0 ? (
             <div className="p-4">
               <EmptyState
-                message="No feature flags configured"
+                message={
+                  showVoiceOnly
+                    ? "No voice-related feature flags found"
+                    : "No feature flags configured"
+                }
                 icon="🚩"
                 action={
                   isAdmin
@@ -317,7 +449,7 @@ export function FeatureFlagsPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-800">
-              {flags.map((flag) => (
+              {visibleFlags.map((flag) => (
                 <div
                   key={flag.name}
                   className="p-4 hover:bg-slate-800/30 transition-colors"
@@ -336,6 +468,11 @@ export function FeatureFlagsPage() {
                           size="sm"
                           showDot={false}
                         />
+                        {isVoiceFlag(flag) && (
+                          <span className="inline-flex items-center rounded-full bg-purple-900/40 border border-purple-700/70 px-2 py-0.5 text-[11px] font-medium text-purple-200">
+                            Voice
+                          </span>
+                        )}
                         {/* Badge for pending scheduled changes */}
                         {flagsWithPendingChanges.has(flag.name) && (
                           <button
@@ -353,6 +490,64 @@ export function FeatureFlagsPage() {
                       <p className="text-sm text-slate-400 mb-2">
                         {flag.description}
                       </p>
+                      {flag.name === "backend.voice_barge_in_quality_preset" && (
+                        <p className="text-xs text-slate-500 mb-2">
+                          <span className="font-semibold text-slate-300">
+                            Clinician tip:
+                          </span>{" "}
+                          <span className="text-slate-400">
+                            Use <code>responsive</code> for dictation-focused
+                            behavior (very fast interruptions),{" "}
+                            <code>balanced</code> for normal conversations, and{" "}
+                            <code>smooth</code> when you want the assistant to
+                            finish thoughts before you interrupt.
+                          </span>
+                        </p>
+                      )}
+                      {flag.name === "backend.voice_v4_audio_processing" && (
+                        <p className="text-xs text-slate-500 mb-2">
+                          <span className="font-semibold text-slate-300">
+                            Clinician tip:
+                          </span>{" "}
+                          <span className="text-slate-400">
+                            Turn this on to let VoiceAssist apply echo
+                            cancellation, automatic gain control, and noise
+                            suppression on the server. Recommended for laptops
+                            and exam-room speakers to make barge-in more
+                            reliable in noisy rooms.
+                          </span>
+                        </p>
+                      )}
+                      {flag.name ===
+                        "backend.voice_hybrid_vad_signal_freshness_ms" && (
+                        <p className="text-xs text-slate-500 mb-2">
+                          <span className="font-semibold text-slate-300">
+                            Ops hint:
+                          </span>{" "}
+                          <span className="text-slate-400">
+                            This controls how long Silero/Deepgram VAD events
+                            are considered “fresh” when deciding barge-in. Use{" "}
+                            <code>200</code> ms for very low-latency networks,
+                            <code>300</code> ms as the default, and{" "}
+                            <code>500</code> ms in higher-latency or jittery
+                            environments.
+                          </span>
+                        </p>
+                      )}
+                      {flag.name === "backend.voice_aec_capability_tuning" && (
+                        <p className="text-xs text-slate-500 mb-2">
+                          <span className="font-semibold text-slate-300">
+                            Clinician tip:
+                          </span>{" "}
+                          <span className="text-slate-400">
+                            When enabled, VoiceAssist adapts barge-in
+                            thresholds to the device’s echo cancellation
+                            quality—keeping headsets very responsive while
+                            being more cautious on built-in speakers to avoid
+                            the AI “hearing itself.”
+                          </span>
+                        </p>
+                      )}
                       {flag.flag_type !== "boolean" &&
                         flag.value !== undefined && (
                           <div className="text-xs font-mono bg-slate-800/50 px-2 py-1 rounded inline-block">

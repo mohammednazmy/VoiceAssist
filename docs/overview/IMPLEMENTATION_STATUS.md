@@ -166,6 +166,12 @@ Main user-facing medical AI assistant application.
 | Voice health endpoint       | Complete | Both            | `/health/voice` with provider checks    |
 | Debug logging               | Complete | Both            | `VOICE_LOG_LEVEL` configuration         |
 
+**Voice State Contract (Summary):**
+
+- **Canonical state model:** All voice pipelines share a single `VoicePipelineState` union (defined in `@voiceassist/types`) that underpins frontend `voiceState`, backend `PipelineState`, and WebSocket `voice.state` / `session.resume.ack.pipeline_state`.
+- **State consistency on reconnect:** After transient disconnects, the backend sends a compact recovery snapshot with `pipeline_state`, and the unified conversation store maps it through `mapPipelineStateToVoiceState` while enforcing guards (no `"listening"`/`"responding"` when disconnected or voice mode is off).
+- **Privacy-respecting recovery:** When clinicians disable transcript history, recovery snapshots omit partial transcripts and replay content while still sending `pipeline_state`, so UI indicators stay accurate without leaking extra transcript data.
+
 > **See:** [Voice Mode Pipeline](../VOICE_MODE_PIPELINE.md) for detailed architecture.
 
 **Voice Mode v4 Enhancement Services (Phase 1-2):**

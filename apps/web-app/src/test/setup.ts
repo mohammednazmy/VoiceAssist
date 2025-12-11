@@ -17,6 +17,45 @@ if (!(globalThis as any).jest) {
   (globalThis as any).jest = vi;
 }
 
+// Provide a robust localStorage mock for jsdom environments where
+// window.localStorage may not implement the full Web Storage API.
+// This stabilizes tests that hydrate Zustand stores (authStore, etc.).
+if (typeof window !== "undefined") {
+  const existing = (window as any).localStorage;
+  const needsMock =
+    !existing || typeof existing.getItem !== "function" || typeof existing.setItem !== "function";
+
+  if (needsMock) {
+    const store: Record<string, string> = {};
+
+    const localStorageMock = {
+      get length() {
+        return Object.keys(store).length;
+      },
+      clear: () => {
+        for (const key of Object.keys(store)) {
+          delete store[key];
+        }
+      },
+      getItem: (key: string): string | null =>
+        Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null,
+      key: (index: number): string | null => Object.keys(store)[index] ?? null,
+      removeItem: (key: string): void => {
+        delete store[key];
+      },
+      setItem: (key: string, value: string): void => {
+        store[key] = String(value);
+      },
+    };
+
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+      writable: true,
+      configurable: true,
+    });
+  }
+}
+
 // Some CI terminals report a column width of 0, which breaks Vitest's dot
 // reporter when it tries to render progress rows. Ensure a sane default so the
 // reporter can't compute Infinity rows and throw during test runs.

@@ -41,7 +41,8 @@ export type ConnectionStatus =
 export interface VoiceSettings {
   voice?: string; // Maps to voice_id in T/T
   language?: string;
-  vadSensitivity?: number; // Not used in T/T (Deepgram handles VAD)
+  // 0-100 slider value used to tune backend barge-in confidence threshold.
+  vadSensitivity?: number;
 }
 
 /**
@@ -158,7 +159,7 @@ function mapVoiceSettings(
   return {
     voice_id: settings.voice, // T/T uses voice_id for ElevenLabs
     language: settings.language,
-    // vadSensitivity is ignored - Deepgram handles VAD
+    vad_sensitivity: settings.vadSensitivity,
   };
 }
 

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import { loadMdxContent } from "@/lib/mdx";
 
 export const metadata: Metadata = {
@@ -70,6 +71,30 @@ export default async function VoiceArchitecturePage() {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* Voice state contract callout */}
+      <div className="mb-8 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-500/60 dark:bg-slate-900/40 p-4">
+        <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
+          Voice state contract
+        </h3>
+        <p className="text-sm text-slate-700 dark:text-slate-200">
+          Voice runtime state is standardized via the{" "}
+          <code className="px-1 rounded bg-slate-100 dark:bg-slate-800">
+            VoicePipelineState
+          </code>{" "}
+          union, shared between frontend <code>voiceState</code>, backend{" "}
+          <code>PipelineState</code>, and WebSocket <code>voice.state</code> /{" "}
+          <code>session.resume.ack.pipeline_state</code>. See{" "}
+          <Link
+            href="/docs/voice/pipeline"
+            className="text-blue-700 dark:text-blue-300 underline"
+          >
+            Voice Mode Pipeline
+          </Link>{" "}
+          for the canonical state model, reconnect semantics, and
+          privacy-aware recovery behavior.
+        </p>
       </div>
 
       {/* Documentation Content */}

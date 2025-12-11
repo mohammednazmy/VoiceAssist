@@ -266,6 +266,50 @@ export interface TranscriptionResult {
   timestamp: string;
 }
 
+/**
+ * Canonical voice/pipeline state used across Thinker/Talker sessions.
+ *
+ * Notes:
+ * - The **backend** pipeline state enum is a subset:
+ *   "idle" | "listening" | "processing" | "speaking" | "cancelled" | "error".
+ *   These values flow over `voice.state` and `session.resume.ack.pipeline_state`.
+ * - The **frontend** unified conversation store uses the full union below for
+ *   `voiceState`, adding UI/transport states like "connecting", "responding",
+ *   and "disconnected" on top of the backend subset.
+ *
+ * This union should remain the single source of truth for:
+ * - unifiedConversationStore.voiceState
+ * - backend WebSocketSessionState.pipeline_state (using the backend subset)
+ * - voice.state WebSocket messages and session.resume.ack.pipeline_state
+ */
+export type VoicePipelineState =
+  | "idle"
+  | "connecting"
+  | "listening"
+  | "processing"
+  | "responding"
+  | "speaking"
+  | "cancelled"
+  | "error"
+  | "disconnected";
+
+/**
+ * Backend-facing subset of the canonical voice pipeline state.
+ *
+ * This matches:
+ * - services/api-gateway/app/services/voice_pipeline_service.PipelineState
+ * - voice.state / session.resume.ack.pipeline_state values on the wire
+ *
+ * Use this type for any TypeScript surface that models backend
+ * pipeline_state, to avoid accidentally introducing frontend-only
+ * UI states ("connecting", "responding", "disconnected") into
+ * backend contracts.
+ */
+export type BackendPipelineState = Exclude<
+  VoicePipelineState,
+  "connecting" | "responding" | "disconnected"
+>;
+
 // ============================================================================
 // Voice Barge-In Settings Types (Phase 7-10)
 // ============================================================================

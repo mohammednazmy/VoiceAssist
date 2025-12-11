@@ -295,6 +295,8 @@ export interface TTAudioPlaybackReturn {
     activeSourcesCount: number;
     streamEndedRef: boolean;
     bargeInActiveRef: boolean;
+    queueLength: number;
+    queueDurationMs: number;
   };
 }
 
@@ -941,15 +943,17 @@ export function useTTAudioPlayback(
       timestampsRef.current.lastChunkReceived = performance.now();
       audioHistoryRef.current.totalChunksReceived++;
 
-      // Drop audio chunks if barge-in is active
-      // This prevents stale audio from cancelled responses from playing
+      // If barge-in is active, treat the next incoming audio as a NEW stream.
+      // Backend `barge_in` handling already cancels the previous response, so
+      // we don't need to keep dropping chunks here. Clearing the flag ensures
+      // we don't accidentally drop audio for the next valid response.
       if (bargeInActiveRef.current) {
-        // E2E Test Harness: Track dropped chunks
-        audioHistoryRef.current.totalChunksDropped++;
         voiceLog.debug(
-          "[TTAudioPlayback] Dropping audio chunk - barge-in active",
+          "[TTAudioPlayback] New audio received while barge-in active - clearing barge-in state for next response",
         );
-        return;
+        bargeInActiveRef.current = false;
+        bargeInStopLoggedRef.current = false;
+        interruptCallbackFiredRef.current = false;
       }
 
       voiceLog.debug("[TTAudioPlayback] queueAudioChunk called", {
@@ -1542,8 +1546,12 @@ export function useTTAudioPlayback(
       activeSourcesCount: activeSourcesRef.current.size,
       streamEndedRef: streamEndedRef.current,
       bargeInActiveRef: bargeInActiveRef.current,
+      // Queue stats are maintained in React state and updated
+      // by the watchdog; they are sufficient for debugging/tests.
+      queueLength,
+      queueDurationMs,
     }),
-    [],
+    [queueLength, queueDurationMs],
   );
 
   // Memoize return object to prevent unnecessary re-renders and useEffect cleanups

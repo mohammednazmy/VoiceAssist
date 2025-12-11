@@ -418,6 +418,13 @@ voice_hybrid_vad_decision_total = _safe_counter(
     ["source", "silero_fresh", "deepgram_fresh"],  # source: silero_only, deepgram_only, hybrid
 )
 
+# High-noise push-to-talk recommendations
+voice_high_noise_push_to_talk_total = _safe_counter(
+    "voiceassist_voice_high_noise_push_to_talk_total",
+    "High-noise push-to-talk recommendations emitted by the voice pipeline",
+    ["reason"],  # reason: "high_noise"
+)
+
 # Perceived response latency (SLO: P95 <250ms)
 voice_perceived_latency_seconds = _safe_histogram(
     "voiceassist_voice_perceived_latency_seconds",

@@ -38,6 +38,9 @@ import { useOfflineVADWithFallback } from "./useOfflineVAD";
 import { useConversationManager } from "./useConversationManager";
 import type { BargeInType as ConversationBargeInType } from "../lib/conversationManager/types";
 
+import type { BackendPipelineState } from "@voiceassist/types";
+import type { VADPresetType } from "../stores/voiceSettingsStore";
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -70,15 +73,8 @@ export type TTConnectionStatus =
   | "failed"
   | "mic_permission_denied";
 
-/**
- * Pipeline state as reported by backend
- */
-export type PipelineState =
-  | "idle"
-  | "listening"
-  | "processing"
-  | "speaking"
-  | "cancelled";
+/** Pipeline state as reported by backend (matches BackendPipelineState). */
+export type PipelineState = BackendPipelineState;
 
 /**
  * Transcript from STT
@@ -367,6 +363,8 @@ export interface TTSessionRecoveryResult {
   partialResponse: string;
   /** Number of missed messages to replay */
   missedMessageCount: number;
+  /** Pipeline state at time of disconnection (canonical voice state) */
+  pipelineState?: PipelineState;
 }
 
 /**
@@ -465,11 +463,36 @@ export interface TTVoiceSettings {
 }
 
 /**
+ * Advanced T/T voice settings that extend the basic voice configuration.
+ *
+ * These map directly to TTSessionConfig.advanced_settings on the backend and
+ * are used for analytics and adaptive behavior (personalized thresholds,
+ * behavior learning, etc.).
+ */
+export interface TTAdvancedSettings {
+  /** 0-100 VAD sensitivity slider value from the frontend store */
+  vad_sensitivity?: number;
+  /** Personalized VAD threshold learned from calibration (0-1), or null */
+  personalized_vad_threshold?: number | null;
+  /** Enable adaptive learning from barge-in patterns */
+  enable_behavior_learning?: boolean;
+  /** Whether to store transcript history on the backend for this session */
+  store_transcript_history?: boolean;
+   /** Selected VAD preset for this session (sensitive/balanced/relaxed/accessibility/custom) */
+   vad_preset?: VADPresetType;
+   /** Custom energy threshold (dB) when vad_preset === "custom" */
+   vad_custom_energy_threshold_db?: number | null;
+   /** Custom silence duration (ms) when vad_preset === "custom" */
+   vad_custom_silence_duration_ms?: number | null;
+}
+
+/**
  * Hook options
  */
 export interface UseThinkerTalkerSessionOptions {
   conversation_id?: string;
   voiceSettings?: TTVoiceSettings;
+  advancedSettings?: TTAdvancedSettings;
   onTranscript?: (transcript: TTTranscript) => void;
   /** Phase 5.2: Called when AI response is truncated during barge-in */
   onTranscriptTruncated?: (truncation: TTTranscriptTruncation) => void;
@@ -594,6 +617,9 @@ export interface UseThinkerTalkerSessionOptions {
   onSessionRecoveryFailed?: (reason: string) => void;
   /** Callback when a missed message is replayed during recovery */
   onMessageReplayed?: (message: Record<string, unknown>) => void;
+
+  /** Called when backend recommends push-to-talk due to high noise */
+  onPushToTalkRecommended?: () => void;
 }
 
 // ============================================================================
@@ -1320,6 +1346,7 @@ export function useThinkerTalkerSession(
 
         case "session.resume.ack": {
           // Session recovery succeeded
+          const pipelineState = message.pipeline_state as PipelineState | undefined;
           const recoveryResult: TTSessionRecoveryResult = {
             recoveryState: message.recovery_state as
               | "none"
@@ -1329,6 +1356,7 @@ export function useThinkerTalkerSession(
             partialTranscript: (message.partial_transcript as string) || "",
             partialResponse: (message.partial_response as string) || "",
             missedMessageCount: (message.missed_message_count as number) || 0,
+            pipelineState,
           };
 
           voiceLog.info(
@@ -1344,6 +1372,15 @@ export function useThinkerTalkerSession(
           }
           if (recoveryResult.partialResponse) {
             partialResponseAccumRef.current = recoveryResult.partialResponse;
+          }
+
+          // Align local pipeline state with recovered state so that
+          // unifiedConversationStore.voiceState can be updated via
+          // onPipelineStateChange in higher-level hooks.
+          if (pipelineState) {
+            setPipelineState(pipelineState);
+            pipelineStateRef.current = pipelineState;
+            options.onPipelineStateChange?.(pipelineState, "recovered");
           }
 
           isRecoveredSessionRef.current = true;
@@ -1979,6 +2016,8 @@ export function useThinkerTalkerSession(
           // Pipeline state update
           const state = message.state as PipelineState;
           const reason = message.reason as string | undefined;
+          const pushToTalkRecommended =
+            message.push_to_talk_recommended === true;
           const prevState = pipelineStateRef.current;
           console.log(
             `[BARGE-IN-DEBUG] Pipeline state change: ${prevState} -> ${state} (reason=${reason})`,
@@ -1986,6 +2025,10 @@ export function useThinkerTalkerSession(
           setPipelineState(state);
           pipelineStateRef.current = state; // Update ref for closure access
           options.onPipelineStateChange?.(state, reason);
+
+          if (pushToTalkRecommended) {
+            options.onPushToTalkRecommended?.();
+          }
 
           if (state === "listening") {
             setIsSpeaking(false);
@@ -2580,12 +2623,13 @@ export function useThinkerTalkerSession(
             ws.send(JSON.stringify(resumeMessage));
           }
 
-          // Send session initialization message with feature negotiation
-          const initMessage = {
-            type: "session.init",
-            protocol_version: "2.0",
-            conversation_id: conversationId || null,
-            voice_settings: options.voiceSettings || {},
+        // Send session initialization message with feature negotiation
+        const initMessage = {
+          type: "session.init",
+          protocol_version: "2.0",
+          conversation_id: conversationId || null,
+          voice_settings: options.voiceSettings || {},
+          advanced_settings: options.advancedSettings || {},
             // Request all WebSocket optimization and reliability features
             // Server will confirm which ones are enabled via feature flags
             features: [
@@ -3299,6 +3343,7 @@ export function useThinkerTalkerSession(
       speech_duration_ms: number;
       is_playback_active: boolean;
       effective_threshold: number;
+      aec_quality?: string;
     }) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         return;

@@ -1499,7 +1499,7 @@ export async function getVoiceTestHarnessState(page: Page): Promise<VoiceTestHar
  * Returns true if a trigger was attempted.
  */
 export async function forceBargeIn(page: Page): Promise<boolean> {
-  return page.evaluate(() => {
+  const triggered = await page.evaluate(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const anyWindow = window as any;
     let triggered = false;
@@ -1529,6 +1529,21 @@ export async function forceBargeIn(page: Page): Promise<boolean> {
 
     return triggered || (harness?.bargeInLog?.length || 0) > 0;
   });
+
+  // Tiny global guard: immediately after a simulated barge-in, the
+  // AI should no longer be playing audio. This uses the canonical
+  // ref-based flag exposed via window.__voiceModeDebug.
+  const debugState = await getVoiceModeDebugState(page);
+  expect(
+    debugState,
+    "[BARGE-IN-TEST] __voiceModeDebug was not available after simulated barge-in",
+  ).not.toBeNull();
+  expect(
+    debugState!.isActuallyPlaying,
+    "[BARGE-IN-TEST] Expected __voiceModeDebug.isActuallyPlaying === false immediately after simulated barge-in",
+  ).toBe(false);
+
+  return triggered;
 }
 
 /**
@@ -1920,13 +1935,21 @@ export async function verifyBargeInWithVoiceModeDebug(
       // 1. Audio has stopped playing (or barge-in is active which implies audio was stopped)
       // 2. Either barge-in count increased OR pipeline transitioned to listening OR bargeInActive flag is set
       if ((audioStopped || bargeInActive) && (bargeInCountIncreased || pipelineTransitioned || bargeInActive)) {
-        return {
+        const result = {
           triggered: true,
           bargeInCountIncreased,
           audioStopped,
           pipelineTransitioned,
           finalState: debugState,
         };
+        // Tiny global guard: after a verified barge-in, the AI should
+        // not still be playing. This provides a human-readable sanity
+        // check across all scenarios that use this helper.
+        expect(
+          result.finalState?.isActuallyPlaying ?? false,
+          "[BARGE-IN-TEST] Expected __voiceModeDebug.isActuallyPlaying === false after barge-in verification",
+        ).toBe(false);
+        return result;
       }
     }
 

@@ -249,6 +249,13 @@ services:
     environment:
       - VITE_API_BASE_URL=http://frontend-gateway:8080/api
       - VITE_APP_ENV=${ENVIRONMENT:-development}
+      # Silero VAD assets (self-hosted). In production, point these at an internal
+      # static host or CDN that serves the onnxruntime-web and @ricky0123/vad-web
+      # dist directories. Defaults fall back to jsDelivr if unset.
+      # For the default Docker image, these assets are baked into the web-app
+      # container under /vendor/onnxruntime-web/dist and /vendor/silero-vad.
+      # - VITE_SILERO_ONNX_WASM_BASE_URL=/vendor/onnxruntime-web/dist/
+      # - VITE_SILERO_VAD_ASSET_BASE_URL=/vendor/silero-vad/
     networks:
       - voiceassist-network
 

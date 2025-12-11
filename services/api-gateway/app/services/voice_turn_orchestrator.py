@@ -20,7 +20,6 @@ import asyncio
 import time
 
 from app.core.logging import get_logger
-from app.core.config import get_settings
 from app.services.semantic_vad_service import (
     SemanticVADService,
     SemanticVADResult,
@@ -141,6 +140,19 @@ class VoiceTurnOrchestrator:
                 "hybrid_vad": self._config.enable_hybrid_vad,
             },
         )
+
+    def set_signal_freshness_ms(self, value: int) -> None:
+        """
+        Configure the HybridVADDecider's signal freshness window (ms).
+
+        Intended to be called from startup wiring so that the orchestrator
+        shares the same Hybrid VAD tuning as the main Thinker/Talker pipeline.
+        """
+        try:
+            self._hybrid_vad.set_signal_freshness_ms(value)
+        except AttributeError:
+            # Older HybridVADDecider versions may not support this helper.
+            self._hybrid_vad.config.signal_freshness_ms = value
 
     # =========================================================================
     # State Management

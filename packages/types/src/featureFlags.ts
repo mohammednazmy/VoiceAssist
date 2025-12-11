@@ -1167,6 +1167,53 @@ export const FEATURE_FLAGS = {
         otherFlags: ["backend.voice_silero_vad_enabled"],
       },
     },
+    voice_hybrid_vad_signal_freshness_ms: {
+      name: "backend.voice_hybrid_vad_signal_freshness_ms",
+      description:
+        "[Natural Conversation] Signal freshness window (ms) for hybrid VAD fusion. " +
+        "Controls how long Silero/Deepgram VAD events are considered valid when deciding " +
+        "barge-in during playback. Lower values favor very recent signals; higher values " +
+        "tolerate more latency.",
+      category: "backend" as const,
+      type: "number" as const,
+      defaultValue: 300,
+      defaultEnabled: true,
+      metadata: {
+        criticality: "low" as const,
+        min: 100,
+        max: 2000,
+        docsUrl: "https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: ["HybridVADDecider", "VoicePipelineService"],
+        otherFlags: ["backend.voice_hybrid_vad_fusion"],
+      },
+    },
+    voice_aec_capability_tuning: {
+      name: "backend.voice_aec_capability_tuning",
+      description:
+        "[Natural Conversation] Enable AEC capability-aware tuning for echo thresholds. " +
+        "Uses frontend AEC quality (excellent/good/fair/poor) to adjust hybrid VAD thresholds " +
+        "and Silero playback thresholds on devices with poor echo cancellation.",
+      category: "backend" as const,
+      type: "boolean" as const,
+      defaultValue: false,
+      defaultEnabled: false,
+      metadata: {
+        criticality: "medium" as const,
+        docsUrl: "https://assistdocs.asimo.io/voice/hybrid-vad-fusion",
+      },
+      dependencies: {
+        services: ["api-gateway", "web-app"],
+        components: [
+          "HybridVADDecider",
+          "VoicePipelineService",
+          "useThinkerTalkerVoiceMode",
+        ],
+        otherFlags: ["backend.voice_silero_vad_enabled"],
+      },
+    },
     voice_word_timestamps: {
       name: "backend.voice_word_timestamps",
       description:
@@ -1575,7 +1622,7 @@ export const FEATURE_FLAGS = {
         "Allows users to tune barge-in behavior to their preference.",
       category: "backend" as const,
       type: "string" as const,
-      defaultValue: "balanced",
+      defaultValue: "responsive",
       defaultEnabled: true,
       metadata: {
         criticality: "low" as const,

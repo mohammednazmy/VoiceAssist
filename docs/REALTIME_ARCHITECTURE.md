@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-04"
 audience:
   - human
   - agent
@@ -41,7 +41,7 @@ ai_summary: >-
 
 # VoiceAssist Real-time Architecture
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-12-04
 **Status**: Production Ready
 
 **Related Documentation:**
@@ -59,6 +59,8 @@ VoiceAssist uses WebSocket connections for real-time bidirectional communication
 - **Streaming chat responses** - Token-by-token LLM output
 - **Voice interactions** - Speech-to-text and text-to-speech
 - **Live updates** - Typing indicators, connection status
+
+For voice WebSocket flows, runtime state is expressed using the canonical `VoicePipelineState` union described in the [Voice Mode Pipeline](VOICE_MODE_PIPELINE.md#canonical-voice-pipeline-state-model), shared across frontend `voiceState`, backend `PipelineState`, and `voice.state` / `session.resume.ack.pipeline_state` messages.
 
 ---
 

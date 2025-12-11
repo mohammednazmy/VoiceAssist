@@ -9,6 +9,7 @@
 
 import { create } from "zustand";
 import type { ChatMessage } from "../types";
+import type { VoicePipelineState } from "@voiceassist/types";
 
 // ============================================================================
 // Types
@@ -37,13 +38,7 @@ export type VoiceConnectionStatus =
 /**
  * Voice mode state machine states
  */
-export type VoiceState =
-  | "idle"
-  | "connecting"
-  | "listening"
-  | "processing"
-  | "responding"
-  | "error";
+export type VoiceState = VoicePipelineState;
 
 /**
  * Audio playback state
@@ -422,27 +417,109 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
     // ---------------------------------------------------------------------------
 
     setVoiceState: (voiceState) => {
-      set({ voiceState });
+      set((state) => {
+        const { voiceModeActive, voiceConnectionStatus } = state;
+        let nextState: VoiceState = voiceState;
+
+        // If voice mode is not active, keep state in idle/error/cancelled only
+        if (!voiceModeActive) {
+          if (
+            nextState === "listening" ||
+            nextState === "processing" ||
+            nextState === "responding" ||
+            nextState === "speaking" ||
+            nextState === "connecting"
+          ) {
+            nextState = "idle";
+          }
+        }
+
+        // If connection is not established, avoid active pipeline states
+        if (
+          voiceConnectionStatus === "disconnected" ||
+          voiceConnectionStatus === "error"
+        ) {
+          if (
+            nextState === "listening" ||
+            nextState === "processing" ||
+            nextState === "responding" ||
+            nextState === "speaking" ||
+            nextState === "connecting"
+          ) {
+            nextState = voiceConnectionStatus === "error" ? "error" : "idle";
+          }
+        } else if (
+          voiceConnectionStatus === "connecting" ||
+          voiceConnectionStatus === "reconnecting"
+        ) {
+          if (
+            nextState === "listening" ||
+            nextState === "processing" ||
+            nextState === "responding" ||
+            nextState === "speaking"
+          ) {
+            nextState = "connecting";
+          }
+        }
+
+        return { ...state, voiceState: nextState };
+      });
     },
 
     startListening: () => {
-      set({
-        isListening: true,
-        voiceState: "listening",
+      set((state) => {
+        // Only allow listening when voice mode is active and connection is healthy
+        if (
+          !state.voiceModeActive ||
+          state.voiceConnectionStatus === "disconnected" ||
+          state.voiceConnectionStatus === "error"
+        ) {
+          return state;
+        }
+
+        return {
+          ...state,
+          isListening: true,
+          voiceState: "listening",
+        };
       });
     },
 
     stopListening: () => {
-      set({
-        isListening: false,
-        voiceState: get().partialTranscript ? "processing" : "idle",
+      set((state) => {
+        const hasTranscript = state.partialTranscript.length > 0;
+        const canProcess =
+          state.voiceModeActive &&
+          state.voiceConnectionStatus !== "disconnected" &&
+          state.voiceConnectionStatus !== "error";
+
+        const nextState: VoiceState =
+          hasTranscript && canProcess ? "processing" : "idle";
+
+        return {
+          ...state,
+          isListening: false,
+          voiceState: nextState,
+        };
       });
     },
 
     startSpeaking: () => {
-      set({
-        isSpeaking: true,
-        voiceState: "responding",
+      set((state) => {
+        // Only allow speaking when voice mode is active and connection is healthy
+        if (
+          !state.voiceModeActive ||
+          state.voiceConnectionStatus === "disconnected" ||
+          state.voiceConnectionStatus === "error"
+        ) {
+          return state;
+        }
+
+        return {
+          ...state,
+          isSpeaking: true,
+          voiceState: "responding",
+        };
       });
     },
 
@@ -467,30 +544,56 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
     },
 
     setVoiceConnectionStatus: (voiceConnectionStatus) => {
-      set({ voiceConnectionStatus });
-      // Update voice state based on connection
-      if (voiceConnectionStatus === "connected") {
-        const { voiceModeType } = get();
-        set({
-          voiceState: voiceModeType === "always-on" ? "listening" : "idle",
-        });
-      } else if (
-        voiceConnectionStatus === "disconnected" ||
-        voiceConnectionStatus === "error"
-      ) {
-        set({
-          voiceState: voiceConnectionStatus === "error" ? "error" : "idle",
-          isListening: false,
-          isSpeaking: false,
-        });
-      }
+      set((state) => {
+        const next: Partial<UnifiedConversationState> = {
+          voiceConnectionStatus,
+        };
+
+        // Update voice state based on connection
+        if (voiceConnectionStatus === "connected") {
+          next.voiceState =
+            state.voiceModeActive && state.voiceModeType === "always-on"
+              ? "listening"
+              : "idle";
+        } else if (
+          voiceConnectionStatus === "disconnected" ||
+          voiceConnectionStatus === "error"
+        ) {
+          next.voiceState =
+            voiceConnectionStatus === "error" ? "error" : "idle";
+          next.isListening = false;
+          next.isSpeaking = false;
+        } else if (
+          voiceConnectionStatus === "connecting" ||
+          voiceConnectionStatus === "reconnecting"
+        ) {
+          // While (re)connecting, keep voiceState in connecting/idle/error only
+          if (
+            state.voiceState === "listening" ||
+            state.voiceState === "processing" ||
+            state.voiceState === "responding" ||
+            state.voiceState === "speaking"
+          ) {
+            next.voiceState = "connecting";
+          }
+        }
+
+        return { ...state, ...next };
+      });
     },
 
     setVoiceError: (voiceError) => {
-      set({
+      set((state) => ({
+        ...state,
         voiceError,
         voiceState: voiceError ? "error" : "idle",
-      });
+        // In error state, never keep local listening/speaking indicators on.
+        // Guards in setVoiceConnectionStatus already enforce this on
+        // disconnect; this ensures the same invariant when errors are
+        // surfaced directly via setVoiceError.
+        isListening: voiceError ? false : state.isListening,
+        isSpeaking: voiceError ? false : state.isSpeaking,
+      }));
     },
 
     // ---------------------------------------------------------------------------

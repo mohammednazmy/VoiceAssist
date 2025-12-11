@@ -6,6 +6,11 @@ import path from "path";
 // HMR uses plain WebSocket by default for localhost development/E2E testing.
 // Set VITE_PROXY_HOST=1 when running behind a proxy to use wss://
 
+// Allow disabling PWA generation in certain environments (e.g., Docker
+// builder images) to avoid workbox-related build issues without impacting
+// local development builds.
+const disablePWA = process.env.DISABLE_PWA_SW === "true";
+
 export default defineConfig({
   build: {
     rollupOptions: {
@@ -44,6 +49,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      disable: disablePWA,
       // Use autoUpdate to immediately activate new service workers
       // This prevents stale SW issues by ensuring users always get the latest version
       registerType: "autoUpdate",

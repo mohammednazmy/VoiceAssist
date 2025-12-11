@@ -347,6 +347,33 @@ The system includes predefined feature flags for common features:
 | `beta_features`    | boolean | `false` | Enable beta/experimental features |
 | `experimental_api` | boolean | `false` | Enable experimental API endpoints |
 
+### Voice AEC & Dictation
+
+These flags control how aggressively VoiceAssist optimizes voice mode for dictation vs. conversational use, and how it responds to device echo cancellation (AEC) quality:
+
+| Flag                                   | Type    | Default       | Dictation-focused setting                           | Conversation-focused setting                               | Behavior                                                                                      |
+| -------------------------------------- | ------- | ------------- | ---------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `backend.voice_barge_in_quality_preset` | string  | `"responsive"` | `responsive` – very fast barge-in, optimized for dictation; may cut mid-word         | `balanced` or `smooth` – more conservative barge-in windows, waits for more natural pauses   | Controls Silero VAD thresholds and timing presets on the frontend (Thinker/Talker voice mode). |
+| `backend.voice_v4_audio_processing`    | boolean | `false`       | `true` – enable server-side audio preprocessing (AEC, AGC, noise suppression) for more robust barge-in under noisy dictation | `true` or `false` depending on infra capacity; `false` keeps raw audio, lower CPU use        | Gates the backend AudioProcessingService in the Thinker/Talker pipeline (AEC + noise handling). |
+| `backend.voice_aec_capability_tuning`  | boolean | `false`       | `true` – automatically makes thresholds more conservative on devices with poor AEC while keeping them snappy on good headsets | `true` – reduces echo-triggered misfires in rooms with speakers; can be `false` for legacy rollout | Enables AEC-quality–aware tuning in HybridVADDecider (backend) and Silero playback-time thresholds (frontend). |
+
+**Recommended presets for deployments:**
+
+- **Dictation-heavy clinics (fast note-taking, headset users)**
+  - `backend.voice_barge_in_quality_preset = "responsive"`
+  - `backend.voice_v4_audio_processing = true`
+  - `backend.voice_aec_capability_tuning = true`
+  - Effect: very low-latency barge-in and dictation-optimized Silero thresholds, with server-side AEC/noise suppression and device-quality–aware safeguards.
+
+- **Conversation-heavy deployments (shared exam-room speakers, teaching environments)**
+  - Start with:
+    - `backend.voice_barge_in_quality_preset = "balanced"` (or `"smooth"` if you want the assistant to finish more sentences)
+    - `backend.voice_v4_audio_processing = true`
+    - `backend.voice_aec_capability_tuning = true`
+  - Effect: smoother, less abrupt interruptions and reduced risk of the assistant “hearing itself” on devices with weaker echo cancellation.
+
+Admins can adjust these flags live in the Feature Flags page of the admin panel (see `admin-guide/feature-flags/admin-panel-guide.md`), and changes take effect immediately for new voice sessions without requiring a deployment.
+
 ---
 
 ## Initialization

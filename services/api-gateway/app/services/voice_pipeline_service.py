@@ -82,6 +82,7 @@ from app.services.streaming_stt_service import (
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
+from app.services.audio_processing_service import AudioContext, get_audio_processing_service
 
 # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
 from app.services.transcript_sync_service import TranscriptSyncService, TruncationResult, get_transcript_sync_service
@@ -95,6 +96,8 @@ from app.services.utterance_aggregator import (
     remove_utterance_aggregator,
 )
 from app.services.voice_command_service import voice_command_service
+from app.core.metrics import voice_high_noise_push_to_talk_total
+from app.services.adaptive_vad_service import VADPresetType, PRESETS as ADAPTIVE_VAD_PRESETS
 
 logger = get_logger(__name__)
 
@@ -416,6 +419,17 @@ class PipelineConfig:
     # 0 = max threshold (0.95 confidence required), 100 = min threshold (0.5 confidence required)
     vad_sensitivity: int = 50
 
+    # Optional personalized VAD threshold learned from frontend calibration.
+    # When present, this reflects the user's calibrated baseline (0-1) and is
+    # used for analytics and tuning, not for direct thresholding here.
+    personalized_vad_threshold: Optional[float] = None
+
+    # Optional VAD preset metadata for dictation/endpoint tuning. When mode is
+    # DICTATION, these values are used to derive STT endpointing parameters
+    # from the same presets used by AdaptiveVADService.
+    vad_preset: Optional[str] = None
+    vad_custom_silence_duration_ms: Optional[int] = None
+
     # Phase 8: Pipeline mode and dictation settings
     mode: PipelineMode = PipelineMode.CONVERSATION
     dictation_note_type: NoteType = NoteType.SOAP
@@ -556,6 +570,8 @@ class VoicePipelineSession:
         self._state = PipelineState.IDLE
         self._cancelled = False
         self._deepgram_vad_active: bool = False
+        self._last_deepgram_vad_confidence: float = 0.0
+        self._last_deepgram_vad_time_ms: float = 0.0
 
         # Transcript accumulation
         self._partial_transcript = ""
@@ -578,6 +594,18 @@ class VoicePipelineSession:
 
         # Locks for thread safety
         self._state_lock = asyncio.Lock()
+
+        # Optional server-side audio processing (AEC/AGC/NS)
+        self._audio_processing_enabled: bool = False
+        self._audio_processor = None
+        self._audio_context: Optional[AudioContext] = None
+
+        # Ambient noise calibration and high-noise tracking
+        self._noise_calibration_samples: List[bytes] = []
+        self._noise_calibration_done: bool = False
+        self._noise_calibration_in_progress: bool = False
+        self._poor_noise_since: Optional[float] = None
+        self._push_to_talk_recommended: bool = False
 
         # Event bus for cross-engine communication (Issue 3: Turn management)
         self._event_bus: VoiceEventBus = get_event_bus()
@@ -622,6 +650,8 @@ class VoicePipelineSession:
         # Phase 2: VAD Confidence Sharing - Store frontend Silero VAD state
         self._frontend_vad_state: Optional[Dict[str, Any]] = None
         self._frontend_vad_update_time: float = 0.0
+        self._aec_quality: str = "unknown"
+        self._barge_in_quality_preset: Optional[str] = None
 
         # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
         # Tracks AI response text for word-accurate truncation during barge-in
@@ -638,6 +668,52 @@ class VoicePipelineSession:
         self._barge_in_interrupted_response: str = ""
         self._barge_in_playback_position_ms: int = 0
         self._misfire_check_task: Optional[asyncio.Task] = None
+
+    def _tune_hybrid_vad_for_noise_and_user(
+        self,
+        noise_snr_db: Optional[float],
+        vad_sensitivity: Optional[int],
+    ) -> None:
+        """
+        Adjust HybridVADDecider config based on ambient noise and user profile.
+
+        - In high-noise environments (low SNR), require slightly longer speech
+          and higher hybrid scores to reduce jitter.
+        - For users who choose higher VAD sensitivity, relax thresholds a bit
+          so soft or fast speech still triggers reliably.
+
+        Adjustments are deliberately small and bounded to avoid drastic changes.
+        """
+        decider = self._hybrid_vad_decider
+        cfg = decider.config
+
+        # Noise-aware tuning using estimated SNR from audio processing.
+        if noise_snr_db is not None:
+            # Very noisy (<10dB): be more conservative.
+            if noise_snr_db < 10:
+                cfg.min_speech_duration_ms = int(cfg.min_speech_duration_ms + 40)
+                cfg.hybrid_score_threshold = min(0.99, cfg.hybrid_score_threshold + 0.05)
+            # Moderately noisy (<20dB): apply a smaller bump.
+            elif noise_snr_db < 20:
+                cfg.min_speech_duration_ms = int(cfg.min_speech_duration_ms + 20)
+                cfg.hybrid_score_threshold = min(0.98, cfg.hybrid_score_threshold + 0.03)
+
+        # User-aware tuning based on VAD sensitivity (0–100).
+        if vad_sensitivity is not None:
+            try:
+                sens = max(0, min(100, int(vad_sensitivity)))
+            except (TypeError, ValueError):
+                sens = None
+
+            if sens is not None:
+                # High sensitivity: user wants easier barge-in, especially in quiet offices.
+                if sens >= 70:
+                    cfg.hybrid_score_threshold = max(0.6, cfg.hybrid_score_threshold - 0.05)
+                    cfg.min_speech_duration_ms = max(80, cfg.min_speech_duration_ms - 30)
+                # Low sensitivity: user prefers conservative behavior.
+                elif sens <= 30:
+                    cfg.hybrid_score_threshold = min(0.99, cfg.hybrid_score_threshold + 0.03)
+                    cfg.min_speech_duration_ms = int(cfg.min_speech_duration_ms + 20)
 
     @property
     def state(self) -> PipelineState:
@@ -663,7 +739,66 @@ class VoicePipelineSession:
             self._metrics.start_time = time.time()
 
             try:
-                # Create STT session with lenient endpointing for natural speech
+                # Derive STT endpointing based on pipeline mode, optional VAD presets,
+                # and feature flags guarding dictation-specific tuning.
+                endpointing_ms = self.config.stt_endpointing_ms
+                utterance_end_ms = self.config.stt_utterance_end_ms
+
+                use_dictation_endpointing = False
+                dictation_profile: Optional[str] = None
+
+                if self.config.mode == PipelineMode.DICTATION:
+                    use_dictation_endpointing = await feature_flag_service.is_enabled(
+                        "backend.voice_dictation_vad_preset_endpointing",
+                        default=False,
+                    )
+                    if use_dictation_endpointing:
+                        # Optional profile knob (fast/balanced/careful) for environment-specific tuning.
+                        raw_profile = await feature_flag_service.get_value(
+                            "backend.voice_dictation_endpoint_profile",
+                            default="balanced",
+                        )
+                        if isinstance(raw_profile, str) and raw_profile in ("fast", "balanced", "careful"):
+                            dictation_profile = raw_profile
+                        else:
+                            dictation_profile = "balanced"
+
+                if use_dictation_endpointing and self.config.mode == PipelineMode.DICTATION:
+                    preset_name = getattr(self.config, "vad_preset", None)
+                    custom_silence = getattr(self.config, "vad_custom_silence_duration_ms", None)
+                    base_preset: Optional[VADPresetType] = None
+
+                    if isinstance(preset_name, str):
+                        try:
+                            base_preset = VADPresetType(preset_name)
+                        except ValueError:
+                            base_preset = None
+
+                    if base_preset is None:
+                        base_preset = VADPresetType.BALANCED
+
+                    preset = ADAPTIVE_VAD_PRESETS.get(base_preset)
+                    if preset:
+                        base_silence_ms = preset.silence_duration_ms
+                        if isinstance(custom_silence, int):
+                            base_silence_ms = max(200, min(1500, custom_silence))
+
+                        # Profile-specific adjustments:
+                        if dictation_profile == "fast":
+                            base_silence_ms = int(base_silence_ms * 0.75)
+                        elif dictation_profile == "careful":
+                            base_silence_ms = int(base_silence_ms * 1.2)
+
+                        # Map base silence into STT endpointing/utterance windows.
+                        # Endpointing tracks approximate silence before speech end;
+                        # utterance_end allows a short tail for mid-thought pauses.
+                        endpointing_ms = max(400, min(1200, base_silence_ms))
+                        utterance_end_ms = max(
+                            endpointing_ms + 300,
+                            min(2500, base_silence_ms + 700),
+                        )
+
+                # Create STT session with lenient, preset-aware endpointing for natural speech
                 self._stt_session = await self._stt_service.create_session(
                     on_partial=self._handle_partial_transcript,
                     on_final=self._handle_final_transcript,
@@ -673,8 +808,8 @@ class VoicePipelineSession:
                     config=STTSessionConfig(
                         language=self.config.stt_language,
                         sample_rate=self.config.stt_sample_rate,
-                        endpointing_ms=self.config.stt_endpointing_ms,
-                        utterance_end_ms=self.config.stt_utterance_end_ms,
+                        endpointing_ms=endpointing_ms,
+                        utterance_end_ms=utterance_end_ms,
                     ),
                 )
 
@@ -707,6 +842,19 @@ class VoicePipelineSession:
                         user_id=self.user_id,
                     )
                     logger.info(f"Prosody analysis enabled for session: {self.session_id}")
+
+                # Voice Mode v4: Optional server-side audio preprocessing (AEC/AGC/NS)
+                self._audio_processing_enabled = await feature_flag_service.is_enabled(
+                    "backend.voice_v4_audio_processing",
+                    default=False,
+                )
+                if self._audio_processing_enabled:
+                    self._audio_processor = get_audio_processing_service()
+                    self._audio_context = AudioContext()
+                    logger.info(
+                        "[Pipeline] Server-side audio processing enabled for session",
+                        extra={"session_id": self.session_id},
+                    )
 
                 # Phase 4: Initialize memory context manager
                 if self.user_id:
@@ -875,13 +1023,67 @@ class VoicePipelineSession:
             mode = "preemptive" if is_preemptive else "normal"
             logger.debug(f"Audio chunk #{self._metrics.audio_chunks_received}, {len(audio_data)} bytes ({mode})")
 
+        # Optional server-side audio preprocessing (AEC/AGC/NS)
+        processed_audio = audio_data
+        if self._audio_processing_enabled and self._audio_processor and self._audio_context:
+            try:
+                # AEC only applies when TTS playback is active (SPEAKING / pre-emptive listening)
+                self._audio_context.playback_active = self._state == PipelineState.SPEAKING
+
+                # Collect early ambient frames for one-time noise floor calibration
+                if (
+                    not self._noise_calibration_done
+                    and not self._noise_calibration_in_progress
+                    and self._speech_start_time is None
+                ):
+                    self._noise_calibration_samples.append(audio_data)
+                    frame_ms = getattr(
+                        self._audio_processor.config,
+                        "frame_duration_ms",
+                        20,
+                    )
+                    approx_ms = len(self._noise_calibration_samples) * frame_ms
+                    if approx_ms >= 1000:
+                        self._noise_calibration_in_progress = True
+                        try:
+                            await self._audio_processor.calibrate_noise_floor(
+                                self._noise_calibration_samples,
+                                duration_ms=approx_ms,
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                "[Pipeline] Noise floor calibration failed; continuing with defaults",
+                                extra={"error": str(e)},
+                            )
+                        finally:
+                            self._noise_calibration_done = True
+                            self._noise_calibration_in_progress = False
+                            self._noise_calibration_samples.clear()
+
+                processed_audio = await self._audio_processor.process_frame(
+                    audio_data,
+                    context=self._audio_context,
+                )
+
+                # Update high-noise recommendation after processing
+                await self._maybe_send_noise_recommendation()
+            except Exception as e:
+                logger.warning(
+                    "[Pipeline] Audio processing failed; bypassing server-side AEC/NS/AGC",
+                    extra={"error": str(e)},
+                )
+                processed_audio = audio_data
+
         # Send to STT
         if self._stt_session:
-            await self._stt_session.send_audio(audio_data)
+            await self._stt_session.send_audio(processed_audio)
 
         # Send to emotion detection (parallel, non-blocking) - only during normal listening
         if self._emotion_session and not is_preemptive:
-            await self._emotion_session.add_audio(audio_data, sample_rate=self.config.stt_sample_rate)
+            await self._emotion_session.add_audio(
+                processed_audio,
+                sample_rate=self.config.stt_sample_rate,
+            )
 
         # Track speech duration for backchanneling - only during normal listening
         current_time = time.time()
@@ -1188,6 +1390,8 @@ class VoicePipelineSession:
 
             # Log barge-in completion with timing
             barge_in_latency_ms = int((time.time() - barge_in_start) * 1000)
+            # Track barge-in count for analytics
+            self._metrics.barge_in_count = getattr(self._metrics, "barge_in_count", 0) + 1
             logger.info(
                 f"[Pipeline] Barge-in completed",
                 extra={
@@ -1391,12 +1595,57 @@ class VoicePipelineSession:
 
             await self._send_state_update(reason="soft_barge")
 
+    async def _maybe_send_noise_recommendation(self) -> None:
+        """
+        Monitor SNR from AudioProcessingService and, when persistently low,
+        recommend switching to push-to-talk mode. This uses aggregate SNR
+        only and does not log or expose raw audio/PHI.
+        """
+        if not self._audio_processing_enabled or self._audio_processor is None:
+            return
+
+        try:
+            metrics = self._audio_processor.get_metrics()
+        except Exception as e:  # pragma: no cover - defensive logging
+            logger.debug(
+                "[Pipeline] Failed to read audio processing metrics for noise recommendation",
+                extra={"error": str(e)},
+            )
+            return
+
+        snr = getattr(metrics, "snr_estimate_db", None)
+        if snr is None:
+            return
+
+        POOR_SNR_THRESHOLD_DB = 5.0
+        RECOMMENDATION_WINDOW_SEC = 10.0
+        now = time.time()
+
+        if snr < POOR_SNR_THRESHOLD_DB:
+            if self._poor_noise_since is None:
+                self._poor_noise_since = now
+            elif (
+                not self._push_to_talk_recommended
+                and now - self._poor_noise_since >= RECOMMENDATION_WINDOW_SEC
+            ):
+                self._push_to_talk_recommended = True
+                # Increment Prometheus counter for observability (aggregate only).
+                try:
+                    voice_high_noise_push_to_talk_total.labels(reason="high_noise").inc()
+                except Exception:
+                    # Metrics failures must not impact voice pipeline behavior.
+                    pass
+                await self._send_state_update(reason="high_noise")
+        else:
+            self._poor_noise_since = None
+
     async def update_frontend_vad_state(
         self,
         silero_confidence: float,
         is_speaking: bool,
         speech_duration_ms: int,
         is_playback_active: bool,
+        aec_quality: Optional[str] = None,
     ) -> None:
         """
         Phase 2: VAD Confidence Sharing - Update frontend Silero VAD state.
@@ -1419,13 +1668,36 @@ class VoicePipelineSession:
         if not share_enabled:
             return
 
+        # Lazily resolve barge-in quality preset once per session so that
+        # HybridVADDecider and frontend share a single conceptual source of truth
+        # (backend.voice_barge_in_quality_preset) for barge-in aggressiveness.
+        if self._barge_in_quality_preset is None:
+            try:
+                raw_preset = await feature_flag_service.get_value(
+                    "backend.voice_barge_in_quality_preset",
+                    default="responsive",
+                )
+                if isinstance(raw_preset, str) and raw_preset:
+                    self._barge_in_quality_preset = raw_preset
+                else:
+                    self._barge_in_quality_preset = "responsive"
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.warning(
+                    "[Pipeline] Failed to resolve voice_barge_in_quality_preset, using 'responsive'",
+                    extra={"error": str(e)},
+                )
+                self._barge_in_quality_preset = "responsive"
+
         self._frontend_vad_state = {
             "silero_confidence": silero_confidence,
             "is_speaking": is_speaking,
             "speech_duration_ms": speech_duration_ms,
             "is_playback_active": is_playback_active,
+            "aec_quality": aec_quality,
         }
         self._frontend_vad_update_time = time.time()
+        if aec_quality:
+            self._aec_quality = str(aec_quality)
 
         # Check if hybrid VAD fusion is enabled
         hybrid_vad_enabled = await feature_flag_service.is_enabled(
@@ -1435,6 +1707,80 @@ class VoicePipelineSession:
 
         # Update hybrid VAD decider state
         self._hybrid_vad_decider.set_tts_playing(is_playback_active)
+        # Apply barge-in quality preset (responsive/balanced/smooth) so that
+        # HybridVAD thresholds align with frontend Silero presets.
+        try:
+            if self._barge_in_quality_preset:
+                self._hybrid_vad_decider.apply_quality_preset(
+                    self._barge_in_quality_preset,
+                )
+        except AttributeError:
+            # Older deployments without apply_quality_preset support simply
+            # ignore the preset and fall back to base config.
+            logger.debug(
+                "[HybridVAD] apply_quality_preset not available on decider instance",
+                extra={"preset": self._barge_in_quality_preset},
+            )
+        # Adjust hybrid VAD thresholds based on AEC capability level when enabled
+        aec_tuning_enabled = await feature_flag_service.is_enabled(
+            "backend.voice_aec_capability_tuning",
+            default=False,
+        )
+        if aec_tuning_enabled:
+            try:
+                self._hybrid_vad_decider.apply_aec_quality(self._aec_quality)
+            except AttributeError:
+                # Older decider versions may not support capability-aware tuning yet
+                logger.debug(
+                    "[HybridVAD] apply_aec_quality not available on decider instance",
+                    extra={"aec_quality": self._aec_quality},
+                )
+        # Apply configurable signal freshness window (in milliseconds) when provided.
+        # This allows ops to tune hybrid behavior for different network/latency profiles.
+        try:
+            raw_fresh_ms = await feature_flag_service.get_value(
+                "backend.voice_hybrid_vad_signal_freshness_ms",
+                default=self._hybrid_vad_decider.config.signal_freshness_ms,
+            )
+            fresh_ms: Optional[int] = None
+            if isinstance(raw_fresh_ms, (int, float)):
+                fresh_ms = int(raw_fresh_ms)
+            elif isinstance(raw_fresh_ms, str) and raw_fresh_ms.strip():
+                try:
+                    fresh_ms = int(float(raw_fresh_ms.strip()))
+                except ValueError:
+                    fresh_ms = None
+
+            if fresh_ms is not None:
+                # Clamp to a safe range (100ms–2000ms) to avoid extreme behavior
+                fresh_ms = max(100, min(2000, fresh_ms))
+                try:
+                    self._hybrid_vad_decider.set_signal_freshness_ms(fresh_ms)
+                except AttributeError:
+                    # Older HybridVADDecider versions may not support this helper yet.
+                    self._hybrid_vad_decider.config.signal_freshness_ms = fresh_ms
+        except Exception as e:  # pragma: no cover - defensive logging
+            logger.debug(
+                "[HybridVAD] Failed to resolve voice_hybrid_vad_signal_freshness_ms",
+                extra={"error": str(e)},
+            )
+
+        # Noise- and user-aware hybrid tuning.
+        # Use server-side audio processing SNR estimate when available plus the
+        # user's VAD sensitivity preference from the pipeline config.
+        noise_snr_db: Optional[float] = None
+        if self._audio_processing_enabled and self._audio_processor is not None:
+            try:
+                metrics = self._audio_processor.get_metrics()
+                noise_snr_db = getattr(metrics, "snr_estimate_db", None)
+            except Exception as e:  # pragma: no cover - defensive logging
+                logger.debug(
+                    "[HybridVAD] Failed to read audio processing metrics for noise SNR",
+                    extra={"error": str(e)},
+                )
+
+        vad_sensitivity: Optional[int] = getattr(self.config, "vad_sensitivity", None)
+        self._tune_hybrid_vad_for_noise_and_user(noise_snr_db, vad_sensitivity)
         silero_state = VADState(
             confidence=silero_confidence,
             is_speaking=is_speaking,
@@ -1443,10 +1789,22 @@ class VoicePipelineSession:
         self._hybrid_vad_decider.update_silero_state(silero_state)
 
         # Create Deepgram event from current state
+        # Use the most recent Deepgram confidence and timestamp when available.
+        if self._last_deepgram_vad_confidence > 0.0:
+            deepgram_confidence = self._last_deepgram_vad_confidence
+        else:
+            deepgram_confidence = 1.0 if self._deepgram_vad_active else 0.0
+
+        if self._last_deepgram_vad_time_ms > 0.0:
+            deepgram_timestamp_ms = self._last_deepgram_vad_time_ms
+        else:
+            deepgram_timestamp_ms = time.time() * 1000
+
         deepgram_event = DeepgramEvent(
             is_speech_started=self._deepgram_vad_active,
-            is_speech_ended=False,
-            confidence=1.0 if self._deepgram_vad_active else 0.0,
+            is_speech_ended=not self._deepgram_vad_active,
+            confidence=deepgram_confidence,
+            timestamp_ms=deepgram_timestamp_ms,
         )
         self._hybrid_vad_decider.update_deepgram_event(deepgram_event)
 
@@ -1610,11 +1968,64 @@ class VoicePipelineSession:
 
         self._state = PipelineState.IDLE
 
+        # Aggregate personalization + barge-in analytics for offline tuning.
+        # This log is intentionally aggregate/numeric only (no transcript/PHI).
+        barge_in_count = getattr(self._metrics, "barge_in_count", 0)
+        barge_in_misfires = getattr(self._metrics, "barge_in_misfires", 0)
+        misfire_rate = (
+            float(barge_in_misfires) / float(barge_in_count)
+            if barge_in_count > 0
+            else 0.0
+        )
+        personalized_threshold = getattr(
+            self.config,
+            "personalized_vad_threshold",
+            None,
+        )
+        recommended_action = "none"
+        if personalized_threshold is not None and barge_in_count >= 3:
+            if misfire_rate > 0.3:
+                recommended_action = "increase_threshold"
+            elif misfire_rate < 0.05:
+                recommended_action = "decrease_threshold"
+
+        final_snr: Optional[float] = None
+        if self._audio_processing_enabled and self._audio_processor is not None:
+            try:
+                metrics = self._audio_processor.get_metrics()
+                final_snr = getattr(metrics, "snr_estimate_db", None)
+            except Exception:
+                final_snr = None
+
         logger.info(
             f"Voice pipeline stopped: {self.session_id}",
             extra={
                 "total_latency_ms": self._metrics.total_latency_ms,
                 "audio_chunks": self._metrics.audio_chunks_received,
+                "barge_in_count": barge_in_count,
+                "barge_in_misfires": barge_in_misfires,
+                "barge_in_misfire_rate": round(misfire_rate, 3),
+                "personalized_vad_threshold": (
+                    round(personalized_threshold, 3)
+                    if isinstance(personalized_threshold, (int, float))
+                    else None
+                ),
+                "vad_sensitivity": getattr(self.config, "vad_sensitivity", None),
+                "recommended_threshold_action": recommended_action,
+                # Echo / AEC metadata for analytics (non-PHI)
+                "aec_quality": getattr(self, "_aec_quality", "unknown"),
+                "voice_barge_in_quality_preset": getattr(
+                    self,
+                    "_barge_in_quality_preset",
+                    None,
+                ),
+                # Adaptive noise handling / high-noise recommendation metrics
+                "final_snr_estimate_db": final_snr,
+                "push_to_talk_recommended": getattr(
+                    self,
+                    "_push_to_talk_recommended",
+                    False,
+                ),
             },
         )
 
@@ -1834,6 +2245,12 @@ class VoicePipelineSession:
         self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
         self._last_transcript_time = time.time()  # Track for pause detection
 
+        # Track Deepgram VAD confidence/timing for hybrid VAD fusion.
+        if text.strip():
+            now_ms = time.time() * 1000
+            self._last_deepgram_vad_confidence = confidence
+            self._last_deepgram_vad_time_ms = now_ms
+
         # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on valid transcript
         # If we received a substantial transcript, the barge-in is confirmed
         if text.strip() and len(text.strip()) > 2:
@@ -1929,6 +2346,12 @@ class VoicePipelineSession:
         """
         logger.info(f"[Pipeline] Speech start detected: {self.session_id}, current_state={self._state}")
         self._deepgram_vad_active = True
+        # Mark Deepgram VAD as recently active; use a moderate default confidence
+        # until we receive actual transcript probabilities.
+        now_ms = time.time() * 1000
+        self._last_deepgram_vad_time_ms = now_ms
+        if self._last_deepgram_vad_confidence <= 0.0:
+            self._last_deepgram_vad_confidence = 0.7
 
         # Natural Conversation Flow: Phase 2 - Continuation Detection
         # If we're waiting for continuation and user starts speaking again, cancel the wait
@@ -1972,6 +2395,7 @@ class VoicePipelineSession:
         """Handle speech endpoint detection from STT."""
         logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}', state={self._state}")
         self._deepgram_vad_active = False
+        self._last_deepgram_vad_time_ms = time.time() * 1000
 
         # Guard against duplicate processing: If we're already processing or speaking,
         # this is a duplicate UtteranceEnd event (Deepgram can send multiple for a single
@@ -2720,6 +3144,10 @@ class VoicePipelineSession:
             logger.info("[Pipeline] Audio chunk dropped - cancelled=True")
             return
 
+        # Update playback buffer for server-side AEC when enabled
+        if self._audio_processing_enabled and self._audio_context and chunk.data:
+            self._audio_context.playback_buffer = chunk.data
+
         self._metrics.audio_chunks_sent += 1
 
         # Track TTS latency (first audio)
@@ -2790,10 +3218,14 @@ class VoicePipelineSession:
                     "natural" indicates normal completion. Frontend uses this to
                     decide whether to stop audio playback.
         """
+        data = {"state": self._state.value, "reason": reason}
+        if getattr(self, "_push_to_talk_recommended", False):
+            data["push_to_talk_recommended"] = True
+
         await self._on_message(
             PipelineMessage(
                 type="voice.state",
-                data={"state": self._state.value, "reason": reason},
+                data=data,
             )
         )
 

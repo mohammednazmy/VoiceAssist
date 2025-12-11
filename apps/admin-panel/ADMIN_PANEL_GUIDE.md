@@ -374,6 +374,7 @@ navigate('/dashboard')
    - Voice Mode (WebRTC)
    - RAG Search
    - Nextcloud Integration
+   - Advanced voice flags (hybrid VAD, AEC tuning, WS options)
 
 **Features:**
 
@@ -381,6 +382,23 @@ navigate('/dashboard')
 - Save button with loading state
 - Success confirmation
 - Warning notice for production changes
+
+### Feature Flags Page (Voice Hybrid VAD Presets)
+
+The **Feature Flags** page (sidebar: “Feature Flags”) exposes all backend flags, including voice‑specific ones under the `backend.voice_*` namespace.
+
+- To quickly see only voice‑related flags, click the **“Voice Flags”** toggle in the header and optionally refine using the small gear icon (filters `backend.voice_*`, `ui.voice_*`, `backend.ws_*`).
+- Locate the numeric flag:
+  - `backend.voice_hybrid_vad_signal_freshness_ms`
+  - This row shows:
+    - A small “Ops hint” text explaining recommended values.
+    - Three quick‑apply preset buttons: **200 ms**, **300 ms**, **500 ms**.
+- Typical usage:
+  - **200 ms** → very low‑latency / lab networks.
+  - **300 ms** → default, balanced behavior.
+  - **500 ms** → higher‑latency or jittery environments where Deepgram events may arrive later.
+
+In Storybook/debug builds, the Feature Flags page is represented by the “FeatureFlagsPage / Voice Flags” story, which mirrors this layout and shows the preset buttons directly beneath the `backend.voice_hybrid_vad_signal_freshness_ms` flag description.
 
 ---
 

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { createTelemetryClient } from "@voiceassist/telemetry";
+import { installVoiceFlagsDebugHelper } from "./lib/voiceFlagsDebug";
 
 // Initialize i18n before rendering
 import "./i18n";
@@ -31,6 +32,9 @@ if (!rootElement) {
 } else {
   console.log("✅ Root element found, creating React root...");
   try {
+    // Install local-only voice feature flag debug helper
+    installVoiceFlagsDebugHelper();
+
     const root = ReactDOM.createRoot(rootElement as HTMLElement);
     console.log("✅ React root created, rendering App...");
     root.render(

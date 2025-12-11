@@ -284,6 +284,10 @@
           {
             "expr": "sum by (cause) (increase(voiceassist_voice_barge_in_misfires_total[1h]))",
             "legendFormat": "{{cause}}"
+          },
+          {
+            "expr": "sum(increase(voiceassist_voice_high_noise_push_to_talk_total[1h]))",
+            "legendFormat": "high_noise_push_to_talk"
           }
         ]
       },
@@ -298,6 +302,34 @@
           }
         ],
         "options": {"colorMode": "value", "graphMode": "area"}
+      },
+      {
+        "id": 21,
+        "title": "Hybrid VAD Decisions by Source & Freshness",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 48},
+        "targets": [
+          {
+            "expr": "sum by (source, silero_fresh, deepgram_fresh) (increase(voiceassist_voice_hybrid_vad_decision_total[1h]))",
+            "legendFormat": "{{source}} (S={{silero_fresh}}, D={{deepgram_fresh}})"
+          },
+          {
+            "expr": "sum(increase(voiceassist_voice_high_noise_push_to_talk_total[1h]))",
+            "legendFormat": "high_noise_push_to_talk"
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "title": "No-Transcript Misfires by Cluster",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 48},
+        "targets": [
+          {
+            "expr": "sum by (cluster) (increase(voiceassist_voice_barge_in_misfires_total{cause=\"no_transcript\"}[1h]))",
+            "legendFormat": "{{cluster}}"
+          }
+        ]
       }
     ]
   }

@@ -472,6 +472,46 @@ describe("ThinkerTalkerVoicePanel", () => {
     });
   });
 
+  describe("Error Banner", () => {
+    it("shows Retry voice banner when error is present and calls reset/ reconnect on click", () => {
+      mockVoiceMode.error = new Error("Test error");
+      mockVoiceMode.isConnected = true;
+
+      render(<ThinkerTalkerVoicePanel />);
+
+      // Banner text should be visible
+      expect(
+        screen.getByText(
+          /Voice had a connection issue\. You can safely retry;/i,
+        ),
+      ).toBeInTheDocument();
+
+      const retryButton = screen.getByRole("button", { name: /retry voice/i });
+      fireEvent.click(retryButton);
+
+      // resetError should be called to clear error state
+      expect(mockVoiceMode.resetError).toHaveBeenCalled();
+      // Existing connection should be disconnected before reconnect
+      expect(mockVoiceMode.disconnect).toHaveBeenCalled();
+      // A fresh connect should be attempted
+      expect(mockVoiceMode.connect).toHaveBeenCalled();
+    });
+
+    it("does not disconnect when already disconnected on Retry voice", () => {
+      mockVoiceMode.error = new Error("Test error");
+      mockVoiceMode.isConnected = false;
+
+      render(<ThinkerTalkerVoicePanel />);
+
+      const retryButton = screen.getByRole("button", { name: /retry voice/i });
+      fireEvent.click(retryButton);
+
+      expect(mockVoiceMode.resetError).toHaveBeenCalled();
+      expect(mockVoiceMode.disconnect).not.toHaveBeenCalled();
+      expect(mockVoiceMode.connect).toHaveBeenCalled();
+    });
+  });
+
   describe("Tool Calls", () => {
     it("should log tool calls", async () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});

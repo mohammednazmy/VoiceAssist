@@ -89,6 +89,8 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
     setLanguageSwitchConfidence,
 
     // Phase 8: Calibration actions
+    setVadCalibrated,
+    setPersonalizedVadThreshold,
     setEnableBehaviorLearning,
 
     // Phase 9: Offline mode actions
@@ -163,6 +165,17 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
   if (!isOpen) {
     return null;
   }
+
+  const handleCalibrationClick = useCallback(() => {
+    if (vadCalibrated) {
+      // Recalibrate: clear existing calibration so the next voice session
+      // will run a fresh Silero noise calibration and establish a new
+      // personalized baseline.
+      setVadCalibrated(false);
+      setPersonalizedVadThreshold(null);
+    }
+    setShowCalibration(true);
+  }, [vadCalibrated, setVadCalibrated, setPersonalizedVadThreshold]);
 
   return (
     <div
@@ -308,7 +321,9 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
               htmlFor="vad-sensitivity"
               className="block text-sm font-medium text-neutral-700 mb-1"
             >
-              Voice Detection Sensitivity: {vadSensitivity}%
+              {personalizedVadThreshold !== null
+                ? `Voice Detection Sensitivity (personalized baseline): ${vadSensitivity}%`
+                : `Voice Detection Sensitivity: ${vadSensitivity}%`}
             </label>
             <input
               type="range"
@@ -324,6 +339,12 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
               <span>Less sensitive</span>
               <span>More sensitive</span>
             </div>
+            {personalizedVadThreshold !== null && (
+              <p className="text-xs text-neutral-500 mt-1">
+                Currently anchored to your calibrated baseline (
+                {Math.round(personalizedVadThreshold * 100)}%).
+              </p>
+            )}
           </div>
 
           {/* Auto-Start Toggle */}
@@ -606,11 +627,16 @@ export function VoiceModeSettings({ isOpen, onClose }: VoiceModeSettingsProps) {
                       {Math.round(personalizedVadThreshold * 100)}%
                     </p>
                   )}
+                  <p className="text-xs text-neutral-500 mt-1">
+                    VoiceAssist also runs a quick automatic noise calibration
+                    when you first connect in voice mode, and this guided
+                    calibration lets you refine those settings for your voice.
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowCalibration(true)}
+                onClick={handleCalibrationClick}
                 className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                   vadCalibrated
                     ? "text-neutral-600 hover:text-neutral-800 bg-white border border-neutral-300 hover:bg-neutral-50"

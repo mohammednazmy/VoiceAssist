@@ -209,3 +209,37 @@ View audit log: **Settings** > **Audit Logs** > Filter by "feature_flags"
 - [Phase 4: User Overrides](../../feature-flags/PHASE_4_USER_OVERRIDES_PLAN.md) - Per-user flag overrides for testing and debugging
 - [API Reference](../../api-reference/rest-api.md) - REST API endpoints for flag management
 - [WebSocket API](../../api-reference/voice-pipeline-ws.md) - Real-time event streaming
+
+## Voice AEC & Dictation Presets (Clinician-Friendly)
+
+The **Feature Flags** page also controls how voice mode behaves for dictation vs conversation, and how it reacts to device echo cancellation (AEC) quality. The most important voice flags for admins are:
+
+- `backend.voice_barge_in_quality_preset` (string)
+  - Think of this as the **“how interruptible is the assistant?”** dial.
+  - `responsive` – very fast interruptions, optimized for dictation and rapid note-taking; may cut mid‑word.
+  - `balanced` – good default for normal conversations; responds quickly but tries not to cut every sentence.
+  - `smooth` – lets the assistant finish more of its thought before interruptions; best for teaching/rounds.
+
+- `backend.voice_v4_audio_processing` (boolean)
+  - Enables the backend audio processing pipeline (AEC, AGC, noise suppression).
+  - Recommended to keep **on** in most environments so the system can clean up room noise and reduce echo.
+
+- `backend.voice_aec_capability_tuning` (boolean)
+  - Lets VoiceAssist automatically adjust thresholds based on the device’s echo cancellation quality.
+  - On good headsets/laptops it keeps barge-in snappy; on poor speakers it becomes more conservative to avoid the AI “hearing itself”.
+
+**Suggested presets:**
+
+- **Dictation-focused clinics**
+  - `backend.voice_barge_in_quality_preset = responsive`
+  - `backend.voice_v4_audio_processing = true`
+  - `backend.voice_aec_capability_tuning = true`
+  - Behavior: very fast dictation with aggressive barge‑in, while still using AEC/quality awareness to avoid obvious misfires.
+
+- **Conversation-focused deployments**
+  - `backend.voice_barge_in_quality_preset = balanced` (or `smooth` for more “polite” behavior)
+  - `backend.voice_v4_audio_processing = true`
+  - `backend.voice_aec_capability_tuning = true`
+  - Behavior: smoother, less abrupt interruptions; better for shared exam‑room speakers and team discussions.
+
+You can adjust these flags live in the Admin panel and clinicians will feel the difference on their next voice session without any downtime or redeployments.

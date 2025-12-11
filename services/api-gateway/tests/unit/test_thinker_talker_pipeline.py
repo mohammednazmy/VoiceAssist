@@ -180,6 +180,95 @@ class TestPipelineConfig:
         assert config.voice_id == "custom_voice"
         assert config.barge_in_enabled is False
 
+    def test_dictation_endpointing_uses_vad_preset_and_flag(self, monkeypatch):
+        """Dictation mode should map VAD presets into STT endpointing when feature flag is enabled."""
+        from app.services.voice_pipeline_service import (
+            AudioContext,
+            PipelineConfig,
+            PipelineMode,
+            VoicePipelineSession,
+        )
+        from app.services.streaming_stt_service import STTSessionConfig
+
+        # Stub feature flags to enable dictation endpointing with "balanced" profile.
+        async def fake_is_enabled(flag_name: str, default: bool = False, db=None) -> bool:
+            if flag_name == "backend.voice_dictation_vad_preset_endpointing":
+                return True
+            return default
+
+        async def fake_get_value(flag_name: str, default=None, db=None):
+            if flag_name == "backend.voice_dictation_endpoint_profile":
+                return "balanced"
+            return default
+
+        from app.services.feature_flags import feature_flag_service
+
+        monkeypatch.setattr(feature_flag_service, "is_enabled", fake_is_enabled)
+        monkeypatch.setattr(feature_flag_service, "get_value", fake_get_value)
+
+        # Minimal STT service stub that records the config used.
+        class StubSTTService:
+            def __init__(self) -> None:
+                self.last_config: STTSessionConfig | None = None
+
+            async def create_session(self, on_partial, on_final, on_endpoint, on_speech_start, on_words, config):
+                self.last_config = config
+
+                class StubSession:
+                    async def start(self) -> bool:
+                        return True
+
+                    async def stop(self) -> None:
+                        return None
+
+                    async def send_audio(self, audio: bytes) -> None:
+                        return None
+
+                return StubSession()
+
+            def is_streaming_available(self) -> bool:
+                return True
+
+        stub_stt = StubSTTService()
+
+        async def noop_on_message(_msg) -> None:
+            return None
+
+        # Dictation pipeline config with a known preset.
+        config = PipelineConfig(
+            mode=PipelineMode.DICTATION,
+            stt_endpointing_ms=800,
+            stt_utterance_end_ms=1500,
+            vad_preset="relaxed",
+            vad_custom_silence_duration_ms=None,
+        )
+
+        session = VoicePipelineSession(
+            session_id="test-dictation-endpointing",
+            conversation_id="conv-1",
+            config=config,
+            stt_service=stub_stt,  # type: ignore[arg-type]
+            thinker_service=None,  # type: ignore[arg-type]
+            talker_service=None,  # type: ignore[arg-type]
+            on_message=noop_on_message,
+            emotion_service=None,
+            backchannel_svc=None,
+        )
+
+        # Disable audio processing to avoid unrelated initialization.
+        session._audio_processing_enabled = False  # type: ignore[attr-defined]
+        session._audio_context = AudioContext()  # type: ignore[attr-defined]
+
+        import asyncio
+
+        asyncio.get_event_loop().run_until_complete(session.start())
+
+        assert stub_stt.last_config is not None
+        # Relaxed preset has longer base silence; with dictation mapping enabled,
+        # endpointing should be >= 800ms and utterance window strictly larger.
+        assert stub_stt.last_config.endpointing_ms >= 800
+        assert stub_stt.last_config.utterance_end_ms > stub_stt.last_config.endpointing_ms
+
 
 class TestPipelineState:
     """Tests for PipelineState enum."""

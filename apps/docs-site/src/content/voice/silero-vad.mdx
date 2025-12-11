@@ -126,7 +126,8 @@ The frontend streams VAD state to the backend via WebSocket, enabling hybrid VAD
   "is_speaking": true,             // Frontend VAD speaking state
   "speech_duration_ms": 250,       // Duration of current speech
   "is_playback_active": false,     // Whether AI is speaking
-  "effective_threshold": 0.5       // Current VAD threshold
+  "effective_threshold": 0.5,      // Current VAD threshold
+  "aec_quality": "good"            // Optional AEC quality (excellent/good/fair/poor/unknown)
 }
 ```
 
@@ -224,6 +225,12 @@ All Silero VAD parameters can be controlled via the admin panel:
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `backend.voice_silero_vad_confidence_sharing` | boolean | `true` | Enable frontend-to-backend VAD sharing |
+
+### AEC Capability Tuning Flag
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `backend.voice_aec_capability_tuning` | boolean | `false` | When enabled, uses frontend AEC quality (excellent/good/fair/poor/unknown) to make echo-related thresholds more conservative on devices with poor/no AEC. Guards both backend HybridVADDecider tuning and frontend playback-time Silero thresholds. |
 
 ## Usage
 

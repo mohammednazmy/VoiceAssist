@@ -153,7 +153,13 @@ type TTConnectionStatus =
   | "failed"
   | "mic_permission_denied";
 
-type PipelineState = "idle" | "listening" | "processing" | "speaking" | "cancelled";
+type PipelineState =
+  | "idle"
+  | "listening"
+  | "processing"
+  | "speaking"
+  | "cancelled"
+  | "error";
 
 interface TTTranscript {
   text: string;

@@ -23,6 +23,7 @@ from app.services.thinker_talker_websocket_handler import (
     TTConnectionState,
     TTSessionConfig,
 )
+from app.services.websocket_session_state import SessionRecoveryState
 from app.services.voice_pipeline_service import PipelineMessage, PipelineState
 from starlette.websockets import WebSocketDisconnect
 
@@ -652,3 +653,331 @@ class TestMetricsEdgeCases:
 
         # Should remain the same
         assert handler._metrics.first_audio_latency_ms == first_latency
+
+
+# =============================================================================
+# Recovery & Privacy Edge Cases
+# =============================================================================
+
+
+class TestRecoveryAndPrivacy:
+    """Tests for session.resume.ack behavior with privacy-aware transcript handling."""
+
+    @pytest.mark.asyncio
+    async def test_session_resume_ack_omits_transcripts_when_history_disabled(
+        self,
+        handler,
+        mock_websocket,
+        mock_pipeline_session,
+        monkeypatch,
+    ):
+        """session.resume.ack should omit transcript fields when store_transcript_history=False."""
+        # Configure handler/session state
+        handler._pipeline_session = mock_pipeline_session
+        handler.config.session_recovery_enabled = True
+
+        # Create a fake session state with transcript history disabled
+        from app.services.websocket_session_state import (
+            SessionRecoveryResult,
+            WebSocketSessionState,
+            websocket_session_state_service,
+        )
+
+        fake_state = WebSocketSessionState(
+            session_id="session-privacy",
+            user_id="user-1",
+            conversation_id="conv-1",
+            pipeline_state="processing",
+            connection_state="disconnected",
+            last_message_seq=42,
+            last_audio_seq_in=10,
+            last_audio_seq_out=5,
+            partial_transcript="SHOULD_NOT_LEAK",
+            partial_response="SHOULD_NOT_LEAK",
+            store_transcript_history=False,
+            created_at=0.0,
+            updated_at=0.0,
+        )
+
+        recovery_result = SessionRecoveryResult(
+            success=True,
+            state=SessionRecoveryState.FULL,
+            session_state=fake_state,
+            missed_messages=[
+                {"type": "transcript.delta", "text": "should not be replayed"}
+            ],
+            audio_resume_seq=None,
+        )
+
+        async def fake_attempt_recovery(*args, **kwargs):
+            return recovery_result
+
+        # Monkeypatch the session state service used by the handler
+        monkeypatch.setattr(
+            websocket_session_state_service,
+            "attempt_recovery",
+            fake_attempt_recovery,
+        )
+
+        # Simulate a session.resume request from client
+        message = {
+            "type": "session.resume",
+            "session_id": "session-privacy",
+            "last_message_seq": 40,
+            "last_audio_seq": 4,
+        }
+
+        await handler._handle_client_message(message)
+
+        # Expect a session.resume.ack sent to the client
+        assert mock_websocket.send_json.called
+        ack_calls = [
+            call
+            for call in mock_websocket.send_json.call_args_list
+            if call[0][0].get("type") == "session.resume.ack"
+        ]
+        assert ack_calls, "Expected at least one session.resume.ack message"
+
+        ack_payload = ack_calls[-1][0][0]
+
+        # Transcript content should be scrubbed when history is disabled
+        assert ack_payload.get("partial_transcript") == ""
+        assert ack_payload.get("partial_response") == ""
+        assert ack_payload.get("missed_message_count") == 0
+
+        # Pipeline state should still be included for UI recovery
+        assert ack_payload.get("pipeline_state") == "processing"
+
+    @pytest.mark.asyncio
+    async def test_session_resume_ack_error_state_when_history_disabled(
+        self,
+        handler,
+        mock_websocket,
+        mock_pipeline_session,
+        monkeypatch,
+    ):
+        """session.resume.ack should report error pipeline_state without transcripts when history is disabled."""
+        handler._pipeline_session = mock_pipeline_session
+        handler.config.session_recovery_enabled = True
+
+        from app.services.websocket_session_state import (
+            SessionRecoveryResult,
+            WebSocketSessionState,
+            websocket_session_state_service,
+        )
+
+        fake_state = WebSocketSessionState(
+            session_id="session-error",
+            user_id="user-err",
+            conversation_id="conv-err",
+            pipeline_state="error",
+            connection_state="disconnected",
+            last_message_seq=7,
+            last_audio_seq_in=0,
+            last_audio_seq_out=0,
+            partial_transcript="SHOULD_NOT_LEAK_ERROR",
+            partial_response="SHOULD_NOT_LEAK_ERROR",
+            store_transcript_history=False,
+            created_at=0.0,
+            updated_at=0.0,
+        )
+
+        recovery_result = SessionRecoveryResult(
+            success=True,
+            state=SessionRecoveryState.FULL,
+            session_state=fake_state,
+            missed_messages=[
+                {"type": "response.delta", "text": "error context that should not replay"}
+            ],
+            audio_resume_seq=None,
+        )
+
+        async def fake_attempt_recovery(*args, **kwargs):
+            return recovery_result
+
+        monkeypatch.setattr(
+            websocket_session_state_service,
+            "attempt_recovery",
+            fake_attempt_recovery,
+        )
+
+        message = {
+            "type": "session.resume",
+            "session_id": "session-error",
+            "last_message_seq": 6,
+            "last_audio_seq": 0,
+        }
+
+        await handler._handle_client_message(message)
+
+        assert mock_websocket.send_json.called
+        ack_calls = [
+            call
+            for call in mock_websocket.send_json.call_args_list
+            if call[0][0].get("type") == "session.resume.ack"
+        ]
+        assert ack_calls
+
+        ack_payload = ack_calls[-1][0][0]
+
+        # Transcripts should still be scrubbed when history is disabled
+        assert ack_payload.get("partial_transcript") == ""
+        assert ack_payload.get("partial_response") == ""
+        assert ack_payload.get("missed_message_count") == 0
+        # But pipeline_state must accurately report the error state for UI recovery
+        assert ack_payload.get("pipeline_state") == "error"
+
+    @pytest.mark.asyncio
+    async def test_session_resume_ack_includes_transcripts_when_history_enabled(
+        self,
+        handler,
+        mock_websocket,
+        mock_pipeline_session,
+        monkeypatch,
+    ):
+        """session.resume.ack should include transcript fields when store_transcript_history=True."""
+        handler._pipeline_session = mock_pipeline_session
+        handler.config.session_recovery_enabled = True
+
+        from app.services.websocket_session_state import (
+            SessionRecoveryResult,
+            WebSocketSessionState,
+            websocket_session_state_service,
+        )
+
+        fake_state = WebSocketSessionState(
+            session_id="session-full",
+            user_id="user-1",
+            conversation_id="conv-1",
+            pipeline_state="speaking",
+            connection_state="disconnected",
+            last_message_seq=10,
+            last_audio_seq_in=3,
+            last_audio_seq_out=2,
+            partial_transcript="Patient has a history of asthma.",
+            partial_response="Let me summarize the key findings.",
+            store_transcript_history=True,
+            created_at=0.0,
+            updated_at=0.0,
+        )
+
+        recovery_result = SessionRecoveryResult(
+            success=True,
+            state=SessionRecoveryState.FULL,
+            session_state=fake_state,
+            missed_messages=[
+                {"type": "transcript.delta", "text": "Patient has a history of asthma."},
+                {"type": "response.delta", "text": "Let me summarize "},
+            ],
+            audio_resume_seq=None,
+        )
+
+        async def fake_attempt_recovery(*args, **kwargs):
+            return recovery_result
+
+        monkeypatch.setattr(
+            websocket_session_state_service,
+            "attempt_recovery",
+            fake_attempt_recovery,
+        )
+
+        message = {
+          "type": "session.resume",
+          "session_id": "session-full",
+          "last_message_seq": 8,
+          "last_audio_seq": 2,
+        }
+
+        await handler._handle_client_message(message)
+
+        assert mock_websocket.send_json.called
+        ack_calls = [
+            call
+            for call in mock_websocket.send_json.call_args_list
+            if call[0][0].get("type") == "session.resume.ack"
+        ]
+        assert ack_calls
+
+        ack_payload = ack_calls[-1][0][0]
+
+        # With history enabled, partial transcript/response and missed message count should be preserved
+        assert ack_payload.get("partial_transcript") == "Patient has a history of asthma."
+        assert ack_payload.get("partial_response") == "Let me summarize the key findings."
+        assert ack_payload.get("missed_message_count") == 2
+        assert ack_payload.get("pipeline_state") == "speaking"
+
+    @pytest.mark.asyncio
+    async def test_session_resume_ack_partial_recovery_state(
+        self,
+        handler,
+        mock_websocket,
+        mock_pipeline_session,
+        monkeypatch,
+    ):
+        """session.resume.ack should accurately report PARTIAL recovery with idle pipeline state."""
+        handler._pipeline_session = mock_pipeline_session
+        handler.config.session_recovery_enabled = True
+
+        from app.services.websocket_session_state import (
+            SessionRecoveryResult,
+            WebSocketSessionState,
+            websocket_session_state_service,
+        )
+
+        fake_state = WebSocketSessionState(
+            session_id="session-partial",
+            user_id="user-2",
+            conversation_id="conv-2",
+            pipeline_state="idle",
+            connection_state="disconnected",
+            last_message_seq=5,
+            last_audio_seq_in=0,
+            last_audio_seq_out=0,
+            partial_transcript="",
+            partial_response="",
+            store_transcript_history=True,
+            created_at=0.0,
+            updated_at=0.0,
+        )
+
+        recovery_result = SessionRecoveryResult(
+            success=True,
+            state=SessionRecoveryState.PARTIAL,
+            session_state=fake_state,
+            missed_messages=[],
+            audio_resume_seq=None,
+        )
+
+        async def fake_attempt_recovery(*args, **kwargs):
+            return recovery_result
+
+        monkeypatch.setattr(
+            websocket_session_state_service,
+            "attempt_recovery",
+            fake_attempt_recovery,
+        )
+
+        message = {
+          "type": "session.resume",
+          "session_id": "session-partial",
+          "last_message_seq": 5,
+          "last_audio_seq": 0,
+        }
+
+        await handler._handle_client_message(message)
+
+        assert mock_websocket.send_json.called
+        ack_calls = [
+            call
+            for call in mock_websocket.send_json.call_args_list
+            if call[0][0].get("type") == "session.resume.ack"
+        ]
+        assert ack_calls
+
+        ack_payload = ack_calls[-1][0][0]
+
+        assert ack_payload.get("recovery_state") == SessionRecoveryState.PARTIAL.value
+        assert ack_payload.get("pipeline_state") == "idle"
+        assert ack_payload.get("partial_transcript") == ""
+        assert ack_payload.get("partial_response") == ""
+        assert ack_payload.get("missed_message_count") == 0

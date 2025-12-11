@@ -347,6 +347,8 @@ class ThinkerTalkerWebSocketHandler:
             └─────────────────┘
 ```
 
+The conceptual states in this diagram map onto the canonical `VoicePipelineState` union described in the [Voice Mode Pipeline](VOICE_MODE_PIPELINE.md#canonical-voice-pipeline-state-model), which is used as the single source of truth for frontend `voiceState`, backend `PipelineState`, and WebSocket `voice.state` / `session.resume.ack.pipeline_state`.
+
 ## WebSocket Protocol
 
 ### Client → Server Messages
@@ -384,7 +386,7 @@ class ThinkerTalkerWebSocketHandler:
 ```typescript
 const {
   status, // 'disconnected' | 'connecting' | 'ready' | 'error'
-  pipelineState, // 'idle' | 'listening' | 'processing' | 'speaking'
+  pipelineState, // 'idle' | 'listening' | 'processing' | 'speaking' | 'cancelled' | 'error'
   transcript, // Final user transcript
   metrics, // Latency and usage metrics
   connect, // Start session

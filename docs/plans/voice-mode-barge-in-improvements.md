@@ -317,6 +317,7 @@ AI: "The capital of Germany is Berlin. [Regarding your earlier question, the cap
   "noise_floor_db": -42,
   "is_playback_active": true,
   "effective_threshold": 0.7,
+  "aec_quality": "good",
   "timestamp_ms": 1701234567890
 }
 ```

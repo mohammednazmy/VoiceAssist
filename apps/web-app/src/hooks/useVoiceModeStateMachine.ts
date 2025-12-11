@@ -21,6 +21,7 @@ import {
   type TTConnectionStatus,
   type TTVoiceSettings,
   type TTTranscript,
+  type TTAdvancedSettings,
 } from "./useThinkerTalkerSession";
 import {
   useUnifiedConversationStore,
@@ -120,7 +121,13 @@ export function useVoiceModeStateMachine(
   } = useUnifiedConversationStore();
 
   // Voice settings
-  const { voice, language } = useVoiceSettingsStore();
+  const {
+    voice,
+    language,
+    vadSensitivity,
+    personalizedVadThreshold,
+    enableBehaviorLearning,
+  } = useVoiceSettingsStore();
 
   // Track responding state locally (when AI is speaking back)
   const isRespondingRef = useRef(false);
@@ -131,6 +138,13 @@ export function useVoiceModeStateMachine(
     voice_id: voice || undefined,
     language: language || undefined,
     barge_in_enabled: true,
+    vad_sensitivity: vadSensitivity,
+  };
+
+  const advancedSettings: TTAdvancedSettings = {
+    vad_sensitivity: vadSensitivity,
+    personalized_vad_threshold: personalizedVadThreshold ?? null,
+    enable_behavior_learning: enableBehaviorLearning,
   };
 
   // Handle transcript events
@@ -197,6 +211,7 @@ export function useVoiceModeStateMachine(
   } = useThinkerTalkerSession({
     conversation_id: conversationId || undefined,
     voiceSettings,
+    advancedSettings,
     onTranscript: handleTranscript,
     onConnectionChange: handleConnectionChange,
     onError: handleError,

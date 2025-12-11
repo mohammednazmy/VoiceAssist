@@ -334,6 +334,8 @@ GRAFANA_ADMIN_PASSWORD=secure_grafana_password
 | `ENABLE_CORS`           | No       | `true`      | Enable CORS                  | `true`, `false`      |
 | `ALLOWED_ORIGINS`       | No       | `*`         | CORS allowed origins         | Comma-separated URLs |
 | `RATE_LIMIT_PER_MINUTE` | No       | `100`       | API rate limit               | 1-10000              |
+| `VITE_SILERO_ONNX_WASM_BASE_URL` | No | _(CDN)_ | Base URL for onnxruntime-web WASM assets (frontend) | Valid HTTP/HTTPS URL or relative path |
+| `VITE_SILERO_VAD_ASSET_BASE_URL` | No | _(CDN)_ | Base URL for @ricky0123/vad-web model assets (frontend) | Valid HTTP/HTTPS URL or relative path |
 
 **Usage:**
 
@@ -342,6 +344,10 @@ MAX_UPLOAD_SIZE=104857600  # 100MB
 ENABLE_CORS=true
 ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
 RATE_LIMIT_PER_MINUTE=100
+
+# Frontend: self-hosted Silero VAD assets
+VITE_SILERO_ONNX_WASM_BASE_URL=/vendor/onnxruntime-web/dist/
+VITE_SILERO_VAD_ASSET_BASE_URL=/vendor/silero-vad/
 ```
 
 **Validation Rules:**

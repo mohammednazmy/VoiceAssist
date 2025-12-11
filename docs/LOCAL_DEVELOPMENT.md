@@ -323,6 +323,28 @@ mkdir -p logs
 mkdir -p tests
 ```
 
+### 6. Local Silero VAD Assets (Optional)
+
+For local development, Silero and ONNX assets are already available under the
+web app’s `public` directory after you run `pnpm install` in `apps/web-app`.
+
+You can tell the Vite dev server to use these self-hosted assets by setting:
+
+```bash
+cd ~/VoiceAssist/apps/web-app
+
+# Use local copies of the ONNX and Silero VAD assets
+export VITE_SILERO_ONNX_WASM_BASE_URL=/vendor/onnxruntime-web/dist/
+export VITE_SILERO_VAD_ASSET_BASE_URL=/vendor/silero-vad/
+
+pnpm dev
+```
+
+When unset, the dev build will fall back to the default jsDelivr CDN URLs. For
+locked-down environments (e.g., hospital networks), prefer the local asset
+paths above so no VAD model files are fetched from external CDNs during
+development.
+
 ## Daily Development Workflow
 
 ### Starting Both Stacks

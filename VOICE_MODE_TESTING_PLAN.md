@@ -346,7 +346,65 @@ export function validateTestEnvironment(): void {
 }
 ```
 
+### 1.5 Canonical Voice State Validation
+
+To prevent regressions where the UI, WebSocket messages, and backend session state drift out of sync, Voice Mode has a small but critical set of tests around the **canonical voice/pipeline state model**:
+
+- **Shared type**:
+  - `VoicePipelineState` in `packages/types/src/index.ts` is the single source of truth for voice state (`idle`, `listening`, `processing`, `responding`, `speaking`, `cancelled`, `error`, etc.).
+- **Frontend unit tests**:
+  - `apps/web-app/src/stores/__tests__/unifiedConversationStore.test.ts` verifies:
+    - `mapPipelineStateToVoiceState` (from `useThinkerTalkerVoiceMode.ts`) maps backend `PipelineState` → canonical `VoiceState`.
+    - Guards in `setVoiceState`/`setVoiceConnectionStatus` never allow active states (`listening`/`responding`/`speaking`) when `voiceConnectionStatus` is `disconnected` or voice mode is off.
+  - `apps/web-app/src/hooks/__tests__/useThinkerTalkerSession-recovery.test.ts` verifies:
+    - `session.resume.ack.pipeline_state` is applied back into the hook’s `pipelineState` and forwarded via `onPipelineStateChange(..., "recovered")` without restoring transcripts when `storeTranscriptHistory=false`.
+  - `apps/web-app/src/components/voice/__tests__/CompactVoiceBar.test.tsx` verifies:
+    - The compact bar renders the expected labels for key states:
+      - `"Listening"` when `pipelineState="listening"`.
+      - `"Thinking"` when `pipelineState="processing"`.
+      - `"Speaking"` when `pipelineState="speaking"`.
+- **Backend unit tests**:
+  - `services/api-gateway/tests/unit/services/test_websocket_error_edge_cases.py::TestRecoveryAndPrivacy` verifies:
+    - When `store_transcript_history=False`, `session.resume.ack` scrubs `partial_transcript`/`partial_response` and `missed_message_count`, but still includes `pipeline_state` for UI recovery.
+    - When `store_transcript_history=True`, `session.resume.ack` includes the partial transcript/response and accurate `missed_message_count` with the correct `pipeline_state`.
+    - PARTIAL recovery (`SessionRecoveryState.PARTIAL`) reports the right `recovery_state` and `pipeline_state` without leaking transcripts.
+- **E2E/Playwright checks**:
+  - `apps/web-app/e2e/thinker-talker-voice.spec.ts` includes:
+    - A debug harness test that:
+      - Confirms `window.__voiceModeDebug.pipelineState` is always in the canonical set.
+      - Asserts that when `isConnected === false`, the pipeline state is never `"listening"` or `"speaking"`.
+      - When the debug state reports `pipelineState="listening"` or `"processing"`, verifies the visible compact bar label shows `"Listening"` / `"Thinking"` respectively.
+
+These tests together form the **voice state contract** and should be kept green whenever backend `PipelineState`, frontend `VoicePipelineState`, or recovery logic in `ThinkerTalkerWebSocketHandler` is changed.
+
 ---
+
+### 1.6 Loki Correlation: AEC Quality × Misfires × Quality Preset
+
+To make tuning repeatable, you can use Loki to correlate AEC capability, barge-in misfire rates, and the current quality preset.
+
+Assuming the `Voice pipeline stopped` log line is structured as described in
+`docs/voice/voice-vad-personalization-analytics.md` and enriched with:
+
+- `aec_quality` (excellent/good/fair/poor/unknown)
+- `barge_in_misfire_rate` (0‒1)
+- `voice_barge_in_quality_preset` (responsive/balanced/smooth)
+
+you can run a query like:
+
+```logql
+{job="voiceassist"} |= "Voice pipeline stopped"
+| json
+| stats avg(barge_in_misfire_rate) by aec_quality, voice_barge_in_quality_preset
+```
+
+This gives a small table showing, for each combination of AEC quality and preset, the average misfire rate over the selected window. In practice:
+
+- Look for rows where:
+  - `aec_quality` is `poor` or `fair` and misfire rate is high → consider moving sites/devices toward `balanced` or `smooth` and enabling `backend.voice_aec_capability_tuning`.
+  - `aec_quality` is `good`/`excellent` and misfire rate is very low → it may be safe to keep or extend `responsive` for dictation-focused users.
+
+You can plug this query directly into Grafana’s Explore view or wire it into a table panel on the `voice-vad-personalization` dashboard for ongoing monitoring.
 
 ## Phase 2: Feature Flag Testing Framework
 
@@ -485,6 +543,72 @@ Comprehensive testing of all flag combinations:
   ]
 }
 ```
+
+#### Hybrid VAD Signal Freshness Sweep (Staging)
+
+To exercise the **hybrid VAD signal freshness** tuning end‑to‑end in staging, add a small sweep over `backend.voice_hybrid_vad_signal_freshness_ms` to your flag matrix (alongside `backend.voice_hybrid_vad_fusion: true`), for example:
+
+```jsonc
+{ "name": "hybrid-fresh-200ms", "flags": {
+  "backend.voice_hybrid_vad_fusion": true,
+  "backend.voice_hybrid_vad_signal_freshness_ms": 200
+}},
+{ "name": "hybrid-fresh-300ms", "flags": {
+  "backend.voice_hybrid_vad_fusion": true,
+  "backend.voice_hybrid_vad_signal_freshness_ms": 300
+}},
+{ "name": "hybrid-fresh-500ms", "flags": {
+  "backend.voice_hybrid_vad_fusion": true,
+  "backend.voice_hybrid_vad_signal_freshness_ms": 500
+}}
+```
+
+Recommended usage:
+
+- Use **200 ms** for low‑latency networks and lab environments (very recent Silero/Deepgram events only).
+- Use **300 ms** as a balanced default (matches the built‑in config).
+- Use **500 ms** in higher‑latency or jittery environments where Deepgram events may arrive later.
+
+During these runs, watch:
+
+- `voiceassist_voice_hybrid_vad_decision_total` (by `source`, `silero_fresh`, `deepgram_fresh`) for decision mix.
+- `voiceassist_voice_barge_in_misfires_total{cause="no_transcript"}` and overall misfire rate vs response/TTFA latency.
+
+#### Dictation VAD Presets & High-Noise Push-to-Talk (Staging)
+
+To validate **dictation endpointing driven by VAD presets** and the new **high-noise push-to-talk** behavior in staging:
+
+1. Enable dictation endpointing based on VAD presets:
+
+```jsonc
+{ "name": "dictation-vad-endpointing-balanced", "flags": {
+  "backend.voice_dictation_vad_preset_endpointing": true,
+  "backend.voice_dictation_endpoint_profile": "balanced"
+}}
+```
+
+2. In the web app, start Thinker/Talker in **dictation mode** and try different VAD presets in `voiceSettingsStore`:
+
+- `sensitive` / `balanced` → expect shorter silence windows (faster endpointing).
+- `relaxed` / `accessibility` → expect longer endpointing and utterance windows.
+- A custom preset with higher `vadCustomSilenceDurationMs` should produce noticeably longer pauses before dictation segments finalize.
+
+3. In a **noisy test room** (e.g., background music or crowd noise), run a few voice sessions with:
+
+```jsonc
+{ "name": "high-noise-push-to-talk", "flags": {
+  "backend.voice_v4_audio_processing": true,
+  "backend.voice_dictation_vad_preset_endpointing": true
+}}
+```
+
+Then verify:
+
+- The frontend occasionally shows the **“Use push-to-talk”** hint in the T/T voice panel after sustained high noise.
+- The Prometheus metric `voiceassist_voice_high_noise_push_to_talk_total{reason="high_noise"}` increases over time.
+- The voice Grafana dashboard surfaces this metric alongside:
+  - `voiceassist_voice_hybrid_vad_decision_total` (for overall VAD behavior).
+  - `voiceassist_voice_barge_in_misfires_total{cause="no_transcript"}` (to ensure recommendations correlate with noisy, error-prone conditions).
 
 ### 2.2 Feature Flag Test Generator
 

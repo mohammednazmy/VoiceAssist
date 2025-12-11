@@ -454,6 +454,85 @@ test.describe("Thinker/Talker Voice Mode UI", () => {
     await page.waitForTimeout(1000); // Give time for WS mock to send connected message
   });
 
+  test("voice debug pipeline state remains consistent after page reload", async ({
+    page,
+  }) => {
+    // Open the voice panel (if possible in this environment)
+    await openVoicePanel(page);
+
+    // Read debug state before reload
+    const before = await page.evaluate(() => {
+      const dbg = (window as any).__voiceModeDebug;
+      const harness = (window as any).__voiceTestHarness;
+      return {
+        pipelineState: dbg?.pipelineState ?? harness?.pipelineState ?? null,
+        isConnected: dbg?.isConnected ?? null,
+      };
+    });
+
+    // Sanity: pipelineState, if present, should be one of the known values
+    if (before.pipelineState) {
+      expect([
+        "idle",
+        "listening",
+        "processing",
+        "speaking",
+        "cancelled",
+        "error",
+      ]).toContain(before.pipelineState);
+    }
+
+    // Simulate a reconnect via full page reload
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(1000);
+    await openVoicePanel(page);
+
+    const after = await page.evaluate(() => {
+      const dbg = (window as any).__voiceModeDebug;
+      const harness = (window as any).__voiceTestHarness;
+      return {
+        pipelineState: dbg?.pipelineState ?? harness?.pipelineState ?? null,
+        isConnected: dbg?.isConnected ?? null,
+      };
+    });
+
+    // After reload, if the debug layer reports disconnected,
+    // pipelineState should not be an active listening/speaking state.
+    if (after.pipelineState && after.isConnected === false) {
+      expect(["listening", "speaking"]).not.toContain(after.pipelineState);
+    }
+
+    // Regardless of connection, pipelineState (when present) should always be
+    // one of the canonical backend values.
+    if (after.pipelineState) {
+      expect([
+        "idle",
+        "listening",
+        "processing",
+        "speaking",
+        "cancelled",
+        "error",
+      ]).toContain(after.pipelineState);
+    }
+
+    // If the pipeline is clearly in a listening/processing state, assert that
+    // the user-visible label in the compact voice bar matches the canonical
+    // text ("Listening" / "Thinking").
+    const labelLocator = page
+      .locator(
+        "[data-testid='compact-voice-bar'] p.text-xs, [data-testid='compact-voice-bar'] .text-xs",
+      )
+      .first();
+
+    if (after.pipelineState === "listening") {
+      await expect(labelLocator).toContainText(/listening/i);
+    } else if (after.pipelineState === "processing") {
+      // UI uses "Thinking" label for processing state
+      await expect(labelLocator).toContainText(/thinking/i);
+    }
+  });
+
   test("voice mode button is visible on chat page", async ({ page }) => {
     // Look for voice mode button with various selectors
     const voiceButton = page

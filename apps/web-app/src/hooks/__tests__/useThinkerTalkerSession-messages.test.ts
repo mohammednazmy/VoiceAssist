@@ -360,6 +360,26 @@ describe("useThinkerTalkerSession - Message Handling", () => {
         expect(result.current.isProcessing).toBe(false);
       });
     });
+
+    it("should call onPushToTalkRecommended when backend sets flag", async () => {
+      const onPushToTalkRecommended = vi.fn();
+      const { result } = renderHook(() =>
+        useThinkerTalkerSession({ onPushToTalkRecommended }),
+      );
+      const ws = await connectHook(result);
+
+      await act(async () => {
+        ws.receiveMessage({
+          type: "voice.state",
+          state: "listening",
+          push_to_talk_recommended: true,
+        });
+      });
+
+      await waitFor(() => {
+        expect(onPushToTalkRecommended).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe("tool call events", () => {

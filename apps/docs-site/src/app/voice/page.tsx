@@ -21,6 +21,35 @@ export default function VoicePage() {
         </p>
       </div>
 
+      {/* Voice state contract callout */}
+      <div className="mb-8 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-500/60 dark:bg-slate-900/40 p-4">
+        <h2 className="text-sm font-semibold tracking-wide text-blue-800 dark:text-blue-200 mb-1">
+          Voice state contract
+        </h2>
+        <p className="text-sm text-slate-700 dark:text-slate-200">
+          Runtime voice and pipeline state is expressed with the shared{" "}
+          <code className="px-1 rounded bg-slate-100 dark:bg-slate-800">
+            VoicePipelineState
+          </code>{" "}
+          union from{" "}
+          <code className="px-1 rounded bg-slate-100 dark:bg-slate-800">
+            @voiceassist/types
+          </code>
+          , used consistently by the frontend unified conversation store,
+          backend <code>PipelineState</code>, and WebSocket{" "}
+          <code>voice.state</code> /{" "}
+          <code>session.resume.ack.pipeline_state</code> messages. See{" "}
+          <Link
+            href="/docs/voice/pipeline"
+            className="text-blue-700 dark:text-blue-300 underline"
+          >
+            Voice Mode Pipeline
+          </Link>{" "}
+          for the canonical contract, reconnection behavior, and
+          privacy-respecting recovery semantics.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           href="/voice/architecture"

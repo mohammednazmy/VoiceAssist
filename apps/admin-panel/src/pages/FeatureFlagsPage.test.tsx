@@ -31,12 +31,28 @@ import { useAuth } from "../contexts/AuthContext";
 
 const mockFlags = [
   {
-    name: "new_voice_mode",
-    description: "Enable new voice mode features",
+    name: "backend.voice_barge_in_quality_preset",
+    description: "Barge-in quality preset",
+    flag_type: "string" as const,
+    enabled: true,
+    value: "responsive",
+    updated_at: "2024-01-15T10:00:00Z",
+  },
+  {
+    name: "backend.voice_v4_audio_processing",
+    description: "Enable server-side audio processing pipeline",
     flag_type: "boolean" as const,
     enabled: true,
     value: undefined,
-    updated_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-01-15T11:00:00Z",
+  },
+  {
+    name: "backend.voice_aec_capability_tuning",
+    description: "Enable AEC capability-aware tuning",
+    flag_type: "boolean" as const,
+    enabled: false,
+    value: undefined,
+    updated_at: "2024-01-15T12:00:00Z",
   },
   {
     name: "phi_detection_v2",
@@ -222,13 +238,31 @@ describe("FeatureFlagsPage", () => {
       expect(screen.getByText("Boolean")).toBeInTheDocument();
       expect(screen.getByText("2")).toBeInTheDocument();
     });
+
+    it("should show voice flags count", () => {
+      render(<FeatureFlagsPage />);
+
+      const voiceCard = screen.getByText("Voice Flags").parentElement
+        ?.parentElement as HTMLElement;
+      expect(voiceCard).toBeTruthy();
+      // Three backend.voice_* flags plus no ui.voice_/backend.ws_ in this fixture
+      expect(within(voiceCard).getByText("3")).toBeInTheDocument();
+    });
   });
 
   describe("flags list", () => {
     it("should display all flags", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("new_voice_mode")).toBeInTheDocument();
+      expect(
+        screen.getByText("backend.voice_barge_in_quality_preset"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("backend.voice_v4_audio_processing"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("backend.voice_aec_capability_tuning"),
+      ).toBeInTheDocument();
       expect(screen.getByText("phi_detection_v2")).toBeInTheDocument();
       expect(screen.getByText("max_sessions")).toBeInTheDocument();
       expect(screen.getByText("welcome_message")).toBeInTheDocument();
@@ -250,7 +284,7 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       const booleanBadges = screen.getAllByText("boolean");
-      expect(booleanBadges.length).toBe(2);
+      expect(booleanBadges.length).toBe(3);
       expect(screen.getByText("number")).toBeInTheDocument();
       expect(screen.getByText("string")).toBeInTheDocument();
       expect(screen.getByText("json")).toBeInTheDocument();
@@ -276,6 +310,32 @@ describe("FeatureFlagsPage", () => {
       expect(
         screen.getByText("No feature flags configured"),
       ).toBeInTheDocument();
+    });
+
+    it("shows Dictation vs Conversation summary only when Voice Flags filter is active", () => {
+      render(<FeatureFlagsPage />);
+
+      // Initially, the summary block should not be present
+      expect(
+        screen.queryByText(/Dictation vs Conversation presets/i),
+      ).not.toBeInTheDocument();
+
+      // Toggle Voice Flags quick filter
+      const voiceFilterButton = screen.getByRole("button", {
+        name: /voice flags/i,
+      });
+      fireEvent.click(voiceFilterButton);
+
+      // Summary block should now be visible
+      expect(
+        screen.getByText(/Dictation vs Conversation presets/i),
+      ).toBeInTheDocument();
+
+      // Toggling off should hide the summary again
+      fireEvent.click(voiceFilterButton);
+      expect(
+        screen.queryByText(/Dictation vs Conversation presets/i),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -415,7 +475,7 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       const editButtons = screen.getAllByRole("button", { name: /edit/i });
-      expect(editButtons.length).toBe(5);
+      expect(editButtons.length).toBe(6);
     });
 
     it("should not show edit button for non-admins", () => {
@@ -495,7 +555,7 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-      expect(deleteButtons.length).toBe(5);
+      expect(deleteButtons.length).toBe(6);
     });
 
     it("should not show delete button for non-admins", () => {

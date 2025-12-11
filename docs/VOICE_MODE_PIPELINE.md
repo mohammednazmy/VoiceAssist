@@ -368,6 +368,172 @@ Settings are persisted to `localStorage` under key `voiceassist-voice-settings` 
 | autoStartOnOpen | false   |
 | showStatusHints | true    |
 
+### Echo / AEC Capability Tuning
+
+Voice mode supports **capability-aware echo handling** that adapts barge-in aggressiveness based on the device’s echo cancellation quality.
+
+- The frontend uses `useAECFeedback` (WebRTC stats) to estimate AEC quality as:
+  - `excellent`, `good`, `fair`, `poor`, or `unknown`.
+- This quality is attached to `vad.state` messages sent from the browser to the Thinker/Talker pipeline:
+
+```json
+{
+  "type": "vad.state",
+  "silero_confidence": 0.82,
+  "is_speaking": true,
+  "speech_duration_ms": 220,
+  "is_playback_active": true,
+  "effective_threshold": 0.71,
+  "aec_quality": "fair"
+}
+```
+
+On the backend:
+
+- `HybridVADDecider` can adjust its thresholds when **`backend.voice_aec_capability_tuning`** is enabled:
+  - `fair`: slightly higher hybrid thresholds and minimum speech duration.
+  - `poor`: more conservative thresholds and a longer misfire rollback window.
+- Hybrid VAD fusion also:
+  - Uses **real Deepgram confidence** (from streaming transcripts) in `DeepgramEvent.confidence` rather than a binary 0/1.
+  - Treats Silero and Deepgram signals as **fresh** using `HybridVADConfig.signal_freshness_ms` (default 300ms), which can be tuned via the numeric flag `backend.voice_hybrid_vad_signal_freshness_ms`.
+  - Applies lightweight **noise- and user-aware tweaks** to `min_speech_duration_ms` and `hybrid_score_threshold` based on server-side SNR and the user’s `vad_sensitivity`.
+  - Emits aggregate Prometheus metrics (`voiceassist_voice_hybrid_vad_decision_total`, `voiceassist_voice_barge_in_misfires_total`) for tuning and dashboards without exposing PHI.
+- On the frontend:
+  - `useThinkerTalkerVoiceMode` uses AEC quality to make Silero’s playback-time thresholds more conservative only when `backend.voice_aec_capability_tuning` is enabled.
+
+### Adaptive noise handling and push-to-talk recommendation
+
+- On first successful Silero start, the client runs `sileroVAD.calibrateNoise()` and stores a personalized threshold in `voiceSettingsStore`; this feeds into both local VAD thresholds and backend analytics (via `personalized_threshold` in `vad.state`).
+- On the backend, `VoicePipelineSession` collects ~1s of early ambient audio and calls `AudioProcessingService.calibrate_noise_floor`, improving SNR estimates used for hybrid VAD tuning.
+- During the session, the audio processor maintains an `snr_estimate_db`; if SNR remains below a conservative threshold for several seconds, the pipeline emits `voice.state` with `push_to_talk_recommended: true` and `reason="high_noise"`.
+- The T/T hook surfaces this via `pushToTalkRecommended`, and the T/T voice panel shows a small hint suggesting push-to-talk in very noisy environments. Only aggregate SNR and flags are used; no raw audio or transcripts are logged.
+
+## Canonical Voice Pipeline State Model
+
+To keep the UI, WebSocket messages, and backend session state aligned, VoiceAssist uses a **canonical voice/pipeline state** type shared across the monorepo.
+
+### Shared Type: `VoicePipelineState`
+
+**Location:** `packages/types/src/index.ts:VoicePipelineState`
+
+```ts
+export type VoicePipelineState =
+  | "idle"
+  | "connecting"
+  | "listening"
+  | "processing"
+  | "responding"
+  | "speaking"
+  | "cancelled"
+  | "error"
+  | "disconnected";
+```
+
+This union is the **source of truth** for:
+
+- Frontend `voiceState` in the unified store
+- Backend WebSocket session `pipeline_state`
+- WebSocket `voice.state` events and `session.resume.ack.pipeline_state`
+
+### Frontend Mapping
+
+- **Unified conversation store**
+  - **Location:** `apps/web-app/src/stores/unifiedConversationStore.ts`
+  - `voiceState: VoicePipelineState` holds the current voice/pipeline state for the unified chat+voice UI.
+  - `voiceConnectionStatus` is a separate transport state: `"disconnected" | "connecting" | "connected" | "reconnecting" | "error"`.
+  - Actions like `setVoiceState`, `startListening`, `startSpeaking`, and `setVoiceConnectionStatus` enforce invariants:
+    - When `voiceConnectionStatus` is `disconnected`/`error`, `voiceState` is coerced to `"idle"`/`"error"` (never `"listening"` or `"responding"` while disconnected).
+    - When voice mode is inactive, `voiceState` is kept in `"idle"`/`"error"` and won’t enter active states.
+
+- **Thinker/Talker voice hook**
+  - **Location:** `apps/web-app/src/hooks/useThinkerTalkerSession.ts`
+  - Defines a narrower `PipelineState` (`"idle" | "listening" | "processing" | "speaking" | "cancelled" | "error"`) that mirrors the backend `PipelineState` enum.
+  - Handles incoming:
+    - `voice.state` messages (`data.state: PipelineState`).
+    - `session.resume.ack` messages with `pipeline_state: PipelineState`.
+  - For `session.resume.ack`, it:
+    - Restores any partial transcript/response (if present).
+    - Updates the local `pipelineState` and calls `onPipelineStateChange(pipelineState, "recovered")`.
+
+- **Thinker/Talker VoiceMode UI**
+  - **Location:** `apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts`
+  - Receives `onPipelineStateChange(state: PipelineState, reason?: string)` from `useThinkerTalkerSession` and maps it into `VoicePipelineState` on the unified store:
+    - `"listening"` → `voiceState = "listening"`
+    - `"processing"` → `voiceState = "processing"`
+    - `"speaking"` → `voiceState = "responding"`
+    - `"idle" | "cancelled"` → `voiceState = "idle"`
+    - `"error"` → `voiceState = "error"` + clears local listening/speaking flags
+  - Because `voiceState` uses the shared `VoicePipelineState`, the UI text (“Listening…”, “Thinking…”, “Responding…”, “Disconnected”, etc.) remains consistent with backend state.
+
+### Backend Mapping
+
+- **Pipeline state enum**
+  - **Location:** `services/api-gateway/app/services/voice_pipeline_service.py:PipelineState`
+  - Enum values: `"idle"`, `"listening"`, `"processing"`, `"speaking"`, `"cancelled"`, `"error"`.
+  - All external state exposed to the WebSocket maps directly to these `.value` strings, which are a subset of `VoicePipelineState`.
+
+- **WebSocket `voice.state` messages**
+  - **Location:** `services/api-gateway/app/services/voice_pipeline_service.py:_send_state_update`
+  - Emits:
+
+    ```json
+    {
+      "type": "voice.state",
+      "state": "listening" | "processing" | "speaking" | "idle" | "cancelled" | "error",
+      "reason": "natural" | "barge_in" | "rollback" | ...
+    }
+    ```
+
+  - Handled by `useThinkerTalkerSession` and propagated to the unified store via `onPipelineStateChange`.
+
+- **WebSocket session state persistence**
+  - **Location:** `services/api-gateway/app/services/websocket_session_state.py`
+  - Field: `pipeline_state: str` stores the last known pipeline state for recovery.
+  - When a disconnect occurs, `ThinkerTalkerWebSocketHandler._save_disconnection_state()` persists:
+
+    ```python
+    "pipeline_state": (self._pipeline_session.state.value if self._pipeline_session else "idle")
+    ```
+
+  - On `session.resume`, `attempt_recovery()` returns the `WebSocketSessionState` along with buffered messages and audio checkpoints.
+
+  - **Recovery snapshot (`session.resume.ack`)**
+  - **Location:** `services/api-gateway/app/services/thinker_talker_websocket_handler.py:_handle_session_resume`
+  - After a successful recovery, the server sends:
+
+    ```json
+    {
+      "type": "session.resume.ack",
+      "recovery_state": "none" | "partial" | "full",
+      "conversation_id": "conv_...",
+      "partial_transcript": "..." | "",
+      "partial_response": "..." | "",
+      "missed_message_count": 0,
+      "pipeline_state": "idle" | "listening" | "processing" | "speaking" | "cancelled" | "error"
+    }
+    ```
+
+  - The frontend maps `pipeline_state` into `VoicePipelineState` via `useThinkerTalkerSession` → `useThinkerTalkerVoiceMode` → `useUnifiedConversationStore`.
+  - **Privacy:** when `storeTranscriptHistory` is disabled for a session, `partial_transcript`, `partial_response`, and transcript/response `missed_message_count` are cleared in this payload, while `pipeline_state` is still sent so the UI can show the correct “Listening / Processing / Responding / Error” state after reconnect.
+
+### Developer Note: Voice State Contract Checklist
+
+When changing voice or pipeline state logic, keep this contract in mind:
+
+- **If you add a new backend `PipelineState` value:**
+  - Update `VoicePipelineState` in `packages/types/src/index.ts`.
+  - Update `PipelineState` in `useThinkerTalkerSession.ts` and its handlers for `voice.state` and `pipeline.state`.
+  - Map the new state into `VoicePipelineState` in `useThinkerTalkerVoiceMode.ts` and, if needed, into accessibility labels in `useVoiceAccessibility.ts`.
+
+- **If you change reconnection/recovery behavior:**
+  - Ensure `session.resume.ack` continues to include a canonical `pipeline_state`.
+  - Verify `useThinkerTalkerSession` forwards the recovered state via `onPipelineStateChange(..., "recovered")`.
+  - Keep `useUnifiedConversationStore` guards intact so you never end up with `"listening"` / `"responding"` while `voiceConnectionStatus` is `"disconnected"` or voice mode is off.
+
+- **If you add privacy-related options (e.g., around transcript history):**
+  - Thread the option through `AdvancedVoiceSettings` → `TTSessionConfig` → `WebSocketSessionState.store_transcript_history`.
+  - Ensure backend recovery (`session.resume.ack`) and message buffering respect the flag (no transcript content or replay when disabled) while still sending `pipeline_state` for UI correctness.
+
 ## Chat Integration
 
 **Location**: `apps/web-app/src/pages/ChatPage.tsx`
@@ -762,12 +928,62 @@ LIVE_REALTIME_E2E=1 npx playwright test e2e/voice-mode-session-smoke.spec.ts
 | File                                                      | Purpose                   |
 | --------------------------------------------------------- | ------------------------- |
 | `apps/web-app/src/hooks/useRealtimeVoiceSession.ts`       | Core hook                 |
+| `apps/web-app/src/hooks/useThinkerTalkerVoiceMode.ts`     | Thinker/Talker voice hook |
 | `apps/web-app/src/components/voice/VoiceModePanel.tsx`    | UI panel                  |
 | `apps/web-app/src/components/voice/VoiceModeSettings.tsx` | Settings modal            |
 | `apps/web-app/src/stores/voiceSettingsStore.ts`           | Settings store            |
 | `apps/web-app/src/components/chat/MessageInput.tsx`       | Voice button integration  |
 | `apps/web-app/src/pages/ChatPage.tsx`                     | Chat timeline integration |
 | `apps/web-app/src/hooks/useChatSession.ts`                | addMessage() helper       |
+
+#### Silero VAD Asset Configuration (Frontend)
+
+Silero model assets and ONNX Runtime can be served from a self-controlled origin to avoid external CDN dependency:
+
+- `VITE_SILERO_ONNX_WASM_BASE_URL`  
+  Base URL for `onnxruntime-web` WASM files (e.g. `/vendor/onnxruntime-web/dist/` in the default Docker image).
+- `VITE_SILERO_VAD_ASSET_BASE_URL`  
+  Base URL for `@ricky0123/vad-web` assets (e.g. `/vendor/silero-vad/` in the default Docker image).
+
+If these env vars are unset, the web app falls back to jsDelivr for compatibility. Production deployments should configure them to point at a local static path (e.g. `apps/web-app/public` served via nginx).
+
+For more detailed guidance on hosting and paths, see
+[docs/voice/silero-vad-env.md](./voice/silero-vad-env.md).
+
+#### Silero VAD Personalization & Analytics
+
+Silero VAD personalization is wired end-to-end:
+
+- The web app stores calibration state in `voiceSettingsStore` (`vadCalibrated`,
+  `lastCalibrationDate`, `personalizedVadThreshold`, `vadSensitivity`).
+- `useThinkerTalkerVoiceMode`:
+  - Runs a quick ambient noise calibration (`sileroVAD.calibrateNoise()`) on
+    first connection when needed and persists `personalizedVadThreshold`.
+  - Anchors the sensitivity slider on this personalized baseline when present
+    and maps 0–100 into safe Silero thresholds and minimum speech durations.
+- The Thinker/Talker WebSocket client sends both:
+  - `voice_settings.vad_sensitivity` (0–100)
+  - `advanced_settings.personalized_vad_threshold` and
+    `advanced_settings.vad_sensitivity`
+- The backend copies these into `TTSessionConfig` and `PipelineConfig` so the
+  pipeline can see the calibrated baseline.
+
+At session end, `VoicePipelineSession.stop()` logs **aggregate, numeric-only**
+stats for analytics:
+
+- `barge_in_count`, `barge_in_misfires`, `barge_in_misfire_rate`
+- `personalized_vad_threshold` (rounded)
+- `vad_sensitivity`
+- `recommended_threshold_action` (`increase_threshold`, `decrease_threshold`,
+  or `none`)
+
+These logs are designed for Loki/Grafana dashboards and offline analysis of:
+
+- Threshold distribution across users/environments
+- Correlation between personalized thresholds and barge-in misfire rates
+
+For a deeper walkthrough and example queries, see
+[docs/voice/voice-vad-personalization-analytics.md](./voice/voice-vad-personalization-analytics.md).
 
 ### Tests
 

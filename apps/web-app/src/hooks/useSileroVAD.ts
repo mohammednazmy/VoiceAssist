@@ -169,6 +169,14 @@ export interface SileroVADOptions {
    * Natural Conversation Flow: Phase 4.3 - AEC Feedback Loop
    */
   aecNotConvergedBoost?: number;
+
+  /**
+   * Optional error callback for engine failures (initialization/start).
+   * Used by higher-level hooks (e.g. Thinker/Talker voice mode) to trigger
+   * graceful fallbacks when Silero VAD is unavailable (CDN blocked, old
+   * browsers, etc).
+   */
+  onError?: (error: Error) => void;
 }
 
 export interface SileroVADReturn {
@@ -305,23 +313,34 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     onSpeechProbability,
     autoStart = false,
     externalStream = null,
-    positiveSpeechThreshold = 0.5,
-    negativeSpeechThreshold = 0.35,
-    minSpeechMs = 250,
+    // Dictation-optimized defaults: slightly lower threshold and shorter
+    // minimum speech duration for more responsive detection, while keeping
+    // negative threshold and echo-aware gating to avoid obvious noise.
+    positiveSpeechThreshold = 0.45,
+    negativeSpeechThreshold = 0.3,
+    minSpeechMs = 160,
     redemptionMs = 100,
     // Echo cancellation options (Phase 1)
     echoSuppressionMode = "threshold_boost",
     playbackThresholdBoost = 0.2,
     playbackMinSpeechMs = 200,
     // Adaptive VAD options (Phase 3)
+    // Phase 2/3 tuning: make adaptive behavior gentle enough that thresholds
+    // stay in a dictation-friendly range even in moderately noisy rooms.
     enableAdaptiveThreshold = true,
     noiseCalibrationMs = 1000,
-    noiseAdaptationFactor = 0.1,
-    minAdaptiveThreshold = 0.3,
-    maxAdaptiveThreshold = 0.8,
+    // Previous: 0.1 → 0.07 → New: 0.05 (even gentler)
+    noiseAdaptationFactor = 0.05,
+    // Allow a slightly lower floor for quiet environments
+    minAdaptiveThreshold = 0.26,
+    // Cap maximum threshold a bit lower to keep sensitivity reasonable
+    maxAdaptiveThreshold = 0.76,
     enableConfidenceStreaming = true,
     // AEC Feedback options (Phase 4.3)
-    aecNotConvergedBoost = 0.1,
+    // Previous boost: 0.1 → New: 0.05 so that early-in-session
+    // AEC convergence doesn't over-suppress genuine user speech.
+    aecNotConvergedBoost = 0.05,
+    onError,
   } = options;
 
   // If VAD is disabled via feature flag, return a disabled/no-op state
@@ -424,13 +443,15 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
   const onSpeechEndRef = useRef(onSpeechEnd);
   const onVADMisfireRef = useRef(onVADMisfire);
   const onSpeechProbabilityRef = useRef(onSpeechProbability);
+  const onErrorRef = useRef(onError);
 
   useEffect(() => {
     onSpeechStartRef.current = onSpeechStart;
     onSpeechEndRef.current = onSpeechEnd;
     onVADMisfireRef.current = onVADMisfire;
     onSpeechProbabilityRef.current = onSpeechProbability;
-  }, [onSpeechStart, onSpeechEnd, onVADMisfire, onSpeechProbability]);
+    onErrorRef.current = onError;
+  }, [onSpeechStart, onSpeechEnd, onVADMisfire, onSpeechProbability, onError]);
 
   const negativeRatio = useMemo(() => {
     if (positiveSpeechThreshold <= 0) return 0.7;
@@ -504,13 +525,58 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
     setError(null);
 
     try {
+      // Allow overriding asset paths via environment to support self-hosting.
+      // Defaults intentionally remain the original CDN paths for backwards
+      // compatibility; production deployments should set:
+      // - VITE_SILERO_ONNX_WASM_BASE_URL
+      // - VITE_SILERO_VAD_ASSET_BASE_URL
+      let onnxBasePath =
+        "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/";
+      let sileroAssetBasePath =
+        "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.30/dist/";
+
+      try {
+        // import.meta.env is provided by Vite; guard for non-browser/test envs
+        const env =
+          typeof import.meta !== "undefined"
+            ? (import.meta.env as unknown as Record<string, string | undefined>)
+            : undefined;
+
+        const ensureTrailingSlash = (value: string) =>
+          value.endsWith("/") ? value : `${value}/`;
+
+        const envOnnx = env?.VITE_SILERO_ONNX_WASM_BASE_URL;
+        const envSilero = env?.VITE_SILERO_VAD_ASSET_BASE_URL;
+
+        if (envOnnx && envOnnx.length > 0) {
+          onnxBasePath = ensureTrailingSlash(envOnnx);
+        }
+        if (envSilero && envSilero.length > 0) {
+          sileroAssetBasePath = ensureTrailingSlash(envSilero);
+        }
+      } catch {
+        // If env access fails for any reason, fall back to CDN defaults.
+      }
+
+      // Log which asset paths are being used for observability. This helps
+      // confirm whether the app is using self-hosted assets or the fallback
+      // CDN configuration in different environments.
+      const usingSelfHostedOnnx = !onnxBasePath.startsWith("https://cdn.jsdelivr.net/");
+      const usingSelfHostedSilero =
+        !sileroAssetBasePath.startsWith("https://cdn.jsdelivr.net/");
+
+      voiceLog.info("[SileroVAD] Asset configuration", {
+        onnxBasePath,
+        sileroAssetBasePath,
+        usingSelfHostedOnnx,
+        usingSelfHostedSilero,
+      });
+
       const vadOptions: Partial<RealTimeVADOptions> = {
-        // CDN paths for ONNX Runtime and VAD model files
-        // Required for bundler environments (Vite, webpack, etc.)
-        onnxWASMBasePath:
-          "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
-        baseAssetPath:
-          "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.30/dist/",
+        // Paths for ONNX Runtime and VAD model files.
+        // Prefer self-hosted paths via env; fall back to original CDN URLs.
+        onnxWASMBasePath: onnxBasePath,
+        baseAssetPath: sileroAssetBasePath,
 
         // Echo-aware speech detection (Phase 1)
         // These callbacks check playback state and apply appropriate filtering
@@ -677,6 +743,7 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       setError(error);
       setIsLoading(false);
       initializingRef.current = false;
+      onErrorRef.current?.(error);
       throw error;
     }
   }, [
@@ -766,7 +833,11 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
         voiceLog.debug("[SileroVAD] Started listening");
       }
     } catch (err) {
-      voiceLog.error("[SileroVAD] Failed to start:", err);
+      const error =
+        err instanceof Error ? err : new Error("Failed to start VAD");
+      voiceLog.error("[SileroVAD] Failed to start:", error);
+      setError(error);
+      onErrorRef.current?.(error);
     }
   }, [initialize]);
 
