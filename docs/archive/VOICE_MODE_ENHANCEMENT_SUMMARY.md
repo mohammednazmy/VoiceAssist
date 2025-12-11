@@ -219,7 +219,7 @@ Both endpoints are **already implemented and working** in:
 
 ### Prerequisites
 
-1. Backend running at `localhost:8000` or `https://dev.asimo.io`
+1. Backend running at `localhost:8000` or `http://localhost:5173`
 2. Valid OpenAI API key configured in backend
 3. Browser with microphone support
 4. HTTPS connection (required for getUserMedia)
@@ -484,7 +484,7 @@ const speed = settings.speed;
 **Accessing Voice Test Page:**
 
 1. Log in to VoiceAssist
-2. Navigate to: `https://dev.asimo.io/voice-test`
+2. Navigate to: `http://localhost:5173/voice-test`
 3. Allow microphone access when prompted
 4. Select VAD or Push-to-Talk mode
 5. Start recording and speak
@@ -552,4 +552,4 @@ All voice mode enhancement objectives have been successfully achieved. The syste
 4. Connect TTS to AI responses
 5. Deploy to production
 
-**Access Test Page:** https://dev.asimo.io/voice-test (after deployment)
+**Access Test Page:** http://localhost:5173/voice-test (after deployment)

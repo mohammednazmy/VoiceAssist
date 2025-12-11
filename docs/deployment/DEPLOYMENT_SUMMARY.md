@@ -22,7 +22,7 @@ ai_summary: >-
   cri...
 ---
 
-# VoiceAssist Deployment Summary - asimo.io
+# VoiceAssist Deployment Summary - localhost
 
 **Date:** 2025-11-21
 **Last Updated:** 2025-11-21 (Nextcloud OAuth Integration Completed)
@@ -66,8 +66,8 @@ All services are **HEALTHY** and running:
 
 ### 4. **Apache Configuration**
 
-- ✅ Created vhost for `assist.asimo.io` (Main API)
-- ✅ Created vhost for `admin.asimo.io` (Admin Panel)
+- ✅ Created vhost for `localhost:8000` (Main API)
+- ✅ Created vhost for `localhost:5174` (Admin Panel)
 - ✅ Reverse proxy configured → port 8200
 - ✅ WebSocket support enabled
 - ✅ Security headers configured
@@ -90,11 +90,11 @@ All services are **HEALTHY** and running:
 - **Health Check:** http://localhost:8200/health
   _Response Time: ~3ms_
 - **API Gateway:** http://localhost:8200/
-- **Via Apache (after DNS):** https://assist.asimo.io
+- **Via Apache (after DNS):** http://localhost:8000
 
 ### **Admin Panel**
 
-- **Via Apache (after DNS):** https://admin.asimo.io
+- **Via Apache (after DNS):** http://localhost:5174
 
 ### **Direct Service Access**
 
@@ -128,22 +128,22 @@ OPENAI_API_KEY=(from existing Quran project)
 DNS records have been configured and SSL certificates installed:
 
 1. **DNS Configuration:**
-   - ✅ `assist.asimo.io` → A record → 107.204.29.210
-   - ✅ `admin.asimo.io` → A record → 107.204.29.210
+   - ✅ `localhost:8000` → A record → 107.204.29.210
+   - ✅ `localhost:5174` → A record → 107.204.29.210
    - ✅ DNS propagation verified
 
 2. **SSL Certificates:**
    - ✅ Certificates installed from Let's Encrypt
-   - ✅ Certificate path: `/etc/letsencrypt/live/assist.asimo.io/`
+   - ✅ Certificate path: `/etc/letsencrypt/live/localhost:8000/`
    - ✅ Expiration date: 2026-02-19
    - ✅ Auto-renewal configured
    - ✅ Apache SSL configs created:
-     - `/etc/apache2/sites-available/assist.asimo.io-le-ssl.conf`
-     - `/etc/apache2/sites-available/admin.asimo.io-le-ssl.conf`
+     - `/etc/apache2/sites-available/localhost:8000-le-ssl.conf`
+     - `/etc/apache2/sites-available/localhost:5174-le-ssl.conf`
 
 3. **HTTPS Access:**
-   - ✅ Main API: https://assist.asimo.io/health (200 OK)
-   - ✅ Admin Panel: https://admin.asimo.io (ready)
+   - ✅ Main API: http://localhost:8000/health (200 OK)
+   - ✅ Admin Panel: http://localhost:5174 (ready)
 
 ### 2. **Nextcloud Integration** ✅ **COMPLETED**
 
@@ -154,11 +154,11 @@ The Nextcloud OAuth integration has been successfully configured:
    - Client Name: VoiceAssist
    - Client ID: `7716f7e0d4842e206404fa2c30e1a987`
    - Client Secret: `3d6d0bc6f71049b3516825f2306d714e211473d053fa123af14a9f016e8dc693`
-   - Redirect URI: `https://assist.asimo.io/auth/callback`
+   - Redirect URI: `http://localhost:8000/auth/callback`
 
 2. **Environment Configuration:**
    - ✅ `.env` updated with OAuth credentials
-   - ✅ Nextcloud URL configured: `https://asimo.io`
+   - ✅ Nextcloud URL configured: `http://localhost`
    - ✅ Admin user configured: `asimo`
 
 3. **Service Status:**
@@ -167,7 +167,7 @@ The Nextcloud OAuth integration has been successfully configured:
 
 4. **OAuth Authorization URL:**
    ```
-   https://asimo.io/apps/oauth2/authorize?client_id=7716f7e0d4842e206404fa2c30e1a987&redirect_uri=https://assist.asimo.io/auth/callback&response_type=code
+   http://localhost/apps/oauth2/authorize?client_id=7716f7e0d4842e206404fa2c30e1a987&redirect_uri=http://localhost:8000/auth/callback&response_type=code
    ```
 
 ### 3. **Configure Nextcloud Admin Credentials**
@@ -297,8 +297,8 @@ Response Time: ~3ms
 └── README.md                                # Project documentation
 
 /etc/apache2/sites-available/
-├── assist.asimo.io.conf                     # Main API vhost
-└── admin.asimo.io.conf                      # Admin panel vhost
+├── localhost:8000.conf                     # Main API vhost
+└── localhost:5174.conf                      # Admin panel vhost
 
 /var/log/apache2/
 ├── assist-error.log                         # API error logs
@@ -352,11 +352,11 @@ curl -v http://localhost:8200/health
 sudo apache2ctl configtest
 
 # Verify DNS propagation
-dig assist.asimo.io
-dig admin.asimo.io
+dig localhost:8000
+dig localhost:5174
 
 # Manual certificate request
-sudo certbot --apache -d assist.asimo.io -d admin.asimo.io
+sudo certbot --apache -d localhost:8000 -d localhost:5174
 ```
 
 ---
@@ -393,8 +393,8 @@ sudo certbot --apache -d assist.asimo.io -d admin.asimo.io
 
 ### **2. Apache Virtual Hosts**
 
-- `/etc/apache2/sites-available/assist.asimo.io.conf`
-- `/etc/apache2/sites-available/admin.asimo.io.conf`
+- `/etc/apache2/sites-available/localhost:8000.conf`
+- `/etc/apache2/sites-available/localhost:5174.conf`
 
 Both configured with:
 
@@ -443,7 +443,7 @@ docker compose exec postgres psql -U voiceassist -d voiceassist
 
 **Deployment Completed:** 2025-11-21
 **Deployed By:** Claude (Anthropic AI Assistant)
-**Server:** Ubuntu @ asimo.io (107.204.29.210)
+**Server:** Ubuntu @ localhost (107.204.29.210)
 **Status:** ✅ **PRODUCTION READY**
 
 ---

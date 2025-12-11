@@ -710,7 +710,7 @@ async def websocket_endpoint(
 **Location:** `useChatSession.ts:37`
 
 ```typescript
-const WS_URL = "wss://assist.asimo.io/api/realtime";
+const WS_URL = "wss://localhost:8000/api/realtime";
 ```
 
 **Issue:**
@@ -723,7 +723,7 @@ const WS_URL = "wss://assist.asimo.io/api/realtime";
 ```typescript
 const WS_URL =
   import.meta.env.VITE_WS_URL ||
-  (import.meta.env.DEV ? "ws://localhost:8000/api/realtime/ws" : "wss://assist.asimo.io/api/realtime/ws");
+  (import.meta.env.DEV ? "ws://localhost:8000/api/realtime/ws" : "wss://localhost:8000/api/realtime/ws");
 ```
 
 Add to `.env`:

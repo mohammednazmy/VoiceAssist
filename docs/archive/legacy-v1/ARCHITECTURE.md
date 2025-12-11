@@ -67,10 +67,10 @@ VoiceAssist uses a distributed architecture with components running on macOS (cl
 │  └─────────────────┘  └─────────────────┘                  │
 └───────────────────────────────┬─────────────────────────────┘
                                 │
-                    Secure HTTPS (asimo.io)
+                    Secure HTTPS (localhost)
                                 │
 ┌───────────────────────────────┴─────────────────────────────┐
-│              Ubuntu Server (asimo.io)                        │
+│              Ubuntu Server (localhost)                        │
 │                                                               │
 │  ┌────────────────────────────────────────────────────┐     │
 │  │              API Gateway (Nginx)                   │     │

@@ -28,7 +28,7 @@ relatedPaths:
 
 This guide covers the VoiceAssist admin panel integration with the main web app, including cross-app navigation, real-time event streaming, and voice session monitoring.
 
-**Admin Panel URL:** https://admin.asimo.io
+**Admin Panel URL:** http://localhost:5174
 
 ## Table of Contents
 
@@ -58,7 +58,7 @@ The admin panel provides a centralized interface for monitoring and managing the
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Admin Panel   │     │    Web App      │     │   Docs Site     │
-│ admin.asimo.io  │────▶│  dev.asimo.io   │────▶│  docs.asimo.io  │
+│ localhost:5174  │────▶│  localhost:5173   │────▶│  localhost:3001  │
 └────────┬────────┘     └────────┬────────┘     └─────────────────┘
          │                       │
          └───────────┬───────────┘
@@ -99,14 +99,14 @@ export const externalApps: ExternalApp[] = [
   {
     id: "web-app",
     name: "VoiceAssist App",
-    url: "https://dev.asimo.io",
+    url: "http://localhost:5173",
     description: "Main voice assistant application",
     icon: "MessageSquare",
   },
   {
     id: "docs",
     name: "Documentation",
-    url: "https://docs.asimo.io",
+    url: "http://localhost:3001",
     description: "Technical documentation",
     icon: "Book",
   },
@@ -129,9 +129,9 @@ import { AppSwitcher } from "@/components/AppSwitcher";
 Configure application URLs via environment variables:
 
 ```env
-VITE_WEB_APP_URL=https://dev.asimo.io
-VITE_DOCS_URL=https://docs.asimo.io
-VITE_ADMIN_URL=https://admin.asimo.io
+VITE_WEB_APP_URL=http://localhost:5173
+VITE_DOCS_URL=http://localhost:3001
+VITE_ADMIN_URL=http://localhost:5174
 ```
 
 ---
@@ -402,7 +402,7 @@ The admin panel receives real-time events via WebSocket, powered by Redis pub/su
 Connect to the admin WebSocket endpoint:
 
 ```typescript
-const ws = new WebSocket("wss://admin.asimo.io/api/admin/panel/ws");
+const ws = new WebSocket("wss://localhost:5174/api/admin/panel/ws");
 ```
 
 ### Event Types
@@ -566,7 +566,7 @@ Authorization: Bearer <admin_jwt_token>
 ```env
 # API Gateway
 ADMIN_PANEL_ENABLED=true
-ADMIN_PANEL_CORS_ORIGINS=https://admin.asimo.io
+ADMIN_PANEL_CORS_ORIGINS=http://localhost:5174
 
 # Redis (for real-time events)
 REDIS_URL=redis://localhost:6379

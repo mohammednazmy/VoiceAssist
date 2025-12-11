@@ -258,6 +258,31 @@ export default defineConfig({
       timeout: 120 * 1000, // 2 minutes for comprehensive barge-in tests
     },
 
+    /* Instant Barge-in Latency Tests - Focused, fast latency enforcement */
+    /* Run with: LIVE_REALTIME_E2E=1 pnpm exec playwright test --project=voice-barge-in-instant */
+    {
+      name: 'voice-barge-in-instant',
+      testDir: './e2e/voice',
+      testMatch: /voice-barge-in-instant\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            // Use simple barge-in audio: 3s silence + detailed question + 3s silence + interrupt
+            `--use-file-for-fake-audio-capture=${AUDIO_FIXTURES.bargeInSimple}`,
+          ],
+        },
+        storageState: 'e2e/.auth/user.json',
+        contextOptions: {
+          recordVideo: { dir: 'test-results/videos' },
+        },
+      },
+      timeout: 120 * 1000, // 2 minutes for focused latency tests
+    },
+
     /* Two-Phase Barge-in Tests - Uses structured audio with silence gap
      * Audio structure: conversation-start (3.19s) + 10s silence + barge-in (2.21s) = 15.4s
      * Phase 1: User asks a question, AI responds, AI starts playing audio

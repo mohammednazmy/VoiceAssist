@@ -12,7 +12,7 @@ import matter from "gray-matter";
 import { DOCS_DIR, parseMetadata } from "@/lib/docs";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://assistdocs.asimo.io";
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001";
 
 interface SitemapEntry {
   url: string;

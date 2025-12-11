@@ -60,14 +60,14 @@ export function validateTestEnvironment(): void {
   const baseUrl = process.env.E2E_BASE_URL || "";
   const gatewayUrl = process.env.CLIENT_GATEWAY_URL || "";
 
-  // Block production URLs - only allow dev/staging
-  const prodPattern = /^https?:\/\/(?!dev\.|staging\.|localhost).*asimo\.io/;
+  // Block ANY asimo.io URL (including dev/staging) to ensure purely local runs
+  const prodPattern = /https?:\/\/.*asimo\.io/;
 
   for (const url of [baseUrl, gatewayUrl]) {
     if (url && prodPattern.test(url)) {
       throw new Error(
-        `SAFETY: Refusing to run tests against production URL: ${url}\n` +
-          `Use dev.asimo.io or staging.asimo.io for E2E tests.`
+        `SAFETY: Refusing to run tests against remote URL: ${url}\n` +
+          `Use purely local endpoints (http://localhost:5173, http://localhost:8000) for E2E tests.`
       );
     }
   }

@@ -44,11 +44,11 @@
     "source_file": "packages/types/src/featureFlags.ts"
   },
   "canonical_urls": {
-    "web_app": "https://dev.asimo.io",
-    "api": "https://assist.asimo.io",
-    "admin": "https://admin.asimo.io",
-    "docs": "https://assistdocs.asimo.io",
-    "monitoring": "https://monitor.asimo.io"
+    "web_app": "http://localhost:5173",
+    "api": "http://localhost:8000",
+    "admin": "http://localhost:5174",
+    "docs": "http://localhost:3001",
+    "monitoring": "http://localhost:3001"
   },
   "documentation": {
     "total_docs": 254,

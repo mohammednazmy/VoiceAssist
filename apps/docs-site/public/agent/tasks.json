@@ -11,8 +11,8 @@
       "docs": ["/debugging/backend", "/debugging/index"],
       "commands": [
         "docker logs voiceassist-server --tail 100 | grep -i error",
-        "curl https://assist.asimo.io/health",
-        "curl https://assist.asimo.io/ready"
+        "curl http://localhost:8000/health",
+        "curl http://localhost:8000/ready"
       ],
       "prerequisites": ["Docker access", "curl"]
     },
@@ -24,7 +24,7 @@
       "docs": ["/debugging/voice-realtime"],
       "commands": [
         "docker logs voiceassist-server --since 10m | grep -i websocket",
-        "websocat wss://assist.asimo.io/ws"
+        "websocat wss://localhost:8000/ws"
       ],
       "prerequisites": ["Docker access", "websocat"]
     },
@@ -44,8 +44,8 @@
       "category": "debugging",
       "docs": ["/debugging/docs-site"],
       "commands": [
-        "curl https://assistdocs.asimo.io/agent/index.json",
-        "ls /var/www/assistdocs.asimo.io/"
+        "curl http://localhost:3001/agent/index.json",
+        "ls /var/www/localhost:3001/"
       ],
       "prerequisites": ["curl", "SSH access"]
     },
@@ -57,8 +57,8 @@
       "docs": ["/debugging/overview", "/debugging/index"],
       "commands": [
         "docker ps --filter name=voiceassist",
-        "curl https://assist.asimo.io/health",
-        "curl https://assistdocs.asimo.io/agent/index.json"
+        "curl http://localhost:8000/health",
+        "curl http://localhost:3001/agent/index.json"
       ],
       "prerequisites": ["Docker access", "curl"]
     },
@@ -70,7 +70,7 @@
       "docs": ["/debugging/docs-site"],
       "commands": [
         "cd apps/docs-site && pnpm build",
-        "sudo rsync -av out/ /var/www/assistdocs.asimo.io/"
+        "sudo rsync -av out/ /var/www/localhost:3001/"
       ],
       "prerequisites": ["pnpm", "rsync", "SSH access"]
     },
@@ -82,7 +82,7 @@
       "docs": ["/ai/agent-onboarding"],
       "commands": [
         "pnpm validate:metadata",
-        "curl https://assistdocs.asimo.io/agent/docs.json | jq '.count'"
+        "curl http://localhost:3001/agent/docs.json | jq '.count'"
       ],
       "prerequisites": ["pnpm", "jq"]
     },
@@ -93,8 +93,8 @@
       "category": "reference",
       "docs": ["/ai/agent-api-reference"],
       "commands": [
-        "curl https://assistdocs.asimo.io/agent/docs.json",
-        "curl https://assistdocs.asimo.io/search-index.json"
+        "curl http://localhost:3001/agent/docs.json",
+        "curl http://localhost:3001/search-index.json"
       ],
       "prerequisites": ["curl"]
     },
@@ -106,7 +106,7 @@
       "docs": ["/debugging/overview"],
       "commands": [
         "sudo certbot certificates",
-        "echo | openssl s_client -connect assist.asimo.io:443 2>/dev/null | openssl x509 -noout -dates"
+        "echo | openssl s_client -connect localhost:8000:443 2>/dev/null | openssl x509 -noout -dates"
       ],
       "prerequisites": ["certbot", "openssl"]
     },
@@ -130,8 +130,8 @@
       "docs": ["/docs-health-overview", "/ai/agent-api-reference"],
       "commands": [
         "cd apps/docs-site && pnpm validate:all",
-        "curl https://assistdocs.asimo.io/agent/health.json | jq '.health_status, .scores'",
-        "curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'"
+        "curl http://localhost:3001/agent/health.json | jq '.health_status, .scores'",
+        "curl http://localhost:3001/agent/docs-summary.json | jq '.stats'"
       ],
       "prerequisites": ["pnpm", "curl", "jq"]
     },
@@ -172,8 +172,8 @@
       "category": "docs-maintenance",
       "docs": ["/ai/agent-task-index", "/ai/agent-api-reference"],
       "commands": [
-        "curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.stats'",
-        "curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.missing_paths'"
+        "curl http://localhost:3001/agent/doc-code-map.json | jq '.meta.stats'",
+        "curl http://localhost:3001/agent/doc-code-map.json | jq '.meta.missing_paths'"
       ],
       "prerequisites": ["curl", "jq"]
     }

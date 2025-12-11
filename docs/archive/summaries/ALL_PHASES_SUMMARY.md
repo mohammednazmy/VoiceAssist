@@ -336,7 +336,7 @@ This is the V2 16-phase implementation plan for VoiceAssist. Each phase is a foc
 
 - Deploy VoiceAssist to production Ubuntu server
 - Configure SSL certificates with Let's Encrypt
-- Set up domain DNS (voiceassist.asimo.io, admin.asimo.io, etc.)
+- Set up domain DNS (voicelocalhost:8000, localhost:5174, etc.)
 - Activate production monitoring (Prometheus, Grafana, alerts)
 - Run production smoke tests (verify all services healthy)
 - Finalize production documentation (runbooks, incident response)

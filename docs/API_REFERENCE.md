@@ -53,7 +53,7 @@ The VoiceAssist API provides comprehensive REST endpoints for building medical A
 
 ### Base URLs
 
-- **Production:** `https://assist.asimo.io`
+- **Production:** `http://localhost:8000`
 - **Development:** `http://localhost:8000`
 
 ### Authentication
@@ -134,7 +134,7 @@ The docs site provides machine-readable JSON endpoints for AI agents:
 | `GET /agent/schema.json` | JSON Schema for API response types      |
 | `GET /search-index.json` | Full-text search index (Fuse.js format) |
 
-**Base URL:** `https://assistdocs.asimo.io`
+**Base URL:** `http://localhost:3001`
 
 **Note:** All endpoints are static JSON. Use search-index.json with client-side Fuse.js for full-text search.
 

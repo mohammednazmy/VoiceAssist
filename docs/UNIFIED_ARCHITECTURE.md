@@ -119,7 +119,7 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant medical AI assistant** 
 │  Port 8080        │   │  │  - Admin Service (Dashboard + Mgmt)  │
 │                   │   │  │  - KB Indexer (Document Ingestion)   │
 │  Production:      │   │  │  - Integration Service (CalDAV/File) │
-│  cloud.asimo.io   │   │  │  - Cache Service (L1+L2)             │
+│  localhost:8080   │   │  │  - Cache Service (L1+L2)             │
 └───────────────────┘   │  │  - Audit Service (Compliance)        │
                         │  │                                      │
                         │  │  Background Workers (ARQ):           │
@@ -614,7 +614,7 @@ Login Request → Auth API →
 
 ```bash
 # Nextcloud Connection
-NEXTCLOUD_BASE_URL=http://localhost:8080  # or https://cloud.asimo.io
+NEXTCLOUD_BASE_URL=http://localhost:8080  # or https://localhost:8080
 NEXTCLOUD_ADMIN_USER=admin
 NEXTCLOUD_ADMIN_PASSWORD=secure_password
 
@@ -795,7 +795,7 @@ services:
 
 ```
 Kubernetes Cluster
-├── Ingress (voiceassist.asimo.io)
+├── Ingress (localhost:5173)
 │   └── SSL Termination (Let's Encrypt)
 ├── Service Mesh (Linkerd)
 │   └── mTLS between all services

@@ -477,7 +477,7 @@ function VoiceSessionAlert() {
 ### Connection
 
 ```javascript
-const ws = new WebSocket("wss://admin.asimo.io/api/admin/panel/ws");
+const ws = new WebSocket("ws://localhost:8000/api/admin/panel/ws");
 ```
 
 ### Message Types
@@ -631,7 +631,7 @@ The WebSocket provides periodic metrics updates:
 1. **Check for CORS issues:**
 
    ```env
-   ADMIN_PANEL_CORS_ORIGINS=https://admin.asimo.io
+   ADMIN_PANEL_CORS_ORIGINS=http://localhost:5174
    ```
 
 2. **Verify authentication:**

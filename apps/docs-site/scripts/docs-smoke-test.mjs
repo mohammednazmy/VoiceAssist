@@ -6,8 +6,8 @@
  * This script can be run against any base URL (local dev, staging, production).
  *
  * Usage:
- *   node scripts/docs-smoke-test.mjs                    # Default: https://assistdocs.asimo.io
- *   node scripts/docs-smoke-test.mjs http://localhost:3000
+ *   node scripts/docs-smoke-test.mjs                    # Default: http://localhost:3001
+ *   node scripts/docs-smoke-test.mjs http://localhost:3001
  *   pnpm validate:endpoints
  *
  * Exit codes:
@@ -15,7 +15,7 @@
  *   1 - One or more tests failed
  */
 
-const BASE_URL = process.argv[2] || "https://assistdocs.asimo.io";
+const BASE_URL = process.argv[2] || "http://localhost:3001";
 
 // Endpoints to test
 const ENDPOINTS = [

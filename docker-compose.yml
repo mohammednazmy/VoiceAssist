@@ -267,6 +267,8 @@ services:
     container_name: voiceassist-docs-site
     environment:
       - NODE_ENV=production
+    ports:
+      - "3001:80"
     networks:
       - voiceassist-network
 

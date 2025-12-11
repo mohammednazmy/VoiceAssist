@@ -1,6 +1,7 @@
-const CANONICAL_HOST = process.env.NEXT_PUBLIC_DOCS_HOST || "docs.asimo.io";
+const CANONICAL_HOST =
+  process.env.NEXT_PUBLIC_DOCS_HOST || "localhost:3001";
 const SECONDARY_HOST =
-  process.env.NEXT_PUBLIC_SECONDARY_DOCS_HOST || "assistdocs.asimo.io";
+  process.env.NEXT_PUBLIC_SECONDARY_DOCS_HOST || "localhost:3001";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -11,7 +12,7 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_DOCS_HOST: CANONICAL_HOST,
-    NEXT_PUBLIC_DOCS_URL: `https://${CANONICAL_HOST}`,
+    NEXT_PUBLIC_DOCS_URL: `http://${CANONICAL_HOST}`,
     NEXT_PUBLIC_SECONDARY_DOCS_HOST: SECONDARY_HOST,
   },
   // Note: redirects require server runtime, not available with static export

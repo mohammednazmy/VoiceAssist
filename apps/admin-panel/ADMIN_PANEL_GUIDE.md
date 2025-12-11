@@ -449,7 +449,7 @@ Access: http://localhost:4173
 
 ### Deploy
 
-- CI/CD: `.github/workflows/admin-panel-deploy.yml` builds with `.env.production` (targeting `https://admin.asimo.io`), publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH when changes land on `main`.
+- CI/CD: `.github/workflows/admin-panel-deploy.yml` builds with `.env.production` (targeting `http://localhost:5174`), publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH when changes land on `main`.
 - Smoke tests run post-deploy to confirm login, metrics summary, and knowledge base APIs respond successfully.
 - Local preview remains available with `npm run preview` if you need to inspect the built output locally.
 

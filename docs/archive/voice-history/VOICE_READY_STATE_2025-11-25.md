@@ -106,7 +106,7 @@ Fixed DOM nesting issues in `MessageBubble.tsx` that caused 2 failing tests:
 ## Voice + Observability Stack Architecture
 
 ```
-Frontend (quran.asimo.io / dev.asimo.io)
+Frontend (localhost:5173 / localhost:5173)
 ├── VoiceModePanel (UI component)
 │   └── Uses useRealtimeVoiceSession hook
 ├── voiceSettingsStore (Zustand)

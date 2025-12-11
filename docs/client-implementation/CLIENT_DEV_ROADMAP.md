@@ -1107,8 +1107,8 @@ Recommend **Option B** (hybrid approach):
 **Provisional Answer:**
 Recommend **Option A**. Set up:
 
-- **Staging:** staging.voiceassist.asimo.io, staging-admin.voiceassist.asimo.io
-- **Production:** voiceassist.asimo.io, admin.voiceassist.asimo.io
+- **Staging:** localhost:5173, localhost:5174
+- **Production:** localhost:5173, admin.localhost:5173
 - Use Vercel/Netlify preview deployments for PRs
 - Staging environment for final QA before production
 

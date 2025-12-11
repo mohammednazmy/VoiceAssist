@@ -191,7 +191,7 @@ Client                                    Server
 ws://localhost:8000/api/realtime/ws?conversationId=uuid&token=jwt
 
 // Production
-wss://assist.asimo.io/api/realtime/ws?conversationId=uuid&token=jwt
+wss://localhost:8000/api/realtime/ws?conversationId=uuid&token=jwt
 ```
 
 ---

@@ -77,13 +77,13 @@ docs/
 
 ```
 # Latest version (default)
-https://assistdocs.asimo.io/feature-flags/README
+http://localhost:3001/feature-flags/README
 
 # Specific version
-https://assistdocs.asimo.io/v1/feature-flags/README
+http://localhost:3001/v1/feature-flags/README
 
 # Canonical URL in version pages
-<link rel="canonical" href="https://assistdocs.asimo.io/feature-flags/README" />
+<link rel="canonical" href="http://localhost:3001/feature-flags/README" />
 ```
 
 #### Version Selector Component
@@ -301,13 +301,13 @@ docs/
 
 ```
 # Default locale (English) - no prefix
-https://assistdocs.asimo.io/feature-flags/README
+http://localhost:3001/feature-flags/README
 
 # Arabic version
-https://assistdocs.asimo.io/ar/feature-flags/README
+http://localhost:3001/ar/feature-flags/README
 
 # Turkish version
-https://assistdocs.asimo.io/tr/feature-flags/README
+http://localhost:3001/tr/feature-flags/README
 ```
 
 ### RTL Support

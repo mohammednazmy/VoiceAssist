@@ -17,7 +17,7 @@ tags:
 category: planning
 ai_summary: >-
   Version: 1.0 Date: 2025-11-21 Application: Main User-Facing Medical AI
-  Assistant URL: https://voiceassist.asimo.io --- 1. Overview 2. Authentication
+  Assistant URL: https://localhost:5173 --- 1. Overview 2. Authentication
   & User Management (5 features) 3. Chat Interface (12 features) 4. Voice Mode
   (8 features) 5. Clinical Context (6 features) 6. File Management (4 fea...
 ---
@@ -27,7 +27,7 @@ ai_summary: >-
 **Version:** 1.0
 **Date:** 2025-11-21
 **Application:** Main User-Facing Medical AI Assistant
-**URL:** https://voiceassist.asimo.io
+**URL:** https://localhost:5173
 
 ---
 

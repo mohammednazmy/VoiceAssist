@@ -311,13 +311,17 @@ export function useFeatureFlagsRealtime(
       eventSourceRef.current.close();
     }
 
-    // Build URL with optional flag filter
-    let url = "/api/flags/stream";
+    // Build URL with optional flag filter. Use API base instead of panel origin to avoid 404s in dev.
+    const apiBase =
+      (import.meta.env.VITE_ADMIN_API_URL as string | undefined) ||
+      (import.meta.env.VITE_API_URL as string | undefined) ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    const url = new URL("/api/flags/stream", apiBase);
     if (flagFilter && flagFilter.length > 0) {
-      url += `?flags=${flagFilter.join(",")}`;
+      url.searchParams.set("flags", flagFilter.join(","));
     }
 
-    const eventSource = new EventSource(url);
+    const eventSource = new EventSource(url.toString());
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {

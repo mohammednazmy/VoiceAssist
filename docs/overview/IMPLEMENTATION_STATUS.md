@@ -240,7 +240,7 @@ System administration and monitoring dashboard.
 
 **Status:** stable | **Stability:** production
 
-Technical documentation website at https://assistdocs.asimo.io.
+Technical documentation website at http://localhost:3001.
 
 | Feature                 | Status   | Notes                                           |
 | ----------------------- | -------- | ----------------------------------------------- |
@@ -332,20 +332,20 @@ Technical documentation website at https://assistdocs.asimo.io.
 
 | Service     | URL                         | Status |
 | ----------- | --------------------------- | ------ |
-| API Gateway | https://assist.asimo.io     | Live   |
-| Admin Panel | https://admin.asimo.io      | Live   |
-| Docs Site   | https://assistdocs.asimo.io | Live   |
-| Monitoring  | https://monitor.asimo.io    | Live   |
+| API Gateway | http://localhost:8000     | Live   |
+| Admin Panel | http://localhost:5174      | Live   |
+| Docs Site   | http://localhost:3001 | Live   |
+| Monitoring  | https://localhost:3001    | Live   |
 
 ### Health Endpoints
 
 ```bash
 # API Gateway
-curl https://assist.asimo.io/health
-curl https://assist.asimo.io/ready
+curl http://localhost:8000/health
+curl http://localhost:8000/ready
 
 # Check all services
-curl https://assist.asimo.io/api/admin/panel/stats
+curl http://localhost:8000/api/admin/panel/stats
 ```
 
 ---

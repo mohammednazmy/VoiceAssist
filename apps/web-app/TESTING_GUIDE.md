@@ -53,7 +53,7 @@
 #### Register New User
 
 ```
-1. Navigate to https://dev.asimo.io/register
+1. Navigate to http://localhost:5173/register
 2. Fill in:
    - Name: Test User
    - Email: test+[timestamp]@example.com
@@ -67,7 +67,7 @@
 
 ```
 1. Logout if logged in
-2. Navigate to https://dev.asimo.io/login
+2. Navigate to http://localhost:5173/login
 3. Fill in credentials
 4. Click "Sign In"
 5. Verify: Redirects to home page
@@ -104,7 +104,7 @@
 2. Press Enter or click Send
 3. Check browser console:
    - "[WebSocket] Connected"
-   - WebSocket connection to wss://assist.asimo.io/api/realtime/ws?conversationId=...
+   - WebSocket connection to wss://localhost:8000/api/realtime/ws?conversationId=...
 4. Check network WebSocket tab:
    - Should see WS connection established
    - Should see outgoing message: {"type":"message","content":"Hello, test message",...}
@@ -180,7 +180,7 @@ Connection drops → Should attempt reconnection
 **Possible Causes:**
 
 1. Backend WebSocket endpoint not available
-2. CORS not allowing wss://dev.asimo.io
+2. CORS not allowing wss://localhost:5173
 3. Token not being passed correctly
 
 **Debug Steps:**
@@ -217,7 +217,7 @@ docker ps | grep voiceassist
 docker logs voiceassist-server --tail 50 -f
 
 # Test auth endpoint
-curl https://assist.asimo.io/api/auth/health
+curl http://localhost:8000/api/auth/health
 ```
 
 ### Test WebSocket Manually (using wscat)
@@ -227,7 +227,7 @@ curl https://assist.asimo.io/api/auth/health
 npm install -g wscat
 
 # Connect to WebSocket (replace TOKEN and CONV_ID)
-wscat -c "wss://assist.asimo.io/api/realtime/ws?conversationId=CONV_ID&token=TOKEN"
+wscat -c "wss://localhost:8000/api/realtime/ws?conversationId=CONV_ID&token=TOKEN"
 
 # Send message
 {"type":"message","content":"test"}
@@ -267,7 +267,7 @@ wscat -c "wss://assist.asimo.io/api/realtime/ws?conversationId=CONV_ID&token=TOK
 
 1. **If WebSocket fails:**
    - Check backend WebSocket implementation
-   - Verify CORS settings include dev.asimo.io
+   - Verify CORS settings include localhost:5173
    - Check token authentication on WS endpoint
 
 2. **If messages don't stream:**

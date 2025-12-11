@@ -503,7 +503,7 @@ For AI assistants and automated tooling, VoiceAssist provides machine-readable J
 
 ### Web API Endpoints
 
-**Base URL**: `https://assistdocs.asimo.io`
+**Base URL**: `http://localhost:3001`
 
 | Endpoint             | Purpose                                        |
 | -------------------- | ---------------------------------------------- |

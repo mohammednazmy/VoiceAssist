@@ -4,7 +4,7 @@ This document describes the hardening measures implemented to prevent stale serv
 
 ## Problem Summary
 
-When users visited dev.asimo.io while Vite dev server was running (with `devOptions.enabled: true`), a development service worker was registered. When production was later deployed, this stale dev SW tried to load dev-mode URLs (`/main.tsx`, `/@react-refresh`, etc.) which no longer existed, causing the app to fail loading.
+When users visited localhost:5173 while Vite dev server was running (with `devOptions.enabled: true`), a development service worker was registered. When production was later deployed, this stale dev SW tried to load dev-mode URLs (`/main.tsx`, `/@react-refresh`, etc.) which no longer existed, causing the app to fail loading.
 
 ## Implemented Solutions
 
@@ -52,7 +52,7 @@ var CLEANUP_VERSION = "20251205";
 
 **Why**: Handles edge cases where users have corrupted or stale SW state.
 
-### 5. Apache Cache Headers (dev.asimo.io-le-ssl.conf)
+### 5. Apache Cache Headers (localhost:5173-le-ssl.conf)
 
 ```apache
 # SW files: Never cache
@@ -66,7 +66,7 @@ var CLEANUP_VERSION = "20251205";
 </FilesMatch>
 
 # Hashed assets: Cache forever
-<Directory /var/www/dev.asimo.io/assets>
+<Directory /var/www/localhost:5173/assets>
     Header set Cache-Control "public, max-age=31536000, immutable"
 </Directory>
 ```
@@ -79,15 +79,15 @@ After deployment, verify headers are correct:
 
 ```bash
 # SW should have no-cache
-curl -sI "https://dev.asimo.io/sw.js" | grep -i cache
+curl -sI "http://localhost:5173/sw.js" | grep -i cache
 # Expected: Cache-Control: no-cache, no-store, must-revalidate
 
 # HTML should revalidate
-curl -sI "https://dev.asimo.io/index.html" | grep -i cache
+curl -sI "http://localhost:5173/index.html" | grep -i cache
 # Expected: Cache-Control: no-cache, must-revalidate
 
 # Assets should be cached long-term
-curl -sI "https://dev.asimo.io/assets/index-*.js" | grep -i cache
+curl -sI "http://localhost:5173/assets/index-*.js" | grep -i cache
 # Expected: Cache-Control: public, max-age=31536000, immutable
 ```
 
@@ -96,10 +96,10 @@ curl -sI "https://dev.asimo.io/assets/index-*.js" | grep -i cache
 When deploying updates:
 
 1. Run `pnpm build` to create production bundle
-2. Copy `dist/*` to `/var/www/dev.asimo.io/`
+2. Copy `dist/*` to `/var/www/localhost:5173/`
 3. Verify SW has `skipWaiting`, `clientsClaim`, `cleanupOutdatedCaches`:
    ```bash
-   grep -o "skipWaiting\|clientsClaim\|cleanupOutdatedCaches" /var/www/dev.asimo.io/sw.js
+   grep -o "skipWaiting\|clientsClaim\|cleanupOutdatedCaches" /var/www/localhost:5173/sw.js
    ```
 4. Test cache headers are correct (see Verification above)
 

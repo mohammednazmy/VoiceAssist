@@ -22,7 +22,7 @@ pnpm add @voiceassist/api-client
 import { VoiceAssistApiClient } from "@voiceassist/api-client";
 
 const client = new VoiceAssistApiClient({
-  baseURL: "https://assist.asimo.io/api",
+  baseURL: "http://localhost:8000/api",
   timeout: 30000,
   getAccessToken: () => localStorage.getItem("accessToken"),
   onUnauthorized: () => {

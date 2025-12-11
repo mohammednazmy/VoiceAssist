@@ -101,7 +101,7 @@ moveConversationToFolder(conversationId, folderId) // Assign conversation
 **Share Link Format:**
 
 ```
-https://assist.asimo.io/shared/{secure-token}
+http://localhost:8000/shared/{secure-token}
 ```
 
 **Features:**

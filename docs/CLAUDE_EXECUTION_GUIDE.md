@@ -97,9 +97,9 @@ Before starting ANY work, read these documents IN ORDER:
 
 **Machine-Readable Endpoints (for AI agents):**
 
-- `https://assistdocs.asimo.io/agent/index.json` - Documentation metadata
-- `https://assistdocs.asimo.io/agent/docs.json` - Full document list with filtering
-- `https://assistdocs.asimo.io/search-index.json` - Full-text search index
+- `http://localhost:3001/agent/index.json` - Documentation metadata
+- `http://localhost:3001/agent/docs.json` - Full document list with filtering
+- `http://localhost:3001/search-index.json` - Full-text search index
 
 **Phase-Specific Reading:**
 If implementing a phase, read:

@@ -33,7 +33,7 @@ The WebSocket Latency Optimization feature provides three key improvements to th
 2. **WebSocket Compression** - Enables permessage-deflate compression to reduce bandwidth usage
 3. **Adaptive Chunk Sizing** - Dynamically adjusts audio chunk size based on network conditions
 
-All optimizations are controlled by feature flags and can be enabled/disabled via the Admin Panel at admin.asimo.io.
+All optimizations are controlled by feature flags and can be enabled/disabled via the Admin Panel at localhost:5174.
 
 ---
 

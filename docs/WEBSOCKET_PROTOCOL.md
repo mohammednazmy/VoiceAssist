@@ -81,7 +81,7 @@ ws://localhost:8000/api/realtime/ws
 **Production:**
 
 ```
-wss://assist.asimo.io/api/realtime/ws
+wss://localhost:8000/api/realtime/ws
 ```
 
 ### Query Parameters

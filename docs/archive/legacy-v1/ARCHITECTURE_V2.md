@@ -60,7 +60,7 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant, multi-user medical AI 
 │  ~/Nextcloud-Dev/ │   │  │  NEXTCLOUD_CLIENT_SECRET             │
 │                   │   │  │                                      │
 │  Production:      │   │  │                                      │
-│  cloud.asimo.io   │   │  │                                      │
+│  localhost:8080   │   │  │                                      │
 └───────────────────┘   │  └──────────────────────────────────────┘
                         │
                         │  HTTPS / OIDC / WebDAV APIs
@@ -361,17 +361,17 @@ The backend uses a **monorepo-first, microservices-ready** architecture:
 
 Nextcloud (Separate Server/Cluster) VoiceAssist (This System)
 
-- cloud.asimo.io - voiceassist.asimo.io
+- localhost:8080 - localhost:5173
 - Managed independently - Connects via HTTPS
-- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://cloud.asimo.io
+- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://localhost:8080
 
 ```
 
 **Authentication Flow:**
 ```
 
-1. User → https://voiceassist.asimo.io
-2. Redirect → Nextcloud OIDC (cloud.asimo.io/apps/oidc)
+1. User → https://localhost:5173
+2. Redirect → Nextcloud OIDC (localhost:8080/apps/oidc)
 3. User logs in to Nextcloud (MFA if enabled)
 4. Nextcloud returns authorization code
 5. VoiceAssist exchanges code for JWT token
@@ -389,7 +389,7 @@ Nextcloud (Separate Server/Cluster) VoiceAssist (This System)
 **Environment Variables Required:**
 ```bash
 # Nextcloud Connection
-NEXTCLOUD_BASE_URL=http://localhost:8080  # or https://cloud.asimo.io
+NEXTCLOUD_BASE_URL=http://localhost:8080  # or https://localhost:8080
 NEXTCLOUD_OIDC_ISSUER=${NEXTCLOUD_BASE_URL}/apps/oidc
 NEXTCLOUD_CLIENT_ID=voiceassist
 NEXTCLOUD_CLIENT_SECRET=secret_from_nextcloud
@@ -411,16 +411,16 @@ NEXTCLOUD_ADMIN_PASSWORD=secure_password
 
 **URLs:**
 
-- **Admin Panel**: `https://admin.asimo.io` (React 18 + Vite)
-- **Web App**: `https://dev.asimo.io` (React 18 + Vite)
-- **Docs Site**: `https://assistdocs.asimo.io` (Next.js 14 static export)
+- **Admin Panel**: `http://localhost:5174` (React 18 + Vite)
+- **Web App**: `http://localhost:5173` (React 18 + Vite)
+- **Docs Site**: `http://localhost:3001` (Next.js 14 static export)
 
 **Architecture:**
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Admin Panel   │     │    Web App      │     │   Docs Site     │
-│ admin.asimo.io  │────▶│  dev.asimo.io   │────▶│assistdocs.asimo.io│
+│ localhost:5174  │────▶│  localhost:5173   │────▶│localhost:3001│
 └────────┬────────┘     └────────┬────────┘     └─────────────────┘
          │                       │
          └───────────┬───────────┘
@@ -499,15 +499,15 @@ const { status, events, metrics } = useRealtimeEvents({
 ```bash
 # Admin Panel
 ADMIN_PANEL_ENABLED=true
-ADMIN_PANEL_CORS_ORIGINS=https://admin.asimo.io
+ADMIN_PANEL_CORS_ORIGINS=http://localhost:5174
 
 # Redis for real-time events
 REDIS_URL=redis://localhost:6379
 ADMIN_EVENTS_CHANNEL=admin:events
 
 # Cross-app URLs
-VITE_WEB_APP_URL=https://dev.asimo.io
-VITE_DOCS_URL=https://assistdocs.asimo.io
+VITE_WEB_APP_URL=http://localhost:5173
+VITE_DOCS_URL=http://localhost:3001
 ```
 
 **Documentation:**
@@ -858,7 +858,7 @@ K3s Cluster (local)
 
 ```
 Kubernetes Cluster
-├── Ingress (voiceassist.asimo.io)
+├── Ingress (localhost:5173)
 │   └── SSL Termination
 ├── Service Mesh (Linkerd)
 ├── Microservices (2-10 replicas each)

@@ -44,14 +44,14 @@ This document lists common AI agent tasks with the relevant documentation and en
 
 **Machine-Readable Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/index.json` - Documentation metadata
-- `https://assistdocs.asimo.io/agent/docs.json` - Full document list with filtering
-- `https://assistdocs.asimo.io/agent/tasks.json` - Common agent tasks with commands
-- `https://assistdocs.asimo.io/search-index.json` - Full-text search index
-- `https://assistdocs.asimo.io/agent/repo-index.json` - Repository structure index
-- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Key files manifest
-- `https://assistdocs.asimo.io/agent/repo/files/{path}.json` - Source file content
-- `https://assistdocs.asimo.io/agent/doc-code-map.json` - Doc ↔ code crosswalk mapping
+- `http://localhost:3001/agent/index.json` - Documentation metadata
+- `http://localhost:3001/agent/docs.json` - Full document list with filtering
+- `http://localhost:3001/agent/tasks.json` - Common agent tasks with commands
+- `http://localhost:3001/search-index.json` - Full-text search index
+- `http://localhost:3001/agent/repo-index.json` - Repository structure index
+- `http://localhost:3001/agent/repo/manifest.json` - Key files manifest
+- `http://localhost:3001/agent/repo/files/{path}.json` - Source file content
+- `http://localhost:3001/agent/doc-code-map.json` - Doc ↔ code crosswalk mapping
 
 ---
 
@@ -69,7 +69,7 @@ This document lists common AI agent tasks with the relevant documentation and en
 **API Endpoint:**
 
 ```bash
-curl https://assistdocs.asimo.io/agent/docs.json | jq '.[] | select(.category == "overview")'
+curl http://localhost:3001/agent/docs.json | jq '.[] | select(.category == "overview")'
 ```
 
 ---
@@ -178,7 +178,7 @@ pnpm dev
 3. Validate: `cd apps/docs-site && pnpm validate:all`
 4. Regenerate search index and agent JSON: `pnpm generate-search-index && pnpm generate-agent-json`
 5. Build: `pnpm build`
-6. Deploy: Copy `out/` to `/var/www/assistdocs.asimo.io/`
+6. Deploy: Copy `out/` to `/var/www/localhost:3001/`
 
 ---
 
@@ -281,9 +281,9 @@ pnpm dev
 
 **Workflow:**
 
-1. Fetch health metrics: `curl https://assistdocs.asimo.io/agent/health.json`
+1. Fetch health metrics: `curl http://localhost:3001/agent/health.json`
 2. Run local validation: `cd apps/docs-site && pnpm validate:all`
-3. Check AI summary coverage: `curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'`
+3. Check AI summary coverage: `curl http://localhost:3001/agent/docs-summary.json | jq '.stats'`
 4. Identify stale docs from health.json `category_freshness` section
 5. Add missing `ai_summary` fields to docs targeting AI agents
 
@@ -314,23 +314,23 @@ These tasks leverage the machine-readable repository endpoints to explore and un
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/repo-index.json` - Full repository structure
-- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Key files manifest
+- `http://localhost:3001/agent/repo-index.json` - Full repository structure
+- `http://localhost:3001/agent/repo/manifest.json` - Key files manifest
 
 **Workflow:**
 
 ```bash
 # List all component categories
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_component'
+curl http://localhost:3001/agent/repo-index.json | jq '.stats.by_component'
 
 # Find all frontend components
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("frontend"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("frontend"))]'
 
 # Find all backend services
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("backend"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.component | startswith("backend"))]'
 
 # Get language breakdown
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
+curl http://localhost:3001/agent/repo-index.json | jq '.stats.by_language'
 ```
 
 **Key Documents:**
@@ -346,23 +346,23 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/repo-index.json` - File paths by component
-- `https://assistdocs.asimo.io/agent/repo/files/{encoded-path}.json` - Source code content
-- `https://assistdocs.asimo.io/search-index.json` - Full-text search
+- `http://localhost:3001/agent/repo-index.json` - File paths by component
+- `http://localhost:3001/agent/repo/files/{encoded-path}.json` - Source code content
+- `http://localhost:3001/search-index.json` - Full-text search
 
 **Workflow:**
 
 1. Search documentation for feature context:
 
    ```bash
-   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.title | test("voice"; "i"))'
+   curl http://localhost:3001/agent/docs.json | jq '.docs[] | select(.title | test("voice"; "i"))'
    ```
 
 2. Find implementation files by component:
 
    ```bash
    # Voice features are in backend/api-gateway and frontend/web-app
-   curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("voice"; "i"))]'
+   curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | test("voice"; "i"))]'
    ```
 
 3. Get source code for specific file:
@@ -370,12 +370,12 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
    ```bash
    # Path encoding: / → __ (double underscore)
    # Example: services/api-gateway/app/api/voice.py → services__api-gateway__app__api__voice.py.json
-   curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json
+   curl http://localhost:3001/agent/repo/files/services__api-gateway__app__api__voice.py.json
    ```
 
 4. Cross-reference with documentation:
    ```bash
-   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.tags | index("voice"))'
+   curl http://localhost:3001/agent/docs.json | jq '.docs[] | select(.tags | index("voice"))'
    ```
 
 **Key Documents:**
@@ -392,29 +392,29 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/docs.json` - Documentation metadata
-- `https://assistdocs.asimo.io/agent/repo-index.json` - Repository structure
-- `https://assistdocs.asimo.io/agent/repo/files/{encoded-path}.json` - Source code
+- `http://localhost:3001/agent/docs.json` - Documentation metadata
+- `http://localhost:3001/agent/repo-index.json` - Repository structure
+- `http://localhost:3001/agent/repo/files/{encoded-path}.json` - Source code
 
 **Workflow:**
 
 1. Identify feature documentation:
 
    ```bash
-   curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs[] | select(.category == "admin")'
+   curl http://localhost:3001/agent/docs.json | jq '.docs[] | select(.category == "admin")'
    ```
 
 2. Extract documented paths/endpoints from docs
 3. Verify files exist in repo-index:
 
    ```bash
-   curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("admin"))]'
+   curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | test("admin"))]'
    ```
 
 4. Fetch and compare source code:
 
    ```bash
-   curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__admin.py.json | jq '.content'
+   curl http://localhost:3001/agent/repo/files/services__api-gateway__app__api__admin.py.json | jq '.content'
    ```
 
 5. Report discrepancies:
@@ -436,22 +436,22 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
 
 **API Endpoint:**
 
-- `https://assistdocs.asimo.io/agent/repo-index.json`
+- `http://localhost:3001/agent/repo-index.json`
 
 **Workflow:**
 
 ```bash
 # Find all TypeScript files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "typescript")]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.language == "typescript")]'
 
 # Find all Python files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "python")]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.language == "python")]'
 
 # Count files by language
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '.stats.by_language'
+curl http://localhost:3001/agent/repo-index.json | jq '.stats.by_language'
 
 # Find configuration files (YAML, JSON, TOML)
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language | . == "yaml" or . == "json" or . == "toml")]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.language | . == "yaml" or . == "json" or . == "toml")]'
 ```
 
 **Supported Languages:**
@@ -466,22 +466,22 @@ typescript, javascript, python, markdown, json, yaml, toml, html, css, scss, she
 
 **API Endpoint:**
 
-- `https://assistdocs.asimo.io/agent/repo/manifest.json` - Curated key files
+- `http://localhost:3001/agent/repo/manifest.json` - Curated key files
 
 **Workflow:**
 
 ```bash
 # Get all exported key files
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '.files'
+curl http://localhost:3001/agent/repo/manifest.json | jq '.files'
 
 # Find package.json files (entry points)
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("package.json"))]'
+curl http://localhost:3001/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("package.json"))]'
 
 # Find Python entry points
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("main.py"))]'
+curl http://localhost:3001/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("main.py"))]'
 
 # Get root configuration files
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | contains("/") | not)]'
+curl http://localhost:3001/agent/repo/manifest.json | jq '[.files[] | select(.path | contains("/") | not)]'
 ```
 
 **Key Files Categories:**
@@ -584,21 +584,21 @@ These tasks use the `/agent/doc-code-map.json` endpoint to navigate between docu
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/doc-code-map.json`
-- `https://assistdocs.asimo.io/agent/repo/manifest.json`
+- `http://localhost:3001/agent/doc-code-map.json`
+- `http://localhost:3001/agent/repo/manifest.json`
 
 **Workflow:**
 
 ```bash
 # 1. Check for missing paths (relatedPaths that don't exist in repo)
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.missing_paths'
+curl http://localhost:3001/agent/doc-code-map.json | jq '.meta.missing_paths'
 
 # 2. Get stats on doc-code coverage
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | jq '.meta.stats'
+curl http://localhost:3001/agent/doc-code-map.json | jq '.meta.stats'
 
 # 3. Find key files in manifest that have no docs
-curl https://assistdocs.asimo.io/agent/doc-code-map.json -o map.json
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | \
+curl http://localhost:3001/agent/doc-code-map.json -o map.json
+curl http://localhost:3001/agent/repo/manifest.json | \
   jq --slurpfile map map.json '[.files[].path] - [($map[0].by_path | keys)[]]'
 ```
 
@@ -616,9 +616,9 @@ curl https://assistdocs.asimo.io/agent/repo/manifest.json | \
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/doc-code-map.json`
-- `https://assistdocs.asimo.io/agent/docs.json`
-- `https://assistdocs.asimo.io/agent/repo/files/{encoded}.json`
+- `http://localhost:3001/agent/doc-code-map.json`
+- `http://localhost:3001/agent/docs.json`
+- `http://localhost:3001/agent/repo/files/{encoded}.json`
 
 **Workflow:**
 
@@ -626,19 +626,19 @@ curl https://assistdocs.asimo.io/agent/repo/manifest.json | \
 # Example: Explain services/api-gateway/app/api/voice.py
 
 # 1. Find docs that reference this file
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+curl http://localhost:3001/agent/doc-code-map.json | \
   jq '.by_path["services/api-gateway/app/api/voice.py"].docs'
 
 # 2. Get those docs' ai_summary
-SLUGS=$(curl -s https://assistdocs.asimo.io/agent/doc-code-map.json | \
+SLUGS=$(curl -s http://localhost:3001/agent/doc-code-map.json | \
   jq -r '.by_path["services/api-gateway/app/api/voice.py"].docs[]')
 for slug in $SLUGS; do
-  curl -s https://assistdocs.asimo.io/agent/docs.json | \
+  curl -s http://localhost:3001/agent/docs.json | \
     jq --arg s "$slug" '.docs[] | select(.slug == $s) | {title, ai_summary}'
 done
 
 # 3. Get the file content
-curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json | \
+curl http://localhost:3001/agent/repo/files/services__api-gateway__app__api__voice.py.json | \
   jq '.content'
 ```
 
@@ -652,8 +652,8 @@ curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__ap
 
 **API Endpoints:**
 
-- `https://assistdocs.asimo.io/agent/docs.json`
-- `https://assistdocs.asimo.io/agent/doc-code-map.json`
+- `http://localhost:3001/agent/docs.json`
+- `http://localhost:3001/agent/doc-code-map.json`
 
 **Workflow:**
 
@@ -661,15 +661,15 @@ curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__ap
 # Example: Find everything about "voice mode"
 
 # 1. Find docs mentioning the feature
-curl https://assistdocs.asimo.io/agent/docs.json | \
+curl http://localhost:3001/agent/docs.json | \
   jq '[.docs[] | select(.title | test("voice"; "i")) | {slug, title, component, relatedPaths}]'
 
 # 2. Get code files from those docs
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+curl http://localhost:3001/agent/doc-code-map.json | \
   jq '[.by_doc_slug | to_entries[] | select(.key | test("voice"; "i")) | .value.relatedPaths] | flatten | unique'
 
 # 3. Find docs for specific component
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+curl http://localhost:3001/agent/doc-code-map.json | \
   jq '[.by_doc_slug | to_entries[] | select(.value.component == "backend/api-gateway") | .key]'
 ```
 
@@ -681,7 +681,7 @@ Use the agent JSON API to filter documents:
 
 ```javascript
 // Fetch all docs
-const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
+const response = await fetch("http://localhost:3001/agent/docs.json");
 const data = await response.json();
 
 // Filter by category

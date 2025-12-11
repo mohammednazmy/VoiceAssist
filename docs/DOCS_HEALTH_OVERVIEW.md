@@ -42,13 +42,13 @@ This document provides a single-page overview of documentation health metrics, v
 
 ```bash
 # Check live health metrics
-curl https://assistdocs.asimo.io/agent/health.json | jq '.health_status, .scores'
+curl http://localhost:3001/agent/health.json | jq '.health_status, .scores'
 
 # Run local validation
 cd apps/docs-site && pnpm validate:all
 
 # Check AI summary coverage
-curl https://assistdocs.asimo.io/agent/docs-summary.json | jq '.stats'
+curl http://localhost:3001/agent/docs-summary.json | jq '.stats'
 ```
 
 ---
@@ -153,7 +153,7 @@ Validation runs automatically on:
 
 ## Agent Endpoints
 
-Machine-readable documentation available at `https://assistdocs.asimo.io`:
+Machine-readable documentation available at `http://localhost:3001`:
 
 | Endpoint                    | Purpose                                         |
 | --------------------------- | ----------------------------------------------- |

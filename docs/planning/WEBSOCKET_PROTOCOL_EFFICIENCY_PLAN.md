@@ -699,11 +699,11 @@ const drainReorderBuffer = useCallback(() => {
 
 ### 4.1 Create Feature Flags
 
-Via Admin Panel at admin.asimo.io or API:
+Via Admin Panel at localhost:5174 or API:
 
 ```bash
 # Binary audio protocol
-curl -X POST https://admin.asimo.io/api/admin/feature-flags \
+curl -X POST http://localhost:5174/api/admin/feature-flags \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "name": "backend.ws_binary_protocol",
@@ -715,7 +715,7 @@ curl -X POST https://admin.asimo.io/api/admin/feature-flags \
   }'
 
 # Message batching
-curl -X POST https://admin.asimo.io/api/admin/feature-flags \
+curl -X POST http://localhost:5174/api/admin/feature-flags \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -d '{
     "name": "backend.ws_message_batching",
@@ -913,7 +913,7 @@ describe("Sequence Validation", () => {
 
 ## Part 6: Documentation Updates
 
-### 6.1 Update assistdocs.asimo.io
+### 6.1 Update localhost:3001
 
 **Files to update:**
 
@@ -965,7 +965,7 @@ describe("Sequence Validation", () => {
 
 - [x] Run all unit tests
 - [ ] Run integration tests on GitHub CI (pending)
-- [x] Update assistdocs.asimo.io
+- [x] Update localhost:3001
 - [x] Update existing planning docs
 - [ ] Create PR and resolve any issues (pending)
 - [ ] Gradual rollout via feature flags (pending)

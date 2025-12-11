@@ -18,7 +18,7 @@ category: voice
 ai_summary: >-
   Asset directory for Voice Mode UI screenshots. Contains capture instructions for
   voice-input-bar-states, streaming-text-rtl, quality-badge-tiers, phi-indicator-states,
-  and vad-presets-panel. Screenshots require manual capture from https://quran.asimo.io.
+  and vad-presets-panel. Screenshots require manual capture from https://localhost:5173.
 ---
 
 # Voice Mode v4.1 Screenshots
@@ -26,7 +26,7 @@ ai_summary: >-
 This directory contains annotated screenshots for the Voice Mode v4.1 documentation.
 
 > **Note**: Screenshots require manual capture from a running instance of the Voice Mode UI.
-> Use the browser at https://quran.asimo.io to capture each state.
+> Use the browser at https://localhost:5173 to capture each state.
 
 ## Capture Status
 

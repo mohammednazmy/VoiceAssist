@@ -116,7 +116,7 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           </div>
           {/* Back to VoiceAssist link */}
           <a
-            href={import.meta.env.VITE_APP_URL || "https://dev.asimo.io"}
+            href={import.meta.env.VITE_APP_URL || "http://localhost:5173"}
             className="mt-3 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
           >
             <svg
@@ -193,7 +193,7 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
         <div className="border-t border-slate-800 p-4 space-y-2">
           {/* Documentation link */}
           <a
-            href={import.meta.env.VITE_DOCS_URL || "https://docs.asimo.io"}
+            href={import.meta.env.VITE_DOCS_URL || "http://localhost:3001"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"

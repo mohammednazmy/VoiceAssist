@@ -30,7 +30,7 @@ relatedPaths:
   - "apps/docs-site/public/agent/index.json"
 ai_summary: >-
   Canonical reference for VoiceAssist documentation API endpoints. Base URL:
-  https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list
+  http://localhost:3001. Key endpoints: /agent/docs.json (full doc list
   with ai_summary), /agent/docs-summary.json (AI summaries by category),
   /agent/health.json (docs health metrics), /agent/tasks.json (common tasks),
   /search-index.json (Fuse.js search). All endpoints are static JSON generated
@@ -41,7 +41,7 @@ ai_summary: >-
 
 The VoiceAssist documentation site exposes machine-readable JSON endpoints designed for AI agents to programmatically discover, filter, and search documentation.
 
-**Base URL:** `https://assistdocs.asimo.io`
+**Base URL:** `http://localhost:3001`
 
 ---
 
@@ -75,7 +75,7 @@ Returns metadata about the documentation system and available endpoints.
 
 ```http
 GET /agent/index.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -142,7 +142,7 @@ Returns a list of all documentation with metadata. **Filtering is done client-si
 
 ```http
 GET /agent/docs.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -192,7 +192,7 @@ Since filtering is done client-side, here are JavaScript examples:
 
 ```javascript
 // Fetch all docs
-const response = await fetch("https://assistdocs.asimo.io/agent/docs.json");
+const response = await fetch("http://localhost:3001/agent/docs.json");
 const data = await response.json();
 
 // Filter for agent-targeted docs (canonical value is "ai-agents")
@@ -223,7 +223,7 @@ Returns AI-friendly document summaries organized by category. Ideal for quick co
 
 ```http
 GET /agent/docs-summary.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -276,7 +276,7 @@ Returns documentation health metrics including coverage, freshness, and status b
 
 ```http
 GET /agent/health.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -336,7 +336,7 @@ Returns code examples extracted from documentation, organized by language.
 
 ```http
 GET /agent/code-examples.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -384,7 +384,7 @@ Returns a catalog of common tasks AI agents can perform, with relevant documenta
 
 ```http
 GET /agent/tasks.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response
@@ -401,7 +401,7 @@ Host: assistdocs.asimo.io
       "description": "Investigate and resolve API errors (500, 401, 404, etc.)",
       "category": "debugging",
       "docs": ["/debugging/backend", "/debugging/index"],
-      "commands": ["docker logs voiceassist-server --tail 100 | grep -i error", "curl https://assist.asimo.io/health"],
+      "commands": ["docker logs voiceassist-server --tail 100 | grep -i error", "curl http://localhost:8000/health"],
       "prerequisites": ["Docker access", "curl"]
     }
   ],
@@ -430,7 +430,7 @@ Host: assistdocs.asimo.io
 
 ```javascript
 // Fetch all tasks
-const response = await fetch("https://assistdocs.asimo.io/agent/tasks.json");
+const response = await fetch("http://localhost:3001/agent/tasks.json");
 const data = await response.json();
 
 // Filter tasks by category
@@ -459,7 +459,7 @@ const task = tasks.find((t) => t.id === "debug-api-error");
 
 // Read related docs
 for (const docSlug of task.docs) {
-  const docUrl = `https://assistdocs.asimo.io${docSlug}`;
+  const docUrl = `http://localhost:3001${docSlug}`;
   // Fetch and process documentation...
 }
 
@@ -485,7 +485,7 @@ JSON Schema definitions for all API response types. Useful for validating respon
 
 ```http
 GET /agent/schema.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response Structure
@@ -502,7 +502,7 @@ Returns a JSON Schema (draft-07) with definitions for:
 
 ```javascript
 // Fetch and use schema for validation
-const schemaResponse = await fetch("https://assistdocs.asimo.io/agent/schema.json");
+const schemaResponse = await fetch("http://localhost:3001/agent/schema.json");
 const schema = await schemaResponse.json();
 
 // Access specific type definitions
@@ -530,7 +530,7 @@ Full-text search index designed for use with [Fuse.js](https://fusejs.io/).
 
 ```http
 GET /search-index.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 ### Response Structure
@@ -555,7 +555,7 @@ Host: assistdocs.asimo.io
 import Fuse from "fuse.js";
 
 // Fetch search index
-const response = await fetch("https://assistdocs.asimo.io/search-index.json");
+const response = await fetch("http://localhost:3001/search-index.json");
 const { docs } = await response.json();
 
 // Configure Fuse.js
@@ -727,7 +727,7 @@ Returns a complete index of all files and directories in the repository.
 
 ```http
 GET /agent/repo-index.json HTTP/1.1
-Host: assistdocs.asimo.io
+Host: localhost:3001
 ```
 
 #### Response
@@ -876,18 +876,18 @@ Returns a bidirectional mapping between documentation and repository files, enab
 
 ```bash
 # Get code files related to voice/pipeline doc
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+curl http://localhost:3001/agent/doc-code-map.json | \
   jq '.by_doc_slug["voice/pipeline"].relatedPaths'
 
 # Fetch one of those code files
-curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json
+curl http://localhost:3001/agent/repo/files/services__api-gateway__app__api__voice.py.json
 ```
 
 **From code to docs:**
 
 ```bash
 # Find docs that reference a specific file
-curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
+curl http://localhost:3001/agent/doc-code-map.json | \
   jq '.by_path["services/api-gateway/app/api/voice.py"].docs'
 ```
 
@@ -901,18 +901,18 @@ curl https://assistdocs.asimo.io/agent/doc-code-map.json | \
 
 Test the endpoints directly:
 
-- **Index:** https://assistdocs.asimo.io/agent/index.json
-- **Docs:** https://assistdocs.asimo.io/agent/docs.json
-- **Docs Summary:** https://assistdocs.asimo.io/agent/docs-summary.json
-- **Health:** https://assistdocs.asimo.io/agent/health.json
-- **Code Examples:** https://assistdocs.asimo.io/agent/code-examples.json
-- **Tasks:** https://assistdocs.asimo.io/agent/tasks.json
-- **Schema:** https://assistdocs.asimo.io/agent/schema.json
-- **Repo Index:** https://assistdocs.asimo.io/agent/repo-index.json
-- **Repo Manifest:** https://assistdocs.asimo.io/agent/repo/manifest.json
-- **Doc-Code Map:** https://assistdocs.asimo.io/agent/doc-code-map.json
-- **Search Index:** https://assistdocs.asimo.io/search-index.json
-- **Sitemap:** https://assistdocs.asimo.io/sitemap.xml
+- **Index:** http://localhost:3001/agent/index.json
+- **Docs:** http://localhost:3001/agent/docs.json
+- **Docs Summary:** http://localhost:3001/agent/docs-summary.json
+- **Health:** http://localhost:3001/agent/health.json
+- **Code Examples:** http://localhost:3001/agent/code-examples.json
+- **Tasks:** http://localhost:3001/agent/tasks.json
+- **Schema:** http://localhost:3001/agent/schema.json
+- **Repo Index:** http://localhost:3001/agent/repo-index.json
+- **Repo Manifest:** http://localhost:3001/agent/repo/manifest.json
+- **Doc-Code Map:** http://localhost:3001/agent/doc-code-map.json
+- **Search Index:** http://localhost:3001/search-index.json
+- **Sitemap:** http://localhost:3001/sitemap.xml
 
 ---
 

@@ -39,7 +39,7 @@
       ],
       "title": "Feature Flags Admin Panel Guide",
       "category": "feature-flags",
-      "ai_summary": "Admin Panel at admin.asimo.io provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT."
+      "ai_summary": "Admin Panel at localhost:5174 provides UI for flag management. Navigate to Settings > Feature Flags. Toggle, edit percentage, filter by category. Real-time updates via SSE. Scheduled Changes tab for time-based variant weight modifications with timezone support. RBAC enforced (admin for write, viewer for read). Prometheus metrics track scheduled changes. Requires admin JWT."
     },
     "advanced-types": {
       "slug": "advanced-types",
@@ -149,7 +149,7 @@
       ],
       "title": "Agent API Reference",
       "category": "ai",
-      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: https://assistdocs.asimo.io. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
+      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: http://localhost:3001. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time."
     },
     "ai/agent-task-index": {
       "slug": "ai/agent-task-index",
@@ -201,7 +201,7 @@
       ],
       "title": "Internal Documentation System",
       "category": "reference",
-      "ai_summary": "Documentation infrastructure for VoiceAssist. Key validation commands: pnpm validate:metadata (frontmatter), pnpm validate:all (all checks). Agent endpoints at assistdocs.asimo.io/agent/*.json include docs.json (with ai_summary), docs-summary.json, health.json, and code-examples.json. See Agent API Reference for endpoint details."
+      "ai_summary": "Documentation infrastructure for VoiceAssist. Key validation commands: pnpm validate:metadata (frontmatter), pnpm validate:all (all checks). Agent endpoints at localhost:3001/agent/*.json include docs.json (with ai_summary), docs-summary.json, health.json, and code-examples.json. See Agent API Reference for endpoint details."
     },
     "next-phase-improvements": {
       "slug": "next-phase-improvements",
@@ -287,7 +287,7 @@
       ],
       "title": "AI Agent Onboarding Guide",
       "category": "ai",
-      "ai_summary": "Start here for AI agents working on VoiceAssist. Key directories: services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel, docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at https://assistdocs.asimo.io/agent/*.json. Read IMPLEMENTATION_STATUS.md first for component status. HIPAA-compliant platform - follow PHI handling rules."
+      "ai_summary": "Start here for AI agents working on VoiceAssist. Key directories: services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel, docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at http://localhost:3001/agent/*.json. Read IMPLEMENTATION_STATUS.md first for component status. HIPAA-compliant platform - follow PHI handling rules."
     },
     "ai/repo-navigation-for-agents": {
       "slug": "ai/repo-navigation-for-agents",
@@ -585,7 +585,7 @@
       ],
       "title": "Docs Site Debugging Guide",
       "category": "debugging",
-      "ai_summary": "Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site: https://assistdocs.asimo.io --- The docs site is a static Next.js export served by Apache: docs/.md → Next.js build → static HTML → Apache → assistdocs.asimo.io (apps/docs-site) (out/) (rewrite rules) Key points: - All pages are pre-r..."
+      "ai_summary": "Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site: http://localhost:3001 --- The docs site is a static Next.js export served by Apache: docs/.md → Next.js build → static HTML → Apache → localhost:3001 (apps/docs-site) (out/) (rewrite rules) Key points: - All pages are pre-r..."
     },
     "admin-panel-specs": {
       "slug": "admin-panel-specs",
@@ -598,7 +598,7 @@
       ],
       "title": "Admin Panel Specs",
       "category": "operations",
-      "ai_summary": "The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at admin.asimo.io. - Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts..."
+      "ai_summary": "The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at localhost:5174. - Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts..."
     },
     "api-reference/overview": {
       "slug": "api-reference/overview",
@@ -682,7 +682,7 @@
       ],
       "title": "Admin Panel Implementation Plan",
       "category": "admin",
-      "ai_summary": "Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide Purpose: Transform admin.asimo.io into the definitive operational mission control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2..."
+      "ai_summary": "Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide Purpose: Transform localhost:5174 into the definitive operational mission control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2..."
     },
     "debugging/index": {
       "slug": "debugging/index",
@@ -816,7 +816,7 @@
       ],
       "title": "Admin Panel Deployment",
       "category": "deployment",
-      "ai_summary": "Date: 2025-11-22 Server: asimo.io (Ubuntu 24.04.3 LTS) Domain: https://admin.asimo.io Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist Admin Panel has been successfully deployed to production on asimo.io. The admin panel is a React-based SPA (Single Page Application) served via Apache with SS..."
+      "ai_summary": "Date: 2025-11-22 Server: localhost (Ubuntu 24.04.3 LTS) Domain: http://localhost:5174 Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist Admin Panel has been successfully deployed to production on localhost. The admin panel is a React-based SPA (Single Page Application) served via Apache with SS..."
     },
     "admin-panel-implementation-summary": {
       "slug": "admin-panel-implementation-summary",
@@ -841,7 +841,7 @@
       ],
       "title": "Admin Panel Login Fix",
       "category": "operations",
-      "ai_summary": "Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io, the following errors occurred: Firebase: Error (auth/network-request-failed) - The admin panel was loading Firebase authentication code - This indi..."
+      "ai_summary": "Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors Status: ✅ RESOLVED --- When attempting to log in to http://localhost:5174, the following errors occurred: Firebase: Error (auth/network-request-failed) - The admin panel was loading Firebase authentication code - This indi..."
     },
     "admin-panel-login-fix-complete": {
       "slug": "admin-panel-login-fix-complete",
@@ -853,7 +853,7 @@
       ],
       "title": "Admin Panel Login Fix Complete",
       "category": "operations",
-      "ai_summary": "Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was failing with \"Unexpected token '<', '<!DOCTYPE ' is not valid JSON\" Status: ✅ RESOLVED The admin panel login was failing due to multiple compounding issues: 1. Frontend receiving HTML error pages instead of JSON responses 2...."
+      "ai_summary": "Date: 2025-11-22 Issue: Admin panel login at http://localhost:5174 was failing with \"Unexpected token '<', '<!DOCTYPE ' is not valid JSON\" Status: ✅ RESOLVED The admin panel login was failing due to multiple compounding issues: 1. Frontend receiving HTML error pages instead of JSON responses 2...."
     },
     "all-phases-summary": {
       "slug": "all-phases-summary",
@@ -1051,7 +1051,7 @@
       "relatedPaths": ["docker-compose.yml"],
       "title": "Deployment Summary Asimo",
       "category": "deployment",
-      "ai_summary": "Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration) Environment: Production (Ubuntu 24.04 LTS) Server: asimo.io (107.204.29.210) Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully deployed to production on the asimo.io server with full monitoring,..."
+      "ai_summary": "Deployment Date: 2025-11-22 (Initial) / 2025-11-23 (Final Configuration) Environment: Production (Ubuntu 24.04 LTS) Server: localhost (107.204.29.210) Status: ✅ FULLY CONFIGURED & OPERATIONAL --- VoiceAssist has been successfully deployed to production on the localhost server with full monitoring,..."
     },
     "development-phases": {
       "slug": "development-phases",
@@ -1242,7 +1242,7 @@
       "relatedPaths": ["services/api-gateway/app/api/auth.py"],
       "title": "Login 500 Fix 2025 11 25",
       "category": "reference",
-      "ai_summary": "Users were experiencing HTTP 500 errors when attempting to login at dev.asimo.io. - Browser console showed: Login failed: AxiosError 500 (Request failed with status code 500) - Backend logs showed stack trace with: - AttributeError: module 'bcrypt' has no attribute '__about__' - ValueError: passw..."
+      "ai_summary": "Users were experiencing HTTP 500 errors when attempting to login at localhost:5173. - Browser console showed: Login failed: AxiosError 500 (Request failed with status code 500) - Backend logs showed stack trace with: - AttributeError: module 'bcrypt' has no attribute '__about__' - ValueError: passw..."
     },
     "medical-features": {
       "slug": "medical-features",
@@ -1789,7 +1789,7 @@
       ],
       "title": "REST API Reference",
       "category": "api",
-      "ai_summary": "Version: 2.0 Base URL: https://assist.asimo.io/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic..."
+      "ai_summary": "Version: 2.0 Base URL: http://localhost:8000/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic..."
     },
     "debugging/backend": {
       "slug": "debugging/backend",
@@ -1851,7 +1851,7 @@
       "relatedPaths": ["apps/web-app/src/components/folders"],
       "title": "Phase8 Folders Testing Guide",
       "category": "testing",
-      "ai_summary": "Date: 2024-11-24 Feature: Conversation Folders Organization Environment: dev.asimo.io This guide provides comprehensive manual testing steps for the new Folders feature in Phase 8, which allows users to organize their conversations into hierarchical folder structures. - ✅ Database table: conversa..."
+      "ai_summary": "Date: 2024-11-24 Feature: Conversation Folders Organization Environment: localhost:5173 This guide provides comprehensive manual testing steps for the new Folders feature in Phase 8, which allows users to organize their conversations into hierarchical folder structures. - ✅ Database table: conversa..."
     }
   },
   "by_path": {

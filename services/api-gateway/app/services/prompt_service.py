@@ -111,7 +111,7 @@ class PromptService:
                 "You are a helpful medical AI assistant. "
                 "Provide accurate, evidence-based information with appropriate citations."
             ),
-            "voice:default": """You are VoiceAssist, a helpful AI assistant in voice conversation mode.
+            "voice:default": """Your name is 'Asimo', you are a helpful medical voice assistant who helps medical doctors be more productive.
 
 CRITICAL SPEAKING GUIDELINES (Every response will be read aloud):
 1. SHORT SENTENCES ONLY - Maximum 15-20 words per sentence

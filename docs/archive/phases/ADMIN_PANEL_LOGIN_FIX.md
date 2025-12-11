@@ -22,7 +22,7 @@ relatedPaths:
   - "services/api-gateway/app/api/auth.py"
 ai_summary: >-
   Date: 2025-11-22 Issue: Login failed with CORS errors and Firebase errors
-  Status: ✅ RESOLVED --- When attempting to log in to https://admin.asimo.io,
+  Status: ✅ RESOLVED --- When attempting to log in to http://localhost:5174,
   the following errors occurred: Firebase: Error (auth/network-request-failed) -
   The admin panel was loading Firebase authentication code - This indi...
 ---
@@ -37,7 +37,7 @@ ai_summary: >-
 
 ## Problem Summary
 
-When attempting to log in to https://admin.asimo.io, the following errors occurred:
+When attempting to log in to http://localhost:5174, the following errors occurred:
 
 ### 1. Firebase Errors (Wrong Bundle)
 
@@ -51,11 +51,11 @@ Firebase: Error (auth/network-request-failed)
 ### 2. CORS Error
 
 ```
-Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'https://admin.asimo.io'
+Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'http://localhost:5174'
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
 ```
 
-- Admin panel was trying to call `http://localhost:8000` from `https://admin.asimo.io`
+- Admin panel was trying to call `http://localhost:8000` from `http://localhost:5174`
 - Browser blocked cross-origin request
 
 ---
@@ -74,7 +74,7 @@ has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is pres
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 ```
 
-**Issue**: In production, this caused cross-origin requests from `https://admin.asimo.io` to `http://localhost:8000`
+**Issue**: In production, this caused cross-origin requests from `http://localhost:5174` to `http://localhost:8000`
 
 ### 2. Missing Apache Proxy Configuration
 
@@ -105,13 +105,13 @@ const API_BASE = import.meta.env.VITE_API_URL || "";
 
 **Effect**:
 
-- API requests now use **same-origin** (e.g., `https://admin.asimo.io/api/auth/login`)
+- API requests now use **same-origin** (e.g., `http://localhost:5174/api/auth/login`)
 - No CORS issues since requests stay within the same domain
 - Works in both development (with proxy) and production
 
 ### 2. Configured Apache Proxy ✅
 
-**File**: `/etc/apache2/sites-available/admin.asimo.io.conf`
+**File**: `/etc/apache2/sites-available/localhost:5174.conf`
 
 **Added**:
 
@@ -154,11 +154,11 @@ cd ~/VoiceAssist/apps/admin-panel
 npm run build
 
 # Deploy new build
-sudo cp -r dist/* /var/www/admin.asimo.io/
-sudo chown -R www-data:www-data /var/www/admin.asimo.io
+sudo cp -r dist/* /var/www/localhost:5174/
+sudo chown -R www-data:www-data /var/www/localhost:5174
 
 # Update Apache config
-sudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf
+sudo cp /tmp/localhost:5174-static.conf /etc/apache2/sites-available/localhost:5174.conf
 
 # Reload Apache
 sudo systemctl reload apache2
@@ -171,7 +171,7 @@ sudo systemctl reload apache2
 ### 1. Health Endpoint ✅
 
 ```bash
-$ curl -s https://admin.asimo.io/health | jq .
+$ curl -s http://localhost:5174/health | jq .
 {
   "status": "healthy",
   "version": "0.1.0",
@@ -182,7 +182,7 @@ $ curl -s https://admin.asimo.io/health | jq .
 ### 2. Auth Endpoint ✅
 
 ```bash
-$ curl -s https://admin.asimo.io/api/auth/login -X POST \
+$ curl -s http://localhost:5174/api/auth/login -X POST \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test"}'
 
@@ -191,8 +191,8 @@ $ curl -s https://admin.asimo.io/api/auth/login -X POST \
 
 ### 3. No CORS Errors ✅
 
-- Requests originate from `https://admin.asimo.io`
-- Target `https://admin.asimo.io/api/*` (same origin)
+- Requests originate from `http://localhost:5174`
+- Target `http://localhost:5174/api/*` (same origin)
 - Apache proxies to `http://localhost:8000/api/*`
 - No cross-origin issues
 
@@ -203,7 +203,7 @@ $ curl -s https://admin.asimo.io/api/auth/login -X POST \
 ### Before (Broken)
 
 ```
-Browser (https://admin.asimo.io)
+Browser (http://localhost:5174)
    ↓ Fetch http://localhost:8000/api/auth/login
    ✗ CORS Error: Cross-origin request blocked
 ```
@@ -211,10 +211,10 @@ Browser (https://admin.asimo.io)
 ### After (Working)
 
 ```
-Browser (https://admin.asimo.io)
-   ↓ Fetch https://admin.asimo.io/api/auth/login (same-origin)
+Browser (http://localhost:5174)
+   ↓ Fetch http://localhost:5174/api/auth/login (same-origin)
    ↓
-Apache (admin.asimo.io:443)
+Apache (localhost:5174:443)
    ↓ ProxyPass to http://localhost:8000/api/auth/login
    ↓
 Backend (voiceassist-server:8000)
@@ -233,19 +233,19 @@ Browser
 
 Now that the CORS issue is fixed, you can log in with:
 
-**URL**: https://admin.asimo.io
-**Email**: `admin@asimo.io`
+**URL**: http://localhost:5174
+**Email**: `admin@localhost`
 **Password**: `admin123`
 
 ---
 
 ## Testing Steps
 
-1. **Visit** https://admin.asimo.io
+1. **Visit** http://localhost:5174
 2. **Clear browser cache** (Ctrl+Shift+R) to get new JavaScript bundle
 3. **Open DevTools** (F12) → Console tab
 4. **Enter credentials**:
-   - Email: `admin@asimo.io`
+   - Email: `admin@localhost`
    - Password: `admin123`
 5. **Click "Sign in"**
 6. **Verify**: Should redirect to `/dashboard` and show metrics
@@ -284,7 +284,7 @@ CREATE TABLE users (
 -- Create admin user
 INSERT INTO users (email, full_name, hashed_password, is_active, is_admin)
 VALUES (
-    'admin@asimo.io',
+    'admin@localhost',
     'Admin User',
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYbYC/ZaB8O',
     true,
@@ -294,7 +294,7 @@ VALUES (
 
 **Credentials**:
 
-- Email: admin@asimo.io
+- Email: admin@localhost
 - Password: admin123 (hashed with bcrypt)
 
 ---
@@ -306,13 +306,13 @@ VALUES (
 - Changed `API_BASE` from `'http://localhost:8000'` to `''`
 - Enables same-origin requests
 
-### 2. `/etc/apache2/sites-available/admin.asimo.io.conf`
+### 2. `/etc/apache2/sites-available/localhost:5174.conf`
 
 - Added ProxyPass directives for `/api` and `/health`
 - Updated RewriteCond to exclude API paths
 - Configured proper SPA routing
 
-### 3. `/var/www/admin.asimo.io/*`
+### 3. `/var/www/localhost:5174/*`
 
 - Deployed new build with updated API configuration
 - New JavaScript bundle: `index-BAlGZ301.js` (210.64 KB)
@@ -326,7 +326,7 @@ e7125e3 - fix(admin-panel): Use same-origin API requests for production deployme
 - Changed API_BASE from 'http://localhost:8000' to '' (same origin)
 - API requests now go through Apache proxy
 - Fixes CORS issues in production
-- Admin panel now works at https://admin.asimo.io
+- Admin panel now works at http://localhost:5174
 ```
 
 ---
@@ -341,7 +341,7 @@ e7125e3 - fix(admin-panel): Use same-origin API requests for production deployme
    - Should load `/assets/index-BAlGZ301.js`
    - Should NOT contain Firebase code
 4. **Check API requests** in DevTools → Network:
-   - Should go to `https://admin.asimo.io/api/auth/login`
+   - Should go to `http://localhost:5174/api/auth/login`
    - Should NOT go to `http://localhost:8000`
 
 ### If Apache proxy not working:
@@ -351,7 +351,7 @@ e7125e3 - fix(admin-panel): Use same-origin API requests for production deployme
 sudo systemctl status apache2
 
 # Check site is enabled
-sudo a2query -s admin.asimo.io
+sudo a2query -s localhost:5174
 
 # Check proxy module is enabled
 sudo a2query -m proxy
@@ -363,7 +363,7 @@ sudo a2enmod proxy_http
 sudo systemctl reload apache2
 
 # Test proxy
-curl -s https://admin.asimo.io/health
+curl -s http://localhost:5174/health
 ```
 
 ### If database connection fails:
@@ -376,7 +376,7 @@ docker ps | grep voiceassist-server
 docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "\dt users"
 
 # Check admin user exists
-docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "SELECT email, is_admin FROM users WHERE email='admin@asimo.io';"
+docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "SELECT email, is_admin FROM users WHERE email='admin@localhost';"
 ```
 
 ---
@@ -394,7 +394,7 @@ docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "SELECT e
    docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c "
    UPDATE users
    SET hashed_password = '<new-bcrypt-hash>'
-   WHERE email = 'admin@asimo.io';
+   WHERE email = 'admin@localhost';
    "
    ```
 
@@ -442,9 +442,9 @@ Unexpected token 'I', 'Internal S'... is not valid JSON
 
 ```bash
 # Test login endpoint
-curl -s https://admin.asimo.io/api/auth/login -X POST \
+curl -s http://localhost:5174/api/auth/login -X POST \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@asimo.io","password":"admin123"}' | jq .
+  -d '{"email":"admin@localhost","password":"admin123"}' | jq .
 
 # Expected response:
 {
@@ -523,8 +523,8 @@ if (!userData.is_admin) {
 ### Verification
 
 1. **Rebuild**: `npm run build`
-2. **Deploy**: `sudo cp -r dist/* /var/www/admin.asimo.io/`
-3. **Test**: Try logging in at https://admin.asimo.io
+2. **Deploy**: `sudo cp -r dist/* /var/www/localhost:5174/`
+3. **Test**: Try logging in at http://localhost:5174
 
 ---
 
@@ -640,14 +640,14 @@ The workaround is secure because:
 ✅ **Verified** login working end-to-end
 ✅ **Committed** all changes to Git
 
-**Status**: Admin panel is now fully operational at https://admin.asimo.io
+**Status**: Admin panel is now fully operational at http://localhost:5174
 **Note**: Backend UserResponse schema needs fixing for proper UUID/datetime serialization
 
 **Login Steps:**
 
-1. Visit https://admin.asimo.io
+1. Visit http://localhost:5174
 2. Clear browser cache (Ctrl+Shift+R) to load new JavaScript bundle
-3. Enter credentials: `admin@asimo.io` / `admin123`
+3. Enter credentials: `admin@localhost` / `admin123`
 4. Click "Sign in"
 5. Should redirect to `/dashboard` with metrics displayed
 

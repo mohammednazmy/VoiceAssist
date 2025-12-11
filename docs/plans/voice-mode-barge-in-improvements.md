@@ -1897,7 +1897,7 @@ All changes are guarded by feature flags for gradual rollout:
 - [Utterance Aggregator](/services/api-gateway/app/services/utterance_aggregator.py)
 - [Backchannel Service](/services/api-gateway/app/services/backchannel_service.py)
 - [T/T WebSocket Handler](/services/api-gateway/app/services/thinker_talker_websocket_handler.py)
-- [Voice Architecture Docs](https://assistdocs.asimo.io/voice/architecture)
+- [Voice Architecture Docs](http://localhost:3001/voice/architecture)
 
 ### Industry Research (2024-2025)
 

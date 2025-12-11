@@ -20,7 +20,7 @@ tags:
 
 The VoiceAssist web application provides browser-based access to the AI assistant from any device. Built with React and TypeScript, it offers both text and voice interaction modes with a modern, responsive interface.
 
-**URL**: https://voiceassist.asimo.io
+**URL**: https://localhost:5173
 
 ## Features
 
@@ -168,8 +168,8 @@ Create `.env.production` for production builds:
 
 ```bash
 # API URLs (production)
-VITE_API_URL=https://voice.asimo.io
-VITE_WS_URL=wss://voice.asimo.io/api/realtime/ws
+VITE_API_URL=https://localhost:8000
+VITE_WS_URL=wss://localhost:8000/api/realtime/ws
 
 # Environment
 VITE_ENV=production
@@ -1019,7 +1019,7 @@ npm run preview
 npm run build
 
 # Copy to server
-rsync -avz dist/ user@asimo.io:/var/www/voiceassist/
+rsync -avz dist/ user@localhost:/var/www/voiceassist/
 
 # Or use CI/CD pipeline
 ```

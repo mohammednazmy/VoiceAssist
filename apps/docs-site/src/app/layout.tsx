@@ -8,7 +8,7 @@ import { PageFrame } from "@/components/PageFrame";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const CANONICAL_URL = "https://assistdocs.asimo.io";
+const CANONICAL_URL = "http://localhost:3001";
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_URL),

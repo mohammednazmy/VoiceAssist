@@ -51,7 +51,7 @@ VoiceAssist is a HIPAA-compliant medical AI assistant that helps healthcare prof
 
 ### Accessing VoiceAssist
 
-1. Open your browser and navigate to `https://assist.asimo.io`
+1. Open your browser and navigate to `http://localhost:8000`
 2. Log in with your credentials
 3. You'll see the main chat interface
 

@@ -32,9 +32,9 @@ relatedPaths:
 version: 1.1.0
 ai_summary: >-
   Last Updated: 2025-12-03 Component: apps/docs-site/ Live Site:
-  https://assistdocs.asimo.io --- The docs site is a static Next.js export
+  http://localhost:3001 --- The docs site is a static Next.js export
   served by Apache: docs/.md → Next.js build → static HTML → Apache →
-  assistdocs.asimo.io (apps/docs-site) (out/) (rewrite rules) Key points: - All
+  localhost:3001 (apps/docs-site) (out/) (rewrite rules) Key points: - All
   pages are pre-r...
 ---
 
@@ -42,7 +42,7 @@ ai_summary: >-
 
 **Last Updated:** 2025-12-03
 **Component:** `apps/docs-site/`
-**Live Site:** https://assistdocs.asimo.io
+**Live Site:** http://localhost:3001
 
 ---
 
@@ -51,7 +51,7 @@ ai_summary: >-
 The docs site is a **static Next.js export** served by Apache:
 
 ```
-docs/*.md → Next.js build → static HTML → Apache → assistdocs.asimo.io
+docs/*.md → Next.js build → static HTML → Apache → localhost:3001
            (apps/docs-site)  (out/)       (rewrite rules)
 ```
 
@@ -81,7 +81,7 @@ Key points:
 
 ```bash
 # For route /ai/onboarding, check:
-ls -la /var/www/assistdocs.asimo.io/ai/onboarding.html
+ls -la /var/www/localhost:3001/ai/onboarding.html
 ```
 
 2. Check Apache rewrite logs:
@@ -93,15 +93,15 @@ sudo tail -f /var/log/apache2/assistdocs-error.log
 3. Test with explicit .html:
 
 ```bash
-curl -I https://assistdocs.asimo.io/ai/onboarding.html
+curl -I http://localhost:3001/ai/onboarding.html
 # vs
-curl -I https://assistdocs.asimo.io/ai/onboarding
+curl -I http://localhost:3001/ai/onboarding
 ```
 
 4. Verify Apache rewrite rules:
 
 ```bash
-sudo cat /etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf | grep -A5 "RewriteRule"
+sudo cat /etc/apache2/sites-available/localhost:3001-le-ssl.conf | grep -A5 "RewriteRule"
 ```
 
 **Common Fixes:**
@@ -122,7 +122,7 @@ RewriteRule ^(.*)$ $1.html [L]
 
 - `apps/docs-site/src/app/docs/[...slug]/page.tsx` - Dynamic route
 - `apps/docs-site/src/lib/docs.ts` - `listAllDocPaths()` function
-- Apache config: `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf`
+- Apache config: `/etc/apache2/sites-available/localhost:3001-le-ssl.conf`
 
 ---
 
@@ -193,7 +193,7 @@ export function generateStaticParams() {
 1. Check files exist:
 
 ```bash
-ls -la /var/www/assistdocs.asimo.io/agent/
+ls -la /var/www/localhost:3001/agent/
 # Should have index.json and docs.json
 ```
 
@@ -236,14 +236,14 @@ pnpm --filter docs-site build
 1. Check search index exists:
 
 ```bash
-ls -la /var/www/assistdocs.asimo.io/search-index.json
+ls -la /var/www/localhost:3001/search-index.json
 # Should be several MB
 ```
 
 2. Verify JSON is valid:
 
 ```bash
-jq . /var/www/assistdocs.asimo.io/search-index.json | head -20
+jq . /var/www/localhost:3001/search-index.json | head -20
 ```
 
 3. Check generation:
@@ -256,7 +256,7 @@ pnpm generate-search-index
 4. Test search index fetch:
 
 ```bash
-curl -I https://assistdocs.asimo.io/search-index.json
+curl -I http://localhost:3001/search-index.json
 ```
 
 **Relevant Code Paths:**
@@ -461,27 +461,27 @@ pnpm build
 pnpm --filter docs-site build
 
 # 2. Copy to web root
-sudo cp -r apps/docs-site/out/* /var/www/assistdocs.asimo.io/
+sudo cp -r apps/docs-site/out/* /var/www/localhost:3001/
 
 # 3. Verify permissions
-sudo chown -R www-data:www-data /var/www/assistdocs.asimo.io/
+sudo chown -R www-data:www-data /var/www/localhost:3001/
 
 # 4. Test (docs site has no /health endpoint - use these instead)
-curl -I https://assistdocs.asimo.io/                  # Homepage
-curl https://assistdocs.asimo.io/agent/index.json    # AI agent discovery
-curl https://assistdocs.asimo.io/search-index.json   # Search index
+curl -I http://localhost:3001/                  # Homepage
+curl http://localhost:3001/agent/index.json    # AI agent discovery
+curl http://localhost:3001/search-index.json   # Search index
 ```
 
 ### Apache Configuration
 
-Required config at `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf`:
+Required config at `/etc/apache2/sites-available/localhost:3001-le-ssl.conf`:
 
 ```apache
 <VirtualHost *:443>
-    ServerName assistdocs.asimo.io
-    DocumentRoot /var/www/assistdocs.asimo.io
+    ServerName localhost:3001
+    DocumentRoot /var/www/localhost:3001
 
-    <Directory /var/www/assistdocs.asimo.io>
+    <Directory /var/www/localhost:3001>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
@@ -496,8 +496,8 @@ Required config at `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf
     </Directory>
 
     # SSL certificates
-    SSLCertificateFile /etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem
+    SSLCertificateFile /etc/letsencrypt/live/localhost:3001/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/localhost:3001/privkey.pem
 </VirtualHost>
 ```
 

@@ -33,7 +33,7 @@ export const VOICE_CONFIG = {
  * Login credentials from environment
  */
 const LOGIN_CREDENTIALS = {
-  email: process.env.E2E_EMAIL || "mo@asimo.io",
+  email: process.env.E2E_EMAIL || "test@example.com",
   password: process.env.E2E_PASSWORD || "TestPassword123!",
 };
 

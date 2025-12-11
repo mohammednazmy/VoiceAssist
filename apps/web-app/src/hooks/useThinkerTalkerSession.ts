@@ -2415,11 +2415,15 @@ export function useThinkerTalkerSession(
           return;
         }
 
-        // Build WebSocket URL with auth token
+        // Build WebSocket URL with auth token and conversation_id
         const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
         const wsProtocol = apiBase.startsWith("https") ? "wss" : "ws";
         const wsHost = apiBase.replace(/^https?:\/\//, "") || window.location.host;
-        const wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+        let wsUrl = `${wsProtocol}://${wsHost}/api/voice/pipeline-ws?token=${encodeURIComponent(accessToken)}`;
+        // Include conversation_id in URL for proper context linking
+        if (conversationId) {
+          wsUrl += `&conversation_id=${encodeURIComponent(conversationId)}`;
+        }
 
         voiceLog.debug(
           `[ThinkerTalker] Connecting to WebSocket (token present)`,

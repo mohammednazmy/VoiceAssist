@@ -60,9 +60,9 @@ This is the central hub for all VoiceAssist troubleshooting documentation. Use t
 | Symptom                      | Likely Subsystem | First Doc to Read                                | Key Commands                                              |
 | ---------------------------- | ---------------- | ------------------------------------------------ | --------------------------------------------------------- |
 | API returns 500 errors       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `docker logs voiceassist-server --tail 100 \| grep ERROR` |
-| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat "wss://assist.asimo.io/api/voice/pipeline-ws"`  |
+| WebSocket disconnects        | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | `websocat "ws://localhost:8000/api/voice/pipeline-ws"`  |
 | Voice input not working      | Voice/Realtime   | [Voice Debugging](./DEBUGGING_VOICE_REALTIME.md) | Check browser audio permissions                           |
-| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/assistdocs.asimo.io/`                        |
+| Pages return 404             | Docs Site        | [Docs Site Debugging](./DEBUGGING_DOCS_SITE.md)  | `ls /var/www/localhost:3001/`                        |
 | Slow response times          | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | `curl /metrics \| grep http_request_duration`             |
 | Authentication failing       | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check JWT token expiry, Redis status                      |
 | Search not returning results | Backend          | [Backend Debugging](./DEBUGGING_BACKEND.md)      | Check Qdrant connection, embedding status                 |
@@ -94,8 +94,8 @@ docker logs voiceassist-server --tail 50
 docker logs voiceassist-server --since "30m" 2>&1 | grep -i error
 
 # 3. Check health endpoints
-curl -s https://assist.asimo.io/health | jq
-curl -s https://assist.asimo.io/ready | jq
+curl -s http://localhost:8000/health | jq
+curl -s http://localhost:8000/ready | jq
 
 # 4. Check dependencies
 docker exec voiceassist-redis redis-cli ping
@@ -191,8 +191,8 @@ docker logs voiceassist-server --since "10m" 2>&1 | grep -i "websocket\|stt\|tts
 
 **Key Endpoints:**
 
-- Voice Pipeline (T/T): `wss://assist.asimo.io/api/voice/pipeline-ws`
-- Chat Streaming: `wss://assist.asimo.io/api/realtime/ws`
+- Voice Pipeline (T/T): `ws://localhost:8000/api/voice/pipeline-ws`
+- Chat Streaming: `ws://localhost:8000/api/realtime/ws`
 - Test tools: `websocat`, `wscat`
 
 **Related Documentation:**
@@ -314,14 +314,14 @@ Log format is structured JSON with trace IDs:
 
 ### 3. WebSocket/Voice Issue Investigation
 
-1. Test voice pipeline: `websocat "wss://assist.asimo.io/api/voice/pipeline-ws?token=..."`
+1. Test voice pipeline: `websocat "ws://localhost:8000/api/voice/pipeline-ws?token=..."`
 2. Check browser console for connection errors
 3. Verify Apache WebSocket proxy configuration
 4. Check audio permissions in browser
 
 ### 4. Docs Site Investigation
 
-1. Verify static files exist: `ls /var/www/assistdocs.asimo.io/`
+1. Verify static files exist: `ls /var/www/localhost:3001/`
 2. Test with explicit .html: `curl /ai/onboarding.html`
 3. Check Apache rewrite rules
 4. Run validation: `pnpm validate:metadata`

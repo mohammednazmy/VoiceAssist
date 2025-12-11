@@ -396,7 +396,7 @@ This is the canonical V2 development roadmap for VoiceAssist. It presents a **15
 
 - VoiceAssist deployed to production Ubuntu server
 - SSL certificates configured (Let's Encrypt)
-- Domain DNS configured (voiceassist.asimo.io, admin.asimo.io, etc.)
+- Domain DNS configured (voicelocalhost:8000, localhost:5174, etc.)
 - Production monitoring active (Prometheus, Grafana, alerts)
 - Production smoke tests passed (all services healthy)
 - Production documentation complete (runbooks, incident response)

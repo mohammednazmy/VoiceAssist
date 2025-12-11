@@ -171,16 +171,16 @@ All 8 critical questions have been answered and documented below. These decision
 
 **Implementation Details:**
 
-- **Backend:** Ubuntu server (asimo.io) - existing
+- **Backend:** Ubuntu server (localhost) - existing
 - **Frontend:** Ubuntu server (Docker Compose) for Milestone 1
   - Deploy web-app, admin-panel, docs-site as Docker containers
   - Nginx reverse proxy (existing)
   - Let's Encrypt SSL (existing)
 
 - **Subdomains:**
-  - voiceassist.asimo.io → web-app
-  - admin.voiceassist.asimo.io → admin-panel
-  - docs.voiceassist.asimo.io → docs-site
+  - voiceassist.localhost → web-app
+  - admin.voiceassist.localhost → admin-panel
+  - docs.voiceassist.localhost → docs-site
 
 - **Future Evaluation (after Milestone 1):**
   - Move frontend to Vercel/Netlify for better CDN
@@ -534,7 +534,7 @@ Should frontend apps deploy to the same Ubuntu server or separate infrastructure
 
 **Options:**
 
-- **A)** Same Ubuntu server (asimo.io)
+- **A)** Same Ubuntu server (localhost)
   - **Pros:** Simpler, single point of management, no extra cost
   - **Cons:** Single point of failure, no global CDN, manual deployments
   - **Cost:** $0 extra
@@ -559,14 +559,14 @@ Should frontend apps deploy to the same Ubuntu server or separate infrastructure
 
 **Architecture:**
 
-- **Backend:** Ubuntu server at asimo.io (existing, production-ready)
+- **Backend:** Ubuntu server at localhost (existing, production-ready)
   - API Gateway, databases, services
   - Existing monitoring stack
 
 - **Frontend:** Vercel or Netlify
-  - voiceassist.asimo.io → Vercel/Netlify edge
-  - admin.voiceassist.asimo.io → Vercel/Netlify edge
-  - docs.voiceassist.asimo.io → Vercel/Netlify edge
+  - voiceassist.localhost → Vercel/Netlify edge
+  - admin.voiceassist.localhost → Vercel/Netlify edge
+  - docs.voiceassist.localhost → Vercel/Netlify edge
   - Global CDN for fast load times
   - Automatic preview deployments for PRs
 
@@ -1095,8 +1095,8 @@ Do we need separate staging/production environments for frontend?
 **Options:**
 
 - **A)** Yes, separate staging environments
-  - **Staging:** staging.voiceassist.asimo.io
-  - **Production:** voiceassist.asimo.io
+  - **Staging:** staging.voiceassist.localhost
+  - **Production:** voiceassist.localhost
   - **Benefits:** Safer, final QA before production
   - **Cost:** $0 (same Vercel/Netlify account)
 
@@ -1111,8 +1111,8 @@ Do we need separate staging/production environments for frontend?
 **Configuration:**
 
 - **Local Dev:** http://localhost:3000 → API at http://localhost:8000
-- **Staging:** https://staging.voiceassist.asimo.io → API at https://staging-api.asimo.io
-- **Production:** https://voiceassist.asimo.io → API at https://api.asimo.io
+- **Staging:** https://staging.voiceassist.localhost → API at https://staging-api.localhost
+- **Production:** https://voiceassist.localhost → API at https://api.localhost
 - **PR Previews:** https://pr-123.voiceassist.vercel.app → API at staging
 
 **Workflow:**

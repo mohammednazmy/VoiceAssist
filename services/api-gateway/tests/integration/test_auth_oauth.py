@@ -56,8 +56,8 @@ class TestOAuthAuthorizeEndpoints:
         with patch("app.api.auth_oauth.settings") as mock_settings:
             mock_settings.GOOGLE_CLIENT_ID = "test-google-client-id"
             mock_settings.GOOGLE_CLIENT_SECRET = "test-google-secret"
-            mock_settings.GOOGLE_OAUTH_REDIRECT_URI = "https://dev.asimo.io/auth/callback/google"
-            mock_settings.ALLOWED_ORIGINS = "https://dev.asimo.io"
+            mock_settings.GOOGLE_OAUTH_REDIRECT_URI = "http://localhost:5173/auth/callback/google"
+            mock_settings.ALLOWED_ORIGINS = "http://localhost:5173"
 
             response = client.get("/api/auth/oauth/google/authorize")
 
@@ -73,8 +73,8 @@ class TestOAuthAuthorizeEndpoints:
         with patch("app.api.auth_oauth.settings") as mock_settings:
             mock_settings.MICROSOFT_CLIENT_ID = "test-microsoft-client-id"
             mock_settings.MICROSOFT_CLIENT_SECRET = "test-microsoft-secret"
-            mock_settings.MICROSOFT_OAUTH_REDIRECT_URI = "https://dev.asimo.io/auth/callback/microsoft"
-            mock_settings.ALLOWED_ORIGINS = "https://dev.asimo.io"
+            mock_settings.MICROSOFT_OAUTH_REDIRECT_URI = "http://localhost:5173/auth/callback/microsoft"
+            mock_settings.ALLOWED_ORIGINS = "http://localhost:5173"
 
             response = client.get("/api/auth/oauth/microsoft/authorize")
 

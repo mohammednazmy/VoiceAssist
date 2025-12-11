@@ -837,8 +837,8 @@ export const useChat = create<ChatStore>()(
 
 ```tsx
 // Environment variables
-VITE_API_URL=https://voice.asimo.io
-VITE_WS_URL=wss://voice.asimo.io
+VITE_API_URL=https://localhost:5173
+VITE_WS_URL=wss://localhost:5173
 ```
 
 **API Modules:**

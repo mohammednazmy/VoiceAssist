@@ -216,14 +216,14 @@ LOG_LEVEL=INFO
 | Prometheus | http://localhost:9090  | Metrics collection  |
 | Jaeger     | http://localhost:16686 | Distributed tracing |
 
-### Production URLs (asimo.io)
+### Production URLs (localhost)
 
 | Service     | URL                         |
 | ----------- | --------------------------- |
-| Web App     | https://dev.asimo.io        |
-| Admin Panel | https://admin.asimo.io      |
-| Docs Site   | https://assistdocs.asimo.io |
-| API         | https://assist.asimo.io     |
+| Web App     | http://localhost:5173        |
+| Admin Panel | http://localhost:5174      |
+| Docs Site   | http://localhost:3001 |
+| API         | http://localhost:8000     |
 
 ---
 

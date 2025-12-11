@@ -397,7 +397,7 @@ graph TB
     end
 
     subgraph "External"
-        NC["☁️ Nextcloud<br/>(Separate Stack)<br/>localhost:8080 or<br/>cloud.asimo.io"]
+        NC["☁️ Nextcloud<br/>(Separate Stack)<br/>localhost:8080 or<br/>localhost:8080"]
         OpenAI["🤖 OpenAI API<br/>(api.openai.com)"]
     end
 

@@ -79,7 +79,7 @@ This document outlines the testing that has been performed and provides a manual
    - Status: ✅ Fixed
    - URL now configurable via environment variables
    - Development default: `ws://localhost:8000/api/realtime/ws`
-   - Production default: `wss://assist.asimo.io/api/realtime/ws`
+   - Production default: `wss://localhost:8000/api/realtime/ws`
 
 ### Issues Identified (Not Fixed Yet)
 

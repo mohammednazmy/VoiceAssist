@@ -51,7 +51,7 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
                     HTTPS/WSS
                          │
 ┌────────────────────────┴─────────────────────────────────┐
-│              Ubuntu Server (asimo.io)                     │
+│              Ubuntu Server (localhost)                     │
 │                                                            │
 │  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐ │
 │  │  API Server  │  │  Medical KB  │  │  Integrations  │ │
@@ -93,7 +93,7 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
 
 ### Infrastructure
 
-- **Hosting**: Ubuntu server at asimo.io
+- **Hosting**: Ubuntu server at localhost
 - **Reverse Proxy**: Nginx
 - **SSL**: Let's Encrypt
 - **Containerization**: Docker
@@ -101,7 +101,7 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
 
 ## Component Breakdown
 
-### 1. Ubuntu Server (asimo.io)
+### 1. Ubuntu Server (localhost)
 
 **Purpose**: Central backend services, medical knowledge base, integrations
 
@@ -114,11 +114,11 @@ VoiceAssist is a comprehensive AI assistant system designed specifically for med
 
 **Subdomains**:
 
-- `voice.asimo.io` - Voice service
-- `medical-kb.asimo.io` - Medical knowledge
-- `voiceassist.asimo.io` - Main web app
-- `admin.asimo.io` - Admin panel
-- `docs-voice.asimo.io` - Documentation
+- `voice.localhost` - Voice service
+- `medical-kb.localhost` - Medical knowledge
+- `voiceassist.localhost` - Main web app
+- `admin.localhost` - Admin panel
+- `docs-voice.localhost` - Documentation
 
 ### 2. macOS Native Client
 
@@ -443,7 +443,7 @@ JWT_SECRET=...
 ### macOS Client (.env)
 
 ```bash
-SERVER_URL=https://voice.asimo.io
+SERVER_URL=https://voice.localhost
 PORCUPINE_ACCESS_KEY=...
 OPENAI_API_KEY=sk-...
 OLLAMA_URL=http://localhost:11434
@@ -453,8 +453,8 @@ WAKE_WORD=computer
 ### Web Apps (.env.local)
 
 ```bash
-VITE_API_URL=https://voice.asimo.io
-VITE_WS_URL=wss://voice.asimo.io/ws
+VITE_API_URL=https://voice.localhost
+VITE_WS_URL=wss://voice.localhost/ws
 VITE_ENV=development
 ```
 
@@ -512,7 +512,7 @@ VITE_ENV=development
 
 ### Documentation
 
-- Full docs: https://docs-voice.asimo.io (when deployed)
+- Full docs: https://docs-voice.localhost (when deployed)
 - GitHub repo: (to be created)
 
 ### APIs Used

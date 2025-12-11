@@ -36,9 +36,9 @@ export default async function DeploymentPage() {
             Production
           </h3>
           <ul className="text-sm text-green-700 dark:text-green-300 space-y-1">
-            <li>• quran.asimo.io - Voice Mode Web App</li>
-            <li>• kb.asimo.io - Admin Control Panel</li>
-            <li>• docs.asimo.io - Documentation Hub</li>
+            <li>• localhost:5173 - Voice Mode Web App</li>
+            <li>• localhost:5174 - Admin Control Panel</li>
+            <li>• localhost:3001 - Documentation Hub</li>
           </ul>
         </div>
         <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
@@ -124,7 +124,7 @@ export default async function DeploymentPage() {
         {deploymentSummary && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              asimo.io Deployment Summary
+              Local Deployment Summary
             </h2>
             <MarkdownRenderer content={deploymentSummary.content} />
           </div>

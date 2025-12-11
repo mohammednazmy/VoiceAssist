@@ -3,7 +3,7 @@ title: Admin Panel Specs
 slug: admin-panel-specs
 summary: >-
   The VoiceAssist Admin Panel provides a centralized web interface for system
-  configuration, monitoring, and management. Accessible at `admin.asimo.io`.
+  configuration, monitoring, and management. Accessible at `localhost:5174`.
 status: stable
 stability: production
 owner: docs
@@ -24,7 +24,7 @@ relatedPaths:
   - "services/api-gateway/app/api/admin.py"
 ai_summary: >-
   The VoiceAssist Admin Panel provides a centralized web interface for system
-  configuration, monitoring, and management. Accessible at admin.asimo.io. -
+  configuration, monitoring, and management. Accessible at localhost:5174. -
   Framework: React 18+ with TypeScript - Build Tool: Vite - Styling: Tailwind
   CSS - Component Library: shadcn/ui or Tremor (for dashboards) - Charts...
 ---
@@ -33,7 +33,7 @@ ai_summary: >-
 
 ## Overview
 
-The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at `admin.asimo.io`.
+The VoiceAssist Admin Panel provides a centralized web interface for system configuration, monitoring, and management. Accessible at `localhost:5174`.
 
 ## Technology Stack
 
@@ -1604,7 +1604,7 @@ Total: $55.00
 │ Nextcloud Integration                    │
 │                                           │
 │ Status: 🟢 Connected                     │
-│ URL: https://asimo.io/nextcloud          │
+│ URL: http://localhost/nextcloud          │
 │ Username: mohammednazmy                  │
 │                                           │
 │ ☑️ Auto-index medical documents          │
@@ -2348,7 +2348,7 @@ import { HelpButton } from "@voiceassist/ui";
   size="sm" | "md" | "lg"            // Button size
 />
 
-// Opens: https://assistdocs.asimo.io/admin/security#permissions
+// Opens: http://localhost:3001/admin/security#permissions
 ```
 
 **Implementation:**

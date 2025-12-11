@@ -355,8 +355,14 @@ class LLMClient:
                     "model": model_name,
                     "messages": messages,
                     "temperature": req.temperature,
-                    "max_tokens": req.max_tokens,
                 }
+
+                # Use max_completion_tokens for newer models (gpt-4o, gpt-5, o1, o3, etc.)
+                # These models don't support the legacy max_tokens parameter
+                if any(model_name.startswith(prefix) for prefix in ("gpt-4o", "gpt-5", "o1", "o3")):
+                    api_params["max_completion_tokens"] = req.max_tokens
+                else:
+                    api_params["max_tokens"] = req.max_tokens
 
                 # Add tools if provided
                 if req.tools:
@@ -534,9 +540,15 @@ class LLMClient:
                 "model": model_name,
                 "messages": messages,
                 "temperature": req.temperature,
-                "max_tokens": req.max_tokens,
                 "stream": True,
             }
+
+            # Use max_completion_tokens for newer models (gpt-4o, gpt-5, o1, o3, etc.)
+            # These models don't support the legacy max_tokens parameter
+            if any(model_name.startswith(prefix) for prefix in ("gpt-4o", "gpt-5", "o1", "o3")):
+                api_params["max_completion_tokens"] = req.max_tokens
+            else:
+                api_params["max_tokens"] = req.max_tokens
 
             # Add tools if provided
             if req.tools:

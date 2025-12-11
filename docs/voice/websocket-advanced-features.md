@@ -8,7 +8,7 @@ The WebSocket Advanced Features module provides enhanced voice streaming capabil
 2. **No adaptive bitrate based on network conditions** - Dynamic quality adjustment implemented
 3. **No echo cancellation feedback loop** - AEC metrics reported from client to server
 
-All features are behind feature flags and can be enabled gradually via the admin panel at `admin.asimo.io`.
+All features are behind feature flags and can be enabled gradually via the admin panel at `localhost:5174`.
 
 ## Architecture
 

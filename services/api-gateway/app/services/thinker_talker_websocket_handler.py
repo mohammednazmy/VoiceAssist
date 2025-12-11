@@ -661,6 +661,16 @@ class ThinkerTalkerWebSocketHandler:
                 f"features={client_features}, protocol={protocol_version}"
             )
 
+            # Store conversation_id if provided (fallback for when not in URL params)
+            # This allows clients to set conversation_id via session.init message
+            if conversation_id and not self.config.conversation_id:
+                self.config.conversation_id = conversation_id
+                logger.info(f"Set conversation_id from session.init: {conversation_id}")
+                # Update pipeline session's conversation_id if already created
+                if self._pipeline_session:
+                    self._pipeline_session.conversation_id = conversation_id
+                    logger.info(f"Updated pipeline session conversation_id: {conversation_id}")
+
             # Negotiate binary protocol (feature flag controlled)
             negotiated_features = []
             if "binary_audio" in client_features:

@@ -919,9 +919,9 @@ app.add_middleware(
         "http://localhost:5173",  # Web app (Vite default)
         "http://localhost:5174",  # Admin panel
         "http://localhost:3000",  # Docs site (Next.js)
-        "https://voiceassist.asimo.io",  # Production web app
-        "https://admin.asimo.io",         # Production admin
-        "https://docs-voice.asimo.io",    # Production docs
+        "https://voicelocalhost:8000",  # Production web app
+        "http://localhost:5174",         # Production admin
+        "https://localhost:3001",    # Production docs
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -953,9 +953,9 @@ Add production URLs to allowed origins:
 
 ```python
 CORS_ORIGINS: list[str] = [
-    "https://voiceassist.asimo.io",
-    "https://admin.asimo.io",
-    "https://docs-voice.asimo.io",
+    "https://voicelocalhost:8000",
+    "http://localhost:5174",
+    "https://localhost:3001",
 ]
 ```
 

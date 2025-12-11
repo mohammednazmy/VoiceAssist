@@ -2101,7 +2101,7 @@ jobs:
     if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
     environment:
       name: staging
-      url: https://staging.voiceassist.asimo.io
+      url: https://localhost:5173
 
     steps:
       - name: Checkout code
@@ -2124,8 +2124,8 @@ jobs:
       - name: Build all apps
         run: pnpm run build
         env:
-          VITE_API_URL: https://api-staging.voiceassist.asimo.io
-          VITE_WS_URL: wss://ws-staging.voiceassist.asimo.io
+          VITE_API_URL: https://api-localhost:5173
+          VITE_WS_URL: wss://ws-localhost:5173
 
       - name: Deploy to staging
         uses: easingthemes/ssh-deploy@v4
@@ -2161,7 +2161,7 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
     environment:
       name: production
-      url: https://voiceassist.asimo.io
+      url: https://localhost:5173
 
     steps:
       - name: Checkout code
@@ -2184,13 +2184,13 @@ jobs:
       - name: Build all apps
         run: pnpm run build
         env:
-          VITE_API_URL: https://api.voiceassist.asimo.io
-          VITE_WS_URL: wss://ws.voiceassist.asimo.io
+          VITE_API_URL: https://api.localhost:5173
+          VITE_WS_URL: wss://ws.localhost:5173
 
       - name: Run smoke tests
         run: pnpm run test:smoke
         env:
-          E2E_BASE_URL: https://voiceassist.asimo.io
+          E2E_BASE_URL: https://localhost:5173
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1
@@ -2224,7 +2224,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Deployment to Production Complete*\nVersion: ${{ github.sha }}\nURL: https://voiceassist.asimo.io"
+                    "text": "*Deployment to Production Complete*\nVersion: ${{ github.sha }}\nURL: https://localhost:5173"
                   }
                 }
               ]
@@ -2404,34 +2404,34 @@ pnpm test
 
 # 6. Build for staging
 echo "🏗️  Building applications..."
-export VITE_API_URL=https://api-staging.voiceassist.asimo.io
-export VITE_WS_URL=wss://ws-staging.voiceassist.asimo.io
+export VITE_API_URL=https://api-localhost:5173
+export VITE_WS_URL=wss://ws-localhost:5173
 pnpm run build
 
 # 7. Deploy to staging server
 echo "📤 Deploying to staging server..."
 rsync -avz --delete \
   apps/web-app/dist/ \
-  deploy@staging.voiceassist.asimo.io:/var/www/voiceassist/web/
+  deploy@localhost:5173:/var/www/voiceassist/web/
 
 rsync -avz --delete \
   apps/admin-panel/dist/ \
-  deploy@staging.voiceassist.asimo.io:/var/www/voiceassist/admin/
+  deploy@localhost:5173:/var/www/voiceassist/admin/
 
 rsync -avz --delete \
   apps/docs-site/dist/ \
-  deploy@staging.voiceassist.asimo.io:/var/www/voiceassist/docs/
+  deploy@localhost:5173:/var/www/voiceassist/docs/
 
 # 8. Verify deployment
 echo "✅ Verifying deployment..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://staging.voiceassist.asimo.io)
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://localhost:5173)
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Error: Staging site returned HTTP $HTTP_STATUS"
   exit 1
 fi
 
 echo "✅ Deployment to staging complete!"
-echo "🌐 URL: https://staging.voiceassist.asimo.io"
+echo "🌐 URL: https://localhost:5173"
 ```
 
 #### Production Deployment
@@ -2460,7 +2460,7 @@ fi
 
 # 3. Create backup
 echo "💾 Creating backup..."
-ssh deploy@voiceassist.asimo.io "tar -czf /backups/voiceassist-$(date +%Y%m%d-%H%M%S).tar.gz /var/www/voiceassist/"
+ssh deploy@localhost:5173 "tar -czf /backups/voiceassist-$(date +%Y%m%d-%H%M%S).tar.gz /var/www/voiceassist/"
 
 # 4. Pull latest changes
 echo "📥 Pulling latest changes..."
@@ -2477,27 +2477,27 @@ pnpm run test:e2e
 
 # 7. Build for production
 echo "🏗️  Building applications..."
-export VITE_API_URL=https://api.voiceassist.asimo.io
-export VITE_WS_URL=wss://ws.voiceassist.asimo.io
+export VITE_API_URL=https://api.localhost:5173
+export VITE_WS_URL=wss://ws.localhost:5173
 pnpm run build
 
 # 8. Deploy to production server
 echo "📤 Deploying to production server..."
 rsync -avz --delete \
   apps/web-app/dist/ \
-  deploy@voiceassist.asimo.io:/var/www/voiceassist/web-new/
+  deploy@localhost:5173:/var/www/voiceassist/web-new/
 
 rsync -avz --delete \
   apps/admin-panel/dist/ \
-  deploy@voiceassist.asimo.io:/var/www/voiceassist/admin-new/
+  deploy@localhost:5173:/var/www/voiceassist/admin-new/
 
 rsync -avz --delete \
   apps/docs-site/dist/ \
-  deploy@voiceassist.asimo.io:/var/www/voiceassist/docs-new/
+  deploy@localhost:5173:/var/www/voiceassist/docs-new/
 
 # 9. Atomic swap
 echo "🔄 Performing atomic swap..."
-ssh deploy@voiceassist.asimo.io << 'EOF'
+ssh deploy@localhost:5173 << 'EOF'
   mv /var/www/voiceassist/web /var/www/voiceassist/web-old
   mv /var/www/voiceassist/web-new /var/www/voiceassist/web
 
@@ -2510,11 +2510,11 @@ EOF
 
 # 10. Verify deployment
 echo "✅ Verifying deployment..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://voiceassist.asimo.io)
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://localhost:5173)
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Error: Production site returned HTTP $HTTP_STATUS"
   echo "🔙 Rolling back..."
-  ssh deploy@voiceassist.asimo.io << 'EOF'
+  ssh deploy@localhost:5173 << 'EOF'
     mv /var/www/voiceassist/web /var/www/voiceassist/web-failed
     mv /var/www/voiceassist/web-old /var/www/voiceassist/web
 EOF
@@ -2523,7 +2523,7 @@ fi
 
 # 11. Clean up old versions
 echo "🧹 Cleaning up..."
-ssh deploy@voiceassist.asimo.io "rm -rf /var/www/voiceassist/*-old"
+ssh deploy@localhost:5173 "rm -rf /var/www/voiceassist/*-old"
 
 # 12. Create release tag
 VERSION=$(date +%Y.%m.%d-%H%M)
@@ -2531,7 +2531,7 @@ git tag -a "v$VERSION" -m "Production deployment $VERSION"
 git push origin "v$VERSION"
 
 echo "✅ Deployment to production complete!"
-echo "🌐 URL: https://voiceassist.asimo.io"
+echo "🌐 URL: https://localhost:5173"
 echo "🏷️  Version: v$VERSION"
 ```
 
@@ -2554,27 +2554,27 @@ fi
 
 # 2. List available backups
 echo "📦 Available backups:"
-ssh deploy@voiceassist.asimo.io "ls -lht /backups/voiceassist-*.tar.gz | head -5"
+ssh deploy@localhost:5173 "ls -lht /backups/voiceassist-*.tar.gz | head -5"
 
 # 3. Select backup
 read -p "Enter backup filename (e.g., voiceassist-20250121-143000.tar.gz): " BACKUP_FILE
 
 # 4. Restore from backup
 echo "🔄 Restoring from backup..."
-ssh deploy@voiceassist.asimo.io << EOF
+ssh deploy@localhost:5173 << EOF
   cd /var/www
   tar -xzf /backups/$BACKUP_FILE
 EOF
 
 # 5. Verify restoration
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://voiceassist.asimo.io)
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://localhost:5173)
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Error: Rollback verification failed"
   exit 1
 fi
 
 echo "✅ Rollback complete!"
-echo "🌐 URL: https://voiceassist.asimo.io"
+echo "🌐 URL: https://localhost:5173"
 ```
 
 ### 5.4 Post-Deployment Verification
@@ -2585,7 +2585,7 @@ echo "🌐 URL: https://voiceassist.asimo.io"
 
 set -e
 
-BASE_URL=${1:-https://voiceassist.asimo.io}
+BASE_URL=${1:-https://localhost:5173}
 
 echo "🔍 Verifying deployment at $BASE_URL..."
 
@@ -2606,7 +2606,7 @@ else
 fi
 
 # 3. Check SSL certificate
-SSL_EXPIRY=$(echo | openssl s_client -servername voiceassist.asimo.io -connect voiceassist.asimo.io:443 2>/dev/null | openssl x509 -noout -dates | grep notAfter | cut -d= -f2)
+SSL_EXPIRY=$(echo | openssl s_client -servername localhost:5173 -connect localhost:5173:443 2>/dev/null | openssl x509 -noout -dates | grep notAfter | cut -d= -f2)
 echo "✅ SSL certificate valid until: $SSL_EXPIRY"
 
 # 4. Check critical endpoints
@@ -2665,7 +2665,7 @@ echo "✅ Deployment verification complete!"
  * ```
  *
  * @see {@link AuthResponse} for response structure
- * @see {@link https://docs.voiceassist.asimo.io/auth|Auth Documentation}
+ * @see {@link https://docs.localhost:5173/auth|Auth Documentation}
  */
 async function loginUser(email: string, password: string): Promise<AuthResponse> {
   // Implementation
@@ -3057,7 +3057,7 @@ module.exports = {
 
 // Constants (UPPER_SNAKE_CASE)
 const MAX_RETRY_COUNT = 3;
-const API_BASE_URL = 'https://api.voiceassist.asimo.io';
+const API_BASE_URL = 'https://api.localhost:5173';
 
 // Enums (PascalCase)
 enum UserRole {
@@ -3505,7 +3505,7 @@ import { Profiler } from 'react';
 
 ### 10.3 Support Resources
 
-- **Documentation:** https://docs-voice.asimo.io
+- **Documentation:** https://docs-localhost:5173
 - **GitHub Issues:** https://github.com/mohammednazmy/VoiceAssist/issues
 - **Team Slack:** #voiceassist-dev
 - **Tech Lead:** [Name]

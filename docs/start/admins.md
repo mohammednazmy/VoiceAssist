@@ -107,7 +107,7 @@ For complete configuration reference, see [Configuration Reference](../CONFIGURA
 
 ### Accessing Admin Panel
 
-1. Navigate to `https://assist.asimo.io/admin`
+1. Navigate to `http://localhost:8000/admin`
 2. Log in with admin credentials
 3. You'll see the admin dashboard
 
@@ -131,13 +131,13 @@ For detailed admin panel documentation, see [Admin Panel Specs](../ADMIN_PANEL_S
 
 ```bash
 # Basic health check
-curl https://assist.asimo.io/health
+curl http://localhost:8000/health
 
 # Readiness check
-curl https://assist.asimo.io/ready
+curl http://localhost:8000/ready
 
 # Detailed metrics
-curl https://assist.asimo.io/metrics
+curl http://localhost:8000/metrics
 ```
 
 ### Key Metrics to Monitor
@@ -166,7 +166,7 @@ Configure alerts for:
 
 ```bash
 # Via API
-curl -X POST https://assist.asimo.io/api/users \
+curl -X POST http://localhost:8000/api/users \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "role": "user"}'
@@ -200,7 +200,7 @@ curl -X POST https://assist.asimo.io/api/users \
 ### Via API
 
 ```bash
-curl -X POST https://assist.asimo.io/api/admin/kb/upload \
+curl -X POST http://localhost:8000/api/admin/kb/upload \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -F "file=@document.pdf"
 ```
@@ -209,7 +209,7 @@ curl -X POST https://assist.asimo.io/api/admin/kb/upload \
 
 ```bash
 # Trigger full re-index
-curl -X POST https://assist.asimo.io/api/admin/kb/reindex \
+curl -X POST http://localhost:8000/api/admin/kb/reindex \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
@@ -260,7 +260,7 @@ All admin actions are logged:
 
 ```bash
 # View recent admin actions
-curl https://assist.asimo.io/api/admin/audit \
+curl http://localhost:8000/api/admin/audit \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 

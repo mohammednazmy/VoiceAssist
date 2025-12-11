@@ -227,7 +227,7 @@ const handleMessageWithSequence = useCallback((message) => {
 
 ## Admin Panel Integration
 
-Feature flags can be managed at `admin.asimo.io` under Feature Flags:
+Feature flags can be managed at `localhost:5174` under Feature Flags:
 
 - `backend.ws_binary_protocol` - Enable/disable binary audio protocol
 - `backend.ws_message_batching` - Enable/disable message batching

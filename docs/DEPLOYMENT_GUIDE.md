@@ -121,7 +121,7 @@ ENCRYPTION_KEY=your_encryption_key_here
 OPENAI_API_KEY=your_openai_key
 
 # Nextcloud Integration
-NEXTCLOUD_BASE_URL=https://cloud.asimo.io
+NEXTCLOUD_BASE_URL=https://localhost:8080
 NEXTCLOUD_CLIENT_ID=voiceassist
 NEXTCLOUD_CLIENT_SECRET=your_nextcloud_secret
 ```

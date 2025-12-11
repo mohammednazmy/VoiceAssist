@@ -20,9 +20,9 @@ relatedPaths:
   - "apps/admin-panel/vite.config.ts"
   - "apps/admin-panel/package.json"
 ai_summary: >-
-  Date: 2025-11-22 Server: asimo.io (Ubuntu 24.04.3 LTS) Domain:
-  https://admin.asimo.io Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist
-  Admin Panel has been successfully deployed to production on asimo.io. The
+  Date: 2025-11-22 Server: localhost (Ubuntu 24.04.3 LTS) Domain:
+  http://localhost:5174 Status: ✅ DEPLOYED & OPERATIONAL --- The VoiceAssist
+  Admin Panel has been successfully deployed to production on localhost. The
   admin panel is a React-based SPA (Single Page Application) served via Apache
   with SS...
 ---
@@ -30,15 +30,15 @@ ai_summary: >-
 # Admin Panel Deployment Summary
 
 **Date**: 2025-11-22
-**Server**: asimo.io (Ubuntu 24.04.3 LTS)
-**Domain**: https://admin.asimo.io
+**Server**: localhost (Ubuntu 24.04.3 LTS)
+**Domain**: http://localhost:5174
 **Status**: ✅ **DEPLOYED & OPERATIONAL**
 
 ---
 
 ## Deployment Overview
 
-The VoiceAssist Admin Panel has been successfully deployed to production on asimo.io. The admin panel is a React-based SPA (Single Page Application) served via Apache with SSL/TLS encryption.
+The VoiceAssist Admin Panel has been successfully deployed to production on localhost. The admin panel is a React-based SPA (Single Page Application) served via Apache with SSL/TLS encryption.
 
 ---
 
@@ -62,24 +62,24 @@ npm run build
 
 ```bash
 # Create web directory
-sudo mkdir -p /var/www/admin.asimo.io
+sudo mkdir -p /var/www/localhost:5174
 
 # Copy built files
-sudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/admin.asimo.io/
+sudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/localhost:5174/
 
 # Set ownership
-sudo chown -R www-data:www-data /var/www/admin.asimo.io
+sudo chown -R www-data:www-data /var/www/localhost:5174
 ```
 
 **Deployed Files:**
 
-- `/var/www/admin.asimo.io/index.html` (403 bytes)
-- `/var/www/admin.asimo.io/assets/index-C3epBpcL.js` (202 KB)
-- `/var/www/admin.asimo.io/assets/index-D8qvZpew.css` (0.12 KB)
+- `/var/www/localhost:5174/index.html` (403 bytes)
+- `/var/www/localhost:5174/assets/index-C3epBpcL.js` (202 KB)
+- `/var/www/localhost:5174/assets/index-D8qvZpew.css` (0.12 KB)
 
 ### 3. Apache Configuration
 
-**Config File**: `/etc/apache2/sites-available/admin.asimo.io.conf`
+**Config File**: `/etc/apache2/sites-available/localhost:5174.conf`
 
 **Key Features:**
 
@@ -93,14 +93,14 @@ sudo chown -R www-data:www-data /var/www/admin.asimo.io
 **Certificate:**
 
 - Provider: Let's Encrypt
-- Certificate: `/etc/letsencrypt/live/assist.asimo.io/fullchain.pem`
-- Private Key: `/etc/letsencrypt/live/assist.asimo.io/privkey.pem`
+- Certificate: `/etc/letsencrypt/live/localhost:8000/fullchain.pem`
+- Private Key: `/etc/letsencrypt/live/localhost:8000/privkey.pem`
 
 ### 4. Apache Activation
 
 ```bash
 # Enable site
-sudo a2ensite admin.asimo.io.conf
+sudo a2ensite localhost:5174.conf
 
 # Test configuration
 sudo apache2ctl configtest
@@ -117,7 +117,7 @@ sudo systemctl reload apache2
 
 ### Public URL
 
-**URL**: https://admin.asimo.io
+**URL**: http://localhost:5174
 
 **Status**: ✅ Responding with HTTP 200 OK
 
@@ -131,7 +131,7 @@ X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
 X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://api.asimo.io;
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://api.localhost;
 Access-Control-Allow-Origin: *
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH
 Access-Control-Allow-Headers: Content-Type, Authorization
@@ -156,9 +156,9 @@ Content-Type: text/html
 ```
 Browser
    ↓ HTTPS
-Apache (admin.asimo.io:443)
+Apache (localhost:5174:443)
    ↓ Serves static files
-/var/www/admin.asimo.io/
+/var/www/localhost:5174/
    ├── index.html
    └── assets/
        ├── index-C3epBpcL.js
@@ -170,7 +170,7 @@ Apache (admin.asimo.io:443)
 ```
 Admin Panel (Browser)
    ↓ HTTP/HTTPS
-API Backend (localhost:8000 or api.asimo.io)
+API Backend (localhost:8000 or api.localhost)
    ↓ REST/WebSocket
 Services (PostgreSQL, Redis, Qdrant)
 ```
@@ -213,7 +213,7 @@ Services (PostgreSQL, Redis, Qdrant)
 5. **Content-Security-Policy**: Restrictive policy
    - `default-src 'self'`
    - `script-src 'self' 'unsafe-inline' 'unsafe-eval'`
-   - `connect-src 'self' http://localhost:8000 https://api.asimo.io`
+   - `connect-src 'self' http://localhost:8000 https://api.localhost`
 
 ### CORS Configuration
 
@@ -248,8 +248,8 @@ Services (PostgreSQL, Redis, Qdrant)
 3. **Deploy**:
 
    ```bash
-   sudo cp -r dist/* /var/www/admin.asimo.io/
-   sudo chown -R www-data:www-data /var/www/admin.asimo.io
+   sudo cp -r dist/* /var/www/localhost:5174/
+   sudo chown -R www-data:www-data /var/www/localhost:5174
    ```
 
 4. **Clear browser cache** (Ctrl+Shift+R)
@@ -319,7 +319,7 @@ sudo apache2ctl -S | grep admin
 ### Current Deployment
 
 **Source**: `~/VoiceAssist/apps/admin-panel/dist/`
-**Deployed**: `/var/www/admin.asimo.io/`
+**Deployed**: `/var/www/localhost:5174/`
 **Git Branch**: `main`
 **Git Commit**: `9fa5127`
 
@@ -338,8 +338,8 @@ cd apps/admin-panel
 npm run build
 
 # 3. Redeploy
-sudo cp -r dist/* /var/www/admin.asimo.io/
-sudo chown -R www-data:www-data /var/www/admin.asimo.io
+sudo cp -r dist/* /var/www/localhost:5174/
+sudo chown -R www-data:www-data /var/www/localhost:5174
 
 # 4. Return to main
 git checkout main
@@ -360,7 +360,7 @@ git checkout main
 2. **Restrict CORS**
 
    ```apache
-   Header always set Access-Control-Allow-Origin "https://admin.asimo.io"
+   Header always set Access-Control-Allow-Origin "http://localhost:5174"
    ```
 
 3. **Rate Limiting**
@@ -391,7 +391,7 @@ git checkout main
 
 - [x] Code merged to main branch
 - [x] Production build successful
-- [x] Files copied to /var/www/admin.asimo.io/
+- [x] Files copied to /var/www/localhost:5174/
 - [x] Ownership set to www-data
 - [x] Apache config updated
 - [x] Apache config tested
@@ -434,8 +434,8 @@ For issues or questions:
 
 - **Admin Panel Guide**: `/home/asimo/VoiceAssist/apps/admin-panel/ADMIN_PANEL_GUIDE.md`
 - **Implementation Summary**: `/home/asimo/VoiceAssist/docs/ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md`
-- **Apache Config**: `/etc/apache2/sites-available/admin.asimo.io.conf`
-- **Deployed Files**: `/var/www/admin.asimo.io/`
+- **Apache Config**: `/etc/apache2/sites-available/localhost:5174.conf`
+- **Deployed Files**: `/var/www/localhost:5174/`
 
 ---
 
@@ -443,7 +443,7 @@ For issues or questions:
 
 ✅ **Admin Panel Deployed Successfully**
 
-- **URL**: https://admin.asimo.io
+- **URL**: http://localhost:5174
 - **Status**: Operational
 - **Response**: HTTP 200 OK
 - **SSL**: Valid (Let's Encrypt)

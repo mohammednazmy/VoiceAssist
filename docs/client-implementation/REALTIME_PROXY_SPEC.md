@@ -21,7 +21,7 @@ ai_summary: >-
   The VoiceAssist platform uses WebSocket connections for real-time
   bidirectional communication between the client and the OpenAI Realtime API.
   This document specifies the protocol, message formats, error handling, and
-  implementation details. --- wss://assist.asimo.io/api/realtime const
+  implementation details. --- wss://localhost:8000/api/realtime const
   conversatio...
 ---
 
@@ -38,7 +38,7 @@ The VoiceAssist platform uses WebSocket connections for real-time bidirectional 
 ### Connection URL
 
 ```
-wss://assist.asimo.io/api/realtime
+wss://localhost:8000/api/realtime
 ```
 
 ### Query Parameters
@@ -53,7 +53,7 @@ wss://assist.asimo.io/api/realtime
 ```javascript
 const conversationId = "conv-123";
 const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-const ws = new WebSocket(`wss://assist.asimo.io/api/realtime?conversationId=${conversationId}&token=${token}`);
+const ws = new WebSocket(`wss://localhost:8000/api/realtime?conversationId=${conversationId}&token=${token}`);
 ```
 
 ---
@@ -94,7 +94,7 @@ Conversation Created → Load History → Connect WebSocket → Send/Receive Mes
    ```
 4. Client connects new WebSocket with new `conversationId`:
    ```javascript
-   const ws = new WebSocket(`wss://assist.asimo.io/api/realtime?conversationId=${newConversationId}&token=${token}`);
+   const ws = new WebSocket(`wss://localhost:8000/api/realtime?conversationId=${newConversationId}&token=${token}`);
    ```
 
 **Critical Requirements:**

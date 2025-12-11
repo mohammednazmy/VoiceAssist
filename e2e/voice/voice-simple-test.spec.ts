@@ -13,7 +13,7 @@ test.describe('Voice Mode - Simple Test', () => {
 
     // Login - using exact selectors from codegen
     await page.getByRole('textbox', { name: 'Emailrequired' }).click();
-    await page.getByRole('textbox', { name: 'Emailrequired' }).fill('mo@asimo.io');
+    await page.getByRole('textbox', { name: 'Emailrequired' }).fill('test@example.com');
     await page.getByRole('textbox', { name: 'Emailrequired' }).press('Tab');
     await page.getByRole('textbox', { name: 'Passwordrequired' }).fill('uL8-p9rp');
     await page.getByRole('button', { name: 'Sign in to VoiceAssist' }).click();

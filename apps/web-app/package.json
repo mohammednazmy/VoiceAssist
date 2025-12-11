@@ -16,7 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:dev": "E2E_BASE_URL=https://dev.asimo.io playwright test",
+    "test:e2e:dev": "E2E_BASE_URL=http://localhost:5173 playwright test",
     "test:a11y": "playwright test e2e/accessibility.spec.ts"
   },
   "dependencies": {

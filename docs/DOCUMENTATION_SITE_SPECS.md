@@ -39,7 +39,7 @@ ai_summary: >-
 
 | Property      | Value                        |
 | ------------- | ---------------------------- |
-| **Domain**    | https://assistdocs.asimo.io  |
+| **Domain**    | http://localhost:3001  |
 | **Framework** | Next.js 14 with App Router   |
 | **Export**    | Static site generation (SSG) |
 | **Hosting**   | Apache (static files)        |
@@ -93,10 +93,10 @@ The docs site exposes structured JSON endpoints for AI agents:
 
 ```bash
 # Fetch documentation index
-curl https://assistdocs.asimo.io/agent/docs.json | jq '.docs | length'
+curl http://localhost:3001/agent/docs.json | jq '.docs | length'
 
 # Get specific debugging task
-curl https://assistdocs.asimo.io/agent/tasks.json | jq '.tasks[] | select(.id == "check-backend-health")'
+curl http://localhost:3001/agent/tasks.json | jq '.tasks[] | select(.id == "check-backend-health")'
 ```
 
 ---
@@ -266,10 +266,10 @@ category: overview|reference|guide|debugging
 
 ```bash
 # apps/docs-site/.env
-NEXT_PUBLIC_SITE_URL=https://assistdocs.asimo.io
-NEXT_PUBLIC_APP_URL=https://dev.asimo.io
-NEXT_PUBLIC_ADMIN_URL=https://admin.asimo.io
-NEXT_PUBLIC_API_URL=https://assist.asimo.io
+NEXT_PUBLIC_SITE_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:5173
+NEXT_PUBLIC_ADMIN_URL=http://localhost:5174
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ---
@@ -290,8 +290,8 @@ The following were evaluated during planning but not implemented:
 
 ### Domain History
 
-- Original proposal: `docs-voice.asimo.io`
-- Current production: `assistdocs.asimo.io`
+- Original proposal: `localhost:3001`
+- Current production: `localhost:3001`
 
 ---
 

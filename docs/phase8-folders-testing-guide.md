@@ -20,7 +20,7 @@ relatedPaths:
   - "apps/web-app/src/components/folders"
 ai_summary: >-
   Date: 2024-11-24 Feature: Conversation Folders Organization Environment:
-  dev.asimo.io This guide provides comprehensive manual testing steps for the
+  localhost:5173 This guide provides comprehensive manual testing steps for the
   new Folders feature in Phase 8, which allows users to organize their
   conversations into hierarchical folder structures. - ✅ Database table:
   conversa...
@@ -30,7 +30,7 @@ ai_summary: >-
 
 **Date**: 2024-11-24
 **Feature**: Conversation Folders Organization
-**Environment**: dev.asimo.io
+**Environment**: localhost:5173
 
 ## Overview
 
@@ -60,16 +60,16 @@ This guide provides comprehensive manual testing steps for the new Folders featu
 
 ### Prerequisites
 
-1. Backend running at `dev.asimo.io:8000`
-2. Frontend deployed to `dev.asimo.io` (or local dev server)
+1. Backend running at `localhost:5173:8000`
+2. Frontend deployed to `localhost:5173` (or local dev server)
 3. Valid user account with authentication tokens
 4. Browser with DevTools available (Chrome/Firefox recommended)
 
 ### Access Points
 
-- **Frontend**: https://dev.asimo.io
-- **Backend API**: https://dev.asimo.io:8000
-- **API Documentation**: https://dev.asimo.io:8000/docs
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5173:8000
+- **API Documentation**: http://localhost:5173:8000/docs
 
 ## Manual Test Cases
 
@@ -120,7 +120,7 @@ This guide provides comprehensive manual testing steps for the new Folders featu
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  https://dev.asimo.io:8000/api/folders/tree
+  http://localhost:5173:8000/api/folders/tree
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
@@ -237,7 +237,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 ```bash
 # Check conversation folder_id updated
 curl -H "Authorization: Bearer $TOKEN" \
-  https://dev.asimo.io:8000/api/sessions/{session_id}
+  http://localhost:5173:8000/api/sessions/{session_id}
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
@@ -295,7 +295,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 curl -X PUT -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Work & Projects"}' \
-  https://dev.asimo.io:8000/api/folders/{folder_id}
+  http://localhost:5173:8000/api/folders/{folder_id}
 ```
 
 **Pass/Fail**: \***\*\_\_\_\*\***
@@ -506,7 +506,7 @@ SELECT id, title, folder_id FROM sessions WHERE user_id = 'USER_ID';
 TOKEN="your_access_token_here"
 
 curl -H "Authorization: Bearer $TOKEN" \
-  https://dev.asimo.io:8000/api/folders/tree | jq .
+  http://localhost:5173:8000/api/folders/tree | jq .
 ```
 
 **Expected Response**:
@@ -539,7 +539,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 curl -X POST -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Personal","icon":"🏠"}' \
-  https://dev.asimo.io:8000/api/folders | jq .
+  http://localhost:5173:8000/api/folders | jq .
 ```
 
 #### 3. Update Conversation Folder
@@ -548,14 +548,14 @@ curl -X POST -H "Authorization: Bearer $TOKEN" \
 curl -X PUT -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"folder_id":"folder_uuid"}' \
-  https://dev.asimo.io:8000/api/sessions/{session_id} | jq .
+  http://localhost:5173:8000/api/sessions/{session_id} | jq .
 ```
 
 #### 4. Delete Folder
 
 ```bash
 curl -X DELETE -H "Authorization: Bearer $TOKEN" \
-  https://dev.asimo.io:8000/api/folders/{folder_id}
+  http://localhost:5173:8000/api/folders/{folder_id}
 ```
 
 ---

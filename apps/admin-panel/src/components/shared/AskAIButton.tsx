@@ -170,7 +170,7 @@ export function AskAIButton({
   };
 
   const docsBaseUrl =
-    import.meta.env.VITE_DOCS_URL || "https://assistdocs.asimo.io/";
+    import.meta.env.VITE_DOCS_URL || "http://localhost:3001/";
 
   const buttonContent = () => {
     const iconSvg = (

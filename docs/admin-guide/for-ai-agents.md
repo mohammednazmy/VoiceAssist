@@ -28,7 +28,7 @@ This page explains how AI agents should navigate and use the VoiceAssist documen
 Start by fetching the agent JSON index to discover available endpoints:
 
 ```bash
-curl https://assistdocs.asimo.io/agent/index.json
+curl http://localhost:3001/agent/index.json
 ```
 
 ### 2. Load Documentation Summaries
@@ -36,7 +36,7 @@ curl https://assistdocs.asimo.io/agent/index.json
 For quick context, fetch the docs-summary endpoint which aggregates `ai_summary` fields:
 
 ```bash
-curl https://assistdocs.asimo.io/agent/docs-summary.json
+curl http://localhost:3001/agent/docs-summary.json
 ```
 
 ### 3. Check Documentation Health
@@ -44,14 +44,14 @@ curl https://assistdocs.asimo.io/agent/docs-summary.json
 Monitor documentation freshness and coverage:
 
 ```bash
-curl https://assistdocs.asimo.io/agent/health.json
+curl http://localhost:3001/agent/health.json
 ```
 
 ---
 
 ## Agent JSON Endpoints
 
-All endpoints are available at `https://assistdocs.asimo.io/agent/`
+All endpoints are available at `http://localhost:3001/agent/`
 
 | Endpoint                    | Purpose                           | Best For                |
 | --------------------------- | --------------------------------- | ----------------------- |
@@ -70,7 +70,7 @@ All endpoints are available at `https://assistdocs.asimo.io/agent/`
 The `/agent/code-examples.json` endpoint provides 3,290+ code snippets with semantic tags:
 
 ```bash
-curl https://assistdocs.asimo.io/agent/code-examples.json | jq '.by_tag | keys'
+curl http://localhost:3001/agent/code-examples.json | jq '.by_tag | keys'
 ```
 
 **Available tags**: `api`, `authentication`, `cache`, `component`, `config`, `database`, `docker`, `environment`, `git`, `http`, `infrastructure`, `kubernetes`, `package-manager`, `react`, `realtime`, `snippet`, `system`, `testing`

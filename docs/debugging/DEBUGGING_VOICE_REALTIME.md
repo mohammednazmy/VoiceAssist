@@ -373,20 +373,20 @@ WebSocket connection to 'wss://...' failed
 
 ```javascript
 // Thinker-Talker voice pipeline (primary)
-const voiceWsUrl = `wss://assist.asimo.io/api/voice/pipeline-ws?token=${accessToken}`;
+const voiceWsUrl = `ws://localhost:8000/api/voice/pipeline-ws?token=${accessToken}`;
 
 // Chat streaming
-const chatWsUrl = `wss://assist.asimo.io/api/realtime/ws?token=${accessToken}`;
+const chatWsUrl = `ws://localhost:8000/api/realtime/ws?token=${accessToken}`;
 ```
 
 3. Test WebSocket connection manually:
 
 ```bash
 # Test Thinker-Talker voice pipeline (primary)
-websocat "wss://assist.asimo.io/api/voice/pipeline-ws?token=YOUR_TOKEN"
+websocat "ws://localhost:8000/api/voice/pipeline-ws?token=YOUR_TOKEN"
 
 # Test chat streaming WebSocket
-wscat -c "wss://assist.asimo.io/api/realtime/ws?token=YOUR_TOKEN"
+wscat -c "ws://localhost:8000/api/realtime/ws?token=YOUR_TOKEN"
 ```
 
 4. Check Apache/Nginx proxy config:
@@ -706,12 +706,12 @@ function draw() {
 ```bash
 # websocat - WebSocket Swiss Army knife
 # Test Thinker-Talker voice pipeline
-websocat -v "wss://assist.asimo.io/api/voice/pipeline-ws?token=YOUR_TOKEN"
+websocat -v "ws://localhost:8000/api/voice/pipeline-ws?token=YOUR_TOKEN"
 
 # wscat - WebSocket cat
 npm install -g wscat
 # Test chat streaming WebSocket
-wscat -c "wss://assist.asimo.io/api/realtime/ws?token=YOUR_TOKEN"
+wscat -c "ws://localhost:8000/api/realtime/ws?token=YOUR_TOKEN"
 ```
 
 ---

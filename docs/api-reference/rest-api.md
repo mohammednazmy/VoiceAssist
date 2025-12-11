@@ -29,7 +29,7 @@ relatedPaths:
   - "packages/api-client/src/index.ts"
 version: 2.0.0
 ai_summary: >-
-  Version: 2.0 Base URL: https://assist.asimo.io/api (production) or
+  Version: 2.0 Base URL: http://localhost:8000/api (production) or
   http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also:
   Auto-generated API Routes - Complete route listing from OpenAPI spec --- The
   VoiceAssist API provides a comprehensive set of endpoints for building
@@ -39,7 +39,7 @@ ai_summary: >-
 # VoiceAssist REST API Reference
 
 **Version:** 2.0
-**Base URL:** `https://assist.asimo.io/api` (production) or `http://localhost:8000/api` (development)
+**Base URL:** `http://localhost:8000/api` (production) or `http://localhost:8000/api` (development)
 **Last Updated:** 2025-11-27
 
 > **See Also:** [Auto-generated API Routes](API_ROUTES.md) - Complete route listing from OpenAPI spec

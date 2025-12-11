@@ -595,7 +595,7 @@ export function MainLayout() {
                   <li>
                     <a
                       href={
-                        import.meta.env.VITE_DOCS_URL || "https://docs.asimo.io"
+                        import.meta.env.VITE_DOCS_URL || "http://localhost:3001"
                       }
                       target="_blank"
                       rel="noopener noreferrer"

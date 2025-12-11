@@ -68,7 +68,7 @@ export default function AdminPanelPage() {
         <p className="text-sm text-gray-600 dark:text-gray-400">
           <strong>Admin Panel URL:</strong>{" "}
           <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
-            https://kb.asimo.io
+            https://kb.localhost
           </code>
         </p>
       </div>

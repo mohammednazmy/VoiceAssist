@@ -21,19 +21,35 @@ const AUTH_FILE = path.join(__dirname, ".auth/user.json");
 const ADMIN_AUTH_FILE = path.join(__dirname, ".auth/admin.json");
 const API_BASE_URL = process.env.API_URL || "http://localhost:8000";
 
+// Guardrail: never talk to asimo.io hosts when running locally
+const asimoPattern = /https?:\/\/.*asimo\.io/i;
+if (API_BASE_URL && asimoPattern.test(API_BASE_URL)) {
+  throw new Error(
+    `SAFETY: API_URL points to ${API_BASE_URL}. Use local endpoints (http://localhost:8000) for E2E runs.`
+  );
+}
+
+const baseUrl = process.env.E2E_BASE_URL || "";
+const targetOrigin = baseUrl || "http://localhost:5173";
+if (baseUrl && asimoPattern.test(baseUrl)) {
+  throw new Error(
+    `SAFETY: E2E_BASE_URL points to ${baseUrl}. Use http://localhost:5173 for local testing.`
+  );
+}
+
 // Token validity buffer - refresh if token expires within this many seconds
 const TOKEN_REFRESH_BUFFER_SECONDS = 60;
 
 // Test user credentials
 const E2E_USER = {
-  email: process.env.E2E_EMAIL || "e2e-test@voiceassist.io",
-  password: process.env.E2E_PASSWORD || "E2eTestPassword123!",
+  email: process.env.E2E_EMAIL || "test@example.com",
+  password: process.env.E2E_PASSWORD || "TestPassword123!",
   fullName: "E2E Test User",
 };
 
 // Admin user credentials (for feature flag operations)
 const E2E_ADMIN = {
-  email: process.env.E2E_ADMIN_EMAIL || "mo@asimo.io",
+  email: process.env.E2E_ADMIN_EMAIL || "test-admin@localhost",
   password: process.env.E2E_ADMIN_PASSWORD || "",
 };
 
@@ -318,7 +334,7 @@ async function globalSetup() {
       cookies: [],
       origins: [
         {
-          origin: "http://localhost:5173",
+          origin: targetOrigin,
           localStorage: [
             {
               name: "voiceassist-auth",
@@ -415,7 +431,7 @@ async function globalSetup() {
     cookies: [],
     origins: [
       {
-        origin: "http://localhost:5173",
+        origin: targetOrigin,
         localStorage: [
           {
             name: "voiceassist-auth",

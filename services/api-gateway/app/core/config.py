@@ -134,7 +134,7 @@ class Settings(BaseSettings):
     BARGE_IN_SUSTAINED_FRAMES: int = 5  # Frames required for barge-in
 
     # WebSocket Latency Optimization Settings
-    # These settings are controlled by feature flags in admin.asimo.io
+    # These settings are controlled by feature flags in the admin panel (local by default)
     # See: backend.voice_ws_audio_prebuffering, backend.voice_ws_compression,
     #      backend.voice_ws_adaptive_chunking
     WS_COMPRESSION_ENABLED: bool = False  # Enable permessage-deflate compression
@@ -177,15 +177,13 @@ class Settings(BaseSettings):
     MICROSOFT_OAUTH_REDIRECT_URI: Optional[str] = None
 
     # CORS (comma-separated list of allowed origins)
-    ALLOWED_ORIGINS: str = (
-        "https://asimo.io,https://dev.asimo.io,https://assist.asimo.io,http://localhost:3000,http://localhost:5173"
-    )
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8080"
 
     # Frontend URL (used for generating share links and other frontend-facing URLs)
     FRONTEND_URL: str = "http://localhost:5173"
 
     # Admin Panel URL (used for invitation and password reset links)
-    ADMIN_PANEL_URL: str = "https://admin.asimo.io"
+    ADMIN_PANEL_URL: str = "http://localhost:5174"
 
     # SMTP Email Configuration (for invitations, password resets)
     SMTP_HOST: str = "smtp.hostinger.com"

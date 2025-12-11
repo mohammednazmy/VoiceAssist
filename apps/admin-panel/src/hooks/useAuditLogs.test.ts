@@ -9,7 +9,7 @@ import { useAuditLogs } from "./useAuditLogs";
 // Use vi.hoisted to define mocks that are accessible inside vi.mock factory
 const { mockRequest, mockGetBaseUrl } = vi.hoisted(() => ({
   mockRequest: vi.fn(),
-  mockGetBaseUrl: vi.fn().mockReturnValue("https://admin.asimo.io"),
+  mockGetBaseUrl: vi.fn().mockReturnValue("http://localhost:5174"),
 }));
 
 vi.mock("../lib/apiClient", () => ({
@@ -336,7 +336,7 @@ describe.skip("useAuditLogs", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://admin.asimo.io/api/admin/audit-logs/export?limit=500",
+        "http://localhost:5174/api/admin/audit-logs/export?limit=500",
         {
           headers: {
             Authorization: "Bearer mock-token",
@@ -386,7 +386,7 @@ describe.skip("useAuditLogs", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://admin.asimo.io/api/admin/audit-logs/export?action=auth.login&limit=500",
+        "http://localhost:5174/api/admin/audit-logs/export?action=auth.login&limit=500",
         expect.any(Object),
       );
     });

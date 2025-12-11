@@ -45,7 +45,7 @@ The Voice Pipeline WebSocket provides bidirectional communication for the Thinke
 Include JWT token in connection URL or headers:
 
 ```javascript
-const ws = new WebSocket(`wss://assist.asimo.io/api/voice/pipeline-ws?token=${accessToken}`);
+const ws = new WebSocket(`ws://localhost:8000/api/voice/pipeline-ws?token=${accessToken}`);
 ```
 
 ### Connection Lifecycle
@@ -407,7 +407,7 @@ Error occurred.
 
 ```javascript
 // 1. Connect
-const ws = new WebSocket(`wss://assist.asimo.io/api/voice/pipeline-ws?token=${token}`);
+const ws = new WebSocket(`ws://localhost:8000/api/voice/pipeline-ws?token=${token}`);
 
 ws.onopen = () => {
   console.log("Connected");

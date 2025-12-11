@@ -204,7 +204,7 @@ export function HelpTooltip({
   const docsBaseUrl =
     typeof import.meta !== "undefined" && import.meta.env?.VITE_DOCS_URL
       ? import.meta.env.VITE_DOCS_URL
-      : "https://assistdocs.asimo.io/";
+      : "http://localhost:3001/";
 
   // Calculate tooltip position
   const updatePosition = useCallback(() => {

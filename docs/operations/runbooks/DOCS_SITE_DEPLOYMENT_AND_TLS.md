@@ -3,7 +3,7 @@ title: Docs Site Deployment and TLS Runbook
 slug: operations/runbooks/docs-site-deployment-tls
 summary: >-
   Step-by-step guide for building, deploying, and managing TLS for
-  assistdocs.asimo.io.
+  localhost:3001.
 status: stable
 stability: production
 owner: sre
@@ -26,8 +26,8 @@ relatedServices:
 category: operations
 version: 1.0.0
 ai_summary: >-
-  Last Updated: 2025-11-27 URL: https://assistdocs.asimo.io Document Root:
-  /var/www/assistdocs.asimo.io --- cd ~/VoiceAssist git pull origin main pnpm
+  Last Updated: 2025-11-27 URL: http://localhost:3001 Document Root:
+  /var/www/localhost:3001 --- cd ~/VoiceAssist git pull origin main pnpm
   install cd apps/docs-site pnpm validate:metadata pnpm check:links node
   scripts/generate-agent-json.mjs pnpm build sudo rm -rf
   /var/www/assistdocs.as...
@@ -36,8 +36,8 @@ ai_summary: >-
 # Docs Site Deployment and TLS Runbook
 
 **Last Updated:** 2025-11-27
-**URL:** https://assistdocs.asimo.io
-**Document Root:** `/var/www/assistdocs.asimo.io`
+**URL:** http://localhost:3001
+**Document Root:** `/var/www/localhost:3001`
 
 ---
 
@@ -67,14 +67,14 @@ pnpm generate-agent-json
 pnpm build
 
 # 8. Deploy to Apache document root
-sudo rm -rf /var/www/assistdocs.asimo.io/*
-sudo cp -r out/* /var/www/assistdocs.asimo.io/
+sudo rm -rf /var/www/localhost:3001/*
+sudo cp -r out/* /var/www/localhost:3001/
 
 # 9. Verify deployment
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/agent/index.json
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/agent/docs.json
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/search-index.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/agent/index.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/agent/docs.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/search-index.json
 ```
 
 ---
@@ -95,8 +95,8 @@ scripts/generate-agent-json  → public/agent/*.json
 ```
 ┌──────────────────────────────────────────────────┐
 │ Apache2 (mod_ssl, mod_rewrite)                   │
-│   - assistdocs.asimo.io-le-ssl.conf              │
-│   - DocumentRoot: /var/www/assistdocs.asimo.io   │
+│   - localhost:3001-le-ssl.conf              │
+│   - DocumentRoot: /var/www/localhost:3001   │
 │   - RewriteEngine for clean URLs                 │
 └──────────────────────────────────────────────────┘
          │
@@ -237,20 +237,20 @@ ls out/agent/
 ### 5.1 Clear Old Files
 
 ```bash
-sudo rm -rf /var/www/assistdocs.asimo.io/*
+sudo rm -rf /var/www/localhost:3001/*
 ```
 
 ### 5.2 Copy New Build
 
 ```bash
-sudo cp -r ~/VoiceAssist/apps/docs-site/out/* /var/www/assistdocs.asimo.io/
+sudo cp -r ~/VoiceAssist/apps/docs-site/out/* /var/www/localhost:3001/
 ```
 
 ### 5.3 Set Permissions
 
 ```bash
-sudo chown -R www-data:www-data /var/www/assistdocs.asimo.io
-sudo chmod -R 755 /var/www/assistdocs.asimo.io
+sudo chown -R www-data:www-data /var/www/localhost:3001
+sudo chmod -R 755 /var/www/localhost:3001
 ```
 
 ### 5.4 Reload Apache (if config changed)
@@ -268,16 +268,16 @@ sudo systemctl reload apache2
 
 ```bash
 # Main page
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/
 
 # AI agent endpoints
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/agent/index.json
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/agent/docs.json
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/search-index.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/agent/index.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/agent/docs.json
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/search-index.json
 
 # Clean URLs (should return 200, not 404)
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/ai/onboarding
-curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/ai/status
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/ai/onboarding
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/ai/status
 ```
 
 **Expected:** All should return `200`.
@@ -286,10 +286,10 @@ curl -s -o /dev/null -w "%{http_code}" https://assistdocs.asimo.io/ai/status
 
 ```bash
 # Verify agent JSON content
-curl -s https://assistdocs.asimo.io/agent/index.json | jq '.endpoints'
+curl -s http://localhost:3001/agent/index.json | jq '.endpoints'
 
 # Verify sitemap
-curl -s https://assistdocs.asimo.io/sitemap.xml | head -20
+curl -s http://localhost:3001/sitemap.xml | head -20
 ```
 
 ---
@@ -299,16 +299,16 @@ curl -s https://assistdocs.asimo.io/sitemap.xml | head -20
 ### Current Certificate Status
 
 ```bash
-sudo certbot certificates | grep -A 5 "assistdocs.asimo.io"
+sudo certbot certificates | grep -A 5 "localhost:3001"
 ```
 
 **Current Certificate:**
 
-- **Domain:** assistdocs.asimo.io
+- **Domain:** localhost:3001
 - **Issuer:** Let's Encrypt
 - **Key Type:** ECDSA
-- **Certificate Path:** `/etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem`
-- **Private Key Path:** `/etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem`
+- **Certificate Path:** `/etc/letsencrypt/live/localhost:3001/fullchain.pem`
+- **Private Key Path:** `/etc/letsencrypt/live/localhost:3001/privkey.pem`
 - **Expiry:** 2026-02-19 (auto-renewed)
 
 ### Automatic Renewal
@@ -330,10 +330,10 @@ sudo certbot renew --dry-run
 
 ```bash
 # Renew specific certificate
-sudo certbot renew --cert-name assistdocs.asimo.io
+sudo certbot renew --cert-name localhost:3001
 
 # Force renewal
-sudo certbot renew --cert-name assistdocs.asimo.io --force-renewal
+sudo certbot renew --cert-name localhost:3001 --force-renewal
 
 # Reload Apache after renewal
 sudo systemctl reload apache2
@@ -342,7 +342,7 @@ sudo systemctl reload apache2
 ### New Certificate (if domain changes)
 
 ```bash
-sudo certbot --apache -d assistdocs.asimo.io
+sudo certbot --apache -d localhost:3001
 ```
 
 ---
@@ -351,16 +351,16 @@ sudo certbot --apache -d assistdocs.asimo.io
 
 ### Configuration File
 
-**Location:** `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf`
+**Location:** `/etc/apache2/sites-available/localhost:3001-le-ssl.conf`
 
 ### Key Configuration
 
 ```apache
 <VirtualHost *:443>
-    ServerName assistdocs.asimo.io
-    DocumentRoot /var/www/assistdocs.asimo.io
+    ServerName localhost:3001
+    DocumentRoot /var/www/localhost:3001
 
-    <Directory /var/www/assistdocs.asimo.io>
+    <Directory /var/www/localhost:3001>
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
@@ -376,8 +376,8 @@ sudo certbot --apache -d assistdocs.asimo.io
 
     # SSL (managed by Certbot)
     SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem
+    SSLCertificateFile /etc/letsencrypt/live/localhost:3001/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/localhost:3001/privkey.pem
 </VirtualHost>
 ```
 
@@ -439,7 +439,7 @@ pnpm generate-agent-json
 
 # Rebuild and redeploy
 pnpm build
-sudo cp -r out/* /var/www/assistdocs.asimo.io/
+sudo cp -r out/* /var/www/localhost:3001/
 ```
 
 ### TLS Certificate Expired
@@ -453,7 +453,7 @@ sudo cp -r out/* /var/www/assistdocs.asimo.io/
 sudo certbot certificates
 
 # Force renewal
-sudo certbot renew --cert-name assistdocs.asimo.io --force-renewal
+sudo certbot renew --cert-name localhost:3001 --force-renewal
 
 # Reload Apache
 sudo systemctl reload apache2

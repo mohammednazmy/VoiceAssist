@@ -30,7 +30,7 @@ relatedPaths:
 ai_summary: >-
   Documentation infrastructure for VoiceAssist. Key validation commands:
   pnpm validate:metadata (frontmatter), pnpm validate:all (all checks).
-  Agent endpoints at assistdocs.asimo.io/agent/*.json include docs.json
+  Agent endpoints at localhost:3001/agent/*.json include docs.json
   (with ai_summary), docs-summary.json, health.json, and code-examples.json.
   See Agent API Reference for endpoint details.
 ---
@@ -53,7 +53,7 @@ The VoiceAssist documentation system consists of:
 
 ### Agent JSON Endpoints
 
-Static JSON endpoints served at `assistdocs.asimo.io`:
+Static JSON endpoints served at `localhost:3001`:
 
 | Endpoint                    | Purpose                                            |
 | --------------------------- | -------------------------------------------------- |

@@ -268,7 +268,7 @@ VOICE_FALLBACK_MODE_ENABLED=true
 ### Via API
 
 ```bash
-curl -X PATCH https://api.dev.asimo.io/api/admin/feature-flags/backend.voice_ws_graceful_degradation \
+curl -X PATCH https://localhost:8000/api/admin/feature-flags/backend.voice_ws_graceful_degradation \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"enabled": true}'
 ```

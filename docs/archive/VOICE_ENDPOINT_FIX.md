@@ -30,7 +30,7 @@ ai_summary: "\U0001F389 --- Status: ✅ Voice endpoints are now working correctl
 The voice transcription and TTS endpoints were returning 404 errors:
 
 ```
-POST https://dev.asimo.io/api/voice/transcribe 404 (Not Found)
+POST http://localhost:5173/api/voice/transcribe 404 (Not Found)
 ```
 
 ## Root Cause
@@ -104,7 +104,7 @@ The frontend voice components are already configured correctly:
 
 To test the voice features:
 
-1. Navigate to: `http://localhost:5174/voice-test` (or `https://dev.asimo.io/voice-test`)
+1. Navigate to: `http://localhost:5174/voice-test` (or `http://localhost:5173/voice-test`)
 2. Log in if prompted
 3. Allow microphone access
 4. Try voice input (VAD or push-to-talk)

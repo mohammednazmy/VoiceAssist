@@ -21,7 +21,7 @@ relatedPaths:
   - "apps/admin-panel/src/pages/Login.tsx"
   - "services/api-gateway/app/api/auth.py"
 ai_summary: >-
-  Date: 2025-11-22 Issue: Admin panel login at https://admin.asimo.io was
+  Date: 2025-11-22 Issue: Admin panel login at http://localhost:5174 was
   failing with "Unexpected token '<', '<!DOCTYPE ' is not valid JSON" Status: ✅
   RESOLVED The admin panel login was failing due to multiple compounding issues:
   1. Frontend receiving HTML error pages instead of JSON responses 2....
@@ -30,7 +30,7 @@ ai_summary: >-
 # Admin Panel Login Fix - Complete Resolution
 
 **Date:** 2025-11-22
-**Issue:** Admin panel login at https://admin.asimo.io was failing with "Unexpected token '<', '<!DOCTYPE ' is not valid JSON"
+**Issue:** Admin panel login at http://localhost:5174 was failing with "Unexpected token '<', '<!DOCTYPE ' is not valid JSON"
 **Status:** ✅ RESOLVED
 
 ## Problem Summary
@@ -50,7 +50,7 @@ The admin panel login was failing due to multiple compounding issues:
 
 **Solution:** Updated Apache proxy configuration to use container IP directly.
 
-**File:** `/etc/apache2/sites-available/admin.asimo.io.conf`
+**File:** `/etc/apache2/sites-available/localhost:5174.conf`
 
 ```apache
 # Before:
@@ -65,7 +65,7 @@ ProxyPassReverse /api http://172.18.0.2:8000/api
 **Commands:**
 
 ```bash
-sudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf
+sudo cp /tmp/localhost:5174-static.conf /etc/apache2/sites-available/localhost:5174.conf
 sudo apache2ctl configtest
 sudo systemctl reload apache2
 ```
@@ -174,7 +174,7 @@ const response = await res.json() as { access_token: string; ... };
 ```bash
 cd /home/asimo/VoiceAssist/apps/admin-panel
 npm run build
-sudo cp -r dist/* /var/www/admin.asimo.io/
+sudo cp -r dist/* /var/www/localhost:5174/
 ```
 
 ## Verification
@@ -182,10 +182,10 @@ sudo cp -r dist/* /var/www/admin.asimo.io/
 ### Backend API Test
 
 ```bash
-curl -s https://admin.asimo.io/api/auth/login \
+curl -s http://localhost:5174/api/auth/login \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@asimo.io","password":"admin123"}' | jq .
+  -d '{"email":"admin@localhost","password":"admin123"}' | jq .
 ```
 
 **Expected Output:**
@@ -287,18 +287,18 @@ git push -u origin fix/admin-panel-login-api-format
 ## Related Documentation
 
 - `/home/asimo/VoiceAssist/docs/ADMIN_PANEL_LOGIN_FIX.md` - Previous troubleshooting attempts
-- `/etc/apache2/sites-available/admin.asimo.io.conf` - Apache configuration
+- `/etc/apache2/sites-available/localhost:5174.conf` - Apache configuration
 - `/home/asimo/VoiceAssist/.env` - Environment variables
 
 ## Testing Checklist
 
 - [x] Backend `/api/auth/login` returns valid JSON tokens
 - [x] Frontend builds without errors
-- [x] Production build deployed to `/var/www/admin.asimo.io/`
+- [x] Production build deployed to `/var/www/localhost:5174/`
 - [x] Apache proxies requests to backend correctly
 - [x] All Docker containers running and healthy
 - [x] Git changes committed and pushed
-- [ ] **User tests login at https://admin.asimo.io/login** ← Final verification needed
+- [ ] **User tests login at http://localhost:5174/login** ← Final verification needed
 
 ## Status
 

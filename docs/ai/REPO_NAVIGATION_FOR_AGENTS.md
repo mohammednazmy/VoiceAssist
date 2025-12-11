@@ -83,7 +83,7 @@ Start with the manifest to understand project structure:
 
 ```bash
 # 1. Get overview stats
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '{
+curl http://localhost:3001/agent/repo-index.json | jq '{
   files: .stats.total_files,
   dirs: .stats.total_dirs,
   size_mb: (.stats.total_size_bytes / 1048576 | floor),
@@ -92,7 +92,7 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '{
 }'
 
 # 2. List key entry points from manifest
-curl https://assistdocs.asimo.io/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("main.py") or endswith("page.tsx"))]'
+curl http://localhost:3001/agent/repo/manifest.json | jq '[.files[] | select(.path | endswith("main.py") or endswith("page.tsx"))]'
 ```
 
 ### Pattern 2: Component-Focused Search
@@ -101,10 +101,10 @@ When working on a specific component:
 
 ```bash
 # Find all files in web-app
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component == "frontend/web-app" and .type == "file")]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.component == "frontend/web-app" and .type == "file")]'
 
 # Find React components
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.component == "frontend/web-app" and (.path | test("components/")))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.component == "frontend/web-app" and (.path | test("components/")))]'
 ```
 
 ### Pattern 3: Keyword Search
@@ -113,10 +113,10 @@ Find files by name pattern:
 
 ```bash
 # Find files with "voice" in path
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("voice"; "i"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | test("voice"; "i"))]'
 
 # Find hook files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("use[A-Z].*\\.ts"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | test("use[A-Z].*\\.ts"))]'
 ```
 
 ### Pattern 4: Language-Based Exploration
@@ -125,10 +125,10 @@ When understanding technology stack:
 
 ```bash
 # All TypeScript files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "typescript")] | length'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.language == "typescript")] | length'
 
 # All Python files in backend
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.language == "python" and (.component | startswith("backend")))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.language == "python" and (.component | startswith("backend")))]'
 ```
 
 ### Pattern 5: File Content Retrieval
@@ -137,7 +137,7 @@ Fetch and analyze source code:
 
 ```bash
 # Get file content
-curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__main.py.json | jq '{
+curl http://localhost:3001/agent/repo/files/services__api-gateway__app__main.py.json | jq '{
   path: .path,
   language: .language,
   lines: .lines,
@@ -145,7 +145,7 @@ curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__ma
 }'
 
 # Check for specific imports (using content)
-curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__main.py.json | jq '.content' | grep -i "from fastapi"
+curl http://localhost:3001/agent/repo/files/services__api-gateway__app__main.py.json | jq '.content' | grep -i "from fastapi"
 ```
 
 ## Workflow: Locate a Feature
@@ -154,16 +154,16 @@ curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__ma
 
 ```bash
 # Step 1: Find voice-related docs
-curl https://assistdocs.asimo.io/agent/docs.json | jq '[.docs[] | select(.path | test("voice"; "i"))] | map({title, path, ai_summary})'
+curl http://localhost:3001/agent/docs.json | jq '[.docs[] | select(.path | test("voice"; "i"))] | map({title, path, ai_summary})'
 
 # Step 2: Find voice-related code files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.type == "file" and (.path | test("voice"; "i")))] | map({path, component, language})'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.type == "file" and (.path | test("voice"; "i")))] | map({path, component, language})'
 
 # Step 3: Categorize by component
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.type == "file" and (.path | test("voice"; "i")))] | group_by(.component) | map({component: .[0].component, count: length})'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.type == "file" and (.path | test("voice"; "i")))] | group_by(.component) | map({component: .[0].component, count: length})'
 
 # Step 4: Get key implementation file
-curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__api__voice.py.json
+curl http://localhost:3001/agent/repo/files/services__api-gateway__app__api__voice.py.json
 ```
 
 ## Workflow: Audit Docs vs Code
@@ -172,10 +172,10 @@ curl https://assistdocs.asimo.io/agent/repo/files/services__api-gateway__app__ap
 
 ```bash
 # Step 1: Get documented API endpoints
-curl https://assistdocs.asimo.io/agent/docs.json | jq '[.docs[] | select(.path | test("API_REFERENCE"))]'
+curl http://localhost:3001/agent/docs.json | jq '[.docs[] | select(.path | test("API_REFERENCE"))]'
 
 # Step 2: Find API route handlers
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | test("services/api-gateway/app/api/.*\\.py$"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | test("services/api-gateway/app/api/.*\\.py$"))]'
 
 # Step 3: Compare documented vs implemented routes
 # (Fetch each file and extract route decorators)
@@ -185,13 +185,13 @@ curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | selec
 
 ```bash
 # Step 1: Get all package.json files
-curl https://assistdocs.asimo.io/agent/repo-index.json | jq '[.entries[] | select(.path | endswith("package.json"))]'
+curl http://localhost:3001/agent/repo-index.json | jq '[.entries[] | select(.path | endswith("package.json"))]'
 
 # Step 2: Fetch root package.json
-curl https://assistdocs.asimo.io/agent/repo/files/package.json.json | jq '.content | fromjson | {dependencies, devDependencies}'
+curl http://localhost:3001/agent/repo/files/package.json.json | jq '.content | fromjson | {dependencies, devDependencies}'
 
 # Step 3: Check pnpm workspace config
-curl https://assistdocs.asimo.io/agent/repo/files/pnpm-workspace.yaml.json
+curl http://localhost:3001/agent/repo/files/pnpm-workspace.yaml.json
 ```
 
 ## Best Practices

@@ -218,7 +218,7 @@ docs(readme): update installation instructions
 
 ## Getting Help
 
-- **Documentation:** [assistdocs.asimo.io](https://assistdocs.asimo.io)
+- **Documentation:** [localhost:3001](http://localhost:3001)
 - **Architecture Questions:** See [UNIFIED_ARCHITECTURE.md](../UNIFIED_ARCHITECTURE.md)
 - **API Questions:** See [API_REFERENCE.md](../API_REFERENCE.md)
 

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://assistdocs.asimo.io/agent/schema.json",
+  "$id": "http://localhost:3001/agent/schema.json",
   "title": "VoiceAssist Documentation API Schema",
   "description": "JSON Schema for the VoiceAssist documentation API endpoints",
   "definitions": {

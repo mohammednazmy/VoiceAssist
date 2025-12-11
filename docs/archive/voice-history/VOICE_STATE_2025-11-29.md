@@ -160,7 +160,7 @@ case "error": {
 ## Architecture Overview
 
 ```
-Frontend (dev.asimo.io)
+Frontend (localhost:5173)
 ├── VoiceModePanel (UI component)
 │   ├── stopCurrentAudio() - stops playback on barge-in
 │   ├── currentAudioRef - tracks playing audio

@@ -731,7 +731,7 @@ class RealtimeVoiceService:
         return True
 
     # Default voice instructions for fallback
-    _DEFAULT_VOICE_INSTRUCTIONS = """You are a helpful medical AI assistant in voice mode.
+    _DEFAULT_VOICE_INSTRUCTIONS = """Your name is 'Asimo', you are a helpful medical AI voice assistant who helps medical doctors be more productive.
 
 Guidelines:
 - Keep responses concise and conversational

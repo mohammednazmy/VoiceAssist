@@ -20,7 +20,7 @@ ai_summary: >-
   serving a specific purpose:
   ┌─────────────────────────────────────────────────────────────┐ │ VoiceAssist
   Platform │ │ │ │ ┌──────────────────┐ ┌──────────────────┐ ┌────────────┐ │ │
-  │ assist.asimo.io │ │ admin.asimo.io │...
+  │ localhost:8000 │ │ localhost:5174 │...
 ---
 
 # VoiceAssist Client Architecture Overview
@@ -34,7 +34,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │                    VoiceAssist Platform                      │
 │                                                              │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │
-│  │  assist.asimo.io │  │ admin.asimo.io   │  │ docs.asimo │ │
+│  │  localhost:8000 │  │ localhost:5174   │  │ docs.asimo │ │
 │  │                  │  │                  │  │ .io        │ │
 │  │   Main Web App   │  │  Admin Panel &   │  │ Docs Hub   │ │
 │  │   Chat Interface │  │  KB Editor       │  │ (canonical)│ │
@@ -47,7 +47,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 │              ┌─────────▼─────────┐                  │        │
 │              │                   │                  │        │
 │              │  Backend Services │                  │        │
-│              │  (assist.asimo.io)│                  │        │
+│              │  (localhost:8000)│                  │        │
 │              │                   │                  │        │
 │              │  • REST API       │                  │        │
 │              │  • WebSocket      │                  │        │
@@ -67,7 +67,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 
 ### Domain Purposes
 
-#### 1. assist.asimo.io (Main Application)
+#### 1. localhost:8000 (Main Application)
 
 **Primary Purpose:** End-user chat interface with real-time AI assistant
 
@@ -104,7 +104,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 
 ---
 
-#### 2. admin.asimo.io (Administration)
+#### 2. localhost:5174 (Administration)
 
 **Primary Purpose:** Administrative control panel and knowledge base management
 
@@ -134,7 +134,7 @@ The VoiceAssist platform is deployed across three dedicated domains, each servin
 
 ---
 
-#### 3. docs.asimo.io (Documentation)
+#### 3. localhost:3001 (Documentation)
 
 **Primary Purpose:** Technical documentation and API reference
 
@@ -180,7 +180,7 @@ docs/
 ## Client Folder Structure
 
 ```
-apps/web-app/                    # Main application (assist.asimo.io)
+apps/web-app/                    # Main application (localhost:8000)
 ├── src/
 │   ├── components/
 │   │   ├── auth/                # Authentication components
@@ -350,7 +350,7 @@ packages/
 **Connection URL:**
 
 ```
-wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
+wss://localhost:8000/api/realtime?conversationId={id}&token={jwt}
 ```
 
 **Event Types:**
@@ -578,7 +578,7 @@ POST   /api/conversations/:id/messages  // Send message (REST fallback)
 **WebSocket Connection:**
 
 ```
-wss://assist.asimo.io/api/realtime?conversationId={id}&token={jwt}
+wss://localhost:8000/api/realtime?conversationId={id}&token={jwt}
 ```
 
 ### State Management
@@ -673,24 +673,24 @@ pnpm test
 pnpm build
 
 # Output:
-# apps/web-app/dist/ (static files for assist.asimo.io)
+# apps/web-app/dist/ (static files for localhost:8000)
 ```
 
 ### Production Deployment
 
 **Static Hosting:**
 
-- Main app (`assist.asimo.io`) served via CDN or static hosting
-- Admin panel (`admin.asimo.io`) served separately
-- Docs site (`docs.asimo.io`) proxied to Next.js runtime with `assistdocs.asimo.io` 301-redirected to the canonical host
+- Main app (`localhost:8000`) served via CDN or static hosting
+- Admin panel (`localhost:5174`) served separately
+- Docs site (`localhost:3001`) proxied to Next.js runtime with `assistlocalhost:3001` 301-redirected to the canonical host
 
 **Environment Variables:**
 
 ```bash
-VITE_API_URL=https://assist.asimo.io/api
-VITE_WS_URL=wss://assist.asimo.io/api/realtime
-VITE_ADMIN_URL=https://admin.asimo.io
-VITE_DOCS_URL=https://docs.asimo.io
+VITE_API_URL=http://localhost:8000/api
+VITE_WS_URL=wss://localhost:8000/api/realtime
+VITE_ADMIN_URL=http://localhost:5174
+VITE_DOCS_URL=http://localhost:3001
 ```
 
 ---

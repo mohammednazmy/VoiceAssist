@@ -199,7 +199,7 @@ docker logs voiceassist-server --since "1h"
 | API Health              | `/health`, `/ready`                     | Service health checks |
 | Prometheus Metrics      | `/metrics`                              | Raw metrics           |
 | Grafana (if configured) | `http://localhost:3000`                 | Visualization         |
-| Apache Status           | `https://assist.asimo.io/server-status` | Web server metrics    |
+| Apache Status           | `http://localhost:8000/server-status` | Web server metrics    |
 
 ---
 

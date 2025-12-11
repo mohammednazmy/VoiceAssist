@@ -904,7 +904,7 @@ Location: `services/api-gateway/app/api/health.py`
 Comprehensive voice subsystem health check:
 
 ```bash
-curl https://assist.asimo.io/health/voice
+curl http://localhost:8000/health/voice
 ```
 
 Response:

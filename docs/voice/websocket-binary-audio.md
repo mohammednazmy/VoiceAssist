@@ -170,7 +170,7 @@ async def _handle_binary_frame(self, data: bytes) -> None:
 ### Via API
 
 ```bash
-curl -X PATCH https://api.dev.asimo.io/api/admin/feature-flags/backend.voice_ws_binary_audio \
+curl -X PATCH https://localhost:8000/api/admin/feature-flags/backend.voice_ws_binary_audio \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"enabled": true, "rollout_percentage": 100}'
 ```

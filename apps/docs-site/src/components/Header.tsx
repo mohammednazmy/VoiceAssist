@@ -81,13 +81,15 @@ export function Header() {
           {/* Cross-app navigation links */}
           <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
           <a
-            href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+            href={process.env.NEXT_PUBLIC_APP_URL || "http://localhost:5173"}
             className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
           >
             App
           </a>
           <a
-            href={process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"}
+            href={
+              process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:5174/admin/"
+            }
             className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
           >
             Admin
@@ -195,7 +197,7 @@ export function Header() {
             {/* Cross-app navigation links */}
             <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
             <a
-              href={process.env.NEXT_PUBLIC_APP_URL || "https://dev.asimo.io"}
+              href={process.env.NEXT_PUBLIC_APP_URL || "http://localhost:5173"}
               className="block rounded-md px-3 py-2 text-base font-medium text-primary-600 hover:bg-gray-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -203,7 +205,8 @@ export function Header() {
             </a>
             <a
               href={
-                process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.asimo.io"
+                process.env.NEXT_PUBLIC_ADMIN_URL ||
+                "http://localhost:5174/admin/"
               }
               className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(false)}

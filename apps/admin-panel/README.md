@@ -25,7 +25,7 @@ tags:
 
 The Admin Panel provides a comprehensive, secure web interface for managing and monitoring the VoiceAssist medical AI platform. Built with React, TypeScript, and modern web technologies, it features full authentication, role-based access control, and real-time system monitoring.
 
-**Live Demo**: https://admin.asimo.io (requires admin credentials)
+**Live Demo**: http://localhost:5174 (requires admin credentials)
 
 ## ✨ Features
 
@@ -191,8 +191,8 @@ Production settings are centralized in `deployment/production/configs/admin-pane
 
 ```bash
 # API URLs (production)
-VITE_ADMIN_API_URL=https://admin.asimo.io/api
-VITE_WS_URL=wss://admin.asimo.io/api/ws
+VITE_ADMIN_API_URL=http://localhost:5174/api
+VITE_WS_URL=ws://localhost:8000/api/ws
 
 # Environment
 VITE_ENV=production
@@ -208,8 +208,8 @@ Run this checklist before promoting changes to staging or production:
 
 1. **Select the environment file**: export `ENV_FILE` to either `deployment/production/configs/admin-panel.staging.env` or `deployment/production/configs/admin-panel.env`. Ensure any secrets pulled from the secret manager are loaded into that file before building.
 2. **Build with the selected config**: `cd apps/admin-panel && set -a && source "$ENV_FILE" && set +a && npm run build`. Vite will embed the centralized values for `VITE_ADMIN_API_URL`, `VITE_WS_URL`, and feature flags.
-3. **Publish static assets**: deploy the `dist/` contents to the appropriate bucket/server/CDN origin (e.g., `rsync -av --delete dist/ /var/www/admin.asimo.io/`). Confirm hashed asset filenames to ensure cache busting.
-4. **Invalidate caches**: issue a CDN/edge cache invalidation for `admin.asimo.io` (or staging) and announce that operators should perform a hard refresh to pick up the new bundle.
+3. **Publish static assets**: deploy the `dist/` contents to the appropriate bucket/server/CDN origin (e.g., `rsync -av --delete dist/ /var/www/localhost:5174/`). Confirm hashed asset filenames to ensure cache busting.
+4. **Invalidate caches**: issue a CDN/edge cache invalidation for `localhost:5174` (or staging) and announce that operators should perform a hard refresh to pick up the new bundle.
 5. **Smoke test**: verify login, analytics export, and WebSocket-backed widgets against the targeted API/WS endpoints. Confirm environment/feature flags reflect the expected values in the UI.
 
 ### Staging Environment
@@ -218,8 +218,8 @@ Use `deployment/production/configs/admin-panel.staging.env` for pre-production v
 
 ```bash
 # API URLs (staging)
-VITE_ADMIN_API_URL=https://admin-staging.asimo.io/api
-VITE_WS_URL=wss://admin-staging.asimo.io/api/ws
+VITE_ADMIN_API_URL=https://localhost:5174/api
+VITE_WS_URL=wss://localhost:5174/api/ws
 
 # Environment
 VITE_ENV=staging
@@ -1007,7 +1007,7 @@ const UploadDialog = () => {
   name="Nextcloud"
   status="connected"
   config={{
-    url: "https://asimo.io/nextcloud",
+    url: "http://localhost/nextcloud",
     autoIndex: true,
     backup: true
   }}
@@ -1083,7 +1083,7 @@ const useMetrics = () => {
   const [metrics, setMetrics] = useState<Metrics>({});
 
   useEffect(() => {
-    const ws = new WebSocket("wss://admin.asimo.io/ws/metrics");
+    const ws = new WebSocket("ws://localhost:8000/ws/metrics");
 
     ws.onmessage = (event) => {
       const update = JSON.parse(event.data);
@@ -1104,7 +1104,7 @@ const useLogs = (filters: LogFilters) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
-    const ws = new WebSocket("wss://admin.asimo.io/ws/logs");
+    const ws = new WebSocket("ws://localhost:8000/ws/logs");
 
     ws.onmessage = (event) => {
       const log = JSON.parse(event.data);
@@ -1259,9 +1259,9 @@ Admin panel requires `admin` role. Future: viewer role with read-only access.
 
 ## Build & Deploy
 
-- Production builds run with `npm run build` (Vite picks up `.env.production` pointing to `https://admin.asimo.io`).
+- Production builds run with `npm run build` (Vite picks up `.env.production` pointing to `http://localhost:5174`).
 - GitHub Actions workflow **Admin Panel Build & Deploy** builds the panel on pushes to `main`, publishes the `dist/` artifact, and syncs it to `/var/www/admin/` via SSH using the configured deploy secrets.
-- Post-deploy smoke checks verify login, dashboard metrics, and knowledge-base listing against `https://admin.asimo.io`.
+- Post-deploy smoke checks verify login, dashboard metrics, and knowledge-base listing against `http://localhost:5174`.
 
 Manual preview remains available via `npm run preview`.
 

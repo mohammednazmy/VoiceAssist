@@ -593,7 +593,7 @@ print(client.test_connection())
 
 In production, you likely have:
 
-- Existing Nextcloud installation (e.g., https://cloud.asimo.io)
+- Existing Nextcloud installation (e.g., https://localhost:8080)
 - OR need to deploy Nextcloud separately on Ubuntu server
 - SSL certificates already configured
 - MFA enabled for all users
@@ -605,7 +605,7 @@ In production, you likely have:
 
 ```bash
 # If you have existing Nextcloud:
-NEXTCLOUD_BASE_URL=https://cloud.asimo.io
+NEXTCLOUD_BASE_URL=https://localhost:8080
 
 # If deploying fresh Nextcloud on Ubuntu:
 # Follow Nextcloud installation guide first
@@ -618,7 +618,7 @@ Same steps as local dev, but with production URLs:
 
 ```
 Name: VoiceAssist Production
-Redirection URI: https://voiceassist.asimo.io/auth/callback
+Redirection URI: https://localhost:5173/auth/callback
 Type: Confidential
 ```
 
@@ -626,11 +626,11 @@ Type: Confidential
 
 ```bash
 # In Ubuntu server: ~/VoiceAssist/.env
-NEXTCLOUD_BASE_URL=https://cloud.asimo.io
-NEXTCLOUD_OIDC_ISSUER=https://cloud.asimo.io
+NEXTCLOUD_BASE_URL=https://localhost:8080
+NEXTCLOUD_OIDC_ISSUER=https://localhost:8080
 NEXTCLOUD_CLIENT_ID=<production_client_id>
 NEXTCLOUD_CLIENT_SECRET=<production_client_secret>
-NEXTCLOUD_REDIRECT_URI=https://voiceassist.asimo.io/auth/callback
+NEXTCLOUD_REDIRECT_URI=https://localhost:5173/auth/callback
 
 # Use service account credentials
 NEXTCLOUD_ADMIN_USER=voiceassist_service
@@ -655,10 +655,10 @@ NEXTCLOUD_ADMIN_PASSWORD=<secure_password>
 
 ```bash
 # SSH to Ubuntu server
-ssh user@asimo.io
+ssh user@localhost
 
 # Test Nextcloud connectivity
-curl https://cloud.asimo.io/status.php
+curl https://localhost:8080/status.php
 
 # Test from VoiceAssist
 docker exec voiceassist-auth-service \
@@ -784,14 +784,14 @@ from email.mime.text import MIMEText
 class NextcloudEmailClient:
     def __init__(self):
         # IMAP for reading
-        self.imap = imaplib.IMAP4_SSL('cloud.asimo.io', 993)
+        self.imap = imaplib.IMAP4_SSL('localhost:8080', 993)
         self.imap.login(
             settings.NEXTCLOUD_EMAIL_USERNAME,
             settings.NEXTCLOUD_EMAIL_PASSWORD
         )
 
         # SMTP for sending
-        self.smtp = smtplib.SMTP_SSL('cloud.asimo.io', 465)
+        self.smtp = smtplib.SMTP_SSL('localhost:8080', 465)
         self.smtp.login(
             settings.NEXTCLOUD_EMAIL_USERNAME,
             settings.NEXTCLOUD_EMAIL_PASSWORD

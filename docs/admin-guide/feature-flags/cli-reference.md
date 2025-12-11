@@ -75,7 +75,7 @@ All feature flag endpoints require admin authentication. Get a JWT token first:
 
 ```bash
 # Get admin token
-TOKEN=$(curl -s -X POST https://api.asimo.io/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "..."}' | jq -r '.access_token')
 ```
@@ -83,35 +83,35 @@ TOKEN=$(curl -s -X POST https://api.asimo.io/api/auth/login \
 ### List All Flags
 
 ```bash
-curl -s https://api.asimo.io/api/admin/feature-flags \
+curl -s http://localhost:8000/api/admin/feature-flags \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 **Filter by environment:**
 
 ```bash
-curl -s "https://api.asimo.io/api/admin/feature-flags?environment=production" \
+curl -s "http://localhost:8000/api/admin/feature-flags?environment=production" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 **Include archived flags:**
 
 ```bash
-curl -s "https://api.asimo.io/api/admin/feature-flags?include_archived=true" \
+curl -s "http://localhost:8000/api/admin/feature-flags?include_archived=true" \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ### Get Specific Flag
 
 ```bash
-curl -s https://api.asimo.io/api/admin/feature-flags/ui.voice_mode_enabled \
+curl -s http://localhost:8000/api/admin/feature-flags/ui.voice_mode_enabled \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ### Create Flag
 
 ```bash
-curl -s -X POST https://api.asimo.io/api/admin/feature-flags \
+curl -s -X POST http://localhost:8000/api/admin/feature-flags \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -131,19 +131,19 @@ curl -s -X POST https://api.asimo.io/api/admin/feature-flags \
 
 ```bash
 # Toggle enabled state
-curl -s -X PATCH https://api.asimo.io/api/admin/feature-flags/experiment.new_feature \
+curl -s -X PATCH http://localhost:8000/api/admin/feature-flags/experiment.new_feature \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"enabled": true}' | jq
 
 # Update description
-curl -s -X PATCH https://api.asimo.io/api/admin/feature-flags/experiment.new_feature \
+curl -s -X PATCH http://localhost:8000/api/admin/feature-flags/experiment.new_feature \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"description": "Updated description"}' | jq
 
 # Set rollout percentage
-curl -s -X PATCH https://api.asimo.io/api/admin/feature-flags/experiment.new_feature \
+curl -s -X PATCH http://localhost:8000/api/admin/feature-flags/experiment.new_feature \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"rollout_percentage": 25}' | jq
@@ -152,28 +152,28 @@ curl -s -X PATCH https://api.asimo.io/api/admin/feature-flags/experiment.new_fea
 ### Toggle Flag (Quick)
 
 ```bash
-curl -s -X POST https://api.asimo.io/api/admin/feature-flags/ui.voice_mode_enabled/toggle \
+curl -s -X POST http://localhost:8000/api/admin/feature-flags/ui.voice_mode_enabled/toggle \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ### Archive Flag (Soft Delete)
 
 ```bash
-curl -s -X POST https://api.asimo.io/api/admin/feature-flags/experiment.old_feature/archive \
+curl -s -X POST http://localhost:8000/api/admin/feature-flags/experiment.old_feature/archive \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ### Delete Flag (Permanent)
 
 ```bash
-curl -s -X DELETE https://api.asimo.io/api/admin/feature-flags/experiment.test_flag \
+curl -s -X DELETE http://localhost:8000/api/admin/feature-flags/experiment.test_flag \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 ### Update Variants (Multivariate Flags)
 
 ```bash
-curl -s -X PUT https://api.asimo.io/api/admin/feature-flags/experiment.pricing/variants \
+curl -s -X PUT http://localhost:8000/api/admin/feature-flags/experiment.pricing/variants \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -188,7 +188,7 @@ curl -s -X PUT https://api.asimo.io/api/admin/feature-flags/experiment.pricing/v
 ### Update Targeting Rules
 
 ```bash
-curl -s -X PUT https://api.asimo.io/api/admin/feature-flags/experiment.beta/targeting-rules \
+curl -s -X PUT http://localhost:8000/api/admin/feature-flags/experiment.beta/targeting-rules \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -225,7 +225,7 @@ curl -s -X PUT https://api.asimo.io/api/admin/feature-flags/experiment.beta/targ
 CATEGORY=$1
 ENABLED=${2:-true}
 TOKEN=$(cat ~/.voiceassist_token)
-BASE_URL="https://api.asimo.io/api/admin/feature-flags"
+BASE_URL="http://localhost:8000/api/admin/feature-flags"
 
 # Get all flags and filter by category
 FLAGS=$(curl -s "$BASE_URL" -H "Authorization: Bearer $TOKEN" | \
@@ -258,7 +258,7 @@ echo "Done! Updated flags in category: $CATEGORY"
 TOKEN=$(cat ~/.voiceassist_token)
 OUTPUT="flags-backup-$(date +%Y%m%d).json"
 
-curl -s https://api.asimo.io/api/admin/feature-flags \
+curl -s http://localhost:8000/api/admin/feature-flags \
   -H "Authorization: Bearer $TOKEN" | jq '.data.flags' > "$OUTPUT"
 
 echo "Exported flags to $OUTPUT"
@@ -272,7 +272,7 @@ echo "Exported flags to $OUTPUT"
 
 INPUT=$1
 TOKEN=$(cat ~/.voiceassist_token)
-BASE_URL="https://api.asimo.io/api/admin/feature-flags"
+BASE_URL="http://localhost:8000/api/admin/feature-flags"
 
 for flag in $(jq -c '.[]' "$INPUT"); do
   name=$(echo "$flag" | jq -r '.name')
@@ -300,7 +300,7 @@ echo "Import complete!"
 FLAG=$1
 TOKEN=$(cat ~/.voiceassist_token)
 
-curl -s "https://api.asimo.io/api/admin/feature-flags/$FLAG" \
+curl -s "http://localhost:8000/api/admin/feature-flags/$FLAG" \
   -H "Authorization: Bearer $TOKEN" | \
   jq '{name: .data.name, enabled: .data.enabled, type: .data.flag_type, value: .data.value}'
 ```
@@ -402,11 +402,11 @@ const newName = resolveFlagName("rag_strategy", true);
 
 ```bash
 # Check if flag exists
-curl -s https://api.asimo.io/api/admin/feature-flags/backend.rag_strategy \
+curl -s http://localhost:8000/api/admin/feature-flags/backend.rag_strategy \
   -H "Authorization: Bearer $TOKEN" | jq '.success'
 
 # If false, check available flags
-curl -s https://api.asimo.io/api/admin/feature-flags \
+curl -s http://localhost:8000/api/admin/feature-flags \
   -H "Authorization: Bearer $TOKEN" | jq '.data.flags[].name' | grep rag
 ```
 
@@ -424,7 +424,7 @@ redis-cli -h redis TTL "feature_flag:ui.voice_mode_enabled"
 
 ```bash
 # Refresh token
-TOKEN=$(curl -s -X POST https://api.asimo.io/api/auth/refresh \
+TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d "{\"refresh_token\": \"$REFRESH_TOKEN\"}" | jq -r '.access_token')
 ```

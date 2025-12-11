@@ -143,7 +143,7 @@ The docs site provides JSON endpoints for programmatic access:
 | `GET /agent/docs.json`   | Full document list with metadata |
 | `GET /search-index.json` | Full-text search index           |
 
-**Base URL:** `https://assistdocs.asimo.io`
+**Base URL:** `http://localhost:3001`
 
 See [Agent API Reference](../ai/AGENT_API_REFERENCE.md) for details.
 
@@ -269,7 +269,7 @@ REDIS_URL=redis://...          # Cache
 - **OpenAPI Spec:** `http://localhost:8000/openapi.json`
 - **Swagger UI:** `http://localhost:8000/docs`
 - **Health Check:** `http://localhost:8000/health`
-- **Docs Site:** `https://assistdocs.asimo.io`
+- **Docs Site:** `http://localhost:3001`
 
 ---
 

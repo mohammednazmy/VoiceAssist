@@ -134,10 +134,10 @@ Use tables for structured comparisons:
 ### URLs and Links
 
 - Use canonical URLs as defined in the plan:
-  - Web app: `https://dev.asimo.io`
-  - API: `https://assist.asimo.io`
-  - Admin: `https://admin.asimo.io`
-  - Docs: `https://assistdocs.asimo.io`
+  - Web app: `http://localhost:5173`
+  - API: `http://localhost:8000`
+  - Admin: `http://localhost:5174`
+  - Docs: `http://localhost:3001`
 
 - Use relative links for internal docs: `[Related Doc](./related-doc.md)`
 - Use absolute URLs for external resources

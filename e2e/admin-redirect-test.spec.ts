@@ -11,7 +11,7 @@ test('admin login works', async ({ page }) => {
   await page.goto('http://localhost:8080/admin/login');
   await page.waitForTimeout(2000);
   
-  await page.fill('input[type="email"], input[name="email"]', 'mo@asimo.io');
+  await page.fill('input[type="email"], input[name="email"]', 'test-admin@localhost');
   await page.fill('input[type="password"], input[name="password"]', 'uL8-p9rp');
   await page.click('button[type="submit"]');
   

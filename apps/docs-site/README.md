@@ -19,23 +19,21 @@ tags:
 
 Technical documentation for the VoiceAssist platform, automatically rendering markdown files from the `docs/` directory.
 
-**URL**: https://docs.asimo.io (assistdocs.asimo.io redirects here)
+**URL**: http://localhost:3001 (local docs)
 
 ## Deployment & DNS
 
-- **Hosting**: Apache2 reverse proxy → `next start` on port **3001**
-- **Canonical domain**: `docs.asimo.io`
-- **Secondary domain**: `assistdocs.asimo.io` (301 to canonical on HTTP and HTTPS)
-- **DNS**:
-  - `docs.asimo.io` → CNAME to production apex/load balancer
-  - `assistdocs.asimo.io` → CNAME to `docs.asimo.io`
+- **Hosting**: Vercel/Next or local `next dev/start` on port **3001**
+- **Canonical host (local)**: `localhost:3001`
+- **Secondary host (local)**: same as canonical
+- **DNS**: not used in local setup
 
 ### Environment
 
 Set at deploy time (or rely on defaults in `next.config.js`):
 
-- `NEXT_PUBLIC_DOCS_HOST` (default: `docs.asimo.io`)
-- `NEXT_PUBLIC_SECONDARY_DOCS_HOST` (default: `assistdocs.asimo.io`)
+- `NEXT_PUBLIC_DOCS_HOST` (default: `localhost:3001`)
+- `NEXT_PUBLIC_SECONDARY_DOCS_HOST` (default: `localhost:3001`)
 
 The config enforces a redirect from the secondary host to the canonical host.
 
@@ -192,12 +190,12 @@ The site loads documentation from:
 
 ## Deployment & Smoke Tests
 
-- **Env vars:** `NEXT_PUBLIC_DOCS_HOST=docs.asimo.io`, `NEXT_PUBLIC_SECONDARY_DOCS_HOST=assistdocs.asimo.io`
+- **Env vars:** `NEXT_PUBLIC_DOCS_HOST=localhost:3001`, `NEXT_PUBLIC_SECONDARY_DOCS_HOST=localhost:3001`
 - **Build artifacts:** `pnpm run generate-search-index && pnpm run generate-agent-json && pnpm build`
-- **Publish:** `rsync -av out/ /var/www/assistdocs.asimo.io/` (or the existing deployment script)
+- **Publish:** `rsync -av out/ /var/www/localhost:3001/` (or the existing deployment script)
 - **Smoke checklist:** load `/`, `/search-index.json`, `/agent/index.json`, `/agent/docs.json`, and `/docs/VOICE_STATE_2025-11-28`
 - **Robots/sitemap:** verify `/robots.txt` allows `/agent/*` and `/sitemap.xml` includes `/agent/index.json`
-- **Host redirect:** enforce at the web server (`assistdocs.asimo.io` → `docs.asimo.io`)
+- **Host redirect:** enforce at the web server (`localhost:3001` → `localhost:3001`)
 
 ---
 
@@ -243,7 +241,7 @@ See `docs/INTERNAL_DOCS_SYSTEM.md` for details.
 
 ### Canonical URL
 
-**Production URL:** `https://assistdocs.asimo.io`
+**Production URL:** `http://localhost:3001`
 
 ### Apache Reverse Proxy
 
@@ -251,11 +249,11 @@ The docs site runs on port 3001 behind Apache:
 
 ```apache
 <VirtualHost *:443>
-    ServerName assistdocs.asimo.io
+    ServerName localhost:3001
 
     SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/assistdocs.asimo.io/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/assistdocs.asimo.io/privkey.pem
+    SSLCertificateFile /etc/letsencrypt/live/localhost:3001/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/localhost:3001/privkey.pem
 
     ProxyPass / http://127.0.0.1:3001/
     ProxyPassReverse / http://127.0.0.1:3001/

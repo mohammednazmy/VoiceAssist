@@ -2,7 +2,7 @@
 title: Admin Panel Implementation Plan
 slug: admin/implementation-plan
 summary: >-
-  Comprehensive implementation plan for making admin.asimo.io the canonical
+  Comprehensive implementation plan for making localhost:5174 the canonical
   operational mission control for VoiceAssist.
 status: stable
 stability: production
@@ -34,7 +34,7 @@ source_of_truth: true
 version: 2.8.0
 ai_summary: >-
   Last Updated: 2025-12-02 Version: 2.8.0 Status: Canonical Implementation Guide
-  Purpose: Transform admin.asimo.io into the definitive operational mission
+  Purpose: Transform localhost:5174 into the definitive operational mission
   control for VoiceAssist --- 1. Executive Summary 2. Admin Panel Tech Stack
   (Ground Truth) 3. Phase 1: Backend-to-Admin Service Matrix 4. Phase 2...
 ---
@@ -58,7 +58,7 @@ ai_summary: >-
 | 2.1.0   | 2025-11-27 | Initial comprehensive implementation plan                               |
 
 **Status:** Canonical Implementation Guide
-**Purpose:** Transform admin.asimo.io into the definitive operational mission control for VoiceAssist
+**Purpose:** Transform localhost:5174 into the definitive operational mission control for VoiceAssist
 
 ---
 
@@ -1629,8 +1629,8 @@ If you are an AI coding assistant (Claude, GPT, etc.) working on admin panel fea
 This plan is discoverable via:
 
 1. **Agent Task Index**: See [ai/AGENT_TASK_INDEX.md](../ai/AGENT_TASK_INDEX.md) → "Admin Panel Implementation" task
-2. **Navigation**: assistdocs.asimo.io → "Admin Guide" → "Implementation Plan"
-3. **Navigation**: assistdocs.asimo.io → "For AI Agents" → "Admin Panel Plan"
+2. **Navigation**: assistlocalhost:3001 → "Admin Guide" → "Implementation Plan"
+3. **Navigation**: assistlocalhost:3001 → "For AI Agents" → "Admin Panel Plan"
 4. **Direct link**: `/admin/implementation-plan` on the docs site
 
 ### Before Starting Work

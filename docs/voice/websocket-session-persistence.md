@@ -199,7 +199,7 @@ VOICE_SESSION_PERSISTENCE_ENABLED=true
 ### Via API
 
 ```bash
-curl -X PATCH https://api.dev.asimo.io/api/admin/feature-flags/backend.voice_ws_session_persistence \
+curl -X PATCH https://api.localhost:5173/api/admin/feature-flags/backend.voice_ws_session_persistence \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"enabled": true}'
 ```

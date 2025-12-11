@@ -32,7 +32,7 @@ ai_summary: >-
   Start here for AI agents working on VoiceAssist. Key directories:
   services/api-gateway/ (canonical backend, FastAPI), apps/ (web-app, admin-panel,
   docs-site). NEVER use server/ (deprecated). Machine-readable endpoints at
-  https://assistdocs.asimo.io/agent/*.json. Read IMPLEMENTATION_STATUS.md first
+  http://localhost:3001/agent/*.json. Read IMPLEMENTATION_STATUS.md first
   for component status. HIPAA-compliant platform - follow PHI handling rules.
 ---
 
@@ -139,7 +139,7 @@ What's your task?
 | `GET /search-index.json` | Full-text search index (Fuse.js format)          |
 | `GET /sitemap.xml`       | XML sitemap for crawlers                         |
 
-**Base URL:** `https://assistdocs.asimo.io`
+**Base URL:** `http://localhost:3001`
 
 ### Safety & Norms
 
@@ -451,7 +451,7 @@ curl -i -N -H "Connection: Upgrade" \
 ```bash
 cd apps/docs-site
 pnpm build
-sudo cp -r out/* /var/www/assistdocs.asimo.io/
+sudo cp -r out/* /var/www/localhost:3001/
 ```
 
 ### Task: Update Agent JSON or Search Index
@@ -479,8 +479,8 @@ pnpm build
 **Verify:**
 
 ```bash
-curl https://assistdocs.asimo.io/agent/docs.json | jq '.count'
-curl https://assistdocs.asimo.io/search-index.json | jq '.docs | length'
+curl http://localhost:3001/agent/docs.json | jq '.count'
+curl http://localhost:3001/search-index.json | jq '.docs | length'
 ```
 
 ---

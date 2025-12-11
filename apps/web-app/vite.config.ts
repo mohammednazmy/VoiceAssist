@@ -4,7 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
 // HMR uses plain WebSocket by default for localhost development/E2E testing.
-// Set VITE_PROXY_HOST=1 when running behind Apache proxy (dev.asimo.io) to use wss://
+// Set VITE_PROXY_HOST=1 when running behind a proxy to use wss://
 
 export default defineConfig({
   build: {
@@ -176,9 +176,9 @@ export default defineConfig({
   server: {
     port: 5173,
     host: "0.0.0.0", // Allow external connections
-    allowedHosts: ["dev.asimo.io"], // Allow dev.asimo.io domain
+    allowedHosts: ["localhost", "127.0.0.1"], // Local-only hosts
     // HMR configuration:
-    // - Use wss:// on port 443 ONLY when accessed through Apache proxy (VITE_PROXY_HOST=1)
+    // - Use wss:// on port 443 ONLY when accessed through a TLS proxy (VITE_PROXY_HOST=1)
     // - Otherwise use ws:// on port 5173 for direct localhost access (default for dev/E2E)
     hmr:
       process.env.VITE_PROXY_HOST === "1"

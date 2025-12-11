@@ -730,7 +730,7 @@
           "type": "string",
           "required": false,
           "defaultValue": null,
-          "description": "Base URL for docs site\nDefaults to VITE_DOCS_URL env var or https://assistdocs.asimo.io/"
+          "description": "Base URL for docs site\nDefaults to VITE_DOCS_URL env var or http://localhost:3001/"
         },
         {
           "name": "className",

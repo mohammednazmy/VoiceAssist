@@ -490,12 +490,12 @@
         {
           "id": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md:0",
           "doc_path": "ADMIN_PANEL_LOGIN_FIX_COMPLETE.md",
-          "description": "**File:** `/etc/apache2/sites-available/admin.asimo.io.conf`"
+          "description": "**File:** `/etc/apache2/sites-available/localhost:5174.conf`"
         },
         {
           "id": "debugging/DEBUGGING_DOCS_SITE.md:35",
           "doc_path": "debugging/DEBUGGING_DOCS_SITE.md",
-          "description": "Required config at `/etc/apache2/sites-available/assistdocs.asimo.io-le-ssl.conf`:"
+          "description": "Required config at `/etc/apache2/sites-available/localhost:3001-le-ssl.conf`:"
         },
         {
           "id": "debugging/DEBUGGING_VOICE_REALTIME.md:21",
@@ -2072,7 +2072,7 @@
         {
           "id": "ARCHITECTURE_V2.md:5",
           "language": "text",
-          "description": "- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://cloud.asimo.io"
+          "description": "- Can be existing NC installation - Environment: NEXTCLOUD_BASE_URL=https://localhost:8080"
         }
       ]
     },
@@ -3799,7 +3799,7 @@
       "language": "bash",
       "tags": ["snippet"],
       "description": "2. File Deployment",
-      "code": "# Create web directory\nsudo mkdir -p /var/www/admin.asimo.io\n\n# Copy built files\nsudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/admin.asimo.io/\n\n# Set ownership\nsudo chown -R www-data:www-data /var/www/admin.asimo.io",
+      "code": "# Create web directory\nsudo mkdir -p /var/www/localhost:5174\n\n# Copy built files\nsudo cp -r ~/VoiceAssist/apps/admin-panel/dist/* /var/www/localhost:5174/\n\n# Set ownership\nsudo chown -R www-data:www-data /var/www/localhost:5174",
       "full_length": 227,
       "category": "deployment"
     },
@@ -3810,7 +3810,7 @@
       "language": "bash",
       "tags": ["system"],
       "description": "4. Apache Activation",
-      "code": "# Enable site\nsudo a2ensite admin.asimo.io.conf\n\n# Test configuration\nsudo apache2ctl configtest\n\n# Reload Apache\nsudo systemctl reload apache2",
+      "code": "# Enable site\nsudo a2ensite localhost:5174.conf\n\n# Test configuration\nsudo apache2ctl configtest\n\n# Reload Apache\nsudo systemctl reload apache2",
       "full_length": 143,
       "category": "deployment"
     },
@@ -3821,7 +3821,7 @@
       "language": "text",
       "tags": ["api", "http", "database", "authentication"],
       "description": "HTTP Headers",
-      "code": "HTTP/1.1 200 OK\nDate: Sun, 23 Nov 2025 01:05:50 GMT\nServer: Apache/2.4.58 (Ubuntu)\nX-Content-Type-Options: nosniff\nX-Frame-Options: SAMEORIGIN\nX-XSS-Protection: 1; mode=block\nReferrer-Policy: strict-origin-when-cross-origin\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://api.asimo.io;\nAccess-Control-Allow-Origin: *\nAc...",
+      "code": "HTTP/1.1 200 OK\nDate: Sun, 23 Nov 2025 01:05:50 GMT\nServer: Apache/2.4.58 (Ubuntu)\nX-Content-Type-Options: nosniff\nX-Frame-Options: SAMEORIGIN\nX-XSS-Protection: 1; mode=block\nReferrer-Policy: strict-origin-when-cross-origin\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:8000 https://localhost:8000;\nAccess-Control-Allow-Origin: *\nAc...",
       "full_length": 648,
       "category": "deployment"
     },
@@ -3832,7 +3832,7 @@
       "language": "text",
       "tags": ["snippet"],
       "description": "Frontend (Static SPA)",
-      "code": "Browser\n   ↓ HTTPS\nApache (admin.asimo.io:443)\n   ↓ Serves static files\n/var/www/admin.asimo.io/\n   ├── index.html\n   └── assets/\n       ├── index-C3epBpcL.js\n       └── index-D8qvZpew.css",
+      "code": "Browser\n   ↓ HTTPS\nApache (localhost:5174:443)\n   ↓ Serves static files\n/var/www/localhost:5174/\n   ├── index.html\n   └── assets/\n       ├── index-C3epBpcL.js\n       └── index-D8qvZpew.css",
       "full_length": 188,
       "category": "deployment"
     },
@@ -3843,7 +3843,7 @@
       "language": "text",
       "tags": ["api", "http", "cache", "realtime"],
       "description": "API Communication",
-      "code": "Admin Panel (Browser)\n   ↓ HTTP/HTTPS\nAPI Backend (localhost:8000 or api.asimo.io)\n   ↓ REST/WebSocket\nServices (PostgreSQL, Redis, Qdrant)",
+      "code": "Admin Panel (Browser)\n   ↓ HTTP/HTTPS\nAPI Backend (localhost:8000 or localhost:8000)\n   ↓ REST/WebSocket\nServices (PostgreSQL, Redis, Qdrant)",
       "full_length": 139,
       "category": "deployment"
     },
@@ -3865,7 +3865,7 @@
       "language": "bash",
       "tags": ["snippet"],
       "description": "3. **Deploy**:",
-      "code": "sudo cp -r dist/* /var/www/admin.asimo.io/\n   sudo chown -R www-data:www-data /var/www/admin.asimo.io",
+      "code": "sudo cp -r dist/* /var/www/localhost:5174/\n   sudo chown -R www-data:www-data /var/www/localhost:5174",
       "full_length": 101,
       "category": "deployment"
     },
@@ -3898,7 +3898,7 @@
       "language": "bash",
       "tags": ["git", "package-manager"],
       "description": "If issues occur, rollback to previous version:",
-      "code": "# 1. Checkout previous commit\ncd ~/VoiceAssist\ngit log --oneline | head -10  # Find previous commit\ngit checkout <previous-commit>\n\n# 2. Rebuild\ncd apps/admin-panel\nnpm run build\n\n# 3. Redeploy\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# 4. Return to main\ngit checkout main",
+      "code": "# 1. Checkout previous commit\ncd ~/VoiceAssist\ngit log --oneline | head -10  # Find previous commit\ngit checkout <previous-commit>\n\n# 2. Rebuild\ncd apps/admin-panel\nnpm run build\n\n# 3. Redeploy\nsudo cp -r dist/* /var/www/localhost:5174/\nsudo chown -R www-data:www-data /var/www/localhost:5174\n\n# 4. Return to main\ngit checkout main",
       "full_length": 331,
       "category": "deployment"
     },
@@ -3920,7 +3920,7 @@
       "language": "apache",
       "tags": ["api"],
       "description": "2. **Restrict CORS**",
-      "code": "Header always set Access-Control-Allow-Origin \"https://admin.asimo.io\"",
+      "code": "Header always set Access-Control-Allow-Origin \"http://localhost:5174\"",
       "full_length": 70,
       "category": "deployment"
     },
@@ -3986,7 +3986,7 @@
       "language": "text",
       "tags": ["api", "authentication"],
       "description": "2. CORS Error",
-      "code": "Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'https://admin.asimo.io'\nhas been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present",
+      "code": "Access to fetch at 'http://localhost:8000/api/auth/login' from origin 'http://localhost:5174'\nhas been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present",
       "full_length": 178,
       "category": "operations"
     },
@@ -4041,7 +4041,7 @@
       "language": "bash",
       "tags": ["database", "system", "package-manager"],
       "description": "4. Rebuilt and Redeployed ✅",
-      "code": "# Rebuild with new configuration\ncd ~/VoiceAssist/apps/admin-panel\nnpm run build\n\n# Deploy new build\nsudo cp -r dist/* /var/www/admin.asimo.io/\nsudo chown -R www-data:www-data /var/www/admin.asimo.io\n\n# Update Apache config\nsudo cp /tmp/admin.asimo.io-static.conf /etc/apache2/sites-available/admin.asimo.io.conf\n\n# Reload Apache\nsudo systemctl reload apache2",
+      "code": "# Rebuild with new configuration\ncd ~/VoiceAssist/apps/admin-panel\nnpm run build\n\n# Deploy new build\nsudo cp -r dist/* /var/www/localhost:5174/\nsudo chown -R www-data:www-data /var/www/localhost:5174\n\n# Update Apache config\nsudo cp /tmp/localhost:5174-static.conf /etc/apache2/sites-available/localhost:5174.conf\n\n# Reload Apache\nsudo systemctl reload apache2",
       "full_length": 359,
       "category": "operations"
     },
@@ -4052,7 +4052,7 @@
       "language": "bash",
       "tags": ["api"],
       "description": "1. Health Endpoint ✅",
-      "code": "$ curl -s https://admin.asimo.io/health | jq .\n{\n  \"status\": \"healthy\",\n  \"version\": \"0.1.0\",\n  \"timestamp\": 1763861360.3138871\n}",
+      "code": "$ curl -s http://localhost:5174/health | jq .\n{\n  \"status\": \"healthy\",\n  \"version\": \"0.1.0\",\n  \"timestamp\": 1763861360.3138871\n}",
       "full_length": 129,
       "category": "operations"
     },
@@ -4063,7 +4063,7 @@
       "language": "bash",
       "tags": ["api", "http", "authentication"],
       "description": "2. Auth Endpoint ✅",
-      "code": "$ curl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"test@example.com\",\"password\":\"test\"}'\n\n# Returns proper validation error (endpoint working)",
+      "code": "$ curl -s http://localhost:5174/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"test@example.com\",\"password\":\"test\"}'\n\n# Returns proper validation error (endpoint working)",
       "full_length": 205,
       "category": "operations"
     },
@@ -4074,7 +4074,7 @@
       "language": "text",
       "tags": ["api", "authentication"],
       "description": "Before (Broken)",
-      "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch http://localhost:8000/api/auth/login\n   ✗ CORS Error: Cross-origin request blocked",
+      "code": "Browser (http://localhost:5174)\n   ↓ Fetch http://localhost:8000/api/auth/login\n   ✗ CORS Error: Cross-origin request blocked",
       "full_length": 126,
       "category": "operations"
     },
@@ -4085,7 +4085,7 @@
       "language": "text",
       "tags": ["api", "authentication"],
       "description": "After (Working)",
-      "code": "Browser (https://admin.asimo.io)\n   ↓ Fetch https://admin.asimo.io/api/auth/login (same-origin)\n   ↓\nApache (admin.asimo.io:443)\n   ↓ ProxyPass to http://localhost:8000/api/auth/login\n   ↓\nBackend (voiceassist-server:8000)\n   ↓ Process request\n   ↓\nApache\n   ↓ Return response\n   ↓\nBrowser\n   ✓ Success: Same-origin, no CORS issues",
+      "code": "Browser (http://localhost:5174)\n   ↓ Fetch http://localhost:5174/api/auth/login (same-origin)\n   ↓\nApache (localhost:5174:443)\n   ↓ ProxyPass to http://localhost:8000/api/auth/login\n   ↓\nBackend (voiceassist-server:8000)\n   ↓ Process request\n   ↓\nApache\n   ↓ Return response\n   ↓\nBrowser\n   ✓ Success: Same-origin, no CORS issues",
       "full_length": 331,
       "category": "operations"
     },
@@ -4107,7 +4107,7 @@
       "language": "text",
       "tags": ["api", "kubernetes"],
       "description": "Git Commits",
-      "code": "e7125e3 - fix(admin-panel): Use same-origin API requests for production deployment\n- Changed API_BASE from 'http://localhost:8000' to '' (same origin)\n- API requests now go through Apache proxy\n- Fixes CORS issues in production\n- Admin panel now works at https://admin.asimo.io",
+      "code": "e7125e3 - fix(admin-panel): Use same-origin API requests for production deployment\n- Changed API_BASE from 'http://localhost:8000' to '' (same origin)\n- API requests now go through Apache proxy\n- Fixes CORS issues in production\n- Admin panel now works at http://localhost:5174",
       "full_length": 277,
       "category": "operations"
     },
@@ -4118,7 +4118,7 @@
       "language": "bash",
       "tags": ["api", "system"],
       "description": "If Apache proxy not working:",
-      "code": "# Check Apache is running\nsudo systemctl status apache2\n\n# Check site is enabled\nsudo a2query -s admin.asimo.io\n\n# Check proxy module is enabled\nsudo a2query -m proxy\nsudo a2query -m proxy_http\n\n# Enable if needed\nsudo a2enmod proxy\nsudo a2enmod proxy_http\nsudo systemctl reload apache2\n\n# Test proxy\ncurl -s https://admin.asimo.io/health",
+      "code": "# Check Apache is running\nsudo systemctl status apache2\n\n# Check site is enabled\nsudo a2query -s localhost:5174\n\n# Check proxy module is enabled\nsudo a2query -m proxy\nsudo a2query -m proxy_http\n\n# Enable if needed\nsudo a2enmod proxy\nsudo a2enmod proxy_http\nsudo systemctl reload apache2\n\n# Test proxy\ncurl -s http://localhost:5174/health",
       "full_length": 338,
       "category": "operations"
     },
@@ -4129,7 +4129,7 @@
       "language": "bash",
       "tags": ["docker", "database"],
       "description": "If database connection fails:",
-      "code": "# Check container is running\ndocker ps | grep voiceassist-server\n\n# Check users table exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\\dt users\"\n\n# Check admin user exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"SELECT email, is_admin FROM users WHERE email='admin@asimo.io';\"",
+      "code": "# Check container is running\ndocker ps | grep voiceassist-server\n\n# Check users table exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\\dt users\"\n\n# Check admin user exists\ndocker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"SELECT email, is_admin FROM users WHERE email='admin@localhost';\"",
       "full_length": 339,
       "category": "operations"
     },
@@ -4140,7 +4140,7 @@
       "language": "bash",
       "tags": ["docker", "database"],
       "description": "3. (Current) Update via database:",
-      "code": "docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\n   UPDATE users\n   SET hashed_password = '<new-bcrypt-hash>'\n   WHERE email = 'admin@asimo.io';\n   \"",
+      "code": "docker exec voiceassist-postgres psql -U voiceassist -d voiceassist -c \"\n   UPDATE users\n   SET hashed_password = '<new-bcrypt-hash>'\n   WHERE email = 'admin@localhost';\n   \"",
       "full_length": 173,
       "category": "operations"
     },
@@ -4195,7 +4195,7 @@
       "language": "bash",
       "tags": ["api", "http", "cache", "authentication"],
       "description": "Verification",
-      "code": "# Test login endpoint\ncurl -s https://admin.asimo.io/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@asimo.io\",\"password\":\"admin123\"}' | jq .\n\n# Expected response:\n{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 900\n}",
+      "code": "# Test login endpoint\ncurl -s http://localhost:5174/api/auth/login -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\":\"admin@localhost\",\"password\":\"admin123\"}' | jq .\n\n# Expected response:\n{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"token_type\": \"bearer\",\n  \"expires_in\": 900\n}",
       "full_length": 375,
       "category": "operations"
     },
