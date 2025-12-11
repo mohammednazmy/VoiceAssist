@@ -1131,16 +1131,43 @@ class TalkerSession:
         Cancel the session (for barge-in).
 
         Stops all synthesis and clears pending audio.
+        CRITICAL: This must stop TTS generation as quickly as possible
+        to ensure user's barge-in is responsive.
         """
+        if self._state == TalkerState.CANCELLED:
+            logger.debug("TTS session already cancelled, skipping")
+            return
+
+        cancel_start = time.time()
         self._state = TalkerState.CANCELLED
         self._metrics.cancelled = True
 
         # Cancel pending synthesis tasks
+        cancelled_count = 0
         for task in self._synthesis_tasks:
             if not task.done():
                 task.cancel()
+                cancelled_count += 1
 
-        logger.info("TTS session cancelled (barge-in)")
+        # Wait briefly for tasks to actually cancel (up to 50ms)
+        # This ensures the HTTP connections are closed promptly
+        if cancelled_count > 0:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*[t for t in self._synthesis_tasks if not t.done()], return_exceptions=True),
+                    timeout=0.05  # 50ms max wait
+                )
+            except asyncio.TimeoutError:
+                logger.debug("TTS cancellation timed out waiting for tasks")
+
+        cancel_latency_ms = int((time.time() - cancel_start) * 1000)
+        logger.info(
+            f"TTS session cancelled (barge-in)",
+            extra={
+                "cancelled_tasks": cancelled_count,
+                "cancel_latency_ms": cancel_latency_ms,
+            }
+        )
 
     def get_metrics(self) -> TalkerMetrics:
         """Get current session metrics."""

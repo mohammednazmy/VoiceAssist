@@ -396,7 +396,14 @@ class ThinkerService:
 
     def __init__(self):
         self._llm_client = LLMClient(
-            cloud_model=settings.MODEL_SELECTION_DEFAULT or "gpt-5.1",
+            # For voice, prefer the dedicated voice pipeline model if configured.
+            # This allows using a faster, latency-optimized model (e.g. gpt-4o-mini)
+            # without affecting other services that may use different defaults.
+            cloud_model=(
+                settings.VOICE_PIPELINE_LLM_MODEL
+                or settings.MODEL_SELECTION_DEFAULT
+                or "gpt-4o-mini"
+            ),
             openai_api_key=settings.OPENAI_API_KEY,
             openai_timeout_sec=settings.OPENAI_TIMEOUT_SEC,
         )
@@ -794,7 +801,10 @@ class ThinkerSession:
             tools=tools,
             tool_choice="auto" if tools else None,
             temperature=0.7,
-            max_tokens=1024,
+            # Use voice-specific max tokens so we can keep
+            # voice responses shorter and latency lower without
+            # impacting other LLM callers.
+            max_tokens=getattr(settings, "VOICE_PIPELINE_MAX_TOKENS", 1024),
         )
 
         # Use streaming generation

@@ -26,6 +26,7 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional
 from app.core.event_bus import VoiceEventBus, get_event_bus
 from app.core.logging import get_logger
 from app.core.voice_constants import DEFAULT_TTS_MODEL, DEFAULT_TTS_OUTPUT_FORMAT, DEFAULT_VOICE_ID
+from app.core.config import settings
 from app.services.backchannel_service import (
     BackchannelAudio,
     BackchannelService,
@@ -161,6 +162,9 @@ class ResponseTimingConfig:
 
 
 # Phase 6: Response timing configuration by query type
+# For voice, we optimize for fast time‑to‑first‑audio rather than
+# deliberate delays. Any remaining delay is bounded later in the
+# pipeline to keep end‑to‑end latency low.
 RESPONSE_TIMING: Dict[QueryType, ResponseTimingConfig] = {
     QueryType.URGENT: ResponseTimingConfig(
         delay_ms=0,
@@ -168,12 +172,12 @@ RESPONSE_TIMING: Dict[QueryType, ResponseTimingConfig] = {
         filler_phrases=[],
     ),
     QueryType.SIMPLE: ResponseTimingConfig(
-        delay_ms=200,
+        delay_ms=0,
         use_filler=False,
         filler_phrases=[],
     ),
     QueryType.COMPLEX: ResponseTimingConfig(
-        delay_ms=600,
+        delay_ms=0,
         use_filler=True,
         filler_phrases=[
             "Hmm, let me think about that...",
@@ -187,11 +191,62 @@ RESPONSE_TIMING: Dict[QueryType, ResponseTimingConfig] = {
         filler_phrases=[],
     ),
     QueryType.UNKNOWN: ResponseTimingConfig(
-        delay_ms=300,
+        delay_ms=0,
         use_filler=False,
         filler_phrases=[],
     ),
 }
+
+
+def normalize_conversational_utterance(transcript: str) -> str:
+    """
+    Lightweight post‑STT normalizer for very short conversational utterances.
+
+    This is intentionally conservative to avoid touching PHI or longer content.
+    It only applies to 1–2 word utterances with small character length and
+    focuses on common ASR confusions for acknowledgments/backchannels.
+    """
+    raw = transcript.strip()
+    if not raw:
+        return raw
+
+    # Limit to very short utterances (single backchannel-style words)
+    words = raw.split()
+    if len(words) > 2:
+        return raw
+
+    # Strip simple punctuation and normalize case
+    stripped = raw.strip(" .!?").lower()
+
+    # Only operate on very short tokens to avoid names/PHI
+    if len(stripped) == 0 or len(stripped) > 8:
+        return raw
+
+    # Map common ASR confusions to canonical conversational forms
+    mappings = {
+        # "Really" variants / mis-hearings
+        "riley": "Really",
+        "realy": "Really",
+        "realli": "Really",
+        "reely": "Really",
+        "really": "Really",
+        # "Okay" / "Ok"
+        "ok": "Okay",
+        "k": "Okay",
+        "kay": "Okay",
+        "okay": "Okay",
+        "okey": "Okay",
+        # "Sure"
+        "shure": "Sure",
+        "sure": "Sure",
+        # Simple affirmative/backchannel
+        "ya": "Yeah",
+        "yae": "Yeah",
+        "yeah": "Yeah",
+        "yep": "Yep",
+    }
+
+    return mappings.get(stripped, raw)
 
 
 def classify_query_type(transcript: str) -> QueryType:
@@ -213,6 +268,24 @@ def classify_query_type(transcript: str) -> QueryType:
     text = transcript.lower().strip()
     words = text.split()
     word_count = len(words)
+
+    # Backchannel / acknowledgment phrases (often very short).
+    # Treat these as clarifications/soft turns rather than full queries.
+    backchannel_set = {
+        "really",
+        "really?",
+        "ok",
+        "okay",
+        "sure",
+        "right",
+        "yeah",
+        "yep",
+        "uh huh",
+        "uh-huh",
+        "wow",
+    }
+    if text in backchannel_set:
+        return QueryType.CLARIFICATION
 
     # Urgent keywords (medical emergencies, distress)
     urgent_keywords = {
@@ -959,7 +1032,16 @@ class VoicePipelineSession:
                 return
 
         # Hard barge or unknown - proceed with full interruption
-        logger.info(f"Barge-in triggered (hard): {self.session_id}")
+        barge_in_start = time.time()
+        logger.info(
+            f"[Pipeline] Hard barge-in triggered",
+            extra={
+                "session_id": self.session_id,
+                "state": self._state.value if self._state else "unknown",
+                "transcript": classification_transcript[:50] if classification_transcript else None,
+                "vad_probability": effective_vad_prob,
+            }
+        )
 
         # Phase 4: Send immediate confirmation before any async operations
         # This allows frontend to optimistically stop audio playback
@@ -1053,6 +1135,28 @@ class VoicePipelineSession:
             # Issue 3: Publish turn.yielded when user interrupts
             await self._publish_turn_yielded("user_barge_in")
 
+            # CRITICAL FIX: Send barge-in transcript as a user message
+            # This ensures user's interruption (e.g., "stop", "hold on") appears in chat
+            # and triggers an AI response. Without this, user speech during barge-in is lost.
+            barge_in_should_respond = False
+            if classification_transcript and classification_transcript.strip():
+                logger.info(f"[Pipeline] Sending barge-in transcript as user message: '{classification_transcript[:50]}'")
+                await self._on_message(
+                    PipelineMessage(
+                        type="transcript.complete",
+                        data={
+                            "text": classification_transcript,
+                            "is_final": True,
+                            "source": "barge_in",  # Flag to indicate this came from barge-in
+                            "timestamp": time.time(),
+                        },
+                    )
+                )
+                # Set the final transcript so it can be processed
+                self._final_transcript = classification_transcript
+                # Mark that we should process this transcript after setup is complete
+                barge_in_should_respond = True
+
             # Send classification result to frontend
             if classification:
                 await self._on_message(
@@ -1074,6 +1178,25 @@ class VoicePipelineSession:
             # Truncate the AI response at the word boundary where playback stopped
             if self._word_timestamps_enabled and self._current_response_text:
                 await self._perform_transcript_truncation()
+
+            # CRITICAL FIX: Process the barge-in transcript to trigger AI response
+            # This must happen after STT is restarted but we have a valid transcript
+            # We use create_task to avoid blocking the barge-in completion
+            if barge_in_should_respond:
+                logger.info(f"[Pipeline] Processing barge-in transcript: '{self._final_transcript[:50]}'")
+                asyncio.create_task(self._process_transcript())
+
+            # Log barge-in completion with timing
+            barge_in_latency_ms = int((time.time() - barge_in_start) * 1000)
+            logger.info(
+                f"[Pipeline] Barge-in completed",
+                extra={
+                    "session_id": self.session_id,
+                    "total_latency_ms": barge_in_latency_ms,
+                    "will_respond": barge_in_should_respond,
+                    "transcript": classification_transcript[:50] if classification_transcript else None,
+                }
+            )
 
     async def _perform_transcript_truncation(self) -> None:
         """
@@ -2055,16 +2178,31 @@ class VoicePipelineSession:
 
     async def _process_transcript(self) -> None:
         """Process the completed transcript through Thinker and Talker."""
-        if not self._final_transcript or not self._final_transcript.strip():
-            logger.debug("Empty transcript, skipping processing")
-            self._state = PipelineState.LISTENING
-            return
-
+        # CRITICAL: All state checks and transitions must be inside the lock
+        # to prevent race conditions when multiple transcripts arrive in quick succession.
+        # Without this, multiple parallel LLM/TTS sessions can be created, causing:
+        # - 20-30 second latency (multiple ElevenLabs requests competing)
+        # - Wasted API calls to OpenAI and ElevenLabs
+        # - Audio overlap/corruption
         async with self._state_lock:
+            # Guard: Skip if already processing or speaking
+            if self._state in (PipelineState.PROCESSING, PipelineState.SPEAKING):
+                logger.info(f"[Pipeline] Skipping duplicate _process_transcript - already in {self._state} state")
+                return
+
+            if not self._final_transcript or not self._final_transcript.strip():
+                logger.debug("Empty transcript, skipping processing")
+                self._state = PipelineState.LISTENING
+                return
+
             self._state = PipelineState.PROCESSING
             await self._send_state_update()
 
         transcript = self._final_transcript.strip()
+        # Apply lightweight normalization for very short conversational
+        # utterances (e.g. "riley" → "Really"). This is intentionally
+        # conservative and only affects tiny backchannel-style inputs.
+        normalized_transcript = normalize_conversational_utterance(transcript)
         self._metrics.stt_latency_ms = int((time.time() - self._metrics.start_time) * 1000)
 
         # Send final transcript
@@ -2073,7 +2211,7 @@ class VoicePipelineSession:
             PipelineMessage(
                 type="transcript.complete",
                 data={
-                    "text": transcript,
+                    "text": normalized_transcript,
                     "message_id": message_id,
                 },
             )
@@ -2085,7 +2223,7 @@ class VoicePipelineSession:
 
         # Phase 8: Handle dictation mode separately
         if self.config.mode == PipelineMode.DICTATION and self._dictation_session:
-            await self._process_dictation_transcript(transcript, message_id)
+            await self._process_dictation_transcript(normalized_transcript, message_id)
             return
 
         # Reset cancelled flag before creating new Talker session
@@ -2170,7 +2308,7 @@ class VoicePipelineSession:
                 logger.warning(f"Failed to track memory context: {e}")
 
         # Phase 6: Classify query type for response timing
-        query_type = classify_query_type(transcript)
+        query_type = classify_query_type(normalized_transcript)
         timing_config = RESPONSE_TIMING.get(query_type, RESPONSE_TIMING[QueryType.UNKNOWN])
         logger.debug(
             f"Query type: {query_type.value}, timing: delay={timing_config.delay_ms}ms, "
@@ -2225,6 +2363,10 @@ class VoicePipelineSession:
         else:
             total_delay_ms = timing_config.delay_ms
 
+        # Hard cap combined delay for voice to keep time‑to‑first‑audio
+        # low even when prosody suggests longer waits.
+        total_delay_ms = min(total_delay_ms, 250)
+
         # Phase 6: Apply thinking filler for complex queries
         if timing_config.use_filler and timing_config.filler_phrases and self._talker_session:
             try:
@@ -2257,15 +2399,24 @@ class VoicePipelineSession:
             await asyncio.sleep(total_delay_ms / 1000.0)
 
         # Process through Thinker
+        # Use a bounded timeout to avoid hanging the entire voice pipeline
+        # if the LLM call becomes slow or unresponsive. This timeout is
+        # intentionally stricter than the generic OpenAI client timeout to
+        # keep voice interactions feeling responsive.
+        thinker_timeout_sec = min(max(settings.OPENAI_TIMEOUT_SEC, 5), 20)
+
         try:
             if self._thinker_session:
-                response = await self._thinker_session.think(
-                    user_input=transcript,
-                    source_mode="voice",
-                    emotion_context=emotion_context,
-                    memory_context=memory_context,  # Phase 4: Pass memory context
-                    transcript_confidence=self._transcript_confidence,  # Phase 7: For repair strategies
-                    session_id=self.session_id,  # Phase 7: For repair strategy tracking
+                response = await asyncio.wait_for(
+                    self._thinker_session.think(
+                        user_input=transcript,
+                        source_mode="voice",
+                        emotion_context=emotion_context,
+                        memory_context=memory_context,  # Phase 4: Pass memory context
+                        transcript_confidence=self._transcript_confidence,  # Phase 7: For repair strategies
+                        session_id=self.session_id,  # Phase 7: For repair strategy tracking
+                    ),
+                    timeout=thinker_timeout_sec,
                 )
 
                 self._metrics.tokens_generated = response.tokens_used
@@ -2302,6 +2453,23 @@ class VoicePipelineSession:
                     )
                 )
 
+        except asyncio.TimeoutError:
+            # LLM did not respond within the voice-friendly timeout window.
+            # Emit a recoverable error so the frontend can surface a clear
+            # message and the pipeline can safely continue listening.
+            logger.error(
+                f"Thinker timed out after {thinker_timeout_sec}s for session {self.session_id}"
+            )
+            await self._on_message(
+                PipelineMessage(
+                    type="error",
+                    data={
+                        "code": "thinker_timeout",
+                        "message": "Voice response took too long and was cancelled. Please try again.",
+                        "recoverable": True,
+                    },
+                )
+            )
         except Exception as e:
             logger.error(f"Thinker error: {e}")
             await self._on_message(

@@ -199,6 +199,7 @@ async function waitForCompleteTurnViaHarness(
   let audioReceived = false;
   let audioPlayed = false;
   let turnStartTranscriptCount = 0;
+  let lastTranscriptValue = "";
   let transcriptReceived = false;
 
   console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Starting...`);
@@ -206,8 +207,11 @@ async function waitForCompleteTurnViaHarness(
   // Get initial state
   const initialHarness = await getVoiceTestHarnessState(page);
   if (initialHarness) {
-    turnStartTranscriptCount = initialHarness.metrics.transcriptCount || 0;
+    turnStartTranscriptCount =
+      Number(initialHarness.metrics.transcriptCount ?? 0) ||
+      (initialHarness.lastTranscriptComplete ? 1 : 0);
     lastPipelineState = initialHarness.pipelineState;
+    lastTranscriptValue = initialHarness.lastTranscriptComplete || "";
     console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Initial state - pipeline=${lastPipelineState}, transcripts=${turnStartTranscriptCount}`);
   }
 
@@ -239,10 +243,24 @@ async function waitForCompleteTurnViaHarness(
     }
 
     // Check if transcript was received for this turn
-    const currentTranscriptCount = harness.metrics.transcriptCount || 0;
+    const currentTranscriptCount = Number(harness.metrics.transcriptCount ?? 0);
     if (!transcriptReceived && currentTranscriptCount > turnStartTranscriptCount) {
       transcriptReceived = true;
       console.log(`[Multi-Turn Harness] Turn ${turnNumber}: Transcript received (count: ${currentTranscriptCount})`);
+    }
+
+    // Fallback: detect new transcript text even if transcriptCount is missing
+    const currentTranscriptValue = harness.lastTranscriptComplete || "";
+    if (
+      !transcriptReceived &&
+      currentTranscriptValue &&
+      currentTranscriptValue !== lastTranscriptValue
+    ) {
+      transcriptReceived = true;
+      lastTranscriptValue = currentTranscriptValue;
+      console.log(
+        `[Multi-Turn Harness] Turn ${turnNumber}: Transcript text updated (${currentTranscriptValue.slice(0, 80)}...)`
+      );
     }
 
     // Turn is complete when:

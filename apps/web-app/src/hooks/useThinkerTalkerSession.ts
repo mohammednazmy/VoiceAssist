@@ -370,6 +370,24 @@ export interface TTSessionRecoveryResult {
 }
 
 /**
+ * Barge-in classification result from backend (Phase 3)
+ */
+export interface TTBargeInClassification {
+  /** Classification type: backchannel, soft_barge, or hard_barge */
+  classification: string;
+  /** Intent of the barge-in (e.g., "stop", "question", "affirmation") */
+  intent: string;
+  /** Confidence score (0-1) */
+  confidence: number;
+  /** Action taken: "continue", "pause", or "stop" */
+  action: string;
+  /** User's transcript that triggered the barge-in */
+  transcript?: string;
+  /** Latency from barge-in trigger to classification (ms) */
+  latencyMs?: number;
+}
+
+/**
  * Phase 5.2: Transcript truncation result for audio-transcript sync
  */
 export interface TTTranscriptTruncation {
@@ -530,6 +548,8 @@ export interface UseThinkerTalkerSessionOptions {
   // Phase 5: Turn-taking
   /** Callback when turn-taking state changes (Phase 5) */
   onTurnStateChange?: (turnState: TTTurnState) => void;
+  /** Callback when barge-in is classified by backend (Phase 3) */
+  onBargeInClassified?: (result: TTBargeInClassification) => void;
 
   // Phase 6: Variable response timing
   /** Callback when thinking filler is spoken (Phase 6) */
@@ -1140,8 +1160,27 @@ export function useThinkerTalkerSession(
    */
   const handleMessageWithSequence = useCallback(
     (message: Record<string, unknown>) => {
-      const seq = message.seq as number | undefined;
       const msgType = message.type as string;
+
+      // Certain control/recovery messages are not part of the main
+      // sequencing stream and should always be processed, even if
+      // their `seq` appears out of order (e.g. resume ACK + replays).
+      if (
+        msgType === "session.resume.ack" ||
+        msgType === "session.resume.nak" ||
+        msgType === "message.replay" ||
+        msgType === "audio.resume" ||
+        // VAD / speech boundary events must be processed immediately
+        // for low-latency barge-in. They are advisory signals and do
+        // not need strict ordering, so bypass sequence gating.
+        msgType === "input_audio_buffer.speech_started" ||
+        msgType === "input_audio_buffer.speech_stopped"
+      ) {
+        handleMessageRef.current(message);
+        return;
+      }
+
+      const seq = message.seq as number | undefined;
 
       // DEBUG: Log ALL audio-related messages before sequence processing
       if (msgType?.includes("audio")) {
@@ -1308,6 +1347,10 @@ export function useThinkerTalkerSession(
           }
 
           isRecoveredSessionRef.current = true;
+          // Once we have successfully recovered, clear the persisted
+          // recovery snapshot so future voice sessions don't repeatedly
+          // replay the same messages.
+          clearRecoveryState();
           options.onSessionRecovered?.(recoveryResult);
           break;
         }
@@ -1546,7 +1589,9 @@ export function useThinkerTalkerSession(
 
         case "response.delta": {
           // Streaming LLM response token
-          const delta = message.delta as string;
+          // Backend sends `text` for streaming tokens; older sessions
+          // (and some tests) may still use `delta`. Support both.
+          const delta = (message.delta || message.text || "") as string;
           const messageId = message.message_id as string;
           const seq = message.seq as number | undefined;
 
@@ -2046,7 +2091,8 @@ export function useThinkerTalkerSession(
 
             // 1. Fade out audio locally for immediate feedback
             if (options.onFadeOutPlayback) {
-              options.onFadeOutPlayback(50);
+              // Use aggressive fade for sub‑100ms mute
+              options.onFadeOutPlayback(30);
             } else {
               options.onStopPlayback?.();
             }
@@ -2056,6 +2102,18 @@ export function useThinkerTalkerSession(
             if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
               wsRef.current.send(JSON.stringify({ type: "barge_in" }));
             }
+
+            // 3. Optimistically switch pipeline state to listening so the UI
+            // reflects the interruption immediately, without waiting for the
+            // backend's voice.state event.
+            const newState: PipelineState = "listening";
+            console.log(
+              `[BARGE-IN-DEBUG] Optimistic pipeline state on speech_started: ${currentPipelineState} -> ${newState}`,
+            );
+            setPipelineState(newState);
+            pipelineStateRef.current = newState;
+            setIsSpeaking(false);
+            options.onPipelineStateChange?.(newState, "barge_in");
 
             // Clear the audio timestamp to prevent repeated barge-ins
             lastAudioChunkTimeRef.current = null;
@@ -2135,15 +2193,78 @@ export function useThinkerTalkerSession(
           // Immediately stop audio playback (optimistic transition)
           // This happens before the full barge-in flow completes
           if (options.onFadeOutPlayback) {
-            // Use fast 30ms fade for smooth but instant stop
+            // Use very fast fade for instant stop (<100ms target)
             options.onFadeOutPlayback(30);
           } else {
             options.onStopPlayback?.();
           }
 
-          // Track barge-in latency in metrics
+          // Optimistically switch pipeline state to listening so the UI reflects
+          // the interruption immediately, without waiting for a later voice.state.
+          const newState: PipelineState = "listening";
+          console.log(
+            `[BARGE-IN-DEBUG] Optimistic pipeline state on barge_in.initiated: ${pipelineStateRef.current} -> ${newState}`,
+          );
+          setPipelineState(newState);
+          pipelineStateRef.current = newState;
+          setIsSpeaking(false);
+          options.onPipelineStateChange?.(newState, "barge_in");
+
+          // Track barge-in count in metrics
           updateMetrics({
             bargeInCount: metrics.bargeInCount + 1,
+          });
+
+          break;
+        }
+
+        case "barge_in.classified": {
+          // Phase 3: Intelligent Barge-In Classification Result
+          // Backend classifies the interruption as backchannel, soft_barge, or hard_barge
+          const classification = message.classification as string;
+          const intent = message.intent as string;
+          const confidence = message.confidence as number;
+          const action = message.action as string;
+          const transcript = message.transcript as string;
+          const latencyMs = message.latency_ms as number | undefined;
+
+          voiceLog.info(
+            `[ThinkerTalker] Barge-in classified: ${classification} ` +
+              `(intent="${intent}", conf=${confidence?.toFixed(2) ?? "N/A"}, action=${action})` +
+              (latencyMs ? `, latency=${latencyMs}ms` : "") +
+              (transcript ? `, transcript="${transcript.slice(0, 30)}..."` : ""),
+          );
+
+          // Handle different classifications
+          if (classification === "backchannel") {
+            // User said something like "uh-huh", "okay" - not a real interruption
+            // AI should continue speaking
+            voiceLog.debug(
+              "[ThinkerTalker] Backchannel detected - AI continues",
+            );
+          } else if (classification === "soft_barge") {
+            // User started speaking but may just be thinking aloud
+            // AI might pause briefly
+            voiceLog.debug(
+              "[ThinkerTalker] Soft barge detected - AI may pause",
+            );
+          } else if (classification === "hard_barge") {
+            // User definitively wants to interrupt
+            // AI should stop immediately
+            voiceLog.debug(
+              "[ThinkerTalker] Hard barge detected - stopping AI response",
+            );
+            // Audio should already be stopped from barge_in.initiated
+          }
+
+          // Notify via callback if available (for UI updates/metrics)
+          options.onBargeInClassified?.({
+            classification,
+            intent,
+            confidence,
+            action,
+            transcript,
+            latencyMs,
           });
 
           break;
@@ -2991,10 +3112,10 @@ export function useThinkerTalkerSession(
     voiceLog.debug("[ThinkerTalker] Disconnecting...");
     intentionalDisconnectRef.current = true;
 
-    // Save recovery state for potential reconnection (if not intentional)
-    if (recoveryEnabledRef.current) {
-      saveRecoveryState();
-    }
+    // For intentional disconnect (user closed voice mode), clear any
+    // persisted recovery state so we don't replay old responses when
+    // voice mode is reopened later.
+    clearRecoveryState();
 
     // Track cleaned resources for debugging
     const cleanedResources: string[] = [];

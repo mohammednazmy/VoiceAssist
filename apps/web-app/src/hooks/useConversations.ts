@@ -16,6 +16,13 @@ import { createLogger } from "../lib/logger";
 
 const log = createLogger("Conversations");
 
+// Global state to prevent multiple instances from fetching simultaneously
+// This is a workaround for multiple components using useConversations independently
+// TODO: Consider migrating to a proper state management solution (zustand/context)
+let globalLoadPromise: Promise<void> | null = null;
+let globalLastLoadTime = 0;
+const LOAD_DEBOUNCE_MS = 500; // Minimum time between loads
+
 export interface UseConversationsOptions {
   /** Callback when an error occurs (for toast notifications) */
   onError?: (message: string, description?: string) => void;
@@ -43,10 +50,24 @@ export function useConversations(options: UseConversationsOptions = {}) {
   const loadConversations = useCallback(
     async (page = 1, append = false) => {
       log.debug(`loadConversations called (page: ${page}, append: ${append})`);
+
       // Guard against concurrent requests (prevents request storm)
       if (isLoadingRef.current && !append) {
         log.debug(`Skipping load - already loading (page: ${page})`);
         return;
+      }
+
+      // Global deduplication: prevent multiple hook instances from loading simultaneously
+      const now = Date.now();
+      if (page === 1 && !append) {
+        if (globalLoadPromise) {
+          log.debug(`Skipping load - global load already in progress`);
+          return;
+        }
+        if (now - globalLastLoadTime < LOAD_DEBOUNCE_MS) {
+          log.debug(`Skipping load - too soon since last load (${now - globalLastLoadTime}ms)`);
+          return;
+        }
       }
 
       isLoadingRef.current = true;
@@ -58,29 +79,45 @@ export function useConversations(options: UseConversationsOptions = {}) {
       }
       setError(null);
 
-      try {
-        const response: PaginatedResponse<Conversation> =
-          await apiClient.getConversations(page, pageSize);
+      // Create the fetch operation
+      const fetchOperation = async () => {
+        try {
+          const response: PaginatedResponse<Conversation> =
+            await apiClient.getConversations(page, pageSize);
 
-        log.debug(`Loaded ${response.items.length} conversations from API`);
-        totalCountRef.current = response.totalCount;
-        setHasMore(page < response.totalPages);
-        setCurrentPage(page);
+          log.debug(`Loaded ${response.items.length} conversations from API`);
+          totalCountRef.current = response.totalCount;
+          setHasMore(page < response.totalPages);
+          setCurrentPage(page);
 
-        if (append) {
-          setConversations((prev) => [...prev, ...response.items]);
-        } else {
-          setConversations(response.items);
+          if (append) {
+            setConversations((prev) => [...prev, ...response.items]);
+          } else {
+            setConversations(response.items);
+          }
+        } catch (err: unknown) {
+          const errorMessage = extractErrorMessage(err);
+          setError(errorMessage);
+          log.error("Failed to load conversations:", err);
+          onError?.("Failed to load conversations", errorMessage);
+        } finally {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+          isLoadingRef.current = false;
+          // Reset global state
+          if (page === 1 && !append) {
+            globalLoadPromise = null;
+            globalLastLoadTime = Date.now();
+          }
         }
-      } catch (err: unknown) {
-        const errorMessage = extractErrorMessage(err);
-        setError(errorMessage);
-        log.error("Failed to load conversations:", err);
-        onError?.("Failed to load conversations", errorMessage);
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-        isLoadingRef.current = false;
+      };
+
+      // Track global promise for page 1 loads
+      if (page === 1 && !append) {
+        globalLoadPromise = fetchOperation();
+        await globalLoadPromise;
+      } else {
+        await fetchOperation();
       }
     },
     [apiClient, pageSize, onError],

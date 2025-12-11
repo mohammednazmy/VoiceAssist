@@ -83,7 +83,9 @@ class Settings(BaseSettings):
     ENABLE_BIOGPT_ADAPTER: bool = True
     PUBMEDBERT_MODEL_ID: Optional[str] = None
     BIOGPT_MODEL_ID: Optional[str] = None
-    MODEL_SELECTION_DEFAULT: str = "gpt-5.1"
+    # Default cloud model for general-purpose reasoning.
+    # For latency-sensitive voice, a separate VOICE_PIPELINE_LLM_MODEL is used.
+    MODEL_SELECTION_DEFAULT: str = "gpt-4o-mini"
 
     # Retrieval configuration
     ENABLE_QUERY_DECOMPOSITION: bool = True
@@ -118,9 +120,12 @@ class Settings(BaseSettings):
     VOICE_PIPELINE_STT_PRIMARY: str = "deepgram"  # Primary STT provider
     VOICE_PIPELINE_STT_FALLBACK: str = "whisper"  # Fallback STT provider
     VOICE_PIPELINE_TTS_PROVIDER: str = "elevenlabs"  # TTS provider
-    VOICE_PIPELINE_LLM_MODEL: str = "gpt-5.1"  # LLM model for Thinker
+    # Use a fast, latency-optimized model for voice by default.
+    # This keeps time-to-first-audio low while preserving quality.
+    VOICE_PIPELINE_LLM_MODEL: str = "gpt-4o-mini"  # LLM model for Thinker (voice)
     VOICE_PIPELINE_STREAMING: bool = True  # Enable streaming at all stages
-    VOICE_PIPELINE_MAX_TOKENS: int = 1024  # Max tokens for voice responses
+    # Keep voice responses concise to reduce latency and avoid overlong answers.
+    VOICE_PIPELINE_MAX_TOKENS: int = 512  # Max tokens for voice responses
 
     # Thinker/Talker latency settings
     TARGET_STT_LATENCY_MS: int = 200  # Target STT latency
@@ -153,6 +158,12 @@ class Settings(BaseSettings):
     ELEVENLABS_MODEL: str = DEFAULT_TTS_MODEL
     ELEVENLABS_VOICE_ID: str = DEFAULT_VOICE_ID  # Can be overridden via env var
     ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
+
+    # Deepgram STT tuning
+    # Optional comma-separated list of keyword hints to bias recognition
+    # toward domain- or app-specific phrases (e.g. "really,okay,sure").
+    # See Deepgram docs for exact keyword semantics.
+    DEEPGRAM_KEYWORDS: Optional[str] = None
 
     # Provider API Keys (for future STT/TTS integration)
     # IMPORTANT: These are sensitive credentials and should never be logged or exposed

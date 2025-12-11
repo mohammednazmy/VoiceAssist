@@ -139,6 +139,10 @@ class DeepgramStreamingSession:
             "model=nova-2",  # Best accuracy/latency balance
             f"utterance_end_ms={self.config.utterance_end_ms}",  # Send UtteranceEnd after speech stops
         ]
+        # Optional domain-specific keyword hints (comma-separated) to help
+        # the STT engine disambiguate short conversational phrases.
+        if settings.DEEPGRAM_KEYWORDS:
+            params.append(f"keywords={settings.DEEPGRAM_KEYWORDS}")
         logger.info(
             f"[Deepgram] Connecting with params: endpointing={self.config.endpointing_ms}ms, "
             f"utterance_end={self.config.utterance_end_ms}ms"

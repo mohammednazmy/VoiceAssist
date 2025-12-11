@@ -266,11 +266,10 @@ export function useThinkerTalkerVoiceMode(
     // Previous: 0.2 (effective 0.7 during playback) - too conservative
     // New: 0.1 (effective 0.6 during playback) - better balance
     sileroPlaybackThresholdBoost = 0.1,
+    // Use shorter minimum speech windows to hit sub‑100ms
+    // perceived mute while still filtering most noise.
     sileroMinSpeechMs = 150,
-    // Lower playback min speech duration for faster barge-in detection
-    // Previous: 200ms - too slow for natural interruption
-    // New: 150ms - same as normal mode for faster response
-    sileroPlaybackMinSpeechMs = 150,
+    sileroPlaybackMinSpeechMs = 120,
   } = options;
 
   // Detect automated browser environments (Playwright/WebDriver) to dial down noisy hooks
@@ -762,9 +761,19 @@ export function useThinkerTalkerVoiceMode(
     // Handle streaming response
     onResponseDelta: (delta: string, messageId: string) => {
       if (messageId !== currentResponseId) {
-        // New response - just track it, don't reset audio here
-        // Audio reset already happens in onPipelineStateChange("processing")
-        // Resetting here causes race conditions with arriving audio chunks
+        // New response has started.
+        // If we are coming out of a barge-in, the audio playback
+        // layer will still be in "barge-in active" mode and will
+        // drop all incoming audio chunks. Reset playback here so
+        // the new response can be heard immediately.
+        const debugState = audioPlayback.getDebugState();
+        if (debugState.bargeInActiveRef) {
+          voiceLog.debug(
+            "[TTVoiceMode] New response started while barge-in active - resetting playback",
+          );
+          audioPlayback.reset();
+        }
+
         voiceLog.debug(`[TTVoiceMode] New response started: ${messageId}`);
         currentResponseId = messageId;
       }
@@ -952,7 +961,8 @@ export function useThinkerTalkerVoiceMode(
           "[TTVoiceMode] Backend VAD barge-in: user speaking while AI playing",
         );
         // Fade out audio immediately for smooth transition
-        audioPlayback.fadeOut(50);
+        // Use short duration to keep mute latency <100ms
+        audioPlayback.fadeOut(30);
         // Notify backend to cancel response generation
         session.bargeIn();
       }
@@ -979,7 +989,8 @@ export function useThinkerTalkerVoiceMode(
           `[TTVoiceMode] Local VAD barge-in: rms=${rmsLevel.toFixed(3)}, stopping playback`,
         );
         // Fade out audio immediately
-        audioPlayback.fadeOut(50);
+        // Use short duration to keep mute latency <100ms
+        audioPlayback.fadeOut(30);
         // Notify backend to cancel response generation
         session.bargeIn();
       }
@@ -1365,6 +1376,11 @@ export function useThinkerTalkerVoiceMode(
         const debugState = audioPlayback.getDebugState();
         return debugState.isPlayingRef || debugState.activeSourcesCount > 0;
       },
+
+      // Test-only controls (exposed for Playwright)
+      stopAI: () => stopAI(),
+      bargeIn: () => bargeIn(false),
+      forceReply: () => forceReply(),
     };
 
     // Expose for E2E tests
@@ -1445,6 +1461,18 @@ export function useThinkerTalkerVoiceMode(
 
       // Session metrics
       metrics: session.metrics,
+
+      // Test-only helper to force a barge-in (used when automation audio fails to trigger)
+      triggerBargeIn: () => {
+        const now = performance.now();
+        audioPlaybackRef.current.fadeOut(30);
+        sessionRef.current.bargeIn();
+        try {
+          voiceTestHarness.recordBargeIn(now);
+        } catch {
+          // Ignore if record fails
+        }
+      },
     };
 
     // Expose test harness for E2E tests
@@ -1452,12 +1480,8 @@ export function useThinkerTalkerVoiceMode(
       window as unknown as { __voiceTestHarness?: typeof voiceTestHarness }
     ).__voiceTestHarness = voiceTestHarness;
 
-    // Log for debugging
-    voiceLog.debug("[TTVoiceMode] Debug state exposed", {
-      isPlaying: voiceModeDebug.isPlaying,
-      pipelineState: voiceModeDebug.pipelineState,
-      isAIPlayingAudio: voiceModeDebug.isAIPlayingAudio,
-    });
+    // Debug logging removed to reduce console spam - this effect runs very frequently
+    // due to its large dependency array. Use __voiceModeDebug in browser console instead.
 
     return () => {
       if (typeof window !== "undefined") {

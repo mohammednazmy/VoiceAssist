@@ -655,12 +655,17 @@ export function useTTAudioPlayback(
         const now = audioContext.currentTime;
         const scheduledAhead = nextScheduledTimeRef.current - now;
         if (scheduledAhead > MAX_SCHEDULE_LOOKAHEAD_S) {
-          // Pause scheduling to let playback catch up
-          // DO NOT stop playing audio - just wait for scheduled audio to play out
-          // The next queueAudioChunk call will re-trigger processAudioQueue
+          // Pause scheduling to let playback catch up.
+          // IMPORTANT: Rebase nextScheduledTime to avoid a tight loop where
+          // we repeatedly see the same large scheduledAhead and never
+          // schedule the queued chunk. By rebasing to "now", the next
+          // invocation will schedule the chunk close to the current time.
           voiceLog.debug(
-            `[TTAudioPlayback] Schedule ahead by ${scheduledAhead.toFixed(2)}s (>${MAX_SCHEDULE_LOOKAHEAD_S}s); pausing scheduling to let playback catch up`,
+            `[TTAudioPlayback] Schedule ahead by ${scheduledAhead.toFixed(
+              2,
+            )}s (>${MAX_SCHEDULE_LOOKAHEAD_S}s); rebasing schedule to current time`,
           );
+          nextScheduledTimeRef.current = now + 0.01;
           break;
         }
 
@@ -1107,20 +1112,30 @@ export function useTTAudioPlayback(
    * Stop playback immediately (barge-in)
    */
   const stop = useCallback(() => {
-    // Guard: If barge-in is already active, skip redundant stop calls
-    // This prevents infinite loops where stop() -> setState -> re-render -> stop()
-    if (bargeInActiveRef.current) {
-      voiceLog.debug(
-        "[TTAudioPlayback] Stop called but barge-in already active, skipping",
-      );
-      return;
-    }
+    // CRITICAL FIX: Always stop audio sources even if bargeInActive is already true
+    // This ensures audio stops completely even if there's a race condition or
+    // the flag was set by a previous incomplete stop/fadeOut call.
+    const wasAlreadyActive = bargeInActiveRef.current;
+
+    // Set barge-in flag to drop any incoming audio chunks
+    // This prevents stale audio from the cancelled response from playing
+    bargeInActiveRef.current = true;
 
     const hasActiveAudio =
       isPlayingRef.current ||
       isProcessingRef.current ||
       audioQueueRef.current.length > 0 ||
       activeSourcesRef.current.size > 0;
+
+    // If already active and no remaining audio, we're done
+    if (wasAlreadyActive && !hasActiveAudio) {
+      voiceLog.debug(
+        "[TTAudioPlayback] Stop called with barge-in active and no remaining audio",
+      );
+      return;
+    }
+
+    // If no active audio at all, just ensure flag is set and return
     if (!hasActiveAudio) {
       voiceLog.debug(
         "[TTAudioPlayback] Stop called with no active audio, skipping",
@@ -1138,10 +1153,6 @@ export function useTTAudioPlayback(
         win.__audioStopStacks.push(`${Date.now()}: barge-in stop`);
       }
     }
-
-    // Set barge-in flag to drop any incoming audio chunks
-    // This prevents stale audio from the cancelled response from playing
-    bargeInActiveRef.current = true;
 
     // Stop all active audio sources
     for (const source of activeSourcesRef.current) {
@@ -1198,18 +1209,58 @@ export function useTTAudioPlayback(
    */
   const fadeOut = useCallback(
     (durationMs: number = 50) => {
-      // Guard: If barge-in is already active, skip redundant fadeOut calls
-      // This prevents infinite loops where fadeOut() -> setState -> re-render -> fadeOut()
-      if (bargeInActiveRef.current) {
-        voiceLog.debug(
-          "[TTAudioPlayback] FadeOut called but barge-in already active, skipping",
-        );
-        return;
-      }
+      // CRITICAL FIX: Always stop audio sources even if bargeInActive is already true
+      // The previous code would return early, leaving audio playing if the flag was
+      // set by a previous incomplete barge-in or race condition.
+      //
+      // Now we track whether we've already fired callbacks to prevent infinite loops,
+      // but we ALWAYS ensure audio sources are stopped.
+      const wasAlreadyActive = bargeInActiveRef.current;
 
       // IMMEDIATELY set barge-in flag to drop any new incoming audio chunks
       // This prevents audio from being queued during the fade
       bargeInActiveRef.current = true;
+
+      // If already active, still stop sources but skip callbacks and logging
+      if (wasAlreadyActive) {
+        const remainingSources = activeSourcesRef.current.size;
+        const remainingQueue = audioQueueRef.current.length;
+        voiceLog.debug(
+          `[TTAudioPlayback] FadeOut called with barge-in already active, ensuring audio stops ` +
+            `(${remainingSources} sources, ${remainingQueue} queued chunks)`,
+        );
+        console.log(
+          `[BARGE-IN-DEBUG] FadeOut re-entry: stopping ${remainingSources} remaining sources, ` +
+            `${remainingQueue} queued chunks`,
+        );
+        // Force-stop any remaining sources (the previous fadeOut may not have completed)
+        for (const source of activeSourcesRef.current) {
+          try {
+            source.stop();
+            source.disconnect();
+          } catch {
+            // Ignore errors from already-stopped sources
+          }
+        }
+        activeSourcesRef.current.clear();
+        audioQueueRef.current = [];
+        isPlayingRef.current = false;
+        isProcessingRef.current = false;
+        nextScheduledTimeRef.current = 0;
+        return;
+      }
+
+      // Log barge-in initiation with state details
+      const activeSourceCount = activeSourcesRef.current.size;
+      const queuedChunkCount = audioQueueRef.current.length;
+      console.log(
+        `[BARGE-IN-DEBUG] FadeOut starting: ${activeSourceCount} active sources, ` +
+          `${queuedChunkCount} queued chunks, isPlaying=${isPlayingRef.current}`,
+      );
+      voiceLog.info(
+        `[TTAudioPlayback] Barge-in fadeOut starting: ${activeSourceCount} sources, ` +
+          `${queuedChunkCount} queued`,
+      );
 
       // E2E Test Harness: Track when fade started (for barge-in latency measurement)
       timestampsRef.current.lastFadeStarted = performance.now();
@@ -1259,6 +1310,16 @@ export function useTTAudioPlayback(
         onPlaybackInterrupted?.();
       }
       setPlaybackState("stopped");
+
+      // Log completion with timing
+      const fadeElapsed = performance.now() - timestampsRef.current.lastFadeStarted!;
+      console.log(
+        `[BARGE-IN-DEBUG] FadeOut complete: sources stopped in ${fadeElapsed.toFixed(1)}ms, ` +
+          `gain ramping to 0 over ${durationMs}ms`,
+      );
+      voiceLog.info(
+        `[TTAudioPlayback] Barge-in audio stopped in ${fadeElapsed.toFixed(1)}ms`,
+      );
 
       // Restore gain value for next playback after a brief delay
       setTimeout(() => {

@@ -329,6 +329,11 @@ class ThinkerTalkerWebSocketHandler:
             logger.info(f"Voice pipeline using aggregation window: {aggregation_window_ms}ms")
 
             # Create pipeline session
+            # Latency-optimized configuration for Thinker/Talker voice mode:
+            # - Disable continuation detection and utterance aggregation to
+            #   avoid extra waits between STT endpoint and LLM/TTS start.
+            # - Keep aggregation window available for future tuning, but keep
+            #   features off by default for fast TTFA.
             pipeline_config = PipelineConfig(
                 stt_language=self.config.language,
                 stt_sample_rate=self.config.stt_sample_rate,
@@ -337,6 +342,8 @@ class ThinkerTalkerWebSocketHandler:
                 voice_id=self.config.voice_id,
                 tts_model=self.config.tts_model,
                 barge_in_enabled=self.config.barge_in_enabled,
+                enable_continuation_detection=False,
+                enable_utterance_aggregation=False,
                 utterance_aggregation_window_ms=int(aggregation_window_ms),
             )
 
@@ -957,7 +964,20 @@ class ThinkerTalkerWebSocketHandler:
 
             # Replay missed messages if message recovery is enabled
             if self.config.message_recovery_enabled and result.missed_messages:
-                for missed_msg in result.missed_messages:
+                # To avoid flooding the client and causing latency spikes,
+                # only replay the most recent subset of buffered messages.
+                # Voice mode already has full conversation history in the
+                # main chat timeline, so replaying a small tail is sufficient
+                # for UI resynchronization after reconnect.
+                max_replay_messages = 20
+                messages_to_replay = result.missed_messages[-max_replay_messages:]
+
+                logger.info(
+                    f"[WS Recovery] Replaying {len(messages_to_replay)} of "
+                    f"{len(result.missed_messages)} buffered messages for session={session_id}"
+                )
+
+                for missed_msg in messages_to_replay:
                     await self._send_message(
                         {
                             "type": "message.replay",
