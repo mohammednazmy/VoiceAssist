@@ -11,8 +11,23 @@ export interface KnowledgeDocument {
   name: string; // Maps to 'title' in canonical model
   type: "textbook" | "journal" | "guideline" | "note" | string; // Maps to 'documentType'
   indexed: boolean; // Maps to 'isIndexed'
+  indexingStatus: "processing" | "indexed" | "failed"; // Actual status from backend
   version?: string; // Simplified from canonical 'version' (number)
   lastIndexedAt?: string;
+  // Structure-related fields (from PDF parsing)
+  totalPages?: number | null;
+  hasToc?: boolean;
+  hasFigures?: boolean;
+  chunksIndexed?: number;
+  processingStage?: string;
+  processingProgress?: number;
+  hasEnhancedStructure?: boolean;
+  phiRisk?: string | null;
+  // Ownership/visibility fields
+  ownerId?: string | null;
+  ownerName?: string | null;
+  isPublic?: boolean;
+  sourceType?: string;
 }
 
 interface DeleteResult {
@@ -49,8 +64,38 @@ export function useKnowledgeDocuments() {
           | KnowledgeDocument[]
         >("/api/admin/kb/documents");
         // Handle both array and object response formats for backwards compatibility
-        const data = Array.isArray(response) ? response : response.documents;
-        if (!cancelled) setDocs(data);
+        const rawData = Array.isArray(response) ? response : response.documents;
+        // Map snake_case API response to camelCase interface
+        const mappedData: KnowledgeDocument[] = (rawData as any[]).map((doc) => {
+          const indexingStatus: "processing" | "indexed" | "failed" =
+            doc.indexing_status ??
+            (doc.indexed === true ? "indexed" : "processing");
+
+          return {
+            id: doc.document_id || doc.id,
+            name: doc.title || doc.name,
+            type: doc.source_type || doc.type,
+            indexed: indexingStatus === "indexed",
+            indexingStatus,
+            version: doc.version,
+            lastIndexedAt: doc.upload_date || doc.lastIndexedAt,
+            // Structure fields
+            totalPages: doc.total_pages ?? null,
+            hasToc: doc.has_toc ?? false,
+            hasFigures: doc.has_figures ?? false,
+            chunksIndexed: doc.chunks_indexed ?? 0,
+            processingStage: doc.processing_stage,
+            processingProgress: doc.processing_progress,
+            hasEnhancedStructure: doc.has_enhanced_structure ?? false,
+            phiRisk: doc.phi_risk ?? null,
+            // Ownership fields
+            ownerId: doc.owner_id ?? null,
+            ownerName: doc.owner_name ?? null,
+            isPublic: doc.is_public ?? true,
+            sourceType: doc.source_type,
+          };
+        });
+        if (!cancelled) setDocs(mappedData);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         console.warn("Falling back to demo KB data:", message);
@@ -62,6 +107,7 @@ export function useKnowledgeDocuments() {
               name: "Harrison's · Heart Failure",
               type: "textbook",
               indexed: true,
+              indexingStatus: "indexed",
               version: "v1",
               lastIndexedAt: new Date().toISOString(),
             },
@@ -70,6 +116,7 @@ export function useKnowledgeDocuments() {
               name: "AHA/ACC/HFSA 2022 HF Guideline",
               type: "guideline",
               indexed: true,
+              indexingStatus: "indexed",
               version: "v1",
               lastIndexedAt: new Date().toISOString(),
             },

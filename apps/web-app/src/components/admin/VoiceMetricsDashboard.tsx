@@ -11,6 +11,7 @@
 import { useState, useEffect } from "react";
 import { useVoiceMetrics, SessionStats } from "../../hooks/useVoiceMetrics";
 import { useWebVitals } from "../../hooks/useWebVitals";
+import { getDefaultAdminApi, type VoicePhiAnalyticsResponse } from "../../lib/api/adminApi";
 
 // Metric card component
 interface MetricCardProps {
@@ -162,6 +163,7 @@ export function VoiceMetricsDashboard() {
 
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [latencies, setLatencies] = useState({ stt: 0, tts: 0 });
+   const [phiSummary, setPhiSummary] = useState<VoicePhiAnalyticsResponse | null>(null);
 
   // Update stats periodically
   useEffect(() => {
@@ -175,6 +177,24 @@ export function VoiceMetricsDashboard() {
 
     return () => clearInterval(interval);
   }, [getSessionStats, getAverageLatencies]);
+
+  // Load PHI-conscious voice analytics for summary chip
+  useEffect(() => {
+    const adminApi = getDefaultAdminApi();
+
+    const loadPhi = async () => {
+      try {
+        const data = await adminApi.getVoicePhiAnalytics();
+        setPhiSummary(data);
+      } catch {
+        // Best-effort only; keep dashboard usable even if this fails
+      }
+    };
+
+    loadPhi();
+    const interval = setInterval(loadPhi, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Determine latency status
   const getSttStatus = (latency: number): "good" | "warning" | "critical" => {
@@ -207,17 +227,29 @@ export function VoiceMetricsDashboard() {
             Real-time voice metrics and session analytics
           </p>
         </div>
-        {currentSession && (
-          <div className="flex items-center space-x-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
-            </span>
-            <span className="text-sm font-medium text-green-600">
-              Active Session
-            </span>
-          </div>
-        )}
+        <div className="flex items-center space-x-4">
+          {phiSummary && (
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
+                {phiSummary.active_sessions_demo} demo sessions
+              </span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 text-xs font-medium border border-sky-200">
+                {Math.round(phiSummary.phi_conscious_rate)}% PHI-conscious RAG
+              </span>
+            </div>
+          )}
+          {currentSession && (
+            <div className="flex items-center space-x-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+              </span>
+              <span className="text-sm font-medium text-green-600">
+                Active Session
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Key Metrics */}

@@ -15,6 +15,7 @@ class User(Base):
     """User model for authentication and user management"""
 
     __tablename__ = "users"
+    __table_args__ = {"extend_existing": True}
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
@@ -53,6 +54,13 @@ class User(Base):
     password_reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
     must_change_password = Column(Boolean, default=False, nullable=False)
 
+    # Multi-tenancy: default organization for the user
+    default_organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -61,6 +69,8 @@ class User(Base):
     # Relationships
     api_keys = relationship("UserAPIKey", back_populates="user", cascade="all, delete-orphan")
     invited_by = relationship("User", remote_side=[id], foreign_keys=[invited_by_id])
+    documents = relationship("Document", back_populates="owner", foreign_keys="[Document.owner_id]")
+    default_organization = relationship("Organization", foreign_keys=[default_organization_id])
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"

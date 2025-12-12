@@ -81,6 +81,16 @@ const ClinicalContextsPage = lazy(() =>
     default: m.ClinicalContextsPage,
   })),
 );
+const OrganizationsPage = lazy(() =>
+  import("./pages/OrganizationsPage").then((m) => ({
+    default: m.OrganizationsPage,
+  })),
+);
+const LearningPage = lazy(() =>
+  import("./pages/LearningPage").then((m) => ({
+    default: m.LearningPage,
+  })),
+);
 
 // Loading fallback component
 function PageLoader() {
@@ -160,6 +170,11 @@ export function App() {
                           element={<TroubleshootingPage />}
                         />
                         <Route path="/backups" element={<BackupsPage />} />
+                        <Route
+                          path="/organizations"
+                          element={<OrganizationsPage />}
+                        />
+                        <Route path="/learning" element={<LearningPage />} />
                         <Route
                           path="/"
                           element={<Navigate to="/dashboard" replace />}

@@ -37,7 +37,14 @@ class SearchRequest(BaseModel):
     query: str = Field(..., description="Search query", min_length=1, max_length=1000)
     top_k: int = Field(10, ge=1, le=50, description="Number of results")
     mode: Optional[str] = Field(None, description="Search mode: fast, balanced, precise, comprehensive")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Metadata filters (e.g., source_type, date_range)")
+    filters: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Metadata filters (e.g., source_type, date_range, phi_risk)",
+    )
+    exclude_phi: bool = Field(
+        False,
+        description="When true, exclude high-risk PHI KB chunks from results.",
+    )
     include_metrics: bool = Field(False, description="Include search metrics in response")
 
 
@@ -166,12 +173,19 @@ async def advanced_search(
                     f"Valid modes: fast, balanced, precise, comprehensive",
                 )
 
+        # Build filters, optionally excluding PHI-heavy chunks
+        filters = request.filters or {}
+        if request.exclude_phi:
+            # Only include chunks where phi_risk is not 'high'. This expects
+            # phi_risk to be stored as a payload field in Qdrant metadata.
+            filters["phi_risk"] = ["none", "low", "medium"]
+
         # Perform search
         results, metrics = await search.search(
             query=request.query,
             top_k=request.top_k,
             mode=mode,
-            filters=request.filters,
+            filters=filters or None,
         )
 
         response_data = {
@@ -181,8 +195,8 @@ async def advanced_search(
             "total_results": len(results),
         }
 
-        if request.filters:
-            response_data["applied_filters"] = request.filters
+        if filters:
+            response_data["applied_filters"] = filters
 
         if request.include_metrics:
             response_data["metrics"] = metrics_to_response(metrics)

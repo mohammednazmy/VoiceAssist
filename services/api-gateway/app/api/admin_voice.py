@@ -44,6 +44,7 @@ from app.core.dependencies import ensure_admin_privileges, get_current_admin_or_
 from app.models.feature_flag import FeatureFlag
 from app.models.user import User
 from app.services.realtime_voice_service import realtime_voice_service
+from app.services.session_analytics_service import session_analytics_service
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -860,6 +861,25 @@ async def get_voice_cost_breakdown(
     return success_response(data, trace_id=trace_id)
 
 
+@router.get("/analytics/phi")
+async def get_voice_phi_analytics(
+    request: Request,
+    current_admin_user: User = Depends(get_current_admin_or_viewer),
+) -> Dict:
+    """
+    Get PHI-conscious mode analytics for active voice sessions.
+
+    Provides a lightweight summary suitable for dashboards:
+    - Active clinical vs demo sessions
+    - Number and rate of sessions running with exclude_phi=True
+    """
+    summary = session_analytics_service.get_phi_summary()
+    summary["timestamp"] = datetime.now(timezone.utc).isoformat() + "Z"
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(summary, trace_id=trace_id)
+
+
 # ============================================================================
 # Phase 11.1: Provider & Voice Endpoints
 # ============================================================================
@@ -1208,6 +1228,17 @@ class TTSessionInfo(BaseModel):
     tool_calls_count: int = 0
     created_at: str
     last_activity: Optional[str] = None
+    # Optional analytics metadata (from SessionAnalyticsService)
+    mode: Optional[str] = None
+    phi_mode: Optional[str] = None
+    exclude_phi: Optional[bool] = None
+    reading_mode_enabled: Optional[bool] = None
+    reading_detail: Optional[str] = None
+    reading_speed: Optional[str] = None
+    # Optional document context (from VoiceDocumentSession)
+    active_document_id: Optional[str] = None
+    active_document_title: Optional[str] = None
+    active_document_page: Optional[int] = None
 
 
 class TTContextInfo(BaseModel):
@@ -1254,15 +1285,17 @@ async def get_tt_sessions(
     request: Request,
     current_admin_user: User = Depends(get_current_admin_or_viewer),
     limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
 ) -> Dict:
     """Get active Thinker-Talker pipeline sessions.
 
     Shows sessions using the new TT voice pipeline (not legacy Realtime API).
     """
-    sessions = []
+    sessions: List[Dict[str, Any]] = []
+    conversation_ids: List[str] = []
 
     try:
-        # Get TT sessions from Redis
+        # Get TT sessions from Redis (primary source for active sessions)
         tt_sessions = redis_client.hgetall(REDIS_TT_SESSIONS_KEY)
         for sid, data in tt_sessions.items():
             if isinstance(sid, bytes):
@@ -1270,13 +1303,18 @@ async def get_tt_sessions(
             if isinstance(data, bytes):
                 data = data.decode("utf-8")
             session_data = json.loads(data) if isinstance(data, str) else data
+
+            conversation_id = session_data.get("conversation_id")
+            if conversation_id:
+                conversation_ids.append(conversation_id)
+
             sessions.append(
                 {
                     "session_id": sid,
                     "user_id": session_data.get("user_id", ""),
                     "user_email": session_data.get("user_email"),
                     "state": session_data.get("state", "unknown"),
-                    "conversation_id": session_data.get("conversation_id"),
+                    "conversation_id": conversation_id,
                     "message_count": session_data.get("message_count", 0),
                     "tool_calls_count": session_data.get("tool_calls_count", 0),
                     "created_at": session_data.get("created_at", ""),
@@ -1285,6 +1323,71 @@ async def get_tt_sessions(
             )
     except Exception as e:
         logger.warning(f"Failed to get TT sessions from Redis: {e}")
+
+    # Enrich sessions with analytics metadata (PHI-conscious + reading-mode)
+    for session in sessions:
+        sid = session.get("session_id")
+        if not sid:
+            continue
+
+        try:
+            analytics = session_analytics_service.get_analytics_summary(sid)
+        except Exception as e:
+            logger.warning(f"Failed to get analytics for TT session {sid}: {e}")
+            analytics = None
+
+        if not analytics:
+            continue
+
+        privacy = analytics.get("privacy") or {}
+        reading = analytics.get("reading") or {}
+
+        session["mode"] = analytics.get("mode")
+        session["phi_mode"] = privacy.get("phi_mode")
+        session["exclude_phi"] = privacy.get("exclude_phi")
+        session["reading_mode_enabled"] = reading.get("reading_mode_enabled")
+        session["reading_detail"] = reading.get("reading_detail")
+        session["reading_speed"] = reading.get("reading_speed")
+
+    # Enrich sessions with active document context (if any)
+    if sessions and conversation_ids:
+        try:
+            from app.models.voice_document_session import VoiceDocumentSession
+            from app.models.document import Document
+
+            # Deduplicate conversation IDs to avoid redundant lookups
+            unique_conversation_ids = list({cid for cid in conversation_ids if cid})
+
+            if unique_conversation_ids:
+                rows = (
+                    db.query(
+                        VoiceDocumentSession.conversation_id,
+                        VoiceDocumentSession.document_id,
+                        VoiceDocumentSession.current_page,
+                        Document.title,
+                    )
+                    .join(Document, VoiceDocumentSession.document_id == Document.document_id)
+                    .filter(
+                        VoiceDocumentSession.conversation_id.in_(unique_conversation_ids),
+                        VoiceDocumentSession.is_active == True,  # noqa: E712
+                    )
+                    .all()
+                )
+
+                by_conversation: Dict[str, Dict[str, Any]] = {}
+                for conv_id, doc_id, current_page, title in rows:
+                    by_conversation[conv_id] = {
+                        "active_document_id": doc_id,
+                        "active_document_title": title,
+                        "active_document_page": current_page or 1,
+                    }
+
+                for session in sessions:
+                    conv_id = session.get("conversation_id")
+                    if conv_id and conv_id in by_conversation:
+                        session.update(by_conversation[conv_id])
+        except Exception as e:
+            logger.warning(f"Failed to enrich TT sessions with document context: {e}")
 
     # Sort by created_at descending and limit
     sessions.sort(key=lambda x: x.get("created_at", ""), reverse=True)

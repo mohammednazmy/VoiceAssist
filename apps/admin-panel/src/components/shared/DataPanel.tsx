@@ -7,6 +7,8 @@ interface DataPanelProps {
   title?: string;
   subtitle?: string;
   headerAction?: ReactNode;
+  /** @deprecated Use headerAction instead */
+  actions?: ReactNode;
   children: ReactNode;
   className?: string;
   noPadding?: boolean;
@@ -16,11 +18,14 @@ export function DataPanel({
   title,
   subtitle,
   headerAction,
+  actions,
   children,
   className = "",
   noPadding = false,
 }: DataPanelProps) {
-  const hasHeader = title || headerAction;
+  // Support 'actions' as alias for 'headerAction' for backwards compatibility
+  const resolvedAction = headerAction ?? actions;
+  const hasHeader = title || resolvedAction;
 
   return (
     <div
@@ -36,9 +41,9 @@ export function DataPanel({
               <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
             )}
           </div>
-          {headerAction && (
+          {resolvedAction && (
             <div className="flex items-center gap-2 flex-shrink-0">
-              {headerAction}
+              {resolvedAction}
             </div>
           )}
         </div>

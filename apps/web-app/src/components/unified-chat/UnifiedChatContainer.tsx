@@ -134,6 +134,9 @@ export function UnifiedChatContainer({
   const activateVoiceMode = useUnifiedConversationStore(
     (state) => state.activateVoiceMode,
   );
+  const deactivateVoiceMode = useUnifiedConversationStore(
+    (state) => state.deactivateVoiceMode,
+  );
 
   // Voice settings
   const _voiceModeType = useVoiceSettingsStore((state) => state.voiceModeType);
@@ -145,10 +148,11 @@ export function UnifiedChatContainer({
     [toast],
   );
 
-  // Conversations hook for title editing
-  const { updateConversation } = useConversations({
-    onError: handleConversationsError,
-  });
+  // Conversations hook for title editing, list updates, and message cache access
+  const { updateConversation, createConversation, getCachedConversationMessages } =
+    useConversations({
+      onError: handleConversationsError,
+    });
 
   // Local state
   const [loadingState, setLoadingState] = useState<LoadingState>("idle");
@@ -176,6 +180,20 @@ export function UnifiedChatContainer({
 
   // Auto-titling state
   const [hasAutoTitled, setHasAutoTitled] = useState(false);
+
+  // Reset stale voice mode state on mount to prevent inconsistent UI
+  // Voice sessions should not persist across page loads - the user should
+  // explicitly open the voice panel each time. This prevents the issue where
+  // voiceModeActive is true but isVoicePanelOpen is false, causing the inline
+  // transcript UI to show without the full ThinkerTalkerVoicePanel (no beeps).
+  useEffect(() => {
+    if (voiceModeActive && !startVoiceMode) {
+      // voiceModeActive is stale from a previous session - reset it
+      deactivateVoiceMode();
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Chat session hook for WebSocket communication
   const {
@@ -325,8 +343,8 @@ export function UnifiedChatContainer({
 
     try {
       console.log("[UnifiedChat] Creating new conversation...");
-      const newConversation =
-        await apiClient.createConversation("New Conversation");
+      // Use useConversations hook so the sidebar/list state stays in sync.
+      const newConversation = await createConversation("New Conversation");
 
       if (newConversation?.id) {
         console.log("[UnifiedChat] Conversation created:", newConversation.id);
@@ -346,7 +364,14 @@ export function UnifiedChatContainer({
       setLoadingState("idle");
       isCreatingConversationRef.current = false;
     }
-  }, [apiClient, navigate, setConversation, onConversationReady, announce]);
+  }, [
+    apiClient,
+    navigate,
+    setConversation,
+    onConversationReady,
+    announce,
+    createConversation,
+  ]);
 
   const loadConversation = useCallback(
     async (id: string) => {
@@ -366,8 +391,11 @@ export function UnifiedChatContainer({
         setLocalConversation(conv);
         setConversation(id);
 
-        // Load messages
-        const messagesResponse = await apiClient.getMessages(id, 1, 50);
+        // Load messages, preferring any cached slice from useConversations
+        const cached = getCachedConversationMessages(id);
+        const messagesResponse = cached
+          ? { items: cached.items, totalCount: cached.totalCount }
+          : await apiClient.getMessages(id, 1, 50);
 
         if (messagesResponse?.items) {
           const loadedMessages = messagesResponse.items;
@@ -577,8 +605,11 @@ export function UnifiedChatContainer({
   }, []);
 
   // Auto-title conversation based on first message
+  // Includes retry logic and toast notifications for failures
   const autoTitleConversation = useCallback(
-    async (messageContent: string) => {
+    async (messageContent: string, retryCount = 0) => {
+      const MAX_RETRIES = 2;
+
       if (
         hasAutoTitled ||
         !activeConversationId ||
@@ -588,17 +619,53 @@ export function UnifiedChatContainer({
         return;
       }
 
-      const newTitle = generateAutoTitle(messageContent);
+      const fallbackTitle = generateAutoTitle(messageContent);
 
       try {
-        await updateConversation(activeConversationId, { title: newTitle });
+        let updated: Conversation | null = null;
+
+        // Prefer backend-generated title when available (PHI-conscious, LLM-assisted).
+        if (apiClient) {
+          try {
+            updated = await apiClient.autoTitleConversation(
+              activeConversationId,
+            );
+          } catch (err) {
+            console.warn("[UnifiedChat] Backend auto-title failed:", err);
+            // Backend failure is okay - we'll use fallback
+          }
+        }
+
+        const newTitle = updated?.title || fallbackTitle;
+
+        // If backend handled title, we don't need an extra PATCH; otherwise, persist via updateConversation.
+        if (!updated) {
+          await updateConversation(activeConversationId, { title: newTitle });
+        }
+
         setLocalConversation((prev) =>
           prev ? { ...prev, title: newTitle } : prev,
         );
         setHasAutoTitled(true);
       } catch (error) {
-        // Silently fail - title remains as "New Conversation"
         console.warn("[UnifiedChat] Auto-title failed:", error);
+
+        // Retry logic for transient failures
+        if (retryCount < MAX_RETRIES) {
+          console.log(`[UnifiedChat] Retrying auto-title (attempt ${retryCount + 2}/${MAX_RETRIES + 1})`);
+          // Exponential backoff: 500ms, 1000ms
+          setTimeout(() => {
+            void autoTitleConversation(messageContent, retryCount + 1);
+          }, 500 * Math.pow(2, retryCount));
+          return;
+        }
+
+        // All retries exhausted - show subtle warning
+        toast.warning(
+          "Couldn't generate title",
+          "The conversation will remain as 'New Conversation'",
+          5000,
+        );
       }
     },
     [
@@ -607,16 +674,56 @@ export function UnifiedChatContainer({
       conversation,
       generateAutoTitle,
       updateConversation,
+      apiClient,
+      toast,
     ],
   );
+
+  // Automatically trigger auto-titling once we have enough turns:
+  // first 1–2 user messages plus the first assistant answer.
+  useEffect(() => {
+    if (
+      hasAutoTitled ||
+      !activeConversationId ||
+      !conversation ||
+      conversation.title !== "New Conversation"
+    ) {
+      return;
+    }
+
+    const userMessages = messages.filter((m) => m.role === "user");
+    const assistantMessages = messages.filter((m) => m.role === "assistant");
+
+    // Wait until we have at least:
+    // - one assistant reply and one user message, or
+    // - two user messages (for purely user-driven drafts)
+    if (assistantMessages.length === 0 && userMessages.length < 2) {
+      return;
+    }
+
+    const parts: string[] = [];
+    if (userMessages[0]) parts.push(userMessages[0].content);
+    if (userMessages[1]) parts.push(userMessages[1].content);
+    if (assistantMessages[0]) parts.push(assistantMessages[0].content);
+
+    const combined = parts.join(" ");
+    if (!combined.trim()) {
+      return;
+    }
+
+    void autoTitleConversation(combined);
+  }, [
+    messages,
+    hasAutoTitled,
+    activeConversationId,
+    conversation,
+    autoTitleConversation,
+  ]);
 
   // Handle send message
   const handleSendMessage = useCallback(
     (content: string, _source: MessageSource) => {
       if (!content.trim()) return;
-
-      // Auto-title conversation if this is the first message
-      autoTitleConversation(content);
 
       // Send via WebSocket - the message will be added to chatMessages by useChatSession,
       // then synced to the unified store by the sync useEffect.
@@ -689,9 +796,6 @@ export function UnifiedChatContainer({
     (content: string) => {
       if (!content.trim()) return;
 
-      // Auto-title conversation if this is the first message
-      autoTitleConversation(content);
-
       // Create content hash for deduplication with WebSocket sync
       const contentHash = `user:${content.slice(0, 100)}`;
       const tempId = `voice-user-${Date.now()}`;
@@ -754,10 +858,12 @@ export function UnifiedChatContainer({
     [activeConversationId],
   );
 
-  // Handle voice panel close
+  // Handle voice panel close - also deactivate voice mode in store
+  // to prevent stale voiceModeActive state causing issues on next open
   const handleVoicePanelClose = useCallback(() => {
     setIsVoicePanelOpen(false);
-  }, []);
+    deactivateVoiceMode();
+  }, [deactivateVoiceMode]);
 
   // -------------------------------------------------------------------------
   // Render Helpers
@@ -826,6 +932,7 @@ export function UnifiedChatContainer({
           isOpen={isSidebarOpen}
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           conversationId={activeConversationId}
+          onNewConversation={createNewConversation}
         />
 
         {/* Main Content Area */}

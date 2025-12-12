@@ -9,9 +9,10 @@ import { AskAIButton } from "../components/shared";
 import { fetchAPI } from "../lib/api";
 import { getApiClient } from "../lib/apiClient";
 import { useModelAnalytics } from "../hooks/useModelAnalytics";
+import { useDocumentAnalytics } from "../hooks/useDocumentAnalytics";
 
 type AnalyticsRange = "24h" | "7d" | "30d";
-type AnalyticsTab = "overview" | "models" | "search" | "costs";
+type AnalyticsTab = "overview" | "models" | "search" | "costs" | "documents";
 
 interface QueryAnalytics {
   total_queries: number;
@@ -61,6 +62,16 @@ export function AnalyticsPage() {
     refresh: refreshModels,
     refreshMetrics,
   } = useModelAnalytics({
+    days: timeRange === "24h" ? 1 : timeRange === "7d" ? 7 : 30,
+  });
+
+  // Document analytics hook
+  const {
+    analytics: documentAnalytics,
+    loading: documentLoading,
+    error: documentError,
+    refresh: refreshDocumentAnalytics,
+  } = useDocumentAnalytics({
     days: timeRange === "24h" ? 1 : timeRange === "7d" ? 7 : 30,
   });
 
@@ -132,8 +143,8 @@ export function AnalyticsPage() {
     return new Intl.NumberFormat("en-US").format(num);
   };
 
-  const loading = modelLoading || legacyLoading;
-  const error = modelError || legacyError;
+  const loading = modelLoading || legacyLoading || documentLoading;
+  const error = modelError || legacyError || documentError;
 
   if (loading && !metrics) {
     return (
@@ -182,11 +193,12 @@ export function AnalyticsPage() {
             onClick={() => {
               refreshModels();
               loadLegacyAnalytics();
+              refreshDocumentAnalytics();
             }}
-            disabled={metricsLoading}
+            disabled={metricsLoading || documentLoading}
             className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-md text-sm font-medium transition-colors"
           >
-            {metricsLoading ? "⟳" : "↻"} Refresh
+            {metricsLoading || documentLoading ? "⟳" : "↻"} Refresh
           </button>
 
           {/* Export Button */}
@@ -207,6 +219,7 @@ export function AnalyticsPage() {
             { id: "models", label: "AI Models" },
             { id: "search", label: "Search Analytics" },
             { id: "costs", label: "Cost Tracking" },
+            { id: "documents", label: "Documents" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -729,6 +742,314 @@ export function AnalyticsPage() {
               </li>
               <li>• Monitor P95 latency to balance cost vs. response time</li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Documents Tab */}
+      {activeTab === "documents" && (
+        <div className="space-y-6">
+          {/* Document Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              title="Total Documents"
+              value={formatNumber(documentAnalytics?.documents.total || 0)}
+              subtitle="In knowledge base"
+              color="blue"
+            />
+            <MetricCard
+              title="Total Pages"
+              value={formatNumber(documentAnalytics?.documents.total_pages || 0)}
+              subtitle={`${formatNumber(documentAnalytics?.documents.with_pages || 0)} docs with pages`}
+              color="purple"
+            />
+            <MetricCard
+              title="Voice Sessions"
+              value={formatNumber(documentAnalytics?.voice_navigation.sessions_in_period || 0)}
+              subtitle={`${formatNumber(documentAnalytics?.voice_navigation.active_sessions || 0)} active`}
+              color="green"
+            />
+            <MetricCard
+              title="Recent Uploads"
+              value={formatNumber(documentAnalytics?.documents.recent_uploads || 0)}
+              subtitle={`Last ${timeRange === "24h" ? "24 hours" : timeRange}`}
+              color="yellow"
+            />
+          </div>
+
+          {/* Document Structure Stats */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Document Structure
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">With TOC</span>
+                  <span className="text-sm font-medium text-blue-400">
+                    {documentAnalytics?.documents.total
+                      ? ((documentAnalytics.documents.with_toc / documentAnalytics.documents.total) * 100).toFixed(1)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="text-2xl font-bold text-blue-400">
+                  {formatNumber(documentAnalytics?.documents.with_toc || 0)}
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full"
+                    style={{
+                      width: `${documentAnalytics?.documents.total ? (documentAnalytics.documents.with_toc / documentAnalytics.documents.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">With Figures</span>
+                  <span className="text-sm font-medium text-purple-400">
+                    {documentAnalytics?.documents.total
+                      ? ((documentAnalytics.documents.with_figures / documentAnalytics.documents.total) * 100).toFixed(1)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="text-2xl font-bold text-purple-400">
+                  {formatNumber(documentAnalytics?.documents.with_figures || 0)}
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 rounded-full"
+                    style={{
+                      width: `${documentAnalytics?.documents.total ? (documentAnalytics.documents.with_figures / documentAnalytics.documents.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">With Pages</span>
+                  <span className="text-sm font-medium text-green-400">
+                    {documentAnalytics?.documents.total
+                      ? ((documentAnalytics.documents.with_pages / documentAnalytics.documents.total) * 100).toFixed(1)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="text-2xl font-bold text-green-400">
+                  {formatNumber(documentAnalytics?.documents.with_pages || 0)}
+                </div>
+                <div className="h-2 bg-slate-700 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full"
+                    style={{
+                      width: `${documentAnalytics?.documents.total ? (documentAnalytics.documents.with_pages / documentAnalytics.documents.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Document Sources */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* By Source Type */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-200 mb-4">
+                Documents by Source
+              </h2>
+              <div className="space-y-3">
+                {documentAnalytics?.documents.by_source &&
+                  Object.entries(documentAnalytics.documents.by_source).map(
+                    ([source, count]) => {
+                      const total = documentAnalytics.documents.total || 1;
+                      const percentage = (count / total) * 100;
+                      return (
+                        <div key={source}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-slate-400 capitalize">
+                              {source}
+                            </span>
+                            <span className="text-sm font-medium text-slate-200">
+                              {formatNumber(count)} ({percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    },
+                  )}
+                {(!documentAnalytics?.documents.by_source ||
+                  Object.keys(documentAnalytics.documents.by_source).length === 0) && (
+                  <div className="py-4 text-center text-slate-500">
+                    No documents yet
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* By Status */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-200 mb-4">
+                Documents by Status
+              </h2>
+              <div className="space-y-3">
+                {documentAnalytics?.documents.by_status &&
+                  Object.entries(documentAnalytics.documents.by_status).map(
+                    ([docStatus, count]) => {
+                      const total = documentAnalytics.documents.total || 1;
+                      const percentage = (count / total) * 100;
+                      const statusColor =
+                        docStatus === "indexed"
+                          ? "bg-green-500"
+                          : docStatus === "processing"
+                            ? "bg-yellow-500"
+                            : docStatus === "failed"
+                              ? "bg-red-500"
+                              : "bg-slate-500";
+                      return (
+                        <div key={docStatus}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm text-slate-400 capitalize">
+                              {docStatus}
+                            </span>
+                            <span className="text-sm font-medium text-slate-200">
+                              {formatNumber(count)} ({percentage.toFixed(1)}%)
+                            </span>
+                          </div>
+                          <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${statusColor} rounded-full`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    },
+                  )}
+                {(!documentAnalytics?.documents.by_status ||
+                  Object.keys(documentAnalytics.documents.by_status).length === 0) && (
+                  <div className="py-4 text-center text-slate-500">
+                    No documents yet
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Voice Navigation Stats */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Voice Navigation
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <div className="text-xs text-slate-400">Total Sessions</div>
+                <div className="text-xl font-bold text-blue-400">
+                  {formatNumber(documentAnalytics?.voice_navigation.total_sessions || 0)}
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <div className="text-xs text-slate-400">Active Now</div>
+                <div className="text-xl font-bold text-green-400">
+                  {formatNumber(documentAnalytics?.voice_navigation.active_sessions || 0)}
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <div className="text-xs text-slate-400">Unique Users</div>
+                <div className="text-xl font-bold text-purple-400">
+                  {formatNumber(documentAnalytics?.voice_navigation.unique_users_in_period || 0)}
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-lg p-3">
+                <div className="text-xs text-slate-400">Avg Pages Navigated</div>
+                <div className="text-xl font-bold text-yellow-400">
+                  {documentAnalytics?.voice_navigation.avg_pages_navigated || 0}
+                </div>
+              </div>
+            </div>
+
+            {/* Popular Documents */}
+            {documentAnalytics?.voice_navigation.popular_documents &&
+              documentAnalytics.voice_navigation.popular_documents.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-slate-300 mb-3">
+                    Popular Documents (Voice Navigation)
+                  </h3>
+                  <div className="space-y-2">
+                    {documentAnalytics.voice_navigation.popular_documents.map(
+                      (doc, idx) => (
+                        <div
+                          key={doc.document_id}
+                          className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="text-xs text-slate-500 w-6">
+                              #{idx + 1}
+                            </span>
+                            <span className="text-sm text-slate-300">
+                              {doc.title}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-blue-400">
+                            {doc.session_count} sessions
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              )}
+            {(!documentAnalytics?.voice_navigation.popular_documents ||
+              documentAnalytics.voice_navigation.popular_documents.length === 0) && (
+              <div className="py-4 text-center text-slate-500">
+                No voice navigation sessions yet
+              </div>
+            )}
+          </div>
+
+          {/* Document Ownership */}
+          <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-slate-200 mb-4">
+              Document Ownership
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">User Uploaded</span>
+                  <span className="text-sm font-medium text-blue-400">
+                    {formatNumber(documentAnalytics?.documents.user_uploaded || 0)}
+                  </span>
+                </div>
+                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${documentAnalytics?.documents.total ? (documentAnalytics.documents.user_uploaded / documentAnalytics.documents.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400">Public Documents</span>
+                  <span className="text-sm font-medium text-green-400">
+                    {formatNumber(documentAnalytics?.documents.public || 0)}
+                  </span>
+                </div>
+                <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${documentAnalytics?.documents.total ? (documentAnalytics.documents.public / documentAnalytics.documents.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

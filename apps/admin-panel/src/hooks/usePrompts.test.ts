@@ -5,6 +5,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { usePrompts, usePrompt } from "./usePrompts";
+import type {
+  Prompt,
+  PromptVersionsResponse,
+  PromptDiffResponse,
+  PromptTestResponse,
+  PromptStats,
+  PromptCacheStats,
+} from "../types";
 
 // Mock fetchAPI
 vi.mock("../lib/api", () => ({
@@ -17,28 +25,28 @@ const mockPrompts = [
   {
     id: "prompt-1",
     name: "system_prompt",
-    prompt_type: "system",
-    content: "You are a helpful assistant.",
+    display_name: "System Prompt",
+    prompt_type: "system" as const,
+    system_prompt: "You are a helpful assistant.",
     description: "Main system prompt",
-    version: 3,
-    status: "published",
+    current_version: 3,
+    status: "published" as const,
     is_active: true,
     created_at: "2024-01-10T10:00:00Z",
     updated_at: "2024-01-15T12:00:00Z",
-    published_at: "2024-01-15T12:00:00Z",
   },
   {
     id: "prompt-2",
     name: "greeting_prompt",
-    prompt_type: "template",
-    content: "Hello, {{name}}!",
+    display_name: "Greeting Prompt",
+    prompt_type: "chat" as const,
+    system_prompt: "Hello, {{name}}!",
     description: "User greeting template",
-    version: 1,
-    status: "draft",
+    current_version: 1,
+    status: "draft" as const,
     is_active: false,
     created_at: "2024-01-12T10:00:00Z",
     updated_at: "2024-01-12T10:00:00Z",
-    published_at: null,
   },
 ];
 
@@ -50,57 +58,85 @@ const mockListResponse = {
 };
 
 const mockVersionsResponse = {
+  prompt_id: "prompt-1",
+  prompt_name: "system_prompt",
+  current_version: 3,
   versions: [
     {
-      version: 3,
-      content: "Updated content",
-      updated_at: "2024-01-15T12:00:00Z",
+      version_number: 3,
+      system_prompt: "Updated content",
+      change_summary: "Third version",
+      created_at: "2024-01-15T12:00:00Z",
     },
     {
-      version: 2,
-      content: "Second version",
-      updated_at: "2024-01-13T12:00:00Z",
+      version_number: 2,
+      system_prompt: "Second version",
+      change_summary: "Second update",
+      created_at: "2024-01-13T12:00:00Z",
     },
     {
-      version: 1,
-      content: "Initial content",
-      updated_at: "2024-01-10T12:00:00Z",
+      version_number: 1,
+      system_prompt: "Initial content",
+      change_summary: "Initial version",
+      created_at: "2024-01-10T12:00:00Z",
     },
   ],
   total: 3,
-  page: 1,
-  total_pages: 1,
 };
 
 const mockDiffResponse = {
+  prompt_id: "prompt-1",
   version_a: 1,
   version_b: 2,
-  diff: [
-    { type: "removed", content: "Initial content" },
-    { type: "added", content: "Second version" },
-  ],
+  additions: 5,
+  deletions: 3,
+  unified_diff: "- Initial content\n+ Second version",
+  version_a_content: "Initial content",
+  version_b_content: "Second version",
 };
 
 const mockTestResponse = {
-  rendered: "Hello, John!",
-  tokens: 3,
-  duration_ms: 15,
+  prompt_id: "prompt-1",
+  prompt_name: "system_prompt",
+  test_input: "Hello",
+  response: "Hello, John!",
+  model: "gpt-4",
+  latency_ms: 15,
+  tokens_used: 3,
+  prompt_tokens: 10,
+  completion_tokens: 3,
+  used_draft: false,
+  cost_estimate: 0.001,
 };
 
 const mockStats = {
-  total_prompts: 10,
+  total: 10,
   published: 5,
-  drafts: 3,
+  draft: 3,
   archived: 2,
-  total_versions: 25,
+  by_type: { system: 3, chat: 4, voice: 2, persona: 1 },
+  by_intent: { diagnosis: 2, treatment: 3, other: 5 },
 };
 
 const mockCacheStats = {
-  hits: 1000,
-  misses: 50,
-  hit_rate: 0.95,
-  size: 50,
-  max_size: 100,
+  l1_cache: {
+    hits: 1000,
+    misses: 50,
+    hit_rate: 0.95,
+    size: 50,
+    max_size: 100,
+    ttl_seconds: 300,
+  },
+  l2_cache: {
+    hits: 500,
+    misses: 100,
+    hit_rate: 0.83,
+    ttl_seconds: 3600,
+  },
+  l3_database: {
+    queries: 100,
+    avg_latency_ms: 5,
+  },
 };
 
 describe("usePrompts", () => {
@@ -182,12 +218,12 @@ describe("usePrompts", () => {
       vi.clearAllMocks();
 
       act(() => {
-        result.current.setFilters({ prompt_type: "template" });
+        result.current.setFilters({ prompt_type: "chat" });
       });
 
       await waitFor(() => {
         expect(fetchAPI).toHaveBeenCalledWith(
-          expect.stringMatching(/prompt_type=template/),
+          expect.stringMatching(/prompt_type=chat/),
         );
       });
     });
@@ -225,7 +261,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let prompt: (typeof mockPrompts)[0] | null = null;
+      let prompt: Prompt | null = null;
       await act(async () => {
         prompt = await result.current.getPrompt("prompt-1");
       });
@@ -245,7 +281,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let prompt: (typeof mockPrompts)[0] | null = null;
+      let prompt: Prompt | null = null;
       await act(async () => {
         prompt = await result.current.getPrompt("invalid-id");
       });
@@ -261,14 +297,15 @@ describe("usePrompts", () => {
     it("should create new prompt", async () => {
       const newPrompt = {
         name: "new_prompt",
-        prompt_type: "template" as const,
-        content: "New content",
+        display_name: "New Prompt",
+        prompt_type: "chat" as const,
+        system_prompt: "New content",
         description: "New description",
       };
 
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce(mockListResponse)
-        .mockResolvedValueOnce({ id: "prompt-3", ...newPrompt })
+        .mockResolvedValueOnce({ id: "prompt-3", ...newPrompt, current_version: 1, status: "draft", is_active: false, created_at: "2024-01-16T10:00:00Z", updated_at: "2024-01-16T10:00:00Z" })
         .mockResolvedValueOnce(mockListResponse);
 
       const { result } = renderHook(() => usePrompts());
@@ -277,7 +314,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let created: Record<string, unknown> | null = null;
+      let created: Prompt | null = null;
       await act(async () => {
         created = await result.current.createPrompt(newPrompt);
       });
@@ -300,12 +337,13 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let created: Record<string, unknown> | null = null;
+      let created: Prompt | null = null;
       await act(async () => {
         created = await result.current.createPrompt({
           name: "",
+          display_name: "",
           prompt_type: "system",
-          content: "",
+          system_prompt: "",
           description: "",
         });
       });
@@ -319,7 +357,7 @@ describe("usePrompts", () => {
 
   describe("updatePrompt", () => {
     it("should update existing prompt", async () => {
-      const updates = { content: "Updated content" };
+      const updates = { system_prompt: "Updated content" };
 
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce(mockListResponse)
@@ -332,7 +370,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let updated: Record<string, unknown> | null = null;
+      let updated: Prompt | null = null;
       await act(async () => {
         updated = await result.current.updatePrompt("prompt-1", updates);
       });
@@ -341,7 +379,7 @@ describe("usePrompts", () => {
         method: "PATCH",
         body: JSON.stringify(updates),
       });
-      expect(updated?.content).toBe("Updated content");
+      expect(updated!.system_prompt).toBe("Updated content");
     });
   });
 
@@ -405,10 +443,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let published: Record<string, unknown> | null = null;
+      let published: Prompt | null = null;
       await act(async () => {
         published = await result.current.publishPrompt("prompt-2", {
-          release_notes: "First release",
+          change_summary: "First release",
         });
       });
 
@@ -418,7 +456,7 @@ describe("usePrompts", () => {
           method: "POST",
         }),
       );
-      expect(published?.status).toBe("published");
+      expect(published!.status).toBe("published");
     });
   });
 
@@ -426,7 +464,7 @@ describe("usePrompts", () => {
     it("should rollback to specific version", async () => {
       vi.mocked(fetchAPI)
         .mockResolvedValueOnce(mockListResponse)
-        .mockResolvedValueOnce({ ...mockPrompts[0], version: 1 })
+        .mockResolvedValueOnce({ ...mockPrompts[0], current_version: 1 })
         .mockResolvedValueOnce(mockListResponse);
 
       const { result } = renderHook(() => usePrompts());
@@ -435,10 +473,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let rolledBack: Record<string, unknown> | null = null;
+      let rolledBack: Prompt | null = null;
       await act(async () => {
         rolledBack = await result.current.rollbackPrompt("prompt-1", {
-          target_version: 1,
+          version_number: 1,
         });
       });
 
@@ -446,10 +484,10 @@ describe("usePrompts", () => {
         "/api/admin/prompts/prompt-1/rollback",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ target_version: 1 }),
+          body: JSON.stringify({ version_number: 1 }),
         }),
       );
-      expect(rolledBack?.version).toBe(1);
+      expect(rolledBack!.current_version).toBe(1);
     });
   });
 
@@ -465,7 +503,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let versions: typeof mockVersionsResponse | null = null;
+      let versions: PromptVersionsResponse | null = null;
       await act(async () => {
         versions = await result.current.getVersions("prompt-1");
       });
@@ -473,7 +511,7 @@ describe("usePrompts", () => {
       expect(fetchAPI).toHaveBeenCalledWith(
         expect.stringContaining("/api/admin/prompts/prompt-1/versions"),
       );
-      expect(versions?.versions).toHaveLength(3);
+      expect(versions!.versions).toHaveLength(3);
     });
   });
 
@@ -489,7 +527,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let diff: typeof mockDiffResponse | null = null;
+      let diff: PromptDiffResponse | null = null;
       await act(async () => {
         diff = await result.current.getDiff("prompt-1", 1, 2);
       });
@@ -497,7 +535,8 @@ describe("usePrompts", () => {
       expect(fetchAPI).toHaveBeenCalledWith(
         "/api/admin/prompts/prompt-1/diff?version_a=1&version_b=2",
       );
-      expect(diff?.diff).toHaveLength(2);
+      expect(diff!.additions).toBe(5);
+      expect(diff!.deletions).toBe(3);
     });
   });
 
@@ -513,10 +552,10 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let testResult: typeof mockTestResponse | null = null;
+      let testResult: PromptTestResponse | null = null;
       await act(async () => {
         testResult = await result.current.testPrompt("prompt-2", {
-          variables: { name: "John" },
+          test_message: "Hello",
         });
       });
 
@@ -526,7 +565,7 @@ describe("usePrompts", () => {
           method: "POST",
         }),
       );
-      expect(testResult?.rendered).toBe("Hello, John!");
+      expect(testResult!.response).toBe("Hello, John!");
     });
   });
 
@@ -546,7 +585,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let duplicated: Record<string, unknown> | null = null;
+      let duplicated: Prompt | null = null;
       await act(async () => {
         duplicated = await result.current.duplicatePrompt("prompt-1", {
           new_name: "system_prompt_copy",
@@ -559,7 +598,7 @@ describe("usePrompts", () => {
           method: "POST",
         }),
       );
-      expect(duplicated?.name).toBe("system_prompt_copy");
+      expect(duplicated!.name).toBe("system_prompt_copy");
     });
   });
 
@@ -576,7 +615,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let toggled: Record<string, unknown> | null = null;
+      let toggled: Prompt | null = null;
       await act(async () => {
         toggled = await result.current.toggleActive("prompt-1");
       });
@@ -588,7 +627,7 @@ describe("usePrompts", () => {
           body: JSON.stringify({ is_active: false }),
         }),
       );
-      expect(toggled?.is_active).toBe(false);
+      expect(toggled!.is_active).toBe(false);
     });
 
     it("should set error if prompt not found", async () => {
@@ -600,7 +639,7 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let toggled: Record<string, unknown> | null = null;
+      let toggled: Prompt | null = null;
       await act(async () => {
         toggled = await result.current.toggleActive("nonexistent");
       });
@@ -650,13 +689,13 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let stats: typeof mockStats | null = null;
+      let stats: PromptStats | null = null;
       await act(async () => {
         stats = await result.current.getStats();
       });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/stats");
-      expect(stats?.total_prompts).toBe(10);
+      expect(stats!.total).toBe(10);
     });
   });
 
@@ -672,13 +711,13 @@ describe("usePrompts", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      let cacheStats: typeof mockCacheStats | null = null;
+      let cacheStats: PromptCacheStats | null = null;
       await act(async () => {
         cacheStats = await result.current.getCacheStats();
       });
 
       expect(fetchAPI).toHaveBeenCalledWith("/api/admin/prompts/cache/stats");
-      expect(cacheStats?.hit_rate).toBe(0.95);
+      expect(cacheStats!.l1_cache.hit_rate).toBe(0.95);
     });
   });
 

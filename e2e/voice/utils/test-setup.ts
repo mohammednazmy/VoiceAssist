@@ -444,6 +444,29 @@ export async function waitForVoiceModeReady(
   timeout = 30000
 ): Promise<{ ready: boolean; error?: string }> {
   try {
+    // First, prefer automation debug hook if present to short-circuit obvious failures.
+    // This relies on UnifiedInputArea writing window.__voice_debug.unifiedInput
+    // when running under Playwright (navigator.webdriver === true).
+    const debugState = await page
+      .evaluate(() => {
+        const win = window as Window & {
+          __voice_debug?: { unifiedInput?: Record<string, unknown> };
+        };
+        return win.__voice_debug?.unifiedInput ?? null;
+      })
+      .catch(() => null);
+
+    if (debugState) {
+      const hasToggle = Boolean(
+        (debugState as any).hasVoiceModeToggle &&
+          (debugState as any).hasUnifiedInputArea,
+      );
+      const isDisabled = Boolean((debugState as any).disabled);
+      if (hasToggle && !isDisabled) {
+        return { ready: true };
+      }
+    }
+
     const voiceButton = page
       .locator(
         '[data-testid="voice-mode-toggle"], [data-testid="realtime-voice-mode-button"]'

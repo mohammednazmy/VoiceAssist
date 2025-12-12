@@ -9,6 +9,7 @@ from typing import Callable, Optional
 
 import structlog
 from app.core.database import redis_client
+from app.core.metrics import http_request_duration_seconds, http_requests_total
 from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -197,7 +198,24 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             duration = time.time() - start_time
 
-            # Track metrics (will be enhanced in Prometheus metrics implementation)
+            # Track Prometheus metrics for successful requests
+            try:
+                endpoint = request.url.path
+                method = request.method
+                status_code = response.status_code
+
+                http_requests_total.labels(
+                    method=method,
+                    endpoint=endpoint,
+                    status_code=str(status_code),
+                ).inc()
+                http_request_duration_seconds.labels(
+                    method=method,
+                    endpoint=endpoint,
+                ).observe(duration)
+            except Exception as metric_err:  # pragma: no cover - defensive
+                logger.debug("metrics_update_failed", error=str(metric_err))
+
             logger.debug(
                 "request_metrics",
                 method=request.method,
@@ -210,6 +228,24 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
         except Exception as exc:
             duration = time.time() - start_time
+
+            # Track metrics for failed requests as 500 errors
+            try:
+                endpoint = request.url.path
+                method = request.method
+
+                http_requests_total.labels(
+                    method=method,
+                    endpoint=endpoint,
+                    status_code="500",
+                ).inc()
+                http_request_duration_seconds.labels(
+                    method=method,
+                    endpoint=endpoint,
+                ).observe(duration)
+            except Exception as metric_err:  # pragma: no cover - defensive
+                logger.debug("metrics_update_failed", error=str(metric_err))
+
             logger.debug(
                 "request_metrics_error",
                 method=request.method,

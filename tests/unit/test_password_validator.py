@@ -19,10 +19,23 @@ class PasswordValidator:
     """Password validation utility for testing."""
 
     COMMON_PASSWORDS = {
-        "password", "123456", "password123", "qwerty",
-        "abc123", "letmein", "welcome", "monkey",
-        "dragon", "master", "sunshine", "princess",
-        "login", "admin", "solo", "passw0rd",
+        "password",
+        "123456",
+        "password123",
+        "password123!",
+        "qwerty",
+        "abc123",
+        "letmein",
+        "welcome",
+        "monkey",
+        "dragon",
+        "master",
+        "sunshine",
+        "princess",
+        "login",
+        "admin",
+        "solo",
+        "passw0rd",
     }
 
     MIN_LENGTH = 8

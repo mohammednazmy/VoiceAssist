@@ -93,6 +93,11 @@ describe("ConversationsPage", () => {
       expect(
         screen.getByText("Browse and manage all user conversations"),
       ).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("Medical consultation")).toBeInTheDocument();
+      });
     });
 
     it("should render refresh button", async () => {
@@ -101,6 +106,11 @@ describe("ConversationsPage", () => {
       expect(
         screen.getByRole("button", { name: /refresh/i }),
       ).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("Medical consultation")).toBeInTheDocument();
+      });
     });
 
     it("should render search input", async () => {
@@ -109,6 +119,11 @@ describe("ConversationsPage", () => {
       expect(
         screen.getByPlaceholderText(/search by title/i),
       ).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("Medical consultation")).toBeInTheDocument();
+      });
     });
 
     it("should render user ID filter input", async () => {
@@ -117,6 +132,11 @@ describe("ConversationsPage", () => {
       expect(
         screen.getByPlaceholderText(/filter by user id/i),
       ).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("Medical consultation")).toBeInTheDocument();
+      });
     });
 
     it("should render table headers", async () => {
@@ -339,8 +359,8 @@ describe("ConversationsPage", () => {
       // Mock URL.createObjectURL and link.click
       const mockCreateObjectURL = vi.fn().mockReturnValue("blob:test");
       const mockRevokeObjectURL = vi.fn();
-      global.URL.createObjectURL = mockCreateObjectURL;
-      global.URL.revokeObjectURL = mockRevokeObjectURL;
+      globalThis.URL.createObjectURL = mockCreateObjectURL;
+      globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
       const mockLink = { href: "", download: "", click: vi.fn() };
       const originalCreateElement = document.createElement;

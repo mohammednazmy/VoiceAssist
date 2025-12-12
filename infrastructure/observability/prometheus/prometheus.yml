@@ -18,6 +18,9 @@ global:
 rule_files:
   - "rules/slo_recording_rules.yml"
   - "rules/slo_alerts.yml"
+  - "rules/voice_slo_alerts.yml"
+  - "rules/phase4_alerts.yml"  # Phase 4: Analytics, Organizations, Learning, PDF Processing
+  - "alerts.yml"  # Core service alerts
 
 # Scrape configurations
 scrape_configs:

@@ -72,7 +72,7 @@ class MockWebSocket {
 let mockWebSocketInstance: MockWebSocket | null = null;
 
 // Store the original WebSocket
-const originalWebSocket = global.WebSocket;
+const originalWebSocket = globalThis.WebSocket;
 
 const openConnection = () => {
   act(() => {
@@ -131,13 +131,13 @@ describe("useRealtimeEvents", () => {
     });
 
     // Create fresh WebSocket mock for each test
-    global.WebSocket = createWebSocketMock();
+    globalThis.WebSocket = createWebSocketMock();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    global.WebSocket = originalWebSocket;
+    globalThis.WebSocket = originalWebSocket;
     mockWebSocketInstance = null;
   });
 
@@ -158,13 +158,13 @@ describe("useRealtimeEvents", () => {
       );
 
       expect(result.current.status).toBe("disconnected");
-      expect(global.WebSocket).not.toHaveBeenCalled();
+      expect(globalThis.WebSocket).not.toHaveBeenCalled();
     });
 
     it("should build correct WebSocket URL", async () => {
       renderHook(() => useRealtimeEvents());
 
-      expect(global.WebSocket).toHaveBeenCalledWith(
+      expect(globalThis.WebSocket).toHaveBeenCalledWith(
         expect.stringMatching(/wss?:\/\/.*\/api\/admin\/panel\/ws/),
       );
     });
@@ -397,7 +397,7 @@ describe("useRealtimeEvents", () => {
       });
 
       // Should attempt new connection
-      expect(global.WebSocket).toHaveBeenCalledTimes(2);
+      expect(globalThis.WebSocket).toHaveBeenCalledTimes(2);
     });
 
     it("should increment reconnectAttempts on each retry", async () => {
@@ -576,13 +576,13 @@ describe("useAdminEventListener", () => {
     });
 
     // Create fresh WebSocket mock for each test
-    global.WebSocket = createWebSocketMock();
+    globalThis.WebSocket = createWebSocketMock();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
-    global.WebSocket = originalWebSocket;
+    globalThis.WebSocket = originalWebSocket;
     mockWebSocketInstance = null;
   });
 

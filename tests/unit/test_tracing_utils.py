@@ -160,12 +160,14 @@ class TracingContext:
 
 def generate_trace_id() -> str:
     """Generate a unique trace ID."""
-    return str(uuid4())
+    # Use hyphen-free hex representation so it fits cleanly into W3C traceparent
+    return uuid4().hex
 
 
 def generate_span_id() -> str:
     """Generate a unique span ID."""
-    return str(uuid4())[:16]
+    # Use compact hex form to avoid introducing extra separators in traceparent
+    return uuid4().hex[:16]
 
 
 def extract_trace_context(headers: Dict[str, str]) -> Optional[SpanContext]:

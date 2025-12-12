@@ -29,8 +29,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.body.classList.toggle("ltr", !rtl);
   }, [currentLanguage, direction, rtl]);
 
-  const changeLanguage = async (lang: LanguageCode) =>
-    i18n.changeLanguage(lang);
+  const changeLanguage = async (lang: LanguageCode): Promise<void> => {
+    await i18n.changeLanguage(lang);
+  };
 
   return (
     <LanguageContext.Provider

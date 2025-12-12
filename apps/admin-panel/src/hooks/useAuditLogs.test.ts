@@ -21,7 +21,7 @@ vi.mock("../lib/apiClient", () => ({
 
 // Mock fetch for export functionality
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch;
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -34,8 +34,8 @@ Object.defineProperty(window, "localStorage", { value: mockLocalStorage });
 // Mock URL.createObjectURL and revokeObjectURL
 const mockCreateObjectURL = vi.fn().mockReturnValue("blob:mock-url");
 const mockRevokeObjectURL = vi.fn();
-global.URL.createObjectURL = mockCreateObjectURL;
-global.URL.revokeObjectURL = mockRevokeObjectURL;
+globalThis.URL.createObjectURL = mockCreateObjectURL;
+globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
 
 const mockLogs = [
   {

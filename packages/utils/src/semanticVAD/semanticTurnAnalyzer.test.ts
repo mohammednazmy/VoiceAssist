@@ -22,7 +22,7 @@ import {
   endsWithContinuationSignal,
   endsWithStrongCompletion,
 } from "./turnDetection";
-import type { TurnAnalysisContext, ProsodyHints } from "./turnDetection";
+import type { ProsodyHints } from "./turnDetection";
 
 // ============================================================================
 // Test Data

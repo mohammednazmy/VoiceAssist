@@ -79,8 +79,8 @@ const mockModels = [
   {
     id: "gpt-4",
     name: "GPT-4",
-    provider: "openai",
-    type: "chat",
+    provider: "openai" as const,
+    type: "chat" as const,
     enabled: true,
     is_primary: true,
     supports_phi: false,

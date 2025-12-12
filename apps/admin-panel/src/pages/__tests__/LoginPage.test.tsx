@@ -6,7 +6,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { LoginPage } from "../LoginPage";
 
 // Mock dependencies
@@ -137,7 +137,7 @@ describe("LoginPage", () => {
       await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
       await waitFor(() => {
-        expect(window.location.href).toBe("/dashboard");
+        expect(window.location.href).toBe("/admin/dashboard");
       });
     });
 

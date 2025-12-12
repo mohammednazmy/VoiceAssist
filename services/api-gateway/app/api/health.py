@@ -70,6 +70,22 @@ async def health_check_head(request: Request):
     return await health_check(request)
 
 
+@router.get("/live", response_model=HealthResponse)
+@limiter.limit("100/minute")
+async def liveness_check(request: Request):
+    """
+    Liveness probe endpoint.
+
+    Returns 200 if the process is up, without performing dependency checks.
+    """
+    logger.debug("liveness_check_requested")
+    return HealthResponse(
+        status="healthy",
+        version=settings.APP_VERSION,
+        timestamp=time.time(),
+    )
+
+
 @router.get("/ready", response_class=JSONResponse)
 @limiter.limit("100/minute")
 async def readiness_check(request: Request):

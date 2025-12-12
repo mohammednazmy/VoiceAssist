@@ -321,6 +321,80 @@ describe("ToolCallDisplay", () => {
         expect(screen.queryByText("Result")).not.toBeInTheDocument();
       });
     });
+
+    it("should render KB Answer badge and sources for kb_search results with answer", async () => {
+      renderDisplay({
+        toolCalls: [
+          createToolCall({
+            status: "completed",
+            result: {
+              answer: "This is a KB answer.",
+              sources: [
+                { id: "src-1", title: "Doc 1", category: "guideline" },
+              ],
+            },
+          }),
+        ],
+        showResults: true,
+      });
+
+      const button = screen.getByRole("button", { name: /Kb Search/i });
+      fireEvent.click(button);
+
+      await waitFor(() => {
+        // Badge and label use "KB Answer"
+        expect(screen.getAllByText("KB Answer").length).toBeGreaterThan(0);
+        expect(
+          screen.getByText("This is a KB answer."),
+        ).toBeInTheDocument();
+        expect(screen.getByText("Doc 1")).toBeInTheDocument();
+        expect(screen.getByText("(guideline)")).toBeInTheDocument();
+      });
+    });
+
+    it("should expose tooltip and open-in-documents icon for KB sources", async () => {
+      const onKBSourceClick = vi.fn();
+
+      renderDisplay({
+        toolCalls: [
+          createToolCall({
+            status: "completed",
+            result: {
+              answer: "KB answer for tooltip test.",
+              sources: [
+                { id: "src-1", title: "Guideline doc", category: "guideline" },
+              ],
+            },
+          }),
+        ],
+        showResults: true,
+        onKBSourceClick,
+      });
+
+      const headerButton = screen.getByRole("button", { name: /Kb Search/i });
+      fireEvent.click(headerButton);
+
+      await waitFor(() => {
+        const copyButton = screen.getByRole("button", {
+          name: /Guideline doc/,
+        });
+        expect(copyButton).toHaveAttribute(
+          "title",
+          "Click to copy title for your notes",
+        );
+
+        const openButtons = screen.getAllByRole("button", {
+          name: /Open document/i,
+        });
+        expect(openButtons.length).toBeGreaterThan(0);
+
+        // Click the first "open in documents" icon and ensure callback is invoked
+        fireEvent.click(openButtons[0]);
+        expect(onKBSourceClick).toHaveBeenCalledWith(
+          expect.objectContaining({ id: "src-1" }),
+        );
+      });
+    });
   });
 
   describe("Visual Styling", () => {

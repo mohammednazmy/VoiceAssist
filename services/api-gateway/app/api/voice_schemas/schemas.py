@@ -86,6 +86,7 @@ class VoiceRelayRequest(BaseModel):
     conversation_id: str
     transcript: str
     clinical_context_id: str | None = None
+    exclude_phi: bool | None = None  # When true, run RAG in PHI-conscious mode (exclude high-risk PHI KB chunks)
 
 
 class VoiceRelayResponse(BaseModel):

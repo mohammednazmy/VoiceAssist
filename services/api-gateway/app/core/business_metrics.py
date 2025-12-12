@@ -152,6 +152,94 @@ kb_indexing_duration = safe_histogram(
     buckets=[1, 5, 10, 30, 60, 120, 300],
 )
 
+# Enhanced PDF Processing Metrics (Phase 5)
+enhanced_kb_processing_total = safe_counter(
+    "voiceassist_kb_enhanced_processing_total",
+    "Total number of enhanced PDF processing runs",
+    labelnames=["status"],  # success, failed
+)
+
+enhanced_kb_processing_pages = safe_histogram(
+    "voiceassist_kb_enhanced_processing_pages",
+    "Distribution of pages per enhanced PDF processing run",
+    buckets=[1, 10, 25, 50, 100, 250, 500],
+)
+
+enhanced_kb_processing_cost_dollars = safe_histogram(
+    "voiceassist_kb_enhanced_processing_cost_dollars",
+    "Estimated OpenAI vision cost (USD) per enhanced processing run",
+    buckets=[0.01, 0.10, 0.50, 1.0, 2.5, 5.0],
+)
+
+# HTTP KB Query Metrics (chat + voice)
+kb_query_requests_total = safe_counter(
+    "voiceassist_kb_query_requests_total",
+    "Total number of /api/kb/query requests",
+    labelnames=["channel", "success"],
+)
+
+kb_query_latency_seconds = safe_histogram(
+    "voiceassist_kb_query_latency_seconds",
+    "Latency for /api/kb/query requests by channel",
+    labelnames=["channel"],
+    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+)
+
+kb_query_answer_length_tokens = safe_histogram(
+    "voiceassist_kb_query_answer_length_tokens",
+    "Approximate length of KB answers returned via /api/kb/query (in tokens)",
+    labelnames=["channel"],
+    buckets=[10, 25, 50, 100, 200, 400],
+)
+
+kb_query_sources_per_answer = safe_histogram(
+    "voiceassist_kb_query_sources_per_answer",
+    "Number of KB sources attached to each /api/kb/query answer",
+    labelnames=["channel"],
+    buckets=[0, 1, 2, 3, 5, 10],
+)
+
+kb_query_top_score = safe_histogram(
+    "voiceassist_kb_query_top_score",
+    "Top relevance score of first KB source per /api/kb/query response",
+    labelnames=["channel"],
+    buckets=[0.0, 0.1, 0.25, 0.5, 0.75, 1.0],
+)
+
+kb_query_failures_total = safe_counter(
+    "voiceassist_kb_query_failures_total",
+    "Total number of /api/kb/query failures by reason",
+    labelnames=["channel", "reason"],
+)
+
+# Voice KB Tool Metrics
+voice_kb_tool_calls_total = safe_counter(
+    "voiceassist_voice_kb_tool_calls_total",
+    "Total number of KB-related tool calls in voice sessions",
+    labelnames=["tool_name", "success"],
+)
+
+voice_kb_tool_latency_seconds = safe_histogram(
+    "voiceassist_voice_kb_tool_latency_seconds",
+    "Latency for KB-related tool calls in voice sessions",
+    labelnames=["tool_name"],
+    buckets=[0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0],
+)
+
+voice_kb_answer_length_tokens = safe_histogram(
+    "voiceassist_voice_kb_answer_length_tokens",
+    "Approximate length of KB answers returned via voice tools (in tokens)",
+    labelnames=["tool_name"],
+    buckets=[10, 25, 50, 100, 200, 400],
+)
+
+voice_kb_sources_per_answer = safe_histogram(
+    "voiceassist_voice_kb_sources_per_answer",
+    "Number of KB sources attached to each answer in voice tools",
+    labelnames=["tool_name"],
+    buckets=[0, 1, 2, 3, 5, 10],
+)
+
 # Nextcloud Integration Metrics
 nextcloud_files_synced_total = safe_counter(
     "voiceassist_nextcloud_files_synced_total", "Total number of Nextcloud files synced"

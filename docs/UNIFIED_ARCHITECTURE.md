@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: mixed
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - agent
@@ -87,6 +87,8 @@ VoiceAssist V2 is an **enterprise-grade, HIPAA-compliant medical AI assistant** 
 - ✅ Comprehensive observability (Prometheus metrics, structured logging, SLOs)
 - ✅ Admin panel with system monitoring dashboard
 - ✅ Async background job processing for document indexing
+- ✅ Enhanced PDF pipeline for admin KB (layout-aware extraction, GPT-4o Vision, page images, voice narrations)
+- ✅ PHI-aware RAG retrieval with `phi_risk` metadata and PHI-conscious mode for voice and text flows
 
 **Design Philosophy**: Start simple (monorepo), maintain clear boundaries (logical services), scale when needed (microservices extraction).
 
@@ -282,6 +284,8 @@ All 16 project phases (0-15) are complete. See [Implementation Status](overview/
 - ✅ RAG pipeline with context retrieval and citation tracking
 - ✅ QueryOrchestrator with LLM integration
 - ✅ Streaming responses via WebSocket
+- ✅ Enhanced PDF ingestion with GPT-4o Vision page analysis, structured content blocks, and voice narrations
+- ✅ PHI-aware indexing with `phi_risk` and `chunk_phi_risk` metadata feeding PHI-conscious RAG filters
 
 **Nextcloud Integration:**
 

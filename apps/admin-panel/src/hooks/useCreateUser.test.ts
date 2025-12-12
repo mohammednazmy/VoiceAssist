@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { useCreateUser } from "./useCreateUser";
+import { useCreateUser, CreatedUser, InvitedUser } from "./useCreateUser";
 
 vi.mock("../lib/api", () => ({
   fetchAPI: vi.fn(),
@@ -93,7 +93,7 @@ describe("useCreateUser", () => {
 
       const { result } = renderHook(() => useCreateUser());
 
-      let createdUser;
+      let createdUser: CreatedUser | undefined;
       await act(async () => {
         createdUser = await result.current.createUser({
           email: "newuser@example.com",
@@ -137,7 +137,7 @@ describe("useCreateUser", () => {
 
       const { result } = renderHook(() => useCreateUser());
 
-      let createdUser;
+      let createdUser: CreatedUser | undefined;
       await act(async () => {
         createdUser = await result.current.createUser({
           email: "newuser@example.com",
@@ -288,7 +288,7 @@ describe("useCreateUser", () => {
 
       const { result } = renderHook(() => useCreateUser());
 
-      let invitedUser;
+      let invitedUser: InvitedUser | undefined;
       await act(async () => {
         invitedUser = await result.current.inviteUser({
           email: "invited@example.com",

@@ -256,6 +256,15 @@ class SessionAnalytics:
     user_id: Optional[str]
     phase: SessionPhase = SessionPhase.CONNECTING
     mode: str = "conversation"  # conversation or dictation
+    # Optional conversation/session metadata
+    conversation_id: Optional[str] = None
+
+    # PHI-conscious and reading-mode metadata for this session
+    phi_mode: str = "clinical"  # "clinical" | "demo"
+    exclude_phi: bool = False
+    reading_mode_enabled: bool = False
+    reading_detail: str = "full"  # "short" | "full"
+    reading_speed: str = "normal"  # "slow" | "normal" | "fast"
 
     # Timestamps
     started_at: datetime = field(default_factory=datetime.utcnow)
@@ -278,6 +287,7 @@ class SessionAnalytics:
             "user_id": self.user_id,
             "phase": self.phase.value,
             "mode": self.mode,
+            "conversation_id": self.conversation_id,
             "timing": {
                 "started_at": self.started_at.isoformat(),
                 "ended_at": self.ended_at.isoformat() if self.ended_at else None,
@@ -290,6 +300,15 @@ class SessionAnalytics:
             "errors": {
                 "count": self.error_count,
                 "details": self.errors[-10:],  # Last 10 errors
+            },
+            "privacy": {
+                "phi_mode": self.phi_mode,
+                "exclude_phi": self.exclude_phi,
+            },
+            "reading": {
+                "reading_mode_enabled": self.reading_mode_enabled,
+                "reading_detail": self.reading_detail,
+                "reading_speed": self.reading_speed,
             },
         }
 
@@ -330,12 +349,23 @@ class SessionAnalyticsService:
         self._message_callbacks: Dict[str, Callable] = {}
         self._analytics_interval_ms = 5000  # Send analytics update every 5s
 
+    # Valid enum values for PHI and reading settings
+    VALID_PHI_MODES = {"clinical", "demo"}
+    VALID_READING_DETAILS = {"short", "full"}
+    VALID_READING_SPEEDS = {"slow", "normal", "fast"}
+
     def create_session(
         self,
         session_id: str,
         user_id: Optional[str] = None,
         mode: str = "conversation",
         on_analytics_update: Optional[Callable] = None,
+        conversation_id: Optional[str] = None,
+        phi_mode: str = "clinical",
+        exclude_phi: bool = False,
+        reading_mode_enabled: bool = False,
+        reading_detail: str = "full",
+        reading_speed: str = "normal",
     ) -> SessionAnalytics:
         """
         Create a new analytics session.
@@ -345,15 +375,53 @@ class SessionAnalyticsService:
             user_id: User ID (optional)
             mode: Session mode (conversation or dictation)
             on_analytics_update: Callback for real-time updates
+            conversation_id: Optional conversation ID for linking
+            phi_mode: PHI policy ("clinical" or "demo")
+            exclude_phi: Whether to exclude high-risk PHI from RAG
+            reading_mode_enabled: Whether reading mode is active
+            reading_detail: Reading detail level ("short" or "full")
+            reading_speed: Reading speed ("slow", "normal", or "fast")
 
         Returns:
             SessionAnalytics object
         """
+        # Validate and normalize PHI/reading settings
+        if phi_mode not in self.VALID_PHI_MODES:
+            logger.warning(
+                f"Invalid phi_mode '{phi_mode}' for session {session_id}, defaulting to 'clinical'"
+            )
+            phi_mode = "clinical"
+
+        if reading_detail not in self.VALID_READING_DETAILS:
+            logger.warning(
+                f"Invalid reading_detail '{reading_detail}' for session {session_id}, defaulting to 'full'"
+            )
+            reading_detail = "full"
+
+        if reading_speed not in self.VALID_READING_SPEEDS:
+            logger.warning(
+                f"Invalid reading_speed '{reading_speed}' for session {session_id}, defaulting to 'normal'"
+            )
+            reading_speed = "normal"
+
+        # Ensure consistency: demo mode implies exclude_phi=True
+        if phi_mode == "demo" and not exclude_phi:
+            logger.debug(
+                f"Session {session_id}: phi_mode='demo' implies exclude_phi=True"
+            )
+            exclude_phi = True
+
         analytics = SessionAnalytics(
             session_id=session_id,
             user_id=user_id,
             mode=mode,
             phase=SessionPhase.INITIALIZING,
+            conversation_id=conversation_id,
+            phi_mode=phi_mode,
+            exclude_phi=exclude_phi,
+            reading_mode_enabled=reading_mode_enabled,
+            reading_detail=reading_detail,
+            reading_speed=reading_speed,
         )
 
         self._sessions[session_id] = analytics
@@ -656,6 +724,51 @@ class SessionAnalyticsService:
                 logger.warning(f"Analytics callback error: {e}")
 
         return summary
+
+    def get_phi_summary(self) -> Dict[str, Any]:
+        """
+        Get a lightweight summary of PHI-conscious settings across active sessions.
+
+        Returns:
+            Dict with counts of clinical vs demo sessions and PHI-conscious rate.
+        """
+        active_phases = {
+            SessionPhase.CONNECTING,
+            SessionPhase.INITIALIZING,
+            SessionPhase.ACTIVE,
+            SessionPhase.PAUSED,
+        }
+
+        total_active = 0
+        clinical = 0
+        demo = 0
+        phi_conscious_sessions = 0
+
+        for session in self._sessions.values():
+            if session.phase not in active_phases:
+                continue
+
+            total_active += 1
+
+            if session.phi_mode == "demo":
+                demo += 1
+            else:
+                clinical += 1
+
+            if session.exclude_phi:
+                phi_conscious_sessions += 1
+
+        phi_conscious_rate = (
+            (phi_conscious_sessions / total_active) * 100.0 if total_active > 0 else 0.0
+        )
+
+        return {
+            "active_sessions_total": total_active,
+            "active_sessions_clinical": clinical,
+            "active_sessions_demo": demo,
+            "phi_conscious_sessions": phi_conscious_sessions,
+            "phi_conscious_rate": phi_conscious_rate,
+        }
 
     def end_session(
         self,

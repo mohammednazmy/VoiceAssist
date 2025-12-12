@@ -21,7 +21,7 @@ vi.mock("../services/websocket", () => ({
 }));
 
 import { fetchAPI } from "../lib/api";
-import { websocketService } from "../services/websocket";
+import { websocketService, ConnectionStatus } from "../services/websocket";
 
 const mockMetrics = {
   total_users: 100,
@@ -37,7 +37,7 @@ const mockHealth = {
 };
 
 describe("useMetrics", () => {
-  let statusCallback: ((status: string) => void) | null = null;
+  let statusCallback: ((status: ConnectionStatus) => void) | null = null;
   let messageCallback:
     | ((event: { type: string; payload?: unknown }) => void)
     | null = null;
@@ -78,9 +78,14 @@ describe("useMetrics", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
+    it("should return loading true initially", async () => {
       const { result } = renderHook(() => useMetrics());
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch metrics and health on mount", async () => {

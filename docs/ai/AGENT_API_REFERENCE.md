@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-12-05"
+lastUpdated: "2025-12-12"
 audience:
   - ai-agents
   - backend
@@ -39,7 +39,7 @@ ai_summary: >-
 
 # Agent API Reference
 
-The VoiceAssist documentation site exposes machine-readable JSON endpoints designed for AI agents to programmatically discover, filter, and search documentation.
+The VoiceAssist documentation site exposes machine-readable JSON endpoints designed for AI agents to programmatically discover, filter, and search documentation, including new PHI-aware RAG and enhanced knowledge base features.
 
 **Base URL:** `http://localhost:3001`
 
@@ -325,6 +325,22 @@ Use this endpoint to:
 
 - `Cache-Control: max-age=3600, public`
 - Cached for 1 hour
+
+> **Note for AI Agents (2025-12 Update)**
+>
+> Recent backend work introduced:
+>
+> - Enhanced PDF ingestion for admin KB documents (layout-aware extraction, GPT-4o Vision page analysis, voice narrations).
+> - PHI-aware RAG retrieval using `phi_risk` and `chunk_phi_risk` metadata (see `SEMANTIC_SEARCH_DESIGN.md`).
+> - PHI-conscious mode for voice/text RAG flows via `exclude_phi` flags (`/api/search/advanced`, `/api/voice/relay`, `/api/voice/relay-ws`).
+> - A maintenance script `services/api-gateway/tools/update_phi_risk_payloads.py` to backfill PHI risk into Qdrant payloads.
+>
+> These features are documented in:
+>
+> - `SEMANTIC_SEARCH_DESIGN.md`
+> - `MEDICAL_FEATURES.md`
+> - `VOICE_MODE_PIPELINE.md`
+> - `UNIFIED_ARCHITECTURE.md`
 
 ---
 

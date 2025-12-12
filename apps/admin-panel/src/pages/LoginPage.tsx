@@ -40,7 +40,8 @@ export function LoginPage() {
       // Login successful without 2FA
       persistTokens(result.accessToken, result.refreshToken);
       const profile = await apiClient.getCurrentUser();
-      const role = profile.role === "viewer" ? "viewer" : "admin";
+      // Map API role to admin panel role (admin panel only has admin/viewer)
+      const role = profile.role === "admin" ? "admin" : "viewer";
       persistRole(role);
 
       // Force a page reload to re-initialize auth state
@@ -66,7 +67,8 @@ export function LoginPage() {
 
       persistTokens(tokens.accessToken, tokens.refreshToken);
       const profile = await apiClient.getCurrentUser();
-      const role = profile.role === "viewer" ? "viewer" : "admin";
+      // Map API role to admin panel role (admin panel only has admin/viewer)
+      const role = profile.role === "admin" ? "admin" : "viewer";
       persistRole(role);
 
       // Force a page reload to re-initialize auth state

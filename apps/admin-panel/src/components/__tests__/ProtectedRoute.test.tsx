@@ -45,9 +45,10 @@ describe("ProtectedRoute", () => {
         isViewer: false,
         loading: true,
         user: null,
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "admin",
       });
 
       renderWithRouter(
@@ -69,9 +70,10 @@ describe("ProtectedRoute", () => {
         isViewer: false,
         loading: false,
         user: null,
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "admin",
       });
 
       renderWithRouter(
@@ -90,10 +92,11 @@ describe("ProtectedRoute", () => {
         isAdmin: false,
         isViewer: false,
         loading: false,
-        user: { id: "1", email: "user@example.com", admin_role: "none" },
+        user: { id: "1", email: "user@example.com", is_admin: false, is_active: true, role: "viewer" as const },
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "viewer",
       });
 
       renderWithRouter(
@@ -114,10 +117,11 @@ describe("ProtectedRoute", () => {
         isAdmin: true,
         isViewer: false,
         loading: false,
-        user: { id: "1", email: "admin@example.com", admin_role: "admin" },
+        user: { id: "1", email: "admin@example.com", is_admin: true, is_active: true, role: "admin" as const },
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "admin",
       });
 
       renderWithRouter(
@@ -138,10 +142,11 @@ describe("ProtectedRoute", () => {
         isAdmin: false,
         isViewer: true,
         loading: false,
-        user: { id: "2", email: "viewer@example.com", admin_role: "viewer" },
+        user: { id: "2", email: "viewer@example.com", is_admin: false, is_active: true, role: "viewer" as const },
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "viewer",
       });
 
       renderWithRouter(
@@ -162,10 +167,11 @@ describe("ProtectedRoute", () => {
         isAdmin: true,
         isViewer: true,
         loading: false,
-        user: { id: "3", email: "superuser@example.com", admin_role: "admin" },
+        user: { id: "3", email: "superuser@example.com", is_admin: true, is_active: true, role: "admin" as const },
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "admin",
       });
 
       renderWithRouter(
@@ -185,10 +191,11 @@ describe("ProtectedRoute", () => {
         isAdmin: true,
         isViewer: false,
         loading: false,
-        user: { id: "1", email: "admin@example.com", admin_role: "admin" },
+        user: { id: "1", email: "admin@example.com", is_admin: true, is_active: true, role: "admin" as const },
+        error: null,
         login: vi.fn(),
         logout: vi.fn(),
-        refreshAuth: vi.fn(),
+        role: "admin",
       });
 
       renderWithRouter(

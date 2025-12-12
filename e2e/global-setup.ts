@@ -344,6 +344,13 @@ async function globalSetup() {
               name: "sw-cleanup-version",
               value: SW_CLEANUP_VERSION,
             },
+            {
+              // Force unified chat/voice UI on for all E2E tests
+              // so selectors like data-testid="voice-mode-toggle"
+              // are always present regardless of backend flag config.
+              name: "ff_unified_chat_voice_ui",
+              value: "true",
+            },
           ],
         },
       ],
@@ -367,6 +374,47 @@ async function globalSetup() {
   const cachedTokens = getCachedTokens();
   if (cachedTokens) {
     console.log("[E2E Setup] Using cached valid tokens - skipping login");
+
+     // Ensure the existing storage state also has the unified chat/voice flag
+     // so that voice E2E tests consistently see the unified UI and voice toggle.
+     try {
+       if (fs.existsSync(AUTH_FILE)) {
+         const raw = fs.readFileSync(AUTH_FILE, "utf-8");
+         const storageState = JSON.parse(raw);
+         const origins = Array.isArray(storageState.origins)
+           ? storageState.origins
+           : [];
+         for (const originEntry of origins) {
+           if (originEntry.origin === targetOrigin) {
+             const ls: Array<{ name: string; value: string }> =
+               originEntry.localStorage || [];
+             const hasUnifiedFlag = ls.some(
+               (item) => item.name === "ff_unified_chat_voice_ui",
+             );
+             if (!hasUnifiedFlag) {
+               ls.push({
+                 name: "ff_unified_chat_voice_ui",
+                 value: "true",
+               });
+               originEntry.localStorage = ls;
+               fs.writeFileSync(
+                 AUTH_FILE,
+                 JSON.stringify(storageState, null, 2),
+               );
+               console.log(
+                 "[E2E Setup] Injected ff_unified_chat_voice_ui into existing auth storage state",
+               );
+             }
+           }
+         }
+       }
+     } catch (err) {
+       console.warn(
+         "[E2E Setup] Failed to ensure unified UI flag in cached auth state:",
+         err,
+       );
+     }
+
     // Also check and refresh admin tokens if needed
     await refreshAdminTokensIfNeeded();
     return;
@@ -440,10 +488,17 @@ async function globalSetup() {
           {
             name: "sw-cleanup-version",
             value: SW_CLEANUP_VERSION,
-          },
-        ],
-      },
-    ],
+           },
+           {
+             // Force unified chat/voice UI on for all E2E tests so
+             // voice mode toggle is always rendered regardless of
+             // backend feature flag configuration.
+             name: "ff_unified_chat_voice_ui",
+             value: "true",
+           },
+         ],
+       },
+     ],
   };
 
   // Ensure .auth directory exists

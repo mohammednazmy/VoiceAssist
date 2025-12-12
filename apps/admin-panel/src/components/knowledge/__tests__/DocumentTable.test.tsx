@@ -12,6 +12,7 @@ const mockDocuments: DocumentRow[] = [
     name: "Medical Guidelines 2024",
     type: "pdf",
     status: "indexed",
+    indexingStatus: "indexed",
     version: "1.0",
     sizeMb: 5.5,
     indexed: true,
@@ -22,6 +23,7 @@ const mockDocuments: DocumentRow[] = [
     name: "Clinical Notes Template",
     type: "txt",
     status: "pending",
+    indexingStatus: "processing",
     version: "2.1",
     sizeMb: 0.5,
     indexed: false,
@@ -31,6 +33,7 @@ const mockDocuments: DocumentRow[] = [
     name: "Drug Interactions Database",
     type: "pdf",
     status: "reindexing",
+    indexingStatus: "processing",
     version: "3.0",
     sizeMb: 15.2,
     indexed: true,
@@ -41,9 +44,24 @@ const mockDocuments: DocumentRow[] = [
     name: "Failed Import Document",
     type: "pdf",
     status: "failed",
+    indexingStatus: "failed",
     version: "1.0",
     sizeMb: 2.0,
     indexed: false,
+  },
+  {
+    id: "doc-5",
+    name: "Enhanced Processing Document",
+    type: "pdf",
+    status: "indexed",
+    indexingStatus: "indexed",
+    version: "1.0",
+    sizeMb: 10.0,
+    indexed: true,
+    hasEnhancedStructure: true,
+    processingStage: "analyzing",
+    processingProgress: 42,
+    phiRisk: "high",
   },
 ];
 
@@ -71,8 +89,10 @@ describe("DocumentTable", () => {
       expect(screen.getByText("Title")).toBeInTheDocument();
       expect(screen.getByText("Type")).toBeInTheDocument();
       expect(screen.getByText("Status")).toBeInTheDocument();
-      expect(screen.getByText("Version")).toBeInTheDocument();
-      expect(screen.getByText("Size")).toBeInTheDocument();
+      expect(screen.getByText("Pages")).toBeInTheDocument();
+      expect(screen.getByText("Structure")).toBeInTheDocument();
+      expect(screen.getByText("Chunks")).toBeInTheDocument();
+      expect(screen.getByText("Visibility")).toBeInTheDocument();
       expect(screen.getByText("Actions")).toBeInTheDocument();
     });
 
@@ -265,6 +285,25 @@ describe("DocumentTable", () => {
       const dashes = screen.getAllByText("—");
       expect(dashes.length).toBeGreaterThan(0);
     });
+
+    it("shows enhanced processing status when available", () => {
+      render(
+        <DocumentTable
+          documents={[mockDocuments[4]]}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      // Mobile metadata line
+      expect(
+        screen.getByText(/Enhanced:\s*Analyzing… 42%/),
+      ).toBeInTheDocument();
+
+      // PHI badge should also be visible
+      expect(screen.getAllByText(/PHI: High/).length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   describe("selection", () => {
@@ -454,6 +493,144 @@ describe("DocumentTable", () => {
 
       // Bulk buttons should be hidden after action
       expect(screen.queryByText(/Delete \(/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe("search and filtering", () => {
+    it("renders search input", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      expect(screen.getByPlaceholderText("Search documents...")).toBeInTheDocument();
+    });
+
+    it("renders filters button", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      expect(screen.getByText("Filters")).toBeInTheDocument();
+    });
+
+    it("filters documents by search term", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search documents...");
+      fireEvent.change(searchInput, { target: { value: "Medical" } });
+
+      // Medical Guidelines should be visible
+      expect(screen.getAllByText("Medical Guidelines 2024").length).toBeGreaterThanOrEqual(1);
+      // Clinical Notes should not be visible
+      expect(screen.queryAllByText("Clinical Notes Template")).toHaveLength(0);
+    });
+
+    it("shows document count after filtering", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search documents...");
+      fireEvent.change(searchInput, { target: { value: "Medical" } });
+
+      // Shows "1 of 5 documents" (one of five total docs matches filter)
+      expect(screen.getByText(/1 of 5 documents/)).toBeInTheDocument();
+    });
+
+    it("shows clear button when filters are active", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search documents...");
+      fireEvent.change(searchInput, { target: { value: "test" } });
+
+      expect(screen.getByText("Clear")).toBeInTheDocument();
+    });
+
+    it("clears filters when clear button clicked", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search documents...");
+      fireEvent.change(searchInput, { target: { value: "test" } });
+      fireEvent.click(screen.getByText("Clear"));
+
+      // Search input should be cleared
+      expect(searchInput).toHaveValue("");
+      // All documents should be visible again (5 of 5)
+      expect(screen.getByText(/5 of 5 documents/)).toBeInTheDocument();
+    });
+
+    it("shows no results message when search returns empty", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText("Search documents...");
+      fireEvent.change(searchInput, { target: { value: "nonexistent document xyz" } });
+
+      expect(screen.getAllByText(/No documents match your filters/).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("toggles filter panel visibility", () => {
+      render(
+        <DocumentTable
+          documents={mockDocuments}
+          onDelete={onDelete}
+          onReindex={onReindex}
+          onOpenAudit={onOpenAudit}
+        />,
+      );
+
+      // Filter dropdowns should not be visible initially
+      expect(screen.queryByLabelText(/Status:/)).not.toBeInTheDocument();
+
+      // Click filters button
+      fireEvent.click(screen.getByText("Filters"));
+
+      // Now filter dropdowns should be visible
+      expect(screen.getByText("Status:")).toBeInTheDocument();
+      expect(screen.getByText("Type:")).toBeInTheDocument();
+      expect(screen.getByText("Visibility:")).toBeInTheDocument();
     });
   });
 

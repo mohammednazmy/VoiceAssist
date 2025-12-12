@@ -27,6 +27,7 @@ const mockDocs: KnowledgeDocument[] = [
     type: "guideline",
     version: "1.0",
     indexed: true,
+    indexingStatus: "indexed",
   },
   {
     id: "doc-2",
@@ -34,6 +35,7 @@ const mockDocs: KnowledgeDocument[] = [
     type: "note",
     version: "2.1",
     indexed: false,
+    indexingStatus: "processing",
   },
 ];
 

@@ -1,0 +1,118 @@
+{
+  "consumer": {
+    "name": "VoiceAssistFrontend"
+  },
+  "provider": {
+    "name": "VoiceAssistAPI"
+  },
+  "interactions": [
+    {
+      "description": "a request to login",
+      "providerState": "user exists with valid credentials",
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "test@example.com",
+          "password": "testpassword123"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+        },
+        "body": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          "token_type": "bearer",
+          "expires_in": 900
+        },
+        "matchingRules": {
+          "$.body.access_token": {
+            "match": "type"
+          },
+          "$.body.refresh_token": {
+            "match": "type"
+          },
+          "$.body.expires_in": {
+            "match": "type"
+          }
+        }
+      }
+    },
+    {
+      "description": "a request to login with invalid password",
+      "providerState": "user exists but password is wrong",
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "test@example.com",
+          "password": "wrongpassword"
+        }
+      },
+      "response": {
+        "status": 401,
+        "headers": {
+        },
+        "body": {
+          "detail": "Incorrect email or password"
+        },
+        "matchingRules": {
+          "$.body.detail": {
+            "match": "type"
+          }
+        }
+      }
+    },
+    {
+      "description": "a request to register",
+      "providerState": "user does not exist",
+      "request": {
+        "method": "POST",
+        "path": "/api/auth/register",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "newuser@example.com",
+          "password": "securepassword123",
+          "full_name": "New User"
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+        },
+        "body": {
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "email": "newuser@example.com",
+          "full_name": "New User",
+          "is_active": true,
+          "is_admin": false,
+          "created_at": "2025-11-21T12:00:00.000000"
+        },
+        "matchingRules": {
+          "$.body.id": {
+            "match": "type"
+          },
+          "$.body.created_at": {
+            "match": "regex",
+            "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+"
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

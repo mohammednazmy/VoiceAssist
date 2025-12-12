@@ -33,6 +33,7 @@ class ToolAnalyticsService:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         user_id: Optional[str] = None,
+        organization_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Get summary statistics for tool usage.
@@ -58,6 +59,10 @@ class ToolAnalyticsService:
         if user_id:
             filters.append("user_id = :user_id")
             params["user_id"] = user_id
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
 
         where_clause = " AND ".join(filters)
 
@@ -121,6 +126,7 @@ class ToolAnalyticsService:
         db_session: AsyncSession,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        organization_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get usage breakdown by tool name.
@@ -132,7 +138,17 @@ class ToolAnalyticsService:
         if not end_date:
             end_date = datetime.utcnow()
 
-        query = """
+        filters = ["created_at >= :start_date", "created_at <= :end_date"]
+        params = {"start_date": start_date, "end_date": end_date}
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
+
+        where_clause = " AND ".join(filters)
+
+        # nosec B608 - where_clause is built from fixed filter segments; values are parameterized
+        query = f"""
             SELECT
                 tool_name,
                 COUNT(*) as call_count,
@@ -141,15 +157,12 @@ class ToolAnalyticsService:
                 AVG(duration_ms) as avg_duration_ms,
                 COUNT(DISTINCT user_id) as unique_users
             FROM tool_invocation_logs
-            WHERE created_at >= :start_date AND created_at <= :end_date
+            WHERE {where_clause}
             GROUP BY tool_name
             ORDER BY call_count DESC
         """
 
-        result = await db_session.execute(
-            text(query),
-            {"start_date": start_date, "end_date": end_date},
-        )
+        result = await db_session.execute(text(query), params)
         rows = result.fetchall()
 
         return [
@@ -173,6 +186,7 @@ class ToolAnalyticsService:
         db_session: AsyncSession,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
+        organization_id: Optional[str] = None,
     ) -> Dict[str, Dict[str, Any]]:
         """
         Compare tool usage between voice and chat modes.
@@ -182,7 +196,17 @@ class ToolAnalyticsService:
         if not end_date:
             end_date = datetime.utcnow()
 
-        query = """
+        filters = ["created_at >= :start_date", "created_at <= :end_date"]
+        params = {"start_date": start_date, "end_date": end_date}
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
+
+        where_clause = " AND ".join(filters)
+
+        # nosec B608 - where_clause is built from fixed filter fragments; values are parameterized
+        query = f"""
             SELECT
                 mode,
                 COUNT(*) as call_count,
@@ -190,14 +214,11 @@ class ToolAnalyticsService:
                 AVG(duration_ms) as avg_duration_ms,
                 COUNT(DISTINCT user_id) as unique_users
             FROM tool_invocation_logs
-            WHERE created_at >= :start_date AND created_at <= :end_date
+            WHERE {where_clause}
             GROUP BY mode
         """
 
-        result = await db_session.execute(
-            text(query),
-            {"start_date": start_date, "end_date": end_date},
-        )
+        result = await db_session.execute(text(query), params)
         rows = result.fetchall()
 
         comparison = {}
@@ -221,6 +242,7 @@ class ToolAnalyticsService:
         db_session: AsyncSession,
         days: int = 30,
         tool_name: Optional[str] = None,
+        organization_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get daily tool usage trend.
@@ -241,6 +263,10 @@ class ToolAnalyticsService:
         if tool_name:
             filters.append("tool_name = :tool_name")
             params["tool_name"] = tool_name
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
 
         where_clause = " AND ".join(filters)
 
@@ -280,6 +306,7 @@ class ToolAnalyticsService:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: int = 20,
+        organization_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get analysis of tool errors.
@@ -291,7 +318,21 @@ class ToolAnalyticsService:
         if not end_date:
             end_date = datetime.utcnow()
 
-        query = """
+        filters = [
+            "status = 'error'",
+            "created_at >= :start_date",
+            "created_at <= :end_date",
+        ]
+        params = {"start_date": start_date, "end_date": end_date, "limit": limit}
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
+
+        where_clause = " AND ".join(filters)
+
+        # nosec B608 - where_clause composed from fixed segments, values parameterized
+        query = f"""
             SELECT
                 tool_name,
                 error_type,
@@ -300,18 +341,13 @@ class ToolAnalyticsService:
                 MIN(created_at) as first_seen,
                 MAX(created_at) as last_seen
             FROM tool_invocation_logs
-            WHERE status = 'error'
-              AND created_at >= :start_date
-              AND created_at <= :end_date
+            WHERE {where_clause}
             GROUP BY tool_name, error_type, error_message
             ORDER BY error_count DESC
             LIMIT :limit
         """
 
-        result = await db_session.execute(
-            text(query),
-            {"start_date": start_date, "end_date": end_date, "limit": limit},
-        )
+        result = await db_session.execute(text(query), params)
         rows = result.fetchall()
 
         return [
@@ -420,6 +456,7 @@ class ToolAnalyticsService:
         tool_name: Optional[str] = None,
         user_id: Optional[str] = None,
         status: Optional[str] = None,
+        organization_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get recent tool invocations for debugging/monitoring.
@@ -438,6 +475,10 @@ class ToolAnalyticsService:
         if status:
             filters.append("status = :status")
             params["status"] = status
+
+        if organization_id:
+            filters.append("organization_id = :organization_id")
+            params["organization_id"] = organization_id
 
         where_clause = " AND ".join(filters)
 

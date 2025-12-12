@@ -34,6 +34,11 @@ const ProfilePage = lazy(() =>
 const DocumentsPage = lazy(() =>
   import("./pages/DocumentsPage").then((m) => ({ default: m.DocumentsPage })),
 );
+const DocumentViewerPage = lazy(() =>
+  import("./pages/DocumentViewerPage").then((m) => ({
+    default: m.DocumentViewerPage,
+  })),
+);
 const ClinicalContextPage = lazy(() =>
   import("./pages/ClinicalContextPage").then((m) => ({
     default: m.ClinicalContextPage,
@@ -60,11 +65,14 @@ function AdminRedirect() {
   const location = useLocation();
 
   useEffect(() => {
-    const adminUrl =
+    const adminUrlBase =
       import.meta.env.VITE_ADMIN_URL || "http://localhost:8080/admin";
-    // Always send to the admin panel root; let that app handle its own routing
-    // This makes http://localhost:5173/admin behave like http://localhost:8080/admin
-    window.location.href = adminUrl;
+    // Preserve the sub-path and query string when redirecting so that
+    // deep links like /admin/knowledge-base?documentId=... reach the
+    // corresponding route in the admin panel app.
+    const suffix = location.pathname.replace(/^\/admin/, "");
+    const target = `${adminUrlBase}${suffix || ""}${location.search || ""}`;
+    window.location.href = target;
   }, [location.pathname]);
 
   return <PageLoader />;
@@ -96,6 +104,7 @@ export function AppRoutes() {
           <Route path="/chat/:conversationId" element={<ChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/documents/:documentId" element={<DocumentViewerPage />} />
           <Route path="/clinical-context" element={<ClinicalContextPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
 

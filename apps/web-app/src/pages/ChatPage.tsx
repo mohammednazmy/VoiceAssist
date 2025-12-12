@@ -186,6 +186,10 @@ export function ChatPage() {
 
   // Handle conversation initialization and validation
   useEffect(() => {
+    // Skip initialization while feature flag is loading - we don't yet know
+    // whether to use the legacy ChatPage flow or the unified UI.
+    if (isFeatureFlagLoading) return;
+
     // Skip if unified UI is enabled - UnifiedChatContainer handles its own initialization
     if (useUnifiedUI) return;
 
@@ -296,7 +300,14 @@ export function ChatPage() {
 
     initializeConversation();
     // Note: loadingState intentionally excluded to prevent infinite loops
-  }, [conversationId, activeConversationId, apiClient, navigate, useUnifiedUI]);
+  }, [
+    conversationId,
+    activeConversationId,
+    apiClient,
+    navigate,
+    useUnifiedUI,
+    isFeatureFlagLoading,
+  ]);
 
   // Load older messages (pagination)
   const loadOlderMessages = useCallback(async () => {
@@ -749,6 +760,12 @@ export function ChatPage() {
         key={conversationId || "new"}
         conversationId={conversationId || undefined}
         startInVoiceMode={startVoiceMode}
+        // Keep ChatPage's activeConversationId in sync so shared hooks
+        // (e.g., clinical context, analytics) see the correct session when
+        // using the unified UI.
+        onConversationReady={(id) => {
+          setActiveConversationId(id);
+        }}
       />
     );
   }

@@ -14,13 +14,27 @@ vi.mock("../../../hooks/useIntegrations", () => ({
 }));
 
 const mockHealth = {
-  overall_status: "healthy",
+  overall_status: "healthy" as const,
   connected: 5,
   degraded: 1,
   errors: 0,
   not_configured: 2,
   total_integrations: 8,
+  checked_at: new Date().toISOString(),
 };
+
+// Helper to create a complete mock return value
+const createMockReturn = (overrides: Partial<ReturnType<typeof useIntegrations>> = {}) => ({
+  integrations: [],
+  health: null,
+  loading: false,
+  error: null,
+  lastUpdated: null,
+  refreshAll: vi.fn(),
+  getIntegrationDetail: vi.fn(),
+  testIntegration: vi.fn(),
+  ...overrides,
+});
 
 const renderWithRouter = (component: React.ReactNode) => {
   return render(<MemoryRouter>{component}</MemoryRouter>);
@@ -33,26 +47,18 @@ describe("IntegrationsWidget", () => {
 
   describe("loading state", () => {
     it("renders loading skeleton when loading and no health data", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         loading: true,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       const { container } = renderWithRouter(<IntegrationsWidget />);
       expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
     });
 
     it("renders loading skeleton with placeholder cards", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         loading: true,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       const { container } = renderWithRouter(<IntegrationsWidget />);
       // Should have 4 placeholder cards
@@ -63,26 +69,18 @@ describe("IntegrationsWidget", () => {
 
   describe("error state", () => {
     it("renders error message when error occurs", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
-        loading: false,
-        error: { code: "FETCH_ERROR", message: "Failed to fetch" },
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
+        error: "Failed to fetch",
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       expect(screen.getByText("Error loading")).toBeInTheDocument();
     });
 
     it("renders integrations title in error state", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
-        loading: false,
-        error: { code: "FETCH_ERROR", message: "Failed to fetch" },
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
+        error: "Failed to fetch",
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       expect(screen.getByText(/Integrations/)).toBeInTheDocument();
@@ -91,13 +89,7 @@ describe("IntegrationsWidget", () => {
 
   describe("empty state", () => {
     it("returns null when no health data and not loading", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn());
 
       const { container } = renderWithRouter(<IntegrationsWidget />);
       expect(container.firstChild).toBeNull();
@@ -106,13 +98,9 @@ describe("IntegrationsWidget", () => {
 
   describe("healthy state", () => {
     beforeEach(() => {
-      vi.mocked(useIntegrations).mockReturnValue({
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         health: mockHealth,
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
     });
 
     it("renders integrations title", () => {
@@ -162,13 +150,9 @@ describe("IntegrationsWidget", () => {
 
   describe("status badge styling", () => {
     it("applies green styling for healthy status", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         health: { ...mockHealth, overall_status: "healthy" },
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       // The badge contains "● Healthy" for healthy status
@@ -177,13 +161,9 @@ describe("IntegrationsWidget", () => {
     });
 
     it("applies yellow styling for degraded status", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         health: { ...mockHealth, overall_status: "degraded" },
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       // Use a more specific selector to find the status badge (not the count label)
@@ -195,13 +175,9 @@ describe("IntegrationsWidget", () => {
     });
 
     it("applies red styling for unhealthy status", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         health: { ...mockHealth, overall_status: "unhealthy" },
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       const badge = screen.getByText("Unhealthy").closest("span");
@@ -209,13 +185,9 @@ describe("IntegrationsWidget", () => {
     });
 
     it("applies red styling for critical status", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         health: { ...mockHealth, overall_status: "critical" },
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       const badge = screen.getByText("Critical").closest("span");
@@ -223,13 +195,10 @@ describe("IntegrationsWidget", () => {
     });
 
     it("applies default styling for unknown status", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: { ...mockHealth, overall_status: "unknown" },
-        loading: false,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      // Cast to any to test unknown status handling
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
+        health: { ...mockHealth, overall_status: "unknown" as "healthy" },
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       const badge = screen.getByText("Unknown").closest("span");
@@ -239,13 +208,9 @@ describe("IntegrationsWidget", () => {
 
   describe("hook configuration", () => {
     it("calls useIntegrations with auto-refresh enabled", () => {
-      vi.mocked(useIntegrations).mockReturnValue({
-        health: null,
+      vi.mocked(useIntegrations).mockReturnValue(createMockReturn({
         loading: true,
-        error: null,
-        integrations: [],
-        refetch: vi.fn(),
-      });
+      }));
 
       renderWithRouter(<IntegrationsWidget />);
       expect(useIntegrations).toHaveBeenCalledWith({

@@ -23,6 +23,23 @@ let globalLoadPromise: Promise<void> | null = null;
 let globalLastLoadTime = 0;
 const LOAD_DEBOUNCE_MS = 500; // Minimum time between loads
 
+// Shared conversations state across all useConversations instances.
+// This ensures that creating a conversation from the unified chat view
+// also updates the sidebar/list instances, which use their own hooks.
+let globalConversations: Conversation[] = [];
+const conversationSubscribers = new Set<(convs: Conversation[]) => void>();
+
+function broadcastConversations(next: Conversation[]) {
+  globalConversations = next;
+  conversationSubscribers.forEach((listener) => {
+    try {
+      listener(next);
+    } catch (err) {
+      log.error("Conversation subscriber threw:", err);
+    }
+  });
+}
+
 export interface UseConversationsOptions {
   /** Callback when an error occurs (for toast notifications) */
   onError?: (message: string, description?: string) => void;
@@ -33,7 +50,9 @@ export interface UseConversationsOptions {
 export function useConversations(options: UseConversationsOptions = {}) {
   const { onError, pageSize = 20 } = options;
   const { apiClient } = useAuth();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>(
+    () => globalConversations,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,9 +62,51 @@ export function useConversations(options: UseConversationsOptions = {}) {
   const [currentPage, setCurrentPage] = useState(1);
   const totalCountRef = useRef(0);
 
+  // Lightweight in-memory cache of recent messages per conversation for prefetching.
+  const messagesCacheRef = useRef<
+    Record<
+      string,
+      {
+        items: Message[];
+        totalCount: number;
+      }
+    >
+  >({});
+
   // Refs to prevent infinite fetch loops
   const isLoadingRef = useRef(false);
   const hasInitializedRef = useRef(false);
+
+  // Helper to keep global and local conversation lists in sync
+  const syncConversations = useCallback(
+    (updater: (prev: Conversation[]) => Conversation[]) => {
+      setConversations((prev) => {
+        const next = updater(prev);
+        broadcastConversations(next);
+        return next;
+      });
+    },
+    [],
+  );
+
+  // Subscribe to global conversation updates so that multiple hook
+  // instances (sidebar, unified chat, legacy list) stay in sync.
+  useEffect(() => {
+    const subscriber = (next: Conversation[]) => {
+      setConversations(next);
+    };
+    conversationSubscribers.add(subscriber);
+
+    // If another instance has already loaded conversations, sync once.
+    if (globalConversations.length && conversations.length === 0) {
+      setConversations(globalConversations);
+    }
+
+    return () => {
+      conversationSubscribers.delete(subscriber);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadConversations = useCallback(
     async (page = 1, append = false) => {
@@ -91,9 +152,9 @@ export function useConversations(options: UseConversationsOptions = {}) {
           setCurrentPage(page);
 
           if (append) {
-            setConversations((prev) => [...prev, ...response.items]);
+            syncConversations((prev) => [...prev, ...response.items]);
           } else {
-            setConversations(response.items);
+            syncConversations(() => response.items);
           }
         } catch (err: unknown) {
           const errorMessage = extractErrorMessage(err);
@@ -120,13 +181,51 @@ export function useConversations(options: UseConversationsOptions = {}) {
         await fetchOperation();
       }
     },
-    [apiClient, pageSize, onError],
+    [apiClient, pageSize, onError, syncConversations],
   );
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoadingMore || isLoadingRef.current) return;
     await loadConversations(currentPage + 1, true);
   }, [hasMore, isLoadingMore, currentPage, loadConversations]);
+
+  /**
+   * Prefetch a small slice of the latest messages for a conversation.
+   * This is used by hover interactions in the sidebar to make switching
+   * between conversations feel more responsive.
+   */
+  const prefetchConversationMessages = useCallback(
+    async (conversationId: string, limit = 50) => {
+      if (!apiClient || !conversationId) return;
+
+      // Avoid re-fetching if we already have a cache entry.
+      if (messagesCacheRef.current[conversationId]) {
+        return;
+      }
+
+      try {
+        const response = await apiClient.getMessages(conversationId, 1, limit);
+        messagesCacheRef.current[conversationId] = {
+          items: response.items,
+          totalCount: response.totalCount ?? response.items.length,
+        };
+      } catch (err) {
+        // Prefetch is best-effort; log and continue without surfacing a toast.
+        log.debug("Prefetch messages failed:", err);
+      }
+    },
+    [apiClient],
+  );
+
+  /**
+   * Get cached messages for a conversation, if any.
+   */
+  const getCachedConversationMessages = useCallback(
+    (conversationId: string) => {
+      return messagesCacheRef.current[conversationId];
+    },
+    [],
+  );
 
   // Initial load - runs only once on mount
   // Using hasInitializedRef to prevent re-fetching when dependencies change identity
@@ -143,7 +242,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
     async (title: string) => {
       try {
         const newConversation = await apiClient.createConversation(title);
-        setConversations((prev) => [newConversation, ...prev]);
+        syncConversations((prev) => [newConversation, ...prev]);
         return newConversation;
       } catch (err: unknown) {
         const errorMessage = extractErrorMessage(err);
@@ -152,7 +251,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
         throw err;
       }
     },
-    [apiClient, onError],
+    [apiClient, onError, syncConversations],
   );
 
   const updateConversation = useCallback(
@@ -164,7 +263,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
       const originalConversations = conversations;
 
       // Optimistically update
-      setConversations((prev) =>
+      syncConversations((prev) =>
         prev.map((conv) =>
           conv.id === id
             ? { ...conv, ...updates, updatedAt: new Date().toISOString() }
@@ -175,20 +274,20 @@ export function useConversations(options: UseConversationsOptions = {}) {
       try {
         const updated = await apiClient.updateConversation(id, updates);
         // Replace with server response
-        setConversations((prev) =>
+        syncConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
       } catch (err: unknown) {
         // Rollback on error
-        setConversations(originalConversations);
+        broadcastConversations(originalConversations);
         const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to update conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient, conversations, onError],
+    [apiClient, conversations, onError, syncConversations],
   );
 
   const archiveConversation = useCallback(
@@ -197,7 +296,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
       const originalConversations = conversations;
 
       // Optimistically update
-      setConversations((prev) =>
+      syncConversations((prev) =>
         prev.map((conv) =>
           conv.id === id
             ? { ...conv, archived: true, updatedAt: new Date().toISOString() }
@@ -207,20 +306,20 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
       try {
         const updated = await apiClient.archiveConversation(id);
-        setConversations((prev) =>
+        syncConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
       } catch (err: unknown) {
         // Rollback on error
-        setConversations(originalConversations);
+        broadcastConversations(originalConversations);
         const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to archive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient, conversations, onError],
+    [apiClient, conversations, onError, syncConversations],
   );
 
   const unarchiveConversation = useCallback(
@@ -229,7 +328,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
       const originalConversations = conversations;
 
       // Optimistically update
-      setConversations((prev) =>
+      syncConversations((prev) =>
         prev.map((conv) =>
           conv.id === id
             ? { ...conv, archived: false, updatedAt: new Date().toISOString() }
@@ -239,20 +338,20 @@ export function useConversations(options: UseConversationsOptions = {}) {
 
       try {
         const updated = await apiClient.unarchiveConversation(id);
-        setConversations((prev) =>
+        syncConversations((prev) =>
           prev.map((conv) => (conv.id === id ? updated : conv)),
         );
         return updated;
       } catch (err: unknown) {
         // Rollback on error
-        setConversations(originalConversations);
+        broadcastConversations(originalConversations);
         const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.("Failed to unarchive conversation", errorMessage);
         throw err;
       }
     },
-    [apiClient, conversations, onError],
+    [apiClient, conversations, onError, syncConversations],
   );
 
   const deleteConversation = useCallback(
@@ -266,7 +365,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
       log.debug(
         `Optimistically removing conversation, count before: ${conversations.length}`,
       );
-      setConversations((prev) => {
+      syncConversations((prev) => {
         const newList = prev.filter((conv) => conv.id !== id);
         log.debug(`After filter, count: ${newList.length}`);
         return newList;
@@ -275,10 +374,12 @@ export function useConversations(options: UseConversationsOptions = {}) {
       try {
         await apiClient.deleteConversation(id);
         log.debug(`API delete successful for: ${id}`);
+        // Clear cached messages for this conversation to prevent stale data
+        delete messagesCacheRef.current[id];
       } catch (err: unknown) {
         // Rollback on error
         log.debug(`API delete failed, rolling back`);
-        setConversations(originalConversations);
+        broadcastConversations(originalConversations);
         const errorMessage = extractErrorMessage(err);
         setError(errorMessage);
         onError?.(
@@ -288,7 +389,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
         throw err;
       }
     },
-    [apiClient, conversations, onError],
+    [apiClient, conversations, onError, syncConversations],
   );
 
   const deleteAllConversations = useCallback(async () => {
@@ -298,7 +399,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
     const count = conversations.length;
 
     // Optimistically clear all
-    setConversations([]);
+    syncConversations(() => []);
     totalCountRef.current = 0;
     setHasMore(false);
     setCurrentPage(1);
@@ -306,10 +407,12 @@ export function useConversations(options: UseConversationsOptions = {}) {
     try {
       const result = await apiClient.deleteAllConversations();
       log.debug(`Deleted ${result.deleted_count} conversations`);
+      // Clear entire messages cache when all conversations are deleted
+      messagesCacheRef.current = {};
       return result;
     } catch (err: unknown) {
       // Rollback on error
-      setConversations(originalConversations);
+      broadcastConversations(originalConversations);
       totalCountRef.current = originalTotal;
       setHasMore(originalConversations.length >= pageSize);
       const errorMessage = extractErrorMessage(err);
@@ -320,7 +423,7 @@ export function useConversations(options: UseConversationsOptions = {}) {
       );
       throw err;
     }
-  }, [apiClient, conversations, pageSize, onError]);
+  }, [apiClient, conversations, pageSize, onError, syncConversations]);
 
   const exportConversation = useCallback(
     async (id: string, format: "markdown" | "text" = "markdown") => {
@@ -389,6 +492,8 @@ export function useConversations(options: UseConversationsOptions = {}) {
     setShowArchived,
     hasMore,
     totalCount: totalCountRef.current,
+    prefetchConversationMessages,
+    getCachedConversationMessages,
     createConversation,
     updateConversation,
     archiveConversation,

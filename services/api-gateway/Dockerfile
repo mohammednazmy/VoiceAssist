@@ -10,6 +10,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     gcc \
     postgresql-client \
     curl \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

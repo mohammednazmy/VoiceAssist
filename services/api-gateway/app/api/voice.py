@@ -40,7 +40,7 @@ from app.api.voice_schemas.schemas import (
 )
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_organization, get_current_user
 from app.core.logging import get_logger
 from app.core.metrics import (
     external_api_duration_seconds,
@@ -56,6 +56,7 @@ from app.core.metrics import (
     voice_slo_violations_total,
     voice_stt_latency_seconds,
     voice_transcripts_total,
+    record_instrumented_api_call,
 )
 from app.core.middleware import rate_limit
 from app.core.security import verify_token
@@ -63,10 +64,13 @@ from app.core.security import verify_token as verify_token_func
 from app.core.sentry import capture_slo_violation
 from app.core.slo import check_slo_violations, log_slo_violations
 from app.models.message import Message
+from app.models.organization import Organization
 from app.models.session import Session as ChatSession
 from app.models.user import User
 from app.models.user_voice_preferences import UserVoicePreferences
+from app.services.analytics_service import analytics_service
 from app.services.elevenlabs_service import elevenlabs_service
+from app.services.organization_service import OrganizationService
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 from app.services.realtime_voice_service import adaptive_vad_manager, realtime_voice_service
 from app.services.thinker_talker_websocket_handler import TTSessionConfig, thinker_talker_session_manager
@@ -94,6 +98,8 @@ voice_query_orchestrator = QueryOrchestrator()
 async def transcribe_audio(
     audio: UploadFile = File(..., description="Audio file to transcribe"),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Transcribe audio to text using OpenAI Whisper.
@@ -105,6 +111,8 @@ async def transcribe_audio(
     Returns:
         TranscribeResponse with transcribed text
     """
+    start_time = time.time()
+
     logger.info(
         f"Transcribing audio for user {current_user.id}",
         extra={"user_id": current_user.id, "filename": audio.filename},
@@ -171,6 +179,33 @@ async def transcribe_audio(
                 },
             )
 
+            # Record analytics (best-effort)
+            elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+            org_id = current_org.id if current_org else None
+            record_instrumented_api_call(
+                analytics_service=analytics_service,
+                db=db,
+                endpoint="/api/voice/transcribe",
+                duration_ms=float(elapsed_ms),
+                success=True,
+                user_id=current_user.id,
+                organization_id=org_id,
+                endpoint_category="voice",
+            )
+            # Record basic user activity
+            try:
+                if org_id is not None:
+                    analytics_service.record_user_activity(
+                        db=db,
+                        user_id=current_user.id,
+                        activity_type="voice",
+                        organization_id=org_id,
+                        feature="voice_transcribe",
+                    )
+            except Exception:
+                # Analytics should never break the main flow
+                pass
+
             return TranscribeResponse(text=transcribed_text)
 
     except httpx.TimeoutException:
@@ -203,6 +238,7 @@ async def synthesize_speech(
     request: SynthesizeRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Synthesize speech from text using OpenAI or ElevenLabs TTS.
@@ -223,6 +259,8 @@ async def synthesize_speech(
     Returns:
         Audio file (mp3 format) with X-TTS-Provider and X-TTS-Style headers
     """
+    start_time = time.time()
+
     # Load user's voice preferences
     user_prefs = db.query(UserVoicePreferences).filter(UserVoicePreferences.user_id == current_user.id).first()
 
@@ -404,11 +442,27 @@ async def synthesize_speech(
         if detected_style:
             headers["X-TTS-Style"] = detected_style
 
-        return Response(
+        response = Response(
             content=audio_content,
             media_type=content_type,
             headers=headers,
         )
+
+        # Record analytics (best-effort)
+        elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+        org_id = current_org.id if current_org else None
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/voice/synthesize",
+            duration_ms=float(elapsed_ms),
+            success=True,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="voice",
+        )
+
+        return response
 
     except httpx.TimeoutException:
         logger.error(
@@ -463,6 +517,7 @@ async def synthesize_speech_stream(
     request: SynthesizeRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Stream TTS audio for low-latency playback.
@@ -517,29 +572,44 @@ async def synthesize_speech_stream(
             async def audio_generator():
                 """Generate audio chunks from ElevenLabs streaming API."""
                 ttfb_logged = False
-                async for chunk in elevenlabs_service.synthesize_stream(
-                    text=request.text,
-                    voice_id=effective_voice,
-                    model_id="eleven_turbo_v2",  # Use turbo model for lowest latency
-                    stability=effective_stability,
-                    similarity_boost=effective_similarity,
-                    style=effective_style,
-                    use_speaker_boost=True,
-                    chunk_size=1024,  # 1KB chunks for smooth streaming
-                ):
-                    if not ttfb_logged:
-                        ttfb_ms = (time.monotonic() - start_time) * 1000
-                        logger.info(
-                            f"Streaming TTS TTFB: {ttfb_ms:.0f}ms",
-                            extra={
-                                "user_id": str(current_user.id),
-                                "ttfb_ms": ttfb_ms,
-                                "provider": "elevenlabs",
-                                "streaming": True,
-                            },
-                        )
-                        ttfb_logged = True
-                    yield chunk
+                try:
+                    async for chunk in elevenlabs_service.synthesize_stream(
+                        text=request.text,
+                        voice_id=effective_voice,
+                        model_id="eleven_turbo_v2",  # Use turbo model for lowest latency
+                        stability=effective_stability,
+                        similarity_boost=effective_similarity,
+                        style=effective_style,
+                        use_speaker_boost=True,
+                        chunk_size=1024,  # 1KB chunks for smooth streaming
+                    ):
+                        if not ttfb_logged:
+                            ttfb_ms = (time.monotonic() - start_time) * 1000
+                            logger.info(
+                                f"Streaming TTS TTFB: {ttfb_ms:.0f}ms",
+                                extra={
+                                    "user_id": str(current_user.id),
+                                    "ttfb_ms": ttfb_ms,
+                                    "provider": "elevenlabs",
+                                    "streaming": True,
+                                },
+                            )
+                            ttfb_logged = True
+                        yield chunk
+                finally:
+                    # Record analytics when stream completes or is cancelled
+                    elapsed_ms = int(max(time.monotonic() - start_time, 0.0) * 1000)
+                    org_id = current_org.id if current_org else None
+                    record_instrumented_api_call(
+                        analytics_service=analytics_service,
+                        db=db,
+                        endpoint="/api/voice/synthesize/stream",
+                        duration_ms=float(elapsed_ms),
+                        success=True,
+                        user_id=current_user.id,
+                        organization_id=org_id,
+                        endpoint_category="voice",
+                    )
 
             headers = {
                 "X-TTS-Provider": "elevenlabs",
@@ -570,7 +640,7 @@ async def synthesize_speech_stream(
     )
 
     # Call the regular synthesize endpoint
-    return await synthesize_speech(request, current_user, db)
+    return await synthesize_speech(request, current_user, db, current_org)
 
 
 # ==============================================================================
@@ -699,6 +769,8 @@ async def get_available_voices(
 async def create_realtime_session(
     request: RealtimeSessionRequest,
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Create a Realtime API session for voice mode.
@@ -770,6 +842,19 @@ async def create_realtime_session(
             },
         )
 
+        # Record analytics (best-effort)
+        org_id = current_org.id if current_org else None
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/voice/realtime-session",
+            duration_ms=float(duration_ms),
+            success=True,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="voice",
+        )
+
         return RealtimeSessionResponse(**config)
 
     except ValueError as e:
@@ -782,6 +867,19 @@ async def create_realtime_session(
                 "duration_ms": duration_ms,
             },
         )
+        # Best-effort failure analytics
+        org_id = current_org.id if current_org else None
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/voice/realtime-session",
+            duration_ms=float(duration_ms),
+            success=False,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="voice",
+        )
+
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(e),
@@ -796,6 +894,19 @@ async def create_realtime_session(
                 "duration_ms": duration_ms,
             },
         )
+        # Failure analytics
+        org_id = current_org.id if current_org else None
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/voice/realtime-session",
+            duration_ms=float(duration_ms),
+            success=False,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="voice",
+        )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create Realtime session: {str(e)}",
@@ -837,6 +948,7 @@ async def post_voice_metrics(
     Returns:
         VoiceMetricsResponse with status "ok"
     """
+    start_time = time.time()
     # Optional authentication - supports sendBeacon which cannot send headers
     user_id: str | None = None
     auth_header = request.headers.get("Authorization")
@@ -923,6 +1035,41 @@ async def post_voice_metrics(
                     user_id=user_id,
                     conversation_id=payload.conversation_id,
                 )
+
+    # Record tenant-aware analytics when user is authenticated
+    try:
+        if user_id and user_id != "anonymous":
+            # Resolve organization context
+            org_service = OrganizationService(db)
+            org = org_service.get_user_default_organization(user_id)
+            org_id = org.id if org else None
+
+            # Record user voice activity in minutes (best-effort)
+            minutes = (payload.session_duration_ms or 0) / 60000.0 if payload.session_duration_ms else 0.0
+            if minutes > 0:
+                analytics_service.record_user_activity(
+                    db=db,
+                    user_id=user_id,  # SQLAlchemy accepts UUID-compatible strings
+                    activity_type="voice",
+                    organization_id=org_id,
+                    minutes=minutes,
+                    feature="voice_session",
+                )
+
+            # Record API call analytics
+            elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+            analytics_service.record_api_call(
+                db=db,
+                endpoint="/api/voice/metrics",
+                duration_ms=float(elapsed_ms),
+                success=True,
+                user_id=user_id,
+                organization_id=org_id,
+                endpoint_category="voice",
+            )
+    except Exception:
+        # Voice metrics are auxiliary; analytics must not break ingestion
+        pass
 
     return VoiceMetricsResponse(status="ok")
 
@@ -1016,6 +1163,7 @@ async def relay_voice_transcript(
     payload: VoiceRelayRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Take a final voice transcript, run the medical RAG pipeline, and persist both sides of the exchange.
@@ -1037,7 +1185,7 @@ async def relay_voice_transcript(
 
     from app.api.conversations import get_session_or_404  # lazy import to avoid cycles
 
-    session = get_session_or_404(db, session_uuid, current_user)
+    session = get_session_or_404(db, session_uuid, current_user, current_org=current_org)
 
     user_message = Message(
         session_id=session.id,
@@ -1053,11 +1201,13 @@ async def relay_voice_transcript(
     db.commit()
     db.refresh(user_message)
 
-    # Run RAG pipeline with streaming disabled here (latency-focused)
+    # Run RAG pipeline with streaming disabled here (latency-focused).
+    # Expose PHI-conscious mode via optional exclude_phi flag on the request.
     query_request = QueryRequest(
         session_id=str(session.id),
         query=payload.transcript,
         clinical_context_id=payload.clinical_context_id,
+        exclude_phi=bool(payload.exclude_phi),
     )
 
     query_response = await voice_query_orchestrator.handle_query(query_request, trace_id=str(user_message.id))
@@ -1093,6 +1243,36 @@ async def relay_voice_transcript(
             "duration_ms": duration_ms,
         },
     )
+
+    # Record analytics for voice relay (best-effort)
+    try:
+        analytics_service.record_api_call(
+            db=db,
+            endpoint="/api/voice/relay",
+            duration_ms=float(duration_ms),
+            success=True,
+            user_id=current_user.id,
+            organization_id=session.organization_id,
+            endpoint_category="voice",
+        )
+        # Count this as both voice and chat usage
+        analytics_service.record_user_activity(
+            db=db,
+            user_id=current_user.id,
+            activity_type="voice",
+            organization_id=session.organization_id,
+            feature="voice_relay",
+        )
+        analytics_service.record_user_activity(
+            db=db,
+            user_id=current_user.id,
+            activity_type="message",
+            organization_id=session.organization_id,
+            count=2,
+            feature="chat",
+        )
+    except Exception:
+        pass
 
     return VoiceRelayResponse(
         user_message_id=str(user_message.id),
@@ -1152,6 +1332,7 @@ async def voice_relay_websocket(websocket: WebSocket, db: Session = Depends(get_
             transcript = data.get("transcript") or ""
             conversation_id = data.get("conversation_id")
             clinical_context_id = data.get("clinical_context_id")
+            exclude_phi = bool(data.get("exclude_phi"))
 
             ttfb_start = time.monotonic()
 
@@ -1185,6 +1366,7 @@ async def voice_relay_websocket(websocket: WebSocket, db: Session = Depends(get_
                 session_id=str(session.id),
                 query=transcript,
                 clinical_context_id=clinical_context_id,
+                exclude_phi=exclude_phi,
             )
 
             full_answer_parts: list[str] = []

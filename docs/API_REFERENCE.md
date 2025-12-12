@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - agent
@@ -39,13 +39,14 @@ ai_summary: >-
 
 # API Reference
 
-**Last Updated:** 2025-12-02
+**Last Updated:** 2025-12-12
 
 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications.
 
 ## Documentation
 
 - **[Complete REST API Reference](api-reference/rest-api.md)** - Full endpoint documentation with examples
+- **[Phase 4 APIs](api-reference/phase4-apis.md)** - Analytics, Organizations, Learning, Enhanced PDF
 - **OpenAPI/Swagger UI** - Interactive docs at `http://localhost:8000/docs`
 - **ReDoc** - Alternative docs at `http://localhost:8000/redoc`
 
@@ -88,6 +89,9 @@ Authorization: Bearer <access_token>
 | Knowledge Base  | `/api/admin/kb`            | Document management                | `admin_kb.py`            |
 | Cache           | `/api/admin/cache`         | Cache statistics and control       | `admin_cache.py`         |
 | Feature Flags   | `/api/admin/feature-flags` | Feature toggle management          | `admin_feature_flags.py` |
+| Analytics       | `/api/admin/analytics`     | Analytics dashboard & cost tracking| `admin_analytics.py`     |
+| Organizations   | `/api/admin/organizations` | Multi-tenancy management           | `admin_organizations.py` |
+| Learning        | `/api/admin/learning`      | Flashcards & spaced repetition     | `admin_learning.py`      |
 | Health          | `/health`, `/ready`        | Service health checks              | `health.py`              |
 | Metrics         | `/metrics`                 | Prometheus metrics                 | `metrics.py`             |
 
@@ -101,13 +105,13 @@ For complete documentation with request/response examples, see [api-reference/re
 
 ### Documentation Coverage Status
 
-As of 2025-12-02, API documentation coverage:
+As of 2025-12-12, API documentation coverage:
 
 | Metric          | Count | Notes                             |
 | --------------- | ----- | --------------------------------- |
 | Total Endpoints | 310   | Backend route definitions         |
-| Documented      | 39    | In rest-api.md with examples      |
-| Undocumented    | 271   | Exist in code, need documentation |
+| Documented      | 45    | In rest-api.md with examples      |
+| Undocumented    | 265   | Exist in code, need documentation |
 
 **Priority endpoints to document:**
 

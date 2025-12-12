@@ -278,7 +278,7 @@ describe("useSystemKeys", () => {
       vi.mocked(fetchAPI).mockResolvedValueOnce(failedValidation);
       vi.mocked(fetchAPI).mockResolvedValueOnce(mockKeysResponse);
 
-      let validationResponse;
+      let validationResponse: typeof failedValidation | undefined;
       await act(async () => {
         validationResponse = await result.current.validateKey("openai");
       });

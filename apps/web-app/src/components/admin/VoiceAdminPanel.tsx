@@ -241,6 +241,11 @@ export function VoiceAdminPanel() {
   const [error, setError] = useState<string | null>(null);
   const [savingFlags, setSavingFlags] = useState(false);
 
+  // Thinker-Talker sessions (developer view)
+  const [ttSessions, setTtSessions] = useState<any[]>([]);
+  const [ttLoading, setTtLoading] = useState(false);
+  const [ttError, setTtError] = useState<string | null>(null);
+
   // Feature flags state
   const [featureFlags, setFeatureFlags] = useState<VoiceFeatureFlags>({
     echoDetectionEnabled: true,
@@ -292,12 +297,29 @@ export function VoiceAdminPanel() {
     }
   }, []);
 
+  const loadTtSessions = useCallback(async () => {
+    if (!apiClient) return;
+    setTtLoading(true);
+    setTtError(null);
+    try {
+      const response = await apiClient.getAdminTTSessions();
+      setTtSessions(response.sessions ?? []);
+    } catch (err) {
+      setTtError(
+        err instanceof Error ? err.message : "Failed to load voice sessions",
+      );
+    } finally {
+      setTtLoading(false);
+    }
+  }, [apiClient]);
+
   // Initial load
   useEffect(() => {
     loadVoices();
     loadElevenlabsUsage();
     loadFeatureFlags();
-  }, [loadVoices, loadElevenlabsUsage, loadFeatureFlags]);
+    loadTtSessions();
+  }, [loadVoices, loadElevenlabsUsage, loadFeatureFlags, loadTtSessions]);
 
   // Set default voice
   const handleSetDefaultVoice = async (voice: VoiceInfo) => {
@@ -502,6 +524,131 @@ export function VoiceAdminPanel() {
 
       {activeTab === "analytics" && (
         <div className="space-y-6">
+          {/* Thinker-Talker Sessions (developer-only verification view) */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  Thinker-Talker Sessions (Dev)
+                </h2>
+                <p className="text-xs text-neutral-500">
+                  Inspect PHI-conscious and reading-mode behavior for active
+                  voice sessions in staging.
+                </p>
+              </div>
+              <button
+                onClick={loadTtSessions}
+                disabled={ttLoading}
+                className="px-3 py-1.5 text-xs font-medium text-primary-700 bg-primary-50 rounded-md hover:bg-primary-100 disabled:opacity-50"
+              >
+                {ttLoading ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
+            {ttError && (
+              <div className="mb-3 text-xs text-red-600">{ttError}</div>
+            )}
+            {ttSessions.length === 0 && !ttLoading ? (
+              <p className="text-sm text-neutral-500">
+                No active Thinker-Talker sessions.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="border-b border-neutral-200">
+                    <tr className="text-left text-neutral-500">
+                      <th className="py-2 pr-4">Session</th>
+                      <th className="py-2 pr-4">Mode</th>
+                      <th className="py-2 pr-4">PHI</th>
+                      <th className="py-2 pr-4">Reading</th>
+                      <th className="py-2 pr-4 hidden md:table-cell">
+                        Document
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ttSessions.map((session) => {
+                      const sessionId =
+                        typeof session.session_id === "string"
+                          ? session.session_id
+                          : "";
+                      const shortId = sessionId ? sessionId.slice(0, 8) : "";
+                      const phiMode =
+                        session.phi_mode ||
+                        (session.exclude_phi ? "demo" : "clinical");
+                      const readingMode = session.reading_mode_enabled
+                        ? session.reading_detail || "full"
+                        : "off";
+                      const documentLabel = session.active_document_title
+                        ? `${session.active_document_title} (p${
+                            session.active_document_page || 1
+                          })`
+                        : session.active_document_id || "—";
+
+                      const documentHref = session.active_document_id
+                        ? `/admin/knowledge-base?documentId=${encodeURIComponent(
+                            session.active_document_id as string,
+                          )}`
+                        : null;
+
+                      return (
+                        <tr
+                          key={sessionId || Math.random().toString(36)}
+                          className="border-b border-neutral-100 last:border-0"
+                        >
+                          <td className="py-1.5 pr-4">
+                            <div className="flex flex-col">
+                              <span className="font-mono text-xs text-neutral-900">
+                                {shortId || "unknown"}
+                              </span>
+                              {session.user_email && (
+                                <span className="text-xs text-neutral-500">
+                                  {session.user_email}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-1.5 pr-4 text-xs text-neutral-700">
+                            {session.mode || "conversation"}
+                          </td>
+                          <td className="py-1.5 pr-4 text-xs">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded-full border ${
+                                phiMode === "demo"
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              }`}
+                            >
+                              {phiMode === "demo"
+                                ? "Demo / PHI-conscious"
+                                : "Clinical"}
+                            </span>
+                          </td>
+                          <td className="py-1.5 pr-4 text-xs text-neutral-700">
+                            {readingMode}
+                          </td>
+                          <td className="py-1.5 pr-4 text-xs text-neutral-700 hidden md:table-cell">
+                            {documentHref ? (
+                              <a
+                                href={documentHref}
+                                className="text-primary-700 hover:text-primary-900 underline-offset-2 hover:underline"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {documentLabel}
+                              </a>
+                            ) : (
+                              documentLabel
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* ElevenLabs Usage */}
           {elevenlabsUsage && (
             <div className="bg-white rounded-lg shadow p-6">

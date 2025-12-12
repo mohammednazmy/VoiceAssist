@@ -1,6 +1,6 @@
 {
-  "count": 326,
-  "generated_at": "2025-12-11T10:01:40.368Z",
+  "count": 331,
+  "generated_at": "2025-12-12T07:56:10.690Z",
   "docs": [
     {
       "slug": "reference/style-guide",
@@ -224,6 +224,356 @@
       "lastUpdated": "Wed Dec 03 2025 18:00:00 GMT-0600 (Central Standard Time)"
     },
     {
+      "slug": "api-reference/overview",
+      "path": "API_REFERENCE.md",
+      "title": "API Reference",
+      "summary": "High-level API overview, endpoint groups, and quick reference for the VoiceAssist API.",
+      "ai_summary": "Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications. - Complete REST API Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI - Interactive docs at http://localhost:8000/docs - ReDoc - Alternative...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
+      "category": "api",
+      "tags": [
+        "api",
+        "rest",
+        "reference",
+        "endpoints"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/api/health.py"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "api/knowledge-base",
+      "path": "KB_API_REFERENCE.md",
+      "title": "Knowledge Base API Reference",
+      "summary": "User and admin Knowledge Base APIs built on kb_documents and RAG services.",
+      "ai_summary": "Describes the three Knowledge Base surfaces: user documents (/api/documents), admin KB management (/api/admin/kb/*), and the user-facing KB + RAG API (/api/kb/*) that frontends and agents should prefer.",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend"
+      ],
+      "category": "api",
+      "tags": [
+        "api",
+        "knowledge-base",
+        "rag",
+        "documents"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/documents.py",
+        "services/api-gateway/app/api/admin_kb.py",
+        "services/api-gateway/app/api/kb.py",
+        "services/api-gateway/app/services/rag_service.py"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "medical-features",
+      "path": "MEDICAL_FEATURES.md",
+      "title": "Medical Features",
+      "summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, cli...",
+      "ai_summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, clinical decision support, and privacy-conscious handling of medical data. Pre-loaded medical textbooks are indexed and available for semantic search...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "medical",
+        "features"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/medical_kb_service.py",
+        "services/api-gateway/app/services/kb_indexer.py",
+        "services/api-gateway/app/api/admin_kb.py"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "semantic-search-design",
+      "path": "SEMANTIC_SEARCH_DESIGN.md",
+      "title": "Semantic Search Design",
+      "summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This...",
+      "ai_summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This document describes the complete ingestion and query pipeline. Note: For canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), se...",
+      "status": "stable",
+      "stability": "beta",
+      "owner": "docs",
+      "audience": [
+        "human",
+        "ai-agents"
+      ],
+      "category": "reference",
+      "tags": [
+        "semantic",
+        "search",
+        "design"
+      ],
+      "component": "backend/search",
+      "relatedPaths": [
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/services/embedding_service.py",
+        "services/api-gateway/app/api/advanced_search.py",
+        "services/api-gateway/app/api/admin_kb.py",
+        "services/api-gateway/app/services/kb_indexer.py",
+        "services/api-gateway/app/services/search_aggregator.py"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "thinker-talker-pipeline",
+      "path": "THINKER_TALKER_PIPELINE.md",
+      "title": "Thinker-Talker Voice Pipeline",
+      "summary": "VoiceAssist's voice processing architecture using local orchestration with Deepgram STT, GPT-4o, and ElevenLabs TTS.",
+      "ai_summary": "> Status: Production Ready > Last Updated: 2025-12-01 > Phase: Voice Pipeline Migration (Complete) The Thinker-Talker (T/T) pipeline is VoiceAssist's voice processing architecture that replaces the OpenAI Realtime API with a local orchestration approach. It provides unified conversation context,...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "developers",
+        "backend",
+        "agent",
+        "ai-agents"
+      ],
+      "category": "architecture",
+      "tags": [
+        "voice",
+        "pipeline",
+        "thinker-talker",
+        "stt",
+        "tts"
+      ],
+      "component": "backend/voice",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/services/thinker_talker_service.py",
+        "services/api-gateway/app/api/kb.py",
+        "services/api-gateway/app/services/session_analytics_service.py",
+        "services/api-gateway/app/api/admin_voice.py",
+        "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "architecture/unified",
+      "path": "UNIFIED_ARCHITECTURE.md",
+      "title": "Unified Architecture Documentation",
+      "summary": "Comprehensive system architecture covering all components, data flows, and integration points.",
+      "ai_summary": "Last Updated: 2025-12-02 (All 16 Phases Complete) Status: Canonical Reference Purpose: Comprehensive system architecture covering all components, data flows, and integration points --- 1. Executive Summary 2. System Overview 3. Architecture Principles 4. Current Implementation Status 5. Component...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "mixed",
+      "audience": [
+        "human",
+        "agent",
+        "ai-agents",
+        "backend",
+        "frontend",
+        "devops"
+      ],
+      "category": "architecture",
+      "tags": [
+        "architecture",
+        "system-design",
+        "overview"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app",
+        "admin-panel",
+        "docs-site"
+      ],
+      "component": "platform/architecture",
+      "relatedPaths": [
+        "services/api-gateway/app/main.py",
+        "apps/web-app/src/App.tsx",
+        "apps/admin-panel/src/App.tsx",
+        "docker-compose.yml",
+        "package.json"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "voice/pipeline",
+      "path": "VOICE_MODE_PIPELINE.md",
+      "title": "Voice Mode Pipeline",
+      "summary": "Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, offline fallback, and testing strategy.",
+      "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
+      "category": "voice",
+      "tags": [
+        "voice",
+        "realtime",
+        "websocket",
+        "openai",
+        "api",
+        "barge-in",
+        "audio",
+        "offline",
+        "multilingual"
+      ],
+      "relatedServices": [
+        "api-gateway",
+        "web-app"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/voice.py",
+        "services/api-gateway/app/api/admin_voice.py",
+        "services/api-gateway/app/services/rag_service.py",
+        "services/api-gateway/app/api/advanced_search.py",
+        "services/api-gateway/app/api/kb.py",
+        "services/api-gateway/app/services/session_analytics_service.py",
+        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
+        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts",
+        "apps/web-app/src/components/admin/VoiceMetricsDashboard.tsx"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "admin/enhanced-kb-phi-controls",
+      "path": "admin/ENHANCED_KB_PHI_CONTROLS.md",
+      "title": "Enhanced KB Editing & PHI Controls",
+      "summary": "Guide for admins on enhanced knowledge base editing, PHI risk indicators, PHI-conscious RAG testing, and maintenance tooling for phi_risk payloads.",
+      "ai_summary": "Explains how admins can use the enhanced knowledge base tools: page images, block-level editors, processing progress indicators, PHI risk badges and filters, the PHI-conscious RAG test panel, and the update_phi_risk_payloads maintenance script for Qdrant. Intended for safe, PHI-aware KB operations.",
+      "status": "stable",
+      "owner": "backend",
+      "audience": [
+        "admin",
+        "backend",
+        "ai-agents"
+      ],
+      "category": "admin",
+      "tags": [
+        "knowledge-base",
+        "phi",
+        "admin",
+        "rag"
+      ],
+      "component": "frontend/admin-panel",
+      "relatedPaths": [
+        "apps/admin-panel/src/components/knowledge/DocumentTable.tsx",
+        "apps/admin-panel/src/components/knowledge/DocumentPreviewDrawer.tsx",
+        "apps/admin-panel/src/pages/KnowledgeBasePage.tsx",
+        "services/api-gateway/app/api/admin_kb.py",
+        "services/api-gateway/app/services/kb_indexer.py",
+        "services/api-gateway/tools/update_phi_risk_payloads.py",
+        "services/api-gateway/app/api/admin_voice.py",
+        "services/api-gateway/app/services/session_analytics_service.py"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "ai/agent-api-reference",
+      "path": "ai/AGENT_API_REFERENCE.md",
+      "title": "Agent API Reference",
+      "summary": "Machine-readable JSON API endpoints for AI agents to discover and search documentation.",
+      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: http://localhost:3001. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "docs",
+      "audience": [
+        "ai-agents",
+        "backend"
+      ],
+      "category": "ai",
+      "tags": [
+        "api",
+        "ai-agent",
+        "json",
+        "documentation",
+        "endpoints"
+      ],
+      "relatedServices": [
+        "docs-site"
+      ],
+      "component": "frontend/docs-site",
+      "relatedPaths": [
+        "apps/docs-site/scripts/generate-agent-json.js",
+        "apps/docs-site/scripts/generate-repo-index.mjs",
+        "apps/docs-site/scripts/generate-doc-code-map.mjs",
+        "apps/docs-site/public/agent/index.json"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
+      "slug": "api-reference/rest-api",
+      "path": "api-reference/rest-api.md",
+      "title": "REST API Reference",
+      "summary": "Complete REST API documentation with request/response examples.",
+      "ai_summary": "Version: 2.0 Base URL: http://localhost:8000/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic...",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend",
+        "ai-agents"
+      ],
+      "category": "api",
+      "tags": [
+        "api",
+        "rest",
+        "reference",
+        "endpoints",
+        "examples"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
+      "component": "backend/api-gateway",
+      "relatedPaths": [
+        "services/api-gateway/app/api/__init__.py",
+        "services/api-gateway/app/api/conversations.py",
+        "services/api-gateway/app/api/auth.py",
+        "packages/api-client/src/index.ts"
+      ],
+      "lastUpdated": "2025-12-12"
+    },
+    {
       "slug": "admin-panel-implementation-summary",
       "path": "ADMIN_PANEL_IMPLEMENTATION_SUMMARY.md",
       "title": "ADMIN PANEL IMPLEMENTATION SUMMARY",
@@ -245,6 +595,26 @@
       "lastUpdated": "2025-12-11"
     },
     {
+      "slug": "setup/multi-tenancy",
+      "path": "MULTI_TENANCY_SETUP.md",
+      "title": "Multi-Tenancy Setup Guide",
+      "summary": "Guide for configuring and deploying VoiceAssist in multi-tenant mode with organization isolation, quota management, and billing integration.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "backend"
+      ],
+      "tags": [
+        "multi-tenancy",
+        "organizations",
+        "setup",
+        "deployment"
+      ],
+      "lastUpdated": "2025-12-11"
+    },
+    {
       "slug": "testing-results-2025-11-22",
       "path": "TESTING_RESULTS_2025-11-22.md",
       "title": "TESTING RESULTS 2025-11-22",
@@ -263,6 +633,33 @@
       "path": "VOICE_STATE_2025-11-28.md",
       "title": "VOICE STATE 2025-11-28",
       "status": "draft",
+      "lastUpdated": "2025-12-11"
+    },
+    {
+      "slug": "api-reference/phase4-apis",
+      "path": "api-reference/phase4-apis.md",
+      "title": "Phase 4 API Reference",
+      "summary": "API documentation for Phase 4 features including Analytics Dashboard, Multi-Tenancy Organizations, Learning Mode, and Enhanced PDF Processing.",
+      "status": "stable",
+      "stability": "production",
+      "owner": "backend",
+      "audience": [
+        "human",
+        "agent",
+        "backend",
+        "frontend"
+      ],
+      "category": "api",
+      "tags": [
+        "api",
+        "analytics",
+        "organizations",
+        "learning",
+        "pdf"
+      ],
+      "relatedServices": [
+        "api-gateway"
+      ],
       "lastUpdated": "2025-12-11"
     },
     {
@@ -290,6 +687,13 @@
       "slug": "voice-mode-barge-in-improvements",
       "path": "plans/voice-mode-barge-in-improvements.md",
       "title": "voice-mode-barge-in-improvements",
+      "status": "draft",
+      "lastUpdated": "2025-12-11"
+    },
+    {
+      "slug": "local-dev-voice-lab-checklist",
+      "path": "voice/LOCAL_DEV_VOICE_LAB_CHECKLIST.md",
+      "title": "LOCAL DEV VOICE LAB CHECKLIST",
       "status": "draft",
       "lastUpdated": "2025-12-11"
     },
@@ -802,39 +1206,6 @@
       "relatedPaths": [
         "services/api-gateway/scripts/init_feature_flags.py",
         "services/api-gateway/app/api/admin_feature_flags.py"
-      ],
-      "lastUpdated": "2025-12-05"
-    },
-    {
-      "slug": "ai/agent-api-reference",
-      "path": "ai/AGENT_API_REFERENCE.md",
-      "title": "Agent API Reference",
-      "summary": "Machine-readable JSON API endpoints for AI agents to discover and search documentation.",
-      "ai_summary": "Canonical reference for VoiceAssist documentation API endpoints. Base URL: http://localhost:3001. Key endpoints: /agent/docs.json (full doc list with ai_summary), /agent/docs-summary.json (AI summaries by category), /agent/health.json (docs health metrics), /agent/tasks.json (common tasks), /search-index.json (Fuse.js search). All endpoints are static JSON generated at build time.",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "ai-agents",
-        "backend"
-      ],
-      "category": "ai",
-      "tags": [
-        "api",
-        "ai-agent",
-        "json",
-        "documentation",
-        "endpoints"
-      ],
-      "relatedServices": [
-        "docs-site"
-      ],
-      "component": "frontend/docs-site",
-      "relatedPaths": [
-        "apps/docs-site/scripts/generate-agent-json.js",
-        "apps/docs-site/scripts/generate-repo-index.mjs",
-        "apps/docs-site/scripts/generate-doc-code-map.mjs",
-        "apps/docs-site/public/agent/index.json"
       ],
       "lastUpdated": "2025-12-05"
     },
@@ -2184,47 +2555,6 @@
       "lastUpdated": "2025-12-03"
     },
     {
-      "slug": "voice/pipeline",
-      "path": "VOICE_MODE_PIPELINE.md",
-      "title": "Voice Mode Pipeline",
-      "summary": "Unified Voice Mode pipeline architecture, data flow, barge-in, audio playback, metrics, offline fallback, and testing strategy.",
-      "ai_summary": "> Status: Production-ready > Last Updated: 2025-12-03 This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features. VoiceAssist supports two voice pipeline mo...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend",
-        "ai-agents"
-      ],
-      "category": "voice",
-      "tags": [
-        "voice",
-        "realtime",
-        "websocket",
-        "openai",
-        "api",
-        "barge-in",
-        "audio",
-        "offline",
-        "multilingual"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app"
-      ],
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/app/api/voice.py",
-        "services/api-gateway/app/api/admin_voice.py",
-        "apps/web-app/src/components/voice/VoiceModePanel.tsx",
-        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
-      ],
-      "lastUpdated": "2025-12-03"
-    },
-    {
       "slug": "voice-mode-settings-guide",
       "path": "VOICE_MODE_SETTINGS_GUIDE.md",
       "title": "Voice Mode Settings Guide",
@@ -2355,42 +2685,6 @@
       "lastUpdated": "2025-12-02"
     },
     {
-      "slug": "api-reference/overview",
-      "path": "API_REFERENCE.md",
-      "title": "API Reference",
-      "summary": "High-level API overview, endpoint groups, and quick reference for the VoiceAssist API.",
-      "ai_summary": "Last Updated: 2025-12-02 The VoiceAssist API provides comprehensive REST endpoints for building medical AI assistant applications. - Complete REST API Reference - Full endpoint documentation with examples - OpenAPI/Swagger UI - Interactive docs at http://localhost:8000/docs - ReDoc - Alternative...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend",
-        "ai-agents"
-      ],
-      "category": "api",
-      "tags": [
-        "api",
-        "rest",
-        "reference",
-        "endpoints"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/app/api/__init__.py",
-        "services/api-gateway/app/api/conversations.py",
-        "services/api-gateway/app/api/auth.py",
-        "services/api-gateway/app/api/voice.py",
-        "services/api-gateway/app/api/health.py"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
       "slug": "documentation-site-specs",
       "path": "DOCUMENTATION_SITE_SPECS.md",
       "title": "Documentation Site Specs",
@@ -2417,77 +2711,6 @@
         "apps/docs-site/src/app/layout.tsx",
         "apps/docs-site/src/lib/docs.ts",
         "apps/docs-site/scripts/generate-agent-json.js"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
-      "slug": "thinker-talker-pipeline",
-      "path": "THINKER_TALKER_PIPELINE.md",
-      "title": "Thinker-Talker Voice Pipeline",
-      "summary": "VoiceAssist's voice processing architecture using local orchestration with Deepgram STT, GPT-4o, and ElevenLabs TTS.",
-      "ai_summary": "> Status: Production Ready > Last Updated: 2025-12-01 > Phase: Voice Pipeline Migration (Complete) The Thinker-Talker (T/T) pipeline is VoiceAssist's voice processing architecture that replaces the OpenAI Realtime API with a local orchestration approach. It provides unified conversation context,...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": [
-        "developers",
-        "backend",
-        "agent",
-        "ai-agents"
-      ],
-      "category": "architecture",
-      "tags": [
-        "voice",
-        "pipeline",
-        "thinker-talker",
-        "stt",
-        "tts"
-      ],
-      "component": "backend/voice",
-      "relatedPaths": [
-        "services/api-gateway/app/api/voice.py",
-        "services/api-gateway/app/services/thinker_talker_service.py",
-        "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx",
-        "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
-      ],
-      "lastUpdated": "2025-12-02"
-    },
-    {
-      "slug": "architecture/unified",
-      "path": "UNIFIED_ARCHITECTURE.md",
-      "title": "Unified Architecture Documentation",
-      "summary": "Comprehensive system architecture covering all components, data flows, and integration points.",
-      "ai_summary": "Last Updated: 2025-12-02 (All 16 Phases Complete) Status: Canonical Reference Purpose: Comprehensive system architecture covering all components, data flows, and integration points --- 1. Executive Summary 2. System Overview 3. Architecture Principles 4. Current Implementation Status 5. Component...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "mixed",
-      "audience": [
-        "human",
-        "agent",
-        "ai-agents",
-        "backend",
-        "frontend",
-        "devops"
-      ],
-      "category": "architecture",
-      "tags": [
-        "architecture",
-        "system-design",
-        "overview"
-      ],
-      "relatedServices": [
-        "api-gateway",
-        "web-app",
-        "admin-panel",
-        "docs-site"
-      ],
-      "component": "platform/architecture",
-      "relatedPaths": [
-        "services/api-gateway/app/main.py",
-        "apps/web-app/src/App.tsx",
-        "apps/admin-panel/src/App.tsx",
-        "docker-compose.yml",
-        "package.json"
       ],
       "lastUpdated": "2025-12-02"
     },
@@ -2965,7 +3188,8 @@
         "services/api-gateway/app/api/__init__.py",
         "services/api-gateway/app/core/config.py",
         "services/api-gateway/app/core/database.py",
-        "services/api-gateway/app/models/__init__.py"
+        "services/api-gateway/app/models/__init__.py",
+        "services/api-gateway/app/services/admin_bootstrap.py"
       ],
       "lastUpdated": "2025-11-27"
     },
@@ -3526,31 +3750,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "medical-features",
-      "path": "MEDICAL_FEATURES.md",
-      "title": "Medical Features",
-      "summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, cli...",
-      "ai_summary": "VoiceAssist includes specialized medical capabilities designed for healthcare professionals, with a focus on evidence-based information retrieval, clinical decision support, and privacy-conscious handling of medical data. Pre-loaded medical textbooks are indexed and available for semantic search...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "medical",
-        "features"
-      ],
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/app/services/rag_service.py",
-        "services/api-gateway/app/services/medical_kb_service.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "message-edit-progress",
       "path": "MESSAGE_EDIT_PROGRESS.md",
       "title": "Message Edit Progress",
@@ -4068,34 +4267,6 @@
       "lastUpdated": "2025-11-27"
     },
     {
-      "slug": "semantic-search-design",
-      "path": "SEMANTIC_SEARCH_DESIGN.md",
-      "title": "Semantic Search Design",
-      "summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This...",
-      "ai_summary": "VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This document describes the complete ingestion and query pipeline. Note: For canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), se...",
-      "status": "stable",
-      "stability": "beta",
-      "owner": "docs",
-      "audience": [
-        "human",
-        "ai-agents"
-      ],
-      "category": "reference",
-      "tags": [
-        "semantic",
-        "search",
-        "design"
-      ],
-      "component": "backend/search",
-      "relatedPaths": [
-        "services/api-gateway/app/services/rag_service.py",
-        "services/api-gateway/app/services/embedding_service.py",
-        "services/api-gateway/app/api/advanced_search.py",
-        "services/api-gateway/app/api/admin_kb.py"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
       "slug": "architecture/service-catalog",
       "path": "SERVICE_CATALOG.md",
       "title": "Service Catalog",
@@ -4398,42 +4569,6 @@
         "services/api-gateway/app/api/__init__.py",
         "services/api-gateway/app/main.py",
         "services/api-gateway/openapi.yaml"
-      ],
-      "lastUpdated": "2025-11-27"
-    },
-    {
-      "slug": "api-reference/rest-api",
-      "path": "api-reference/rest-api.md",
-      "title": "REST API Reference",
-      "summary": "Complete REST API documentation with request/response examples.",
-      "ai_summary": "Version: 2.0 Base URL: http://localhost:8000/api (production) or http://localhost:8000/api (development) Last Updated: 2025-11-27 > See Also: Auto-generated API Routes - Complete route listing from OpenAPI spec --- The VoiceAssist API provides a comprehensive set of endpoints for building medic...",
-      "status": "stable",
-      "stability": "production",
-      "owner": "backend",
-      "audience": [
-        "human",
-        "agent",
-        "backend",
-        "frontend",
-        "ai-agents"
-      ],
-      "category": "api",
-      "tags": [
-        "api",
-        "rest",
-        "reference",
-        "endpoints",
-        "examples"
-      ],
-      "relatedServices": [
-        "api-gateway"
-      ],
-      "component": "backend/api-gateway",
-      "relatedPaths": [
-        "services/api-gateway/app/api/__init__.py",
-        "services/api-gateway/app/api/conversations.py",
-        "services/api-gateway/app/api/auth.py",
-        "packages/api-client/src/index.ts"
       ],
       "lastUpdated": "2025-11-27"
     },

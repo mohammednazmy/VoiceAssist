@@ -25,7 +25,7 @@ export function useAdminSummary(options: UseAdminSummaryOptions = {}) {
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [fetchCount, setFetchCount] = useState(0);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
 
   const load = useCallback(

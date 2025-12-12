@@ -81,8 +81,10 @@ from app.services.streaming_stt_service import (
     streaming_stt_service,
 )
 from app.services.talker_service import AudioChunk, TalkerService, TalkerSession, VoiceConfig, talker_service
+from app.services.ssml_processor import VoiceStyle
 from app.services.thinker_service import ThinkerService, ThinkerSession, ToolCallEvent, ToolResultEvent, thinker_service
 from app.services.audio_processing_service import AudioContext, get_audio_processing_service
+from app.services.conversation_metadata_service import add_conversation_tags, set_conversation_phi_mode
 
 # Natural Conversation Flow: Phase 1 - Clean Transcript Truncation
 from app.services.transcript_sync_service import TranscriptSyncService, TruncationResult, get_transcript_sync_service
@@ -461,6 +463,19 @@ class PipelineConfig:
     # Natural Conversation Flow: Pre-emptive Listening
     # When enabled, keeps STT active during AI speech for faster barge-in
     enable_preemptive_listening: bool = True
+
+    # Document reading & PHI-conscious RAG settings for voice sessions.
+    # These are primarily populated from the Thinker/Talker WebSocket
+    # advanced_settings payload at session.init time.
+    reading_mode_enabled: bool = False
+    reading_speed: str = "normal"  # "slow" | "normal" | "fast"
+    reading_detail: str = "full"  # "short" | "full"
+
+    # Voice-level PHI policy:
+    # - phi_mode = "clinical": normal KB access
+    # - phi_mode = "demo": run RAG in PHI-conscious mode (exclude high-risk chunks)
+    phi_mode: str = "clinical"
+    exclude_phi: bool = False
 
 
 @dataclass
@@ -892,6 +907,20 @@ class VoicePipelineSession:
                         f"type={self.config.dictation_note_type.value}"
                     )
 
+                    # Tag conversation for audit/organization purposes (non-PHI metadata).
+                    try:
+                        add_conversation_tags(self.conversation_id, ["dictation"])
+                        if self.config.dictation_note_type == NoteType.CONSULT:
+                            add_conversation_tags(self.conversation_id, ["consult"])
+                        elif self.config.dictation_note_type == NoteType.DISCHARGE:
+                            add_conversation_tags(self.conversation_id, ["discharge summary"])
+                    except Exception as e:
+                        logger.warning(
+                            "Failed to add dictation tags for conversation %s: %s",
+                            self.conversation_id,
+                            e,
+                        )
+
                     # Phase 9: Load patient context if patient_id is provided
                     if self.config.patient_id and self.config.enable_patient_context:
                         try:
@@ -953,15 +982,40 @@ class VoicePipelineSession:
                     on_tool_call=self._handle_tool_call,
                     on_tool_result=self._handle_tool_result,
                     user_id=self.user_id,
+                    exclude_phi=getattr(self.config, "exclude_phi", False),
+                    reading_mode_enabled=getattr(self.config, "reading_mode_enabled", False),
+                    reading_detail=getattr(self.config, "reading_detail", None),
+                    reading_speed=getattr(self.config, "reading_speed", None),
                 )
 
                 # Phase 10: Initialize analytics session
                 pipeline_mode = "dictation" if self.config.mode == PipelineMode.DICTATION else "conversation"
+
+                # Persist conversation-level PHI mode based on voice session config
+                try:
+                    set_conversation_phi_mode(
+                        self.conversation_id,
+                        getattr(self.config, "phi_mode", "clinical"),
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to persist phi_mode '%s' for conversation %s: %s",
+                        getattr(self.config, "phi_mode", "clinical"),
+                        self.conversation_id,
+                        e,
+                    )
+
                 self._analytics = self._analytics_service.create_session(
                     session_id=self.session_id,
                     user_id=self.user_id,
                     mode=pipeline_mode,
                     on_analytics_update=self._send_analytics_update,
+                    conversation_id=self.conversation_id,
+                    phi_mode=getattr(self.config, "phi_mode", "clinical"),
+                    exclude_phi=getattr(self.config, "exclude_phi", False),
+                    reading_mode_enabled=getattr(self.config, "reading_mode_enabled", False),
+                    reading_detail=getattr(self.config, "reading_detail", "full"),
+                    reading_speed=getattr(self.config, "reading_speed", "normal"),
                 )
                 self._analytics_service.set_session_active(self.session_id)
                 logger.info(f"Analytics session created: {self.session_id}, mode={pipeline_mode}")
@@ -1294,6 +1348,10 @@ class VoicePipelineSession:
                     on_tool_call=self._handle_tool_call,
                     on_tool_result=self._handle_tool_result,
                     user_id=self.user_id,
+                    exclude_phi=getattr(self.config, "exclude_phi", False),
+                    reading_mode_enabled=getattr(self.config, "reading_mode_enabled", False),
+                    reading_detail=getattr(self.config, "reading_detail", None),
+                    reading_speed=getattr(self.config, "reading_speed", None),
                 )
                 logger.debug("[Pipeline] Recreated Thinker session for new input after barge-in")
 
@@ -2655,11 +2713,15 @@ class VoicePipelineSession:
         self._cancelled = False
 
         # Create Talker session for TTS
+        # When in reading mode, bias TTS toward a narration style that is
+        # slightly slower and more structured for long-form document reading.
         voice_config = VoiceConfig(
             voice_id=self.config.voice_id,
             model_id=self.config.tts_model,
             output_format=self.config.tts_output_format,
         )
+        if getattr(self.config, "reading_mode_enabled", False):
+            voice_config.voice_style = VoiceStyle.NARRATION
 
         self._talker_session = await self._talker_service.start_session(
             on_audio_chunk=self._handle_audio_chunk,
@@ -3198,6 +3260,43 @@ class VoicePipelineSession:
 
     async def _handle_tool_result(self, event: ToolResultEvent) -> None:
         """Handle tool result from Thinker."""
+        from app.core.business_metrics import (
+            voice_kb_answer_length_tokens,
+            voice_kb_sources_per_answer,
+            voice_kb_tool_calls_total,
+            voice_kb_tool_latency_seconds,
+        )
+
+        tool_name = event.tool_name
+        is_kb_tool = tool_name in {"kb_search", "knowledge_base_query"}
+
+        if is_kb_tool:
+            # Track latency relative to pipeline start time
+            if self._metrics.start_time:
+                latency_sec = max(time.time() - self._metrics.start_time, 0.0)
+                voice_kb_tool_latency_seconds.labels(tool_name=tool_name).observe(latency_sec)
+
+            # Approximate answer length and source count for tuning
+            answer_text = ""
+            sources_count = 0
+            if isinstance(event.result, dict):
+                answer_text = str(event.result.get("answer") or "")
+                sources = event.result.get("sources") or []
+                if isinstance(sources, list):
+                    sources_count = len(sources)
+
+            if answer_text:
+                approx_tokens = max(len(answer_text.split()), 1)
+                voice_kb_answer_length_tokens.labels(tool_name=tool_name).observe(approx_tokens)
+
+            voice_kb_sources_per_answer.labels(tool_name=tool_name).observe(sources_count)
+
+            # Increment total calls metric
+            voice_kb_tool_calls_total.labels(
+                tool_name=tool_name,
+                success=str(bool(answer_text)),
+            ).inc()
+
         await self._on_message(
             PipelineMessage(
                 type="tool.result",

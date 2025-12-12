@@ -101,6 +101,15 @@ interface UnifiedConversationState {
   messages: UnifiedMessage[];
   /** Whether AI is typing/generating */
   isTyping: boolean;
+  /** Lightweight KB context attached to the last assistant answer, if any */
+  lastKbContext?: {
+    toolName: string;
+    sources: {
+      id?: string;
+      title: string;
+      category?: string;
+    }[];
+  } | null;
 
   // -------------------------------------------------------------------------
   // Input Mode State
@@ -264,6 +273,7 @@ const defaultState = {
   conversationId: null,
   messages: [],
   isTyping: false,
+  lastKbContext: null,
 
   // Input Mode
   inputMode: "text" as const,

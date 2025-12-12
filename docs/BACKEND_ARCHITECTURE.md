@@ -26,6 +26,7 @@ relatedPaths:
   - "services/api-gateway/app/core/config.py"
   - "services/api-gateway/app/core/database.py"
   - "services/api-gateway/app/models/__init__.py"
+  - "services/api-gateway/app/services/admin_bootstrap.py"
 source_of_truth: true
 version: 2.0.0
 ai_summary: >-
@@ -250,6 +251,32 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
 ```
+
+### Local/Test Admin Bootstrap
+
+In non-production environments the API gateway includes a small helper that
+ensures a usable admin account exists for admin workflows and tests:
+
+- Implementation: `services/api-gateway/app/services/admin_bootstrap.py`
+- Wired in `app/main.py` via `bootstrap_default_admin()` inside
+  the `startup_event` handler.
+- Activation:
+  - Enabled when `ENVIRONMENT != "production"` or `DEBUG=true`.
+  - No-op in strict production deployments.
+- Credentials (configurable via environment variables):
+  - `TEST_ADMIN_EMAIL` (default: `admin@test.com`)
+  - `TEST_ADMIN_PASSWORD` (default: `Test123!@#`)
+  - `TEST_ADMIN_FULL_NAME` (default: `Test Admin`)
+
+Bootstrap behavior is idempotent:
+
+- If a user with `TEST_ADMIN_EMAIL` does not exist, a new admin is created with
+  `is_admin=true` and `admin_role="admin"`.
+- If the user exists but lacks admin privileges, they are elevated to
+  `admin_role="admin"`.
+
+This keeps E2E/admin tests (`/api/admin/panel/*`, `/api/admin/kb/*`) and local
+admin panel sessions working smoothly without weakening production RBAC.
 
 ### Service Layer Pattern
 

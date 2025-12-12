@@ -50,6 +50,38 @@ export default function VoicePage() {
         </p>
       </div>
 
+      {/* Voice PHI & Reading Analytics */}
+      <div className="mb-8 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-500/60 dark:bg-slate-900/40 p-4">
+        <h2 className="text-sm font-semibold tracking-wide text-emerald-800 dark:text-emerald-200 mb-1">
+          Voice PHI & Reading Analytics
+        </h2>
+        <p className="text-sm text-slate-700 dark:text-slate-200 mb-2">
+          PHI-conscious RAG behavior and document reading mode settings are
+          surfaced directly in the voice pipeline and admin dashboards. These
+          sections are the canonical reference for how{" "}
+          <code>phi_mode</code>, <code>exclude_phi</code>, and reading-mode
+          hints affect retrieval and analytics.
+        </p>
+        <ul className="list-disc list-inside text-sm text-slate-700 dark:text-slate-200 space-y-1">
+          <li>
+            <Link
+              href="/docs/voice/pipeline#phi-conscious-rag-for-voice-2025-12-update"
+              className="text-emerald-700 dark:text-emerald-300 underline-offset-2 hover:underline"
+            >
+              PHI-Conscious RAG for Voice
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/docs/voice/pipeline#voice-session-phi-analytics-2025-12-update"
+              className="text-emerald-700 dark:text-emerald-300 underline-offset-2 hover:underline"
+            >
+              Voice Session PHI Analytics
+            </Link>
+          </li>
+        </ul>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           href="/voice/architecture"

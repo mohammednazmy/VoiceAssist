@@ -14,6 +14,7 @@
 import type { TTToolCall } from "../../hooks/useThinkerTalkerSession";
 import type { VoiceMetrics } from "./VoiceMetricsDisplay";
 import { ToolCallDisplay } from "./ToolCallDisplay";
+import { useNavigate } from "react-router-dom";
 
 // ============================================================================
 // Types
@@ -208,6 +209,9 @@ export function VoiceExpandedDrawer({
 }: VoiceExpandedDrawerProps) {
   if (!isOpen) return null;
 
+  const hasKBToolCalls = toolCalls.some((tc) => tc.name === "kb_search");
+  const navigate = useNavigate();
+
   return (
     <div
       className="mb-2 bg-white border border-neutral-200 rounded-lg shadow-lg overflow-hidden animate-slide-up"
@@ -292,7 +296,19 @@ export function VoiceExpandedDrawer({
             maxVisible={5}
             showArguments={true}
             showResults={true}
+            onKBSourceClick={(source) => {
+              if (source.id) {
+                navigate(`/documents/${source.id}`);
+              } else {
+                navigate("/documents");
+              }
+            }}
           />
+          {hasKBToolCalls && (
+            <p className="mt-2 text-[11px] text-neutral-500" data-testid="kb-source-tip">
+              Tip: In knowledge-base tool results, clicking a source copies its title so you can paste it into notes or search.
+            </p>
+          )}
         </div>
       )}
 

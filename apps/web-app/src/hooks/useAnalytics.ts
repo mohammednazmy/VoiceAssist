@@ -205,7 +205,6 @@ export function useWebVitals(): void {
     // Dynamically import web-vitals for code splitting
     const trackVitals = async () => {
       try {
-        // @ts-expect-error - web-vitals may not be installed
         const webVitals = await import("web-vitals");
 
         const handleVital = (metric: {

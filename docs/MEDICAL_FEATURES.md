@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - ai-agents
@@ -19,6 +19,8 @@ component: "backend/api-gateway"
 relatedPaths:
   - "services/api-gateway/app/services/rag_service.py"
   - "services/api-gateway/app/services/medical_kb_service.py"
+  - "services/api-gateway/app/services/kb_indexer.py"
+  - "services/api-gateway/app/api/admin_kb.py"
 ai_summary: >-
   VoiceAssist includes specialized medical capabilities designed for healthcare
   professionals, with a focus on evidence-based information retrieval, clinical
@@ -56,6 +58,10 @@ Pre-loaded medical textbooks are indexed and available for semantic search with 
 3. Content is chunked by section/paragraph with page tracking
 4. Embeddings generated and stored in vector database
 5. Metadata includes: book name, edition, chapter, page number, section title
+6. (Enhanced pipeline) For selected admin KB PDFs:
+   - Layout-aware extraction and per-page GPT-4o Vision analysis.
+   - Structured content blocks (headings, tables, figures) and voice-optimized narrations.
+   - Enhanced chunks and narrations fed into RAG and voice navigation.
 
 #### Example Queries
 
@@ -84,6 +90,9 @@ Would you like me to read more from this section or explore related topics?
 - "Read more" option to get additional context
 - Voice narration of text sections
 - Bookmark frequently referenced sections
+- Optional **enhanced content editing** in the admin panel:
+  - Page images with zoom.
+  - Block-level editing of headings, tables, figures, and voice narrations.
 
 ### 2. Medical Journal Search & Retrieval
 
@@ -146,6 +155,9 @@ Would you like me to read more from this section or explore related topics?
 - PDFs saved on Ubuntu server
 - Optionally backed up to Nextcloud
 - Organized by topic/specialty folders
+- For admin-managed KB documents, enhanced processing can generate:
+  - Per-page images and structured blocks.
+  - Voice-optimized narrations with PHI detection on the narration text.
 
 #### Example Use Cases
 

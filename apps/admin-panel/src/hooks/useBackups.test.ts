@@ -54,9 +54,14 @@ describe("useBackups", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
+    it("should return loading true initially", async () => {
       const { result } = renderHook(() => useBackups());
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch all backup data on mount", async () => {

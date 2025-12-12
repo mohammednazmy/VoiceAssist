@@ -47,17 +47,21 @@ const mockRules = [
     id: "rule-ssn",
     name: "SSN Detection",
     description: "Detects Social Security Numbers",
-    phi_type: "ssn",
+    phi_type: "ssn" as const,
     status: "enabled" as const,
     priority: 1,
+    is_builtin: true,
+    detection_count: 500,
   },
   {
     id: "rule-phone",
     name: "Phone Number Detection",
     description: "Detects phone numbers",
-    phi_type: "phone",
+    phi_type: "phone" as const,
     status: "disabled" as const,
     priority: 2,
+    is_builtin: false,
+    detection_count: 150,
   },
 ];
 
@@ -68,8 +72,10 @@ const mockStats = {
   routing_stats: {
     routed_local: 800,
     redacted_cloud: 450,
-    allowed_cloud: 0,
+    blocked: 0,
   },
+  by_type: { ssn: 500, phone: 150 },
+  by_day: [{ date: "2024-01-15", count: 45, by_type: { ssn: 25, phone: 20 } }],
 };
 
 const mockRouting = {
@@ -85,9 +91,12 @@ const mockHealth = {
   overall: "healthy" as const,
   components: {
     detector: "healthy",
-    router: "healthy",
-    audit: "healthy",
+    redis_config: "healthy",
+    local_llm: "healthy",
+    audit_logging: "healthy",
   },
+  routing_mode: "hybrid" as const,
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockEvents = [

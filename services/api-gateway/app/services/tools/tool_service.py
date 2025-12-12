@@ -8,6 +8,7 @@ Used by both Voice Mode (OpenAI Realtime API) and Chat Mode (Chat Completions AP
 import json
 import logging
 import time
+import uuid
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -25,6 +26,7 @@ class ToolCategory(str, Enum):
     MEDICAL = "medical"
     KNOWLEDGE = "knowledge"
     UTILITY = "utility"
+    DOCUMENT = "document"
 
 
 @dataclass
@@ -61,9 +63,24 @@ class ToolExecutionContext:
 
     user_id: str
     session_id: Optional[str] = None
-    mode: str = "chat"  # "voice" or "chat"
+    # Mode in which the tool is being invoked ("voice" or "chat").
+    mode: str = "chat"
     trace_id: Optional[str] = None
     db_session: Optional[AsyncSession] = None
+    # Optional tenant context for multi-tenancy-aware analytics.
+    organization_id: Optional[str] = None
+    # Optional richer context for tools that need it (RAG, document
+    # navigation, PHI-conscious behavior, etc.).
+    conversation_id: Optional[str] = None
+    clinical_context_id: Optional[str] = None
+    # When true, tools that perform KB/RAG lookups should apply PHI-conscious
+    # filters (e.g., exclude high-risk KB chunks). Defaults to False so that
+    # existing behavior is unchanged unless explicitly enabled.
+    exclude_phi: bool = False
+    # Optional reading-mode hints for document-aware tools (voice mode).
+    reading_mode_enabled: bool = False
+    reading_detail: Optional[str] = None  # "short" | "full"
+    reading_speed: Optional[str] = None  # "slow" | "normal" | "fast"
 
 
 # Tool handler type
@@ -374,6 +391,190 @@ class ToolService:
             ),
         )
 
+        # Knowledge base RAG query tool (unified KB + RAG surface)
+        self.register(
+            ToolDefinition(
+                name="knowledge_base_query",
+                description=(
+                    "Run a RAG-style query over the medical knowledge base and return a concise answer with sources. "
+                    "Use this for clinical knowledge questions where a KB-backed answer with citations is preferred."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "description": "User's clinical question to answer using the knowledge base.",
+                        },
+                        "context_documents": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 20,
+                            "description": "Approximate number of KB documents to draw context from (default 5).",
+                        },
+                        "filters": {
+                            "type": "object",
+                            "description": "Optional filters for KB selection (e.g., category, recency).",
+                        },
+                        "conversation_history": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "role": {"type": "string"},
+                                    "content": {"type": "string"},
+                                },
+                                "required": ["role", "content"],
+                            },
+                            "description": "Optional short history to help disambiguate the question.",
+                        },
+                        "clinical_context_id": {
+                            "type": "string",
+                            "description": "Optional clinical context identifier to align with EHR context.",
+                        },
+                    },
+                    "required": ["question"],
+                },
+                category=ToolCategory.KNOWLEDGE,
+            ),
+        )
+
+        # Document navigation tools for voice mode
+        self.register(
+            ToolDefinition(
+                name="document_select",
+                description=(
+                    "Select and open a document from the user's library for reading. "
+                    "Use when user says 'I want to read Harrison's' or 'Open my cardiology textbook'."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Document title or search term to find the document",
+                        },
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Current conversation ID (provided by system)",
+                        },
+                    },
+                    "required": ["query", "conversation_id"],
+                },
+                category=ToolCategory.DOCUMENT,
+            ),
+        )
+
+        self.register(
+            ToolDefinition(
+                name="document_read_page",
+                description=(
+                    "Read content from a specific page of the open document. "
+                    "Use when user says 'Read page 40' or 'What's on page 100?'."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "page_number": {
+                            "type": "integer",
+                            "description": "The page number to read",
+                        },
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Current conversation ID (provided by system)",
+                        },
+                    },
+                    "required": ["page_number", "conversation_id"],
+                },
+                category=ToolCategory.DOCUMENT,
+            ),
+        )
+
+        self.register(
+            ToolDefinition(
+                name="document_navigate",
+                description=(
+                    "Navigate through the document by pages or sections. "
+                    "Use when user says 'Next page', 'Previous section', or 'Go to chapter 5'."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "direction": {
+                            "type": "string",
+                            "enum": ["next", "previous"],
+                            "description": "Direction to navigate",
+                        },
+                        "target_type": {
+                            "type": "string",
+                            "enum": ["page", "section"],
+                            "description": "Navigate by page or section",
+                        },
+                        "section_name": {
+                            "type": "string",
+                            "description": "Optional section name to jump to directly (e.g., 'Cardiology', 'Chapter 5')",
+                        },
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Current conversation ID (provided by system)",
+                        },
+                    },
+                    "required": ["conversation_id"],
+                },
+                category=ToolCategory.DOCUMENT,
+            ),
+        )
+
+        self.register(
+            ToolDefinition(
+                name="document_toc",
+                description=(
+                    "Get the table of contents for the open document. "
+                    "Use when user asks 'What's in the table of contents?' or 'Show me the chapters'."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Current conversation ID (provided by system)",
+                        },
+                    },
+                    "required": ["conversation_id"],
+                },
+                category=ToolCategory.DOCUMENT,
+            ),
+        )
+
+        self.register(
+            ToolDefinition(
+                name="document_describe_figure",
+                description=(
+                    "Describe a figure or diagram in the document. "
+                    "Use when user says 'Describe the figure' or 'What does the diagram show?'."
+                ),
+                parameters={
+                    "type": "object",
+                    "properties": {
+                        "page_number": {
+                            "type": "integer",
+                            "description": "Page number with the figure (defaults to current page)",
+                        },
+                        "figure_number": {
+                            "type": "integer",
+                            "description": "Which figure on the page (1 = first figure, defaults to 1)",
+                        },
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Current conversation ID (provided by system)",
+                        },
+                    },
+                    "required": ["conversation_id"],
+                },
+                category=ToolCategory.DOCUMENT,
+            ),
+        )
+
     def register(self, tool: ToolDefinition, handler: Optional[ToolHandler] = None):
         """Register a tool definition and optional handler."""
         self._tools[tool.name] = tool
@@ -499,32 +700,104 @@ class ToolService:
                 error_type="NoHandler",
             )
 
+        call_id = str(uuid.uuid4())
         try:
-            logger.info(f"Executing tool: {name} with args: {json.dumps(arguments)[:500]}")
+            # Log tool execution with PHI context for auditing and debugging
+            phi_context_info = (
+                f"exclude_phi={context.exclude_phi}, "
+                f"reading_mode={context.reading_mode_enabled}, "
+                f"clinical_ctx={context.clinical_context_id or 'none'}"
+            )
+            logger.info(
+                f"Executing tool: {name} with args: {json.dumps(arguments)[:500]} "
+                f"[PHI context: {phi_context_info}]"
+            )
             result = await handler(arguments, context)
             duration_ms = int((time.time() - start_time) * 1000)
 
             if isinstance(result, ToolResult):
                 result.duration_ms = duration_ms
-                return result
+            else:
+                # Wrap plain result
+                result = ToolResult(
+                    success=True,
+                    data=result,
+                    duration_ms=duration_ms,
+                )
 
-            # Wrap plain result
-            return ToolResult(
-                success=True,
-                data=result,
-                duration_ms=duration_ms,
+            # Log to Redis for analytics (with organization_id)
+            self._log_tool_invocation(
+                tool_name=name,
+                user_id=context.user_id,
+                session_id=context.session_id,
+                call_id=call_id,
+                arguments=arguments,
+                success=result.success,
+                duration_ms=result.duration_ms,
+                error_message=result.error,
+                organization_id=context.organization_id,
             )
+
+            return result
 
         except Exception as e:
             duration_ms = int((time.time() - start_time) * 1000)
             logger.exception(f"Error executing tool {name}: {e}")
-            return ToolResult(
+            result = ToolResult(
                 success=False,
                 data=None,
                 error=str(e),
                 error_type=type(e).__name__,
                 duration_ms=duration_ms,
             )
+            # Log failed invocation too
+            self._log_tool_invocation(
+                tool_name=name,
+                user_id=context.user_id,
+                session_id=context.session_id,
+                call_id=call_id,
+                arguments=arguments,
+                success=False,
+                duration_ms=duration_ms,
+                error_message=str(e),
+                organization_id=context.organization_id,
+            )
+            return result
+
+    def _log_tool_invocation(
+        self,
+        tool_name: str,
+        user_id: str,
+        session_id: Optional[str],
+        call_id: str,
+        arguments: Dict[str, Any],
+        success: bool,
+        duration_ms: int,
+        error_message: Optional[str],
+        organization_id: Optional[str],
+    ) -> None:
+        """Log tool invocation to Redis for analytics."""
+        try:
+            from app.api.admin_tools import log_tool_invocation
+
+            log_tool_invocation(
+                tool_name=tool_name,
+                user_email=user_id,  # user_id is typically the email
+                session_id=session_id or "",
+                call_id=call_id,
+                arguments=arguments,
+                status="completed" if success else "failed",
+                duration_ms=duration_ms,
+                phi_detected=False,  # TODO: Detect PHI in arguments
+                confirmation_required=False,
+                user_confirmed=None,
+                error_code=None,
+                error_message=error_message,
+                organization_id=organization_id,
+            )
+        except Exception as e:
+            # Don't let logging failure break tool execution
+            logger.warning(f"Failed to log tool invocation: {e}")
 
     def _get_dynamic_handler(self, tool_name: str) -> Optional[ToolHandler]:
         """
@@ -532,7 +805,7 @@ class ToolService:
 
         This allows lazy loading of handlers without circular imports.
         """
-        from app.services.tools import calendar_tool, medical_tools, search_tools
+        from app.services.tools import calendar_tool, document_navigation_tool, medical_tools, search_tools
 
         handler_map = {
             # Calendar tools
@@ -544,8 +817,15 @@ class ToolService:
             "web_search": search_tools.handle_web_search,
             "pubmed_search": search_tools.handle_pubmed_search,
             "kb_search": search_tools.handle_kb_search,
+            "knowledge_base_query": search_tools.handle_knowledge_base_query,
             # Medical tools
             "medical_calculator": medical_tools.handle_medical_calculator,
+            # Document navigation tools
+            "document_select": document_navigation_tool.handle_document_select,
+            "document_read_page": document_navigation_tool.handle_document_read_page,
+            "document_navigate": document_navigation_tool.handle_document_navigate,
+            "document_toc": document_navigation_tool.handle_document_toc,
+            "document_describe_figure": document_navigation_tool.handle_document_describe_figure,
         }
 
         return handler_map.get(tool_name)

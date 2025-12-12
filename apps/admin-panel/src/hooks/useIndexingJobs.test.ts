@@ -40,13 +40,18 @@ describe("useIndexingJobs", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
-      const { result } = renderHook(() => useIndexingJobs());
+    it("should return loading true initially", async () => {
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch jobs on mount", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -56,18 +61,23 @@ describe("useIndexingJobs", () => {
     });
 
     it("should return jobs after loading", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.jobs).toEqual(mockJobs);
       expect(result.current.jobs).toHaveLength(3);
+      expect(result.current.jobs[0]).toMatchObject({
+        id: "job-1",
+        documentId: "doc-1",
+        state: "completed",
+        attempts: 1,
+      });
     });
 
     it("should have no error on success", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -79,7 +89,7 @@ describe("useIndexingJobs", () => {
 
   describe("job states", () => {
     it("should handle completed jobs", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -92,7 +102,7 @@ describe("useIndexingJobs", () => {
     });
 
     it("should handle running jobs", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -105,7 +115,7 @@ describe("useIndexingJobs", () => {
     });
 
     it("should handle failed jobs", async () => {
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -122,25 +132,25 @@ describe("useIndexingJobs", () => {
     it("should fall back to demo data on API error", async () => {
       vi.mocked(fetchAPI).mockRejectedValue(new Error("API Error"));
 
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
       expect(result.current.error).toEqual({
-        code: "demo",
+        code: "not_available",
         message: "API Error",
       });
-      expect(result.current.jobs).toHaveLength(2);
-      expect(result.current.jobs[0].state).toBe("completed");
-      expect(result.current.jobs[1].state).toBe("running");
+      // When the jobs endpoint is not available we now surface an empty list
+      // rather than demo data.
+      expect(result.current.jobs).toHaveLength(0);
     });
 
     it("should handle non-Error rejection with unknown message", async () => {
       vi.mocked(fetchAPI).mockRejectedValue("network failure");
 
-      const { result } = renderHook(() => useIndexingJobs());
+      const { result } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -159,7 +169,7 @@ describe("useIndexingJobs", () => {
 
       vi.mocked(fetchAPI).mockReturnValue(pendingPromise as Promise<unknown>);
 
-      const { unmount } = renderHook(() => useIndexingJobs());
+      const { unmount } = renderHook(() => useIndexingJobs({ enabled: true }));
 
       unmount();
       resolvePromise!(mockJobs);

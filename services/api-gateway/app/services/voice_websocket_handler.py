@@ -70,6 +70,7 @@ class VoiceSessionConfig:
     user_id: str
     session_id: str
     conversation_id: Optional[str] = None
+    organization_id: Optional[str] = None
 
     # OpenAI configuration
     model: str = "gpt-4o-realtime-preview-2024-12-17"
@@ -603,6 +604,7 @@ Remember: You're SPEAKING, not writing. Keep it brief and natural."""
                 user_id=self.config.user_id,
                 session_id=self.config.session_id,
                 mode="voice",
+                organization_id=self.config.organization_id,
             )
 
             # Execute the tool

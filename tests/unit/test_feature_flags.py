@@ -15,6 +15,14 @@ import hashlib
 import pytest
 
 
+@pytest.fixture
+def mock_redis_client():
+    """Simple mock Redis client for caching tests."""
+    client = MagicMock()
+    client.get.return_value = None
+    return client
+
+
 # Mock feature flag implementation for testing
 class FeatureFlag:
     """Feature flag configuration."""
@@ -481,6 +489,9 @@ def test_cache_expiration():
     service = FeatureFlagService(cache=mock_cache)
     flag = FeatureFlag(name="test_feature", enabled=True)
     service.create_flag(flag)
+
+    # Simulate cache miss for first evaluation
+    mock_cache.get.return_value = None
 
     service.is_enabled("test_feature", user_id="user123")
 

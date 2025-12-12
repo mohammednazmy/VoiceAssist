@@ -56,6 +56,9 @@ duckduckgo-search==8.1.1  # Web search for voice assistant
 
 # Document Processing (Phase 5)
 pypdf==6.4.1
+pdfplumber>=0.10.0  # Layout-aware PDF extraction with table detection
+pdf2image>=1.16.0  # PDF to image conversion for GPT-4 Vision
+Pillow>=10.0.0  # Image processing
 
 # Calendar and Email Integration (Phase 6)
 caldav==2.2.3

@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-12-03"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - agent
@@ -32,8 +32,13 @@ component: "backend/api-gateway"
 relatedPaths:
   - "services/api-gateway/app/api/voice.py"
   - "services/api-gateway/app/api/admin_voice.py"
+  - "services/api-gateway/app/services/rag_service.py"
+  - "services/api-gateway/app/api/advanced_search.py"
+  - "services/api-gateway/app/api/kb.py"
+  - "services/api-gateway/app/services/session_analytics_service.py"
   - "apps/web-app/src/components/voice/VoiceModePanel.tsx"
   - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
+  - "apps/web-app/src/components/admin/VoiceMetricsDashboard.tsx"
 ai_summary: >-
   > Status: Production-ready > Last Updated: 2025-12-03 This document describes
   the unified Voice Mode pipeline architecture, data flow, metrics, and testing
@@ -46,7 +51,7 @@ ai_summary: >-
 > **Status**: Production-ready
 > **Last Updated**: 2025-12-03
 
-This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features.
+This document describes the unified Voice Mode pipeline architecture, data flow, metrics, and testing strategy. It serves as the canonical reference for developers working on real-time voice features, including PHI-conscious RAG behavior and enhanced document integration.
 
 ## Voice Pipeline Modes
 
@@ -79,6 +84,69 @@ The Thinker-Talker pipeline is the recommended approach, providing:
 ### OpenAI Realtime API (Legacy)
 
 The original implementation using OpenAI's Realtime API directly. Still supported for backward compatibility.
+
+### PHI-Conscious RAG for Voice (2025-12 Update)
+
+VoiceAssist now supports **PHI-conscious RAG behavior** for voice flows:
+
+- The shared RAG orchestrator (`QueryOrchestrator`) accepts an `exclude_phi` flag.
+- When `exclude_phi` is true, retrieval applies a metadata filter in Qdrant so that:
+  - Only chunks with `phi_risk` in `["none", "low", "medium"]` are used.
+  - High-risk PHI KB chunks are excluded from RAG context.
+- Voice relay and Thinker/Talker flows expose this flag:
+  - REST: `POST /api/voice/relay` (`VoiceRelayRequest.exclude_phi?: boolean`).
+  - WebSocket: `/api/voice/relay-ws` messages may include `"exclude_phi": true` on `transcript.final`.
+  - Thinker/Talker: `session.init.advanced_settings.phi_mode: "clinical" | "demo"` is mapped to
+    a per-session `exclude_phi` flag on the voice pipeline and the Thinker tool execution context.
+- This is especially useful for:
+  - Demos and non-clinical environments.
+  - Scenarios where the assistant must avoid PHI-heavy KB content when answering general questions.
+
+### Voice Session PHI Analytics (2025-12 Update)
+
+To support admin observability for PHI-conscious behavior, VoiceAssist tracks PHI-related
+metadata per voice session in the `SessionAnalyticsService`:
+
+- `phi_mode`: `"clinical"` or `"demo"` for each voice session.
+- `exclude_phi`: whether RAG calls in that session are running in PHI-conscious mode.
+- `reading_mode_enabled`, `reading_detail`, `reading_speed`: reading-mode hints for
+  document-aware voice navigation.
+
+The admin API exposes a lightweight aggregation endpoint:
+
+- `GET /api/admin/voice/analytics/phi`:
+  - `active_sessions_total`
+  - `active_sessions_clinical`
+  - `active_sessions_demo`
+  - `phi_conscious_sessions`
+  - `phi_conscious_rate` (percentage of active sessions with `exclude_phi=true`)
+
+The clinician web app’s **Voice Health Dashboard** surfaces these metrics as compact chips:
+
+- “X demo sessions”
+- “Y% PHI-conscious RAG”
+
+This makes it easy to confirm that staging and demo environments are predominantly running
+in PHI-conscious mode, without exposing any raw PHI or transcripts in analytics.
+
+### Preferred RAG Surface for Voice (2025-12 Update)
+
+As of the KB API unification work, **all new voice features should prefer
+the `/api/kb/query` surface for RAG-backed answers**:
+
+- `/api/kb/query` is implemented in `app/api/kb.py` and backed by
+  `QueryOrchestrator` from `rag_service.py`.
+- It encapsulates:
+  - KB document selection (user + public docs).
+  - A resilient RAG call path that degrades gracefully when external
+    services are unavailable.
+- Voice relays and Thinker/Talker flows should treat `/api/kb/query` as
+  the canonical “RAG answer” endpoint, rather than calling lower-level
+  RAG orchestrators or legacy `/api/advanced-search/*` endpoints directly.
+
+Frontend code can reach this surface via the shared TypeScript client:
+
+- `apiClient.queryKB({ question, contextDocuments?, filters?, conversationHistory?, clinicalContextId? })`
 
 ---
 

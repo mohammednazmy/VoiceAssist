@@ -865,9 +865,31 @@ class TalkerSession:
             logger.debug(f"Skipping empty TTS text (original: {sentence[:50]}...)")
             return
 
-        # Apply SSML processing for natural pauses (if enabled)
+        # Apply SSML processing for natural pauses (if enabled). Use a simple
+        # heuristic to soften guideline-style content and emphasize obvious
+        # warnings/contraindications without inspecting or logging PHI.
         if self._ssml_processor:
-            tts_text = self._ssml_processor.process(tts_text, style=self._voice_style)
+            style_to_use = self._voice_style
+            lowered = tts_text.lower()
+            try:
+                # Emphasize clear warning phrases
+                warning_phrases = [
+                    "contraindicated",
+                    "do not use",
+                    "do not administer",
+                    "black box warning",
+                    "boxed warning",
+                ]
+                if any(p in lowered for p in warning_phrases):
+                    style_to_use = VoiceStyle.CRISP
+                # Gently narrate guideline / recommendation language
+                elif "guideline" in lowered or "recommendation" in lowered:
+                    style_to_use = VoiceStyle.NARRATION
+            except Exception:
+                # If anything goes wrong, fall back to the default style
+                style_to_use = self._voice_style
+
+            tts_text = self._ssml_processor.process(tts_text, style=style_to_use)
 
         sentence_idx = self._sentence_index
         self._sentence_index += 1

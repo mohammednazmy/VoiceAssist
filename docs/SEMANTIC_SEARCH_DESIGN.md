@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: beta
 owner: docs
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - ai-agents
@@ -22,6 +22,8 @@ relatedPaths:
   - "services/api-gateway/app/services/embedding_service.py"
   - "services/api-gateway/app/api/advanced_search.py"
   - "services/api-gateway/app/api/admin_kb.py"
+  - "services/api-gateway/app/services/kb_indexer.py"
+  - "services/api-gateway/app/services/search_aggregator.py"
 ai_summary: >-
   VoiceAssist uses a sophisticated semantic search system to retrieve relevant
   medical knowledge from textbooks, journals, and clinical guidelines. This
@@ -33,7 +35,7 @@ ai_summary: >-
 
 ## Overview
 
-VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This document describes the complete ingestion and query pipeline.
+VoiceAssist uses a sophisticated semantic search system to retrieve relevant medical knowledge from textbooks, journals, and clinical guidelines. This document describes the complete ingestion and query pipeline, including enhanced PDF extraction and PHI-aware retrieval.
 
 **Note**: For canonical entity definitions (KnowledgeDocument, KBChunk, IndexingJob), see [DATA_MODEL.md](DATA_MODEL.md). This document describes their usage in the search pipeline.
 
@@ -75,6 +77,23 @@ VoiceAssist uses a sophisticated semantic search system to retrieve relevant med
 ```
 
 ## Ingestion Pipeline
+
+> **2025-12 Update – Enhanced PDF Extraction & PHI-Aware Indexing**
+>
+> The ingestion pipeline now includes:
+>
+> - **Enhanced PDF processing** for admin knowledge base documents:
+>   - Layout-aware extraction via `enhanced_pdf_processor` (pdfplumber).
+>   - Per-page GPT-4o Vision analysis via `page_analysis_service`.
+>   - Voice-optimized narrations for each page.
+>   - Rendered page images stored on disk for admin review.
+> - **Enhanced chunking** in `KBIndexer.index_document_with_enhanced_extraction`:
+>   - Chunks built from voice narration + structured content blocks (headings, tables, figures).
+>   - Metadata includes `has_voice_narration` to slightly boost enhanced chunks during reranking.
+> - **PHI-aware metadata**:
+>   - Document-level `phi_risk` (none/low/medium/high) stored in `Document.doc_metadata`.
+>   - Propagated into all KB chunks as both `phi_risk` and `chunk_phi_risk` payload fields in Qdrant.
+>   - A maintenance script (`tools/update_phi_risk_payloads.py`) can backfill these payload fields for older documents.
 
 ### 1. Document Upload & Storage
 
@@ -165,7 +184,7 @@ class DocumentUploader:
 **Libraries:**
 
 - **PyPDF2**: Fast PDF text extraction
-- **pdfplumber**: Better table/structure handling
+- **pdfplumber**: Better table/structure handling and layout-aware extraction (used by the enhanced admin KB pipeline)
 - **Tesseract OCR**: For scanned documents
 - **python-docx**: DOCX extraction
 

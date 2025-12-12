@@ -8,9 +8,9 @@ Defines request and response models for conversation-related endpoints:
 - Settings: per-conversation settings
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # =============================================================================
 # Conversation Schemas
@@ -29,7 +29,46 @@ class UpdateConversationRequest(BaseModel):
 
     title: Optional[str] = Field(None, description="New conversation title")
     archived: Optional[bool] = Field(None, description="Archive status")
-    folder_id: Optional[str] = Field(None, description="Move to folder")
+    folder_id: Optional[str] = Field(
+        None,
+        description="Move to folder",
+        alias="folderId",
+    )
+    phi_mode: Optional[str] = Field(
+        None,
+        description="Conversation PHI mode (clinical or demo)",
+        alias="phiMode",
+    )
+    tags: Optional[List[str]] = Field(
+        None,
+        description="Conversation tags for audit/organization (e.g., dictation, consult, billing)",
+        max_length=50,  # Maximum 50 tags
+    )
+
+    @field_validator("phi_mode")
+    @classmethod
+    def validate_phi_mode(cls, v: Optional[str]) -> Optional[str]:
+        """Validate and normalize phi_mode to lowercase 'clinical' or 'demo'."""
+        if v is None:
+            return None
+        normalized = str(v).strip().lower()
+        if normalized not in {"clinical", "demo"}:
+            raise ValueError("phiMode must be 'clinical' or 'demo'")
+        return normalized
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        """Validate and normalize tags: trim whitespace, remove empties, enforce max length."""
+        if v is None:
+            return None
+        # Normalize: trim whitespace, filter empty strings
+        normalized = [str(t).strip() for t in v if str(t).strip()]
+        # Validate tag length (max 100 chars per tag)
+        for tag in normalized:
+            if len(tag) > 100:
+                raise ValueError(f"Tag '{tag[:20]}...' exceeds maximum length of 100 characters")
+        return normalized if normalized else None  # Return None instead of empty list
 
 
 class ConversationResponse(BaseModel):
@@ -43,6 +82,18 @@ class ConversationResponse(BaseModel):
     folderId: Optional[str] = None
     createdAt: str
     updatedAt: str
+    phiMode: Optional[str] = Field(
+        None,
+        description="Conversation PHI mode (clinical or demo)",
+    )
+    tags: Optional[List[str]] = Field(
+        None,
+        description="Conversation tags for audit/organization",
+    )
+    metadata: Optional[dict[str, Any]] = Field(
+        None,
+        description="Additional conversation metadata derived from context/settings",
+    )
 
 
 class ConversationsListResponse(BaseModel):

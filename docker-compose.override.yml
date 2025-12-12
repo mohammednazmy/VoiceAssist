@@ -6,6 +6,8 @@ services:
   voiceassist-server:
     ports:
       - "8200:8000" # External 8200 -> Internal 8000 (avoid conflict with other services)
+    volumes:
+      - ./services/api-gateway/tests:/app/tests:ro  # Mount tests for development
     restart: unless-stopped
 
   # PostgreSQL - Use custom external port

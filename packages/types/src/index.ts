@@ -130,12 +130,22 @@ export interface Conversation {
   archived?: boolean;
   lastMessagePreview?: string;
   folderId?: string | null;
+  /** Conversation PHI mode, when known ("clinical" or "demo") */
+  phiMode?: "clinical" | "demo";
+  /** High-level workflow tags for audit/organization (e.g., dictation, consult) */
+  tags?: string[];
+  /** Additional metadata from backend context/settings */
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateConversationRequest {
   title?: string;
   archived?: boolean;
   folderId?: string | null;
+  /** Optional PHI mode override for the conversation */
+  phiMode?: "clinical" | "demo";
+  /** Optional tag set replacement */
+  tags?: string[];
 }
 
 // ============================================================================
@@ -572,6 +582,46 @@ export interface SearchResult {
   excerpt: string;
   score: number;
   pageNumber?: number;
+}
+
+// User-facing KB document summary (via /api/kb/documents)
+export interface KBDocumentSummary {
+  id: string;
+  document_id: string;
+  title: string;
+  category: string;
+  source_type: string;
+  created_at: string | null;
+  updated_at: string | null;
+  indexing_status: string;
+  is_public: boolean;
+}
+
+export interface KBPagination {
+  page: number;
+  page_size: number;
+  total: number;
+}
+
+export interface KBSearchResult {
+  id: string;
+  title: string;
+  category: string;
+  created_at: string | null;
+  relevance_score?: number;
+  score?: number;
+}
+
+export interface KBRAGSource {
+  id: string;
+  title: string;
+  category: string;
+  score?: number;
+}
+
+export interface KBRAGAnswer {
+  answer: string;
+  sources: KBRAGSource[];
 }
 
 // ============================================================================

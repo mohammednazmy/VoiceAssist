@@ -168,7 +168,13 @@ You have access to the following tools - use them when relevant:
 - web_search: Search the web for current information
 - pubmed_search: Search medical literature and research papers
 - medical_calculator: Calculate medical scores (Wells DVT, CHA2DS2-VASc, BMI, eGFR, etc.)
-- kb_search: Search the medical knowledge base for clinical information
+- kb_search: Search the medical knowledge base for clinical information or to surface candidate documents
+- knowledge_base_query: Run a focused KB-backed RAG query that returns a concise answer with cited sources from the knowledge base
+- document_select: Open a document from the user's library for reading
+- document_read_page: Read content from a specific page
+- document_navigate: Move to next/previous page or section
+- document_toc: Show the table of contents
+- document_describe_figure: Describe figures and diagrams in the document
 
 CALENDAR TOOL USAGE:
 - When asked about calendar/schedule, USE calendar_list_events
@@ -176,6 +182,26 @@ CALENDAR TOOL USAGE:
 - When asked to change/modify/reschedule an event, USE calendar_update_event
 - When asked to delete/remove/cancel an event, USE calendar_delete_event
 - For update/delete: First use calendar_list_events to get the event_id, then use the appropriate tool
+
+DOCUMENT NAVIGATION USAGE:
+- When user wants to read a document, USE document_select with the document name
+- When user says "read page X" or "go to page X", USE document_read_page
+- When user says "next page", "previous page", "next section", USE document_navigate
+- When user asks for table of contents or chapters, USE document_toc
+- When user asks about a figure/diagram, USE document_describe_figure
+
+DOCUMENT READING GUIDELINES:
+- Summarize long page content for voice (keep it under 2-3 minutes of speaking)
+- Break readings into digestible chunks
+- Offer to continue: "Would you like me to continue reading?"
+- Confirm navigation: "Now on page 42, Chapter 5: Cardiology"
+- Mention figures: "This page has a diagram. Want me to describe it?"
+- If the user hasn't opened a document, offer to help find one
+
+KB AND RAG USAGE:
+- For general clinical knowledge questions where a KB-backed answer with citations is appropriate, prefer calling knowledge_base_query.
+- Use kb_search when you primarily need to identify or compare relevant documents, or when the user asks to browse what the KB contains.
+- When you receive an answer with sources from knowledge_base_query or kb_search, briefly summarize the answer in your own words and reference the sources naturally in voice (e.g., "based on recent cardiology guidelines").
 
 HANDLING PARTIAL INFORMATION:
 When the user provides incomplete info, DO NOT ask rigid follow-up questions.
@@ -346,13 +372,38 @@ class ToolRegistry:
         """Get all tool schemas for LLM API."""
         return list(self._tools.values())
 
-    async def execute(self, tool_name: str, arguments: Dict, user_id: Optional[str] = None) -> Any:
+    async def execute(
+        self,
+        tool_name: str,
+        arguments: Dict,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        clinical_context_id: Optional[str] = None,
+        exclude_phi: bool = False,
+        reading_mode_enabled: bool = False,
+        reading_detail: Optional[str] = None,
+        reading_speed: Optional[str] = None,
+    ) -> Any:
         """Execute a tool and return its result."""
         handler = self._handlers.get(tool_name)
         if not handler:
             raise ValueError(f"Unknown tool: {tool_name}")
 
-        return await handler(arguments, user_id)
+        # Handlers are responsible for constructing ToolExecutionContext
+        # objects with the richer metadata provided here, including
+        # tenant/organization context when available.
+        return await handler(
+            arguments,
+            user_id=user_id,
+            session_id=session_id,
+            conversation_id=conversation_id,
+            clinical_context_id=clinical_context_id,
+            exclude_phi=exclude_phi,
+            reading_mode_enabled=reading_mode_enabled,
+            reading_detail=reading_detail,
+            reading_speed=reading_speed,
+        )
 
     def has_tools(self) -> bool:
         """Check if any tools are registered."""
@@ -463,20 +514,45 @@ class ThinkerService:
             func = tool_def.get("function", {})
             tool_name = func.get("name", "")
 
-            # Create a wrapper handler that bridges to the unified tool service
+            # Create a wrapper handler that bridges to the unified tool service.
+            # We accept additional context parameters so that voice-mode tools
+            # can respect PHI-conscious flags and attach to the correct session.
             async def tool_handler(
                 arguments: Dict,
                 user_id: Optional[str] = None,
+                session_id: Optional[str] = None,
+                conversation_id: Optional[str] = None,
+                clinical_context_id: Optional[str] = None,
+                exclude_phi: bool = False,
                 _tool_name: str = tool_name,  # Capture tool name in closure
             ) -> Any:
                 from app.core.database import AsyncSessionLocal
+                from app.models.session import Session as ChatSession
 
-                # Create execution context with real user_id and database session
+                # Create execution context with real user_id, organization context,
+                # and database session. Organization is resolved from the
+                # conversation/session when available.
                 async with AsyncSessionLocal() as db_session:
+                    org_id_str: Optional[str] = None
+                    if conversation_id:
+                        try:
+                            conv_uuid = uuid.UUID(str(conversation_id))
+                            session_obj = await db_session.get(ChatSession, conv_uuid)
+                            if session_obj and session_obj.organization_id:
+                                org_id_str = str(session_obj.organization_id)
+                        except Exception:
+                            # Best-effort: if parsing fails, fall back to no org
+                            org_id_str = None
+
                     context = ToolExecutionContext(
                         user_id=user_id or "anonymous",
+                        session_id=session_id,
                         mode="voice",
                         db_session=db_session,
+                        conversation_id=conversation_id,
+                        clinical_context_id=clinical_context_id,
+                        exclude_phi=exclude_phi,
+                        organization_id=org_id_str,
                     )
 
                     # Execute via the unified service
@@ -518,6 +594,12 @@ class ThinkerService:
         on_tool_result: Optional[Callable[[ToolResultEvent], Awaitable[None]]] = None,
         system_prompt: Optional[str] = None,
         user_id: Optional[str] = None,
+        *,
+        exclude_phi: bool = False,
+        clinical_context_id: Optional[str] = None,
+        reading_mode_enabled: bool = False,
+        reading_detail: Optional[str] = None,
+        reading_speed: Optional[str] = None,
     ) -> "ThinkerSession":
         """
         Create a new thinking session.
@@ -547,6 +629,11 @@ class ThinkerService:
             on_tool_call=on_tool_call,
             on_tool_result=on_tool_result,
             user_id=user_id,
+            exclude_phi=exclude_phi,
+            clinical_context_id=clinical_context_id,
+            reading_mode_enabled=reading_mode_enabled,
+            reading_detail=reading_detail,
+            reading_speed=reading_speed,
         )
 
     def register_tool(
@@ -581,6 +668,12 @@ class ThinkerSession:
         on_tool_call: Optional[Callable[[ToolCallEvent], Awaitable[None]]] = None,
         on_tool_result: Optional[Callable[[ToolResultEvent], Awaitable[None]]] = None,
         user_id: Optional[str] = None,
+        *,
+        exclude_phi: bool = False,
+        clinical_context_id: Optional[str] = None,
+        reading_mode_enabled: bool = False,
+        reading_detail: Optional[str] = None,
+        reading_speed: Optional[str] = None,
     ):
         self._llm_client = llm_client
         self._tool_registry = tool_registry
@@ -589,6 +682,21 @@ class ThinkerSession:
         self._on_tool_call = on_tool_call
         self._on_tool_result = on_tool_result
         self._user_id = user_id  # User ID for tool authentication
+
+        # PHI-conscious / RAG-aware settings for this thinking session.
+        # These are primarily populated from voice pipeline configuration
+        # when running in Thinker/Talker mode.
+        self._exclude_phi = exclude_phi
+        self._clinical_context_id = clinical_context_id
+
+        # Document reading preferences (used by document navigation tools).
+        self._reading_mode_enabled = reading_mode_enabled
+        self._reading_detail = reading_detail
+        self._reading_speed = reading_speed
+
+        # Track the current pipeline session id (when provided) so that
+        # tool executions can attach to the right session for telemetry.
+        self._current_session_id: Optional[str] = None
 
         self._state = ThinkingState.IDLE
         self._cancelled = False
@@ -641,6 +749,9 @@ class ThinkerSession:
                 message_id="",
                 state=ThinkingState.CANCELLED,
             )
+
+        # Track the current session id for downstream tooling (RAG, analytics)
+        self._current_session_id = session_id
 
         self._start_time = time.time()
         self._state = ThinkingState.PROCESSING
@@ -873,9 +984,22 @@ class ThinkerSession:
                 ],
             )
 
-            # Execute tool with user_id for authentication
+            # Execute tool with user_id for authentication. For voice sessions
+            # this also carries PHI-conscious flags and conversation/session
+            # identifiers so RAG-aware tools can respect exclude_phi.
             self._metrics.tool_calls_count += 1
-            result = await self._tool_registry.execute(tool_call.name, arguments, self._user_id)
+            result = await self._tool_registry.execute(
+                tool_call.name,
+                arguments,
+                user_id=self._user_id,
+                session_id=self._current_session_id,
+                conversation_id=self._context.conversation_id,
+                clinical_context_id=self._clinical_context_id,
+                exclude_phi=self._exclude_phi,
+                reading_mode_enabled=self._reading_mode_enabled,
+                reading_detail=self._reading_detail,
+                reading_speed=self._reading_speed,
+            )
             result_str = json.dumps(result) if not isinstance(result, str) else result
             logger.info(f"Tool {tool_call.name} returned (user_id={self._user_id}): {result_str[:200]}...")
 

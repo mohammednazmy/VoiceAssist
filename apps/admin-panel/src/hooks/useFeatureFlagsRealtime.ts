@@ -174,7 +174,7 @@ export function useFeatureFlagsRealtime(
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch flags via REST API
   const refreshFlags = useCallback(async () => {

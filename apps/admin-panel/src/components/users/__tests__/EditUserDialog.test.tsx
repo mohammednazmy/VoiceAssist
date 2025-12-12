@@ -16,6 +16,10 @@ import { useEditUser } from "../../../hooks/useEditUser";
 
 const mockUpdateUser = vi.fn();
 const mockClearError = vi.fn();
+const mockInitializeUser = vi.fn();
+const mockSetField = vi.fn();
+const mockResetChanges = vi.fn();
+const mockValidate = vi.fn(() => ({}));
 
 const defaultMockHook = {
   updateUser: mockUpdateUser,
@@ -23,6 +27,17 @@ const defaultMockHook = {
   error: null,
   rateLimitInfo: null,
   clearError: mockClearError,
+  // Dirty tracking
+  initializeUser: mockInitializeUser,
+  setField: mockSetField,
+  resetChanges: mockResetChanges,
+  currentData: {},
+  dirtyFields: new Set<string>(),
+  isDirty: false,
+  // Validation
+  validationErrors: {},
+  isValid: true,
+  validate: mockValidate,
 };
 
 const mockUser = {

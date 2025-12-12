@@ -7,7 +7,7 @@ summary: >-
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-12-02"
+lastUpdated: "2025-12-12"
 audience:
   - developers
   - backend
@@ -24,6 +24,9 @@ component: "backend/voice"
 relatedPaths:
   - "services/api-gateway/app/api/voice.py"
   - "services/api-gateway/app/services/thinker_talker_service.py"
+  - "services/api-gateway/app/api/kb.py"
+  - "services/api-gateway/app/services/session_analytics_service.py"
+  - "services/api-gateway/app/api/admin_voice.py"
   - "apps/web-app/src/components/voice/ThinkerTalkerVoicePanel.tsx"
   - "apps/web-app/src/hooks/useRealtimeVoiceSession.ts"
 ai_summary: >-
@@ -73,6 +76,8 @@ The Thinker-Talker (T/T) pipeline is VoiceAssist's voice processing architecture
 | **Voice Selection**      | 6 voices           | 11+ ElevenLabs voices        |
 | **Customization**        | Limited            | Full control over each stage |
 | **Barge-in**             | Built-in           | Fully supported              |
+| **PHI-aware RAG**        | Limited            | Per-session PHI-conscious    |
+| **Doc reading**          | Basic              | Enhanced structure + cues    |
 
 ## Architecture Components
 
@@ -112,6 +117,19 @@ class PipelineConfig:
 
     # Barge-in
     barge_in_enabled: bool = True
+
+    # Document reading & PHI-conscious controls (2025-12)
+    # These are propagated from Thinker/Talker WebSocket advanced_settings
+    # (session.init) into the voice pipeline and Thinker tool execution context.
+    reading_mode_enabled: bool = False
+    reading_speed: str = "normal"  # "slow" | "normal" | "fast"
+    reading_detail: str = "full"   # "short" | "full"
+
+    # Voice-level PHI policy:
+    # - phi_mode = "clinical": normal KB access
+    # - phi_mode = "demo": run RAG in PHI-conscious mode (exclude high-risk PHI)
+    phi_mode: str = "clinical"
+    exclude_phi: bool = False
 ```
 
 ### 2. Thinker Service
@@ -139,6 +157,47 @@ class ThinkerService:
 - **Tool Registry**: Supports calendar, search, medical calculators, KB search
 - **Streaming**: Token-by-token callbacks for low-latency TTS
 - **State Machine**: IDLE → PROCESSING → TOOL_CALLING → GENERATING → COMPLETE
+
+#### RAG and KB Integration
+
+The Thinker service does not call low-level RAG primitives directly. Instead,
+for KB-backed answers it is expected to route through the user-facing KB API:
+
+- HTTP: `POST /api/kb/query` (implemented in `app/api/kb.py`)
+- Client: `apiClient.queryKB(...)` in the web app
+
+This keeps:
+
+- A single, well-defined contract for “KB + RAG answers” that both voice
+  and text chat can share.
+- The option to evolve RAG internals (`QueryOrchestrator`, rerankers, etc.)
+  without changing voice pipeline logic.
+
+#### PHI-Conscious RAG for Thinker/Talker
+
+The Thinker session accepts an `exclude_phi` flag (derived from the T/T WebSocket
+`advanced_settings.phi_mode` field):
+
+- `phi_mode: "clinical"` → `exclude_phi = False`
+- `phi_mode: "demo"` → `exclude_phi = True`
+
+This flag is threaded through:
+
+- `ThinkerSession` → `ToolRegistry.execute(...)`
+- `ToolExecutionContext.exclude_phi`
+- KB search tools (e.g., search utilities in `search_tools.py`),
+  which pass `exclude_phi` into the shared RAG layer.
+
+When `exclude_phi=True`, retrieval applies Qdrant filters:
+
+- Only KB chunks with `phi_risk ∈ {"none", "low", "medium"}` are eligible.
+- `chunk_phi_risk` is also considered when present to allow finer-grained
+  filtering in mixed-risk documents.
+
+This provides a clean separation between:
+
+- **Clinical sessions** (full KB access, PHI where appropriate).
+- **Demo/PHI-conscious sessions** where answers avoid high-risk KB content.
 
 ### 3. Talker Service
 
@@ -270,6 +329,33 @@ class ThinkerTalkerWebSocketHandler:
         ▼
 7. Frontend plays audio via Web Audio API
 ```
+
+### Document-Aware Reading Mode (2025-12 Update)
+
+The T/T pipeline now supports a document-aware **reading mode** for KB documents:
+
+- The frontend can set `reading_mode_enabled`, `reading_detail`, and `reading_speed`
+  in `session.init.advanced_settings`.
+- The voice pipeline in turn:
+  - Stores these flags in `PipelineConfig`.
+  - Propagates them into the Thinker tool context.
+  - Uses them in document navigation tools to control how much of a page/section
+    is read out.
+
+Key behaviors:
+
+- `reading_detail: "short"`:
+  - Document navigation tools truncate page/section text at a lower character budget
+    (e.g., ~800 chars), mark `has_more`, and ensure a concise summary-like reading.
+- `reading_detail: "full"`:
+  - Tools read more of the enhanced content or narration (up to a higher character limit),
+    appropriate for deep reading of guideline content.
+
+Reading mode is designed to be:
+
+- Lightweight (no extra LLM calls).
+- Based on existing enhanced structures and narrations.
+- Tunable per session so clinicians can quickly switch between summary and full detail.
 
 ### Barge-in Flow
 

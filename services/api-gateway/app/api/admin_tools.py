@@ -492,6 +492,7 @@ def log_tool_invocation(
     user_confirmed: Optional[bool] = None,
     error_code: Optional[str] = None,
     error_message: Optional[str] = None,
+     organization_id: Optional[str] = None,
 ) -> None:
     """Log a tool invocation to Redis."""
     try:
@@ -509,6 +510,7 @@ def log_tool_invocation(
             "user_confirmed": user_confirmed,
             "error_code": error_code,
             "error_message": error_message,
+            "organization_id": organization_id,
             "created_at": datetime.now(timezone.utc).isoformat() + "Z",
         }
 
@@ -822,6 +824,7 @@ async def get_db_analytics(
     request: Request,
     current_admin_user: User = Depends(get_current_admin_or_viewer),
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
+    organization_id: Optional[str] = Query(None, description="Filter by organization ID"),
 ) -> Dict:
     """Get comprehensive tool analytics from database logs.
 
@@ -846,6 +849,7 @@ async def get_db_analytics(
                 db_session=db_session,
                 start_date=start_date,
                 end_date=end_date,
+                organization_id=organization_id,
             )
 
             # Get tool breakdown
@@ -853,6 +857,7 @@ async def get_db_analytics(
                 db_session=db_session,
                 start_date=start_date,
                 end_date=end_date,
+                organization_id=organization_id,
             )
 
             # Get mode comparison
@@ -860,6 +865,7 @@ async def get_db_analytics(
                 db_session=db_session,
                 start_date=start_date,
                 end_date=end_date,
+                organization_id=organization_id,
             )
 
             data = {
@@ -882,6 +888,7 @@ async def get_db_analytics_trend(
     current_admin_user: User = Depends(get_current_admin_or_viewer),
     days: int = Query(30, ge=1, le=365, description="Number of days"),
     tool_name: Optional[str] = Query(None, description="Filter by tool name"),
+    organization_id: Optional[str] = Query(None, description="Filter by organization ID"),
 ) -> Dict:
     """Get daily trend data for tool usage.
 
@@ -896,6 +903,7 @@ async def get_db_analytics_trend(
                 db_session=db_session,
                 days=days,
                 tool_name=tool_name,
+                organization_id=organization_id,
             )
 
             data = {
@@ -917,6 +925,7 @@ async def get_db_error_analysis(
     current_admin_user: User = Depends(get_current_admin_or_viewer),
     days: int = Query(7, ge=1, le=30, description="Number of days"),
     limit: int = Query(20, ge=1, le=100, description="Max errors to return"),
+    organization_id: Optional[str] = Query(None, description="Filter by organization ID"),
 ) -> Dict:
     """Get error analysis from tool invocation logs.
 
@@ -935,6 +944,7 @@ async def get_db_error_analysis(
                 db_session=db_session,
                 start_date=start_date,
                 limit=limit,
+                organization_id=organization_id,
             )
 
             data = {
@@ -957,6 +967,7 @@ async def get_db_recent_invocations(
     limit: int = Query(50, ge=1, le=200, description="Max invocations to return"),
     tool_name: Optional[str] = Query(None, description="Filter by tool name"),
     status: Optional[str] = Query(None, description="Filter by status"),
+    organization_id: Optional[str] = Query(None, description="Filter by organization ID"),
 ) -> Dict:
     """Get recent tool invocations for monitoring.
 
@@ -972,12 +983,13 @@ async def get_db_recent_invocations(
                 limit=limit,
                 tool_name=tool_name,
                 status=status,
+                organization_id=organization_id,
             )
 
             data = {
                 "invocations": invocations,
                 "limit": limit,
-                "filters": {"tool_name": tool_name, "status": status},
+                "filters": {"tool_name": tool_name, "status": status, "organization_id": organization_id},
                 "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             }
 

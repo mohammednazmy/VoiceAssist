@@ -3,9 +3,11 @@ Integration tests for service-to-service communication.
 Phase 13: Final Testing & Documentation
 """
 
+import asyncio
+
 import pytest
 from httpx import AsyncClient
-import asyncio
+from sqlalchemy import text
 
 
 @pytest.mark.integration
@@ -17,13 +19,13 @@ class TestDatabaseIntegration:
         """Test database connection is working."""
         assert test_db_session is not None
         # Execute simple query
-        result = test_db_session.execute("SELECT 1").scalar()
+        result = test_db_session.execute(text("SELECT 1")).scalar()
         assert result == 1
 
     async def test_database_transactions(self, test_db_session):
         """Test database transaction handling."""
         # Test rollback
-        test_db_session.execute("SELECT 1")
+        test_db_session.execute(text("SELECT 1"))
         test_db_session.rollback()
         assert True  # If we get here, rollback worked
 

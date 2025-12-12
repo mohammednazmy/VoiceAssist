@@ -289,7 +289,7 @@ export function ToolsPage() {
           </>
         }
         confirmLabel={confirmToggle?.enabled ? "Disable" : "Enable"}
-        variant={confirmToggle?.enabled ? "danger" : "primary"}
+        variant={confirmToggle?.enabled ? "danger" : "info"}
         isLoading={updating}
       />
     </PageContainer>

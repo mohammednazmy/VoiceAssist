@@ -16,10 +16,12 @@ class PasswordStrength(str, Enum):
 class PasswordValidator:
     """Validates password strength based on multiple criteria."""
 
-    # Common passwords to reject (case-sensitive)
+    # Common passwords to reject (base list).
+    # Comparison is performed in a case-insensitive way using COMMON_PASSWORDS_LOWER.
     COMMON_PASSWORDS = {
         "password",
         "password123",
+        "password123!",
         "123456",
         "12345678",
         "qwerty",
@@ -44,6 +46,8 @@ class PasswordValidator:
         "michael",
         "football",
     }
+    # Precomputed lowercase variants for quick lookup
+    COMMON_PASSWORDS_LOWER = {p.lower() for p in COMMON_PASSWORDS}
 
     def __init__(
         self,
@@ -64,6 +68,7 @@ class PasswordValidator:
     def validate(self, password: str) -> Tuple[bool, List[str]]:
         """Validate password strength. Returns (is_valid, list_of_errors)."""
         errors = []
+        password_lower = password.lower()
 
         if len(password) < self.min_length:
             errors.append(f"Password must be at least {self.min_length} characters long")
@@ -75,8 +80,8 @@ class PasswordValidator:
             errors.append("Password must contain at least one digit")
         if self.require_special and not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
             errors.append("Password must contain at least one special character")
-        # Check against common passwords (case-sensitive for better security)
-        if self.reject_common and password in self.COMMON_PASSWORDS:
+        # Check against common passwords (case-insensitive to catch trivial variations)
+        if self.reject_common and password_lower in self.COMMON_PASSWORDS_LOWER:
             errors.append("Password is too common")
         # Only check sequential/repeated for shorter passwords where patterns are more concerning
         # Skip these checks if requirements are relaxed or password is sufficiently long
@@ -116,6 +121,7 @@ class PasswordValidator:
 
     def get_strength_score(self, password: str) -> int:
         score = 0
+        password_lower = password.lower()
         # Length bonuses
         if len(password) >= 8:
             score += 10
@@ -130,8 +136,8 @@ class PasswordValidator:
             score += 10
         if re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]', password):
             score += 10
-        # Not in common passwords (case-sensitive check)
-        if password not in self.COMMON_PASSWORDS:
+        # Not in common passwords (case-insensitive check)
+        if password_lower not in self.COMMON_PASSWORDS_LOWER:
             score += 10
         # Extra length bonuses for very long passwords
         if len(password) >= 20:

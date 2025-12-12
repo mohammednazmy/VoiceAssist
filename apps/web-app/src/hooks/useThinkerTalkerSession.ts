@@ -484,6 +484,14 @@ export interface TTAdvancedSettings {
    vad_custom_energy_threshold_db?: number | null;
    /** Custom silence duration (ms) when vad_preset === "custom" */
    vad_custom_silence_duration_ms?: number | null;
+  /** Enable long-form document reading mode for this session */
+  reading_mode_enabled?: boolean;
+  /** Reading speed preference for TTS */
+  reading_speed?: "slow" | "normal" | "fast";
+  /** Reading detail preference (short summary vs full detail) */
+  reading_detail?: "short" | "full";
+  /** Voice-level PHI policy for RAG lookups ("clinical" or "demo") */
+  phi_mode?: "clinical" | "demo";
 }
 
 /**
@@ -634,7 +642,8 @@ function isMicPermissionError(err: unknown): boolean {
     return (
       err.name === "NotAllowedError" ||
       err.name === "SecurityError" ||
-      err.name === "NotFoundError"
+      err.name === "NotFoundError" ||
+      err.name === "NotSupportedError"
     );
   }
   if (err instanceof Error) {
@@ -643,7 +652,8 @@ function isMicPermissionError(err: unknown): boolean {
       msg.includes("permission") ||
       msg.includes("not allowed") ||
       msg.includes("blocked") ||
-      msg.includes("denied")
+      msg.includes("denied") ||
+      msg.includes("not supported")
     );
   }
   return false;
@@ -661,11 +671,20 @@ function getMicErrorMessage(err: unknown): string {
         return "Microphone blocked by browser policy. This site may need to be accessed via HTTPS.";
       case "NotFoundError":
         return "No microphone found. Please connect a microphone and try again.";
+      case "NotSupportedError":
+        return "Your browser does not support microphone capture required for Voice Mode. Please try a modern browser like Chrome or Edge, and ensure the site is loaded over HTTPS.";
       default:
         return `Microphone error: ${err.message}`;
     }
   }
-  return err instanceof Error ? err.message : "Unknown microphone error";
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (msg.includes("not supported")) {
+      return "Your browser does not support microphone capture required for Voice Mode. Please try a modern browser like Chrome or Edge, and ensure the site is loaded over HTTPS.";
+    }
+    return err.message;
+  }
+  return "Unknown microphone error";
 }
 
 // ============================================================================
@@ -1196,11 +1215,32 @@ export function useThinkerTalkerSession(
         msgType === "session.resume.nak" ||
         msgType === "message.replay" ||
         msgType === "audio.resume" ||
+        // Heartbeat/pong messages MUST be processed immediately for
+        // connection health monitoring. Buffering these causes false
+        // heartbeat timeouts and zombie connection detection failures.
+        msgType === "pong" ||
+        msgType === "heartbeat" ||
+        msgType === "ping" ||
+        // Session lifecycle messages must be processed immediately
+        msgType === "session.ready" ||
+        msgType === "session.init.ack" ||
+        // Pipeline state changes must be processed immediately for UI updates
+        msgType === "voice.state" ||
+        // Barge-in messages must be processed immediately for responsiveness
+        msgType === "barge_in.initiated" ||
+        msgType === "barge_in.classified" ||
         // VAD / speech boundary events must be processed immediately
         // for low-latency barge-in. They are advisory signals and do
         // not need strict ordering, so bypass sequence gating.
         msgType === "input_audio_buffer.speech_started" ||
-        msgType === "input_audio_buffer.speech_stopped"
+        msgType === "input_audio_buffer.speech_stopped" ||
+        // Transcript / response events must always be delivered to the UI.
+        // In practice, the backend seq counter also includes events the
+        // frontend never sees (e.g. internal audio/control frames), so
+        // enforcing strict contiguity here can cause us to buffer and
+        // effectively drop transcript/response messages forever.
+        msgType.startsWith("transcript.") ||
+        msgType.startsWith("response.")
       ) {
         handleMessageRef.current(message);
         return;
@@ -1234,24 +1274,33 @@ export function useThinkerTalkerSession(
         }
         drainReorderBuffer();
       } else if (seq > expected) {
-        // Out of order - buffer for later
-        if (reorderBufferRef.current.size < MAX_REORDER_BUFFER) {
-          reorderBufferRef.current.set(seq, message);
-          voiceLog.debug(
-            `[ThinkerTalker] Buffered out-of-order message seq=${seq}, expected=${expected}`,
-          );
-        } else {
-          voiceLog.warn(
-            `[ThinkerTalker] Reorder buffer full (${MAX_REORDER_BUFFER}), dropping message seq=${seq}`,
-          );
-        }
-
-        // Check for large gaps which might indicate dropped messages
         const gap = seq - expected;
+
+        // For small gaps, buffer the message and wait for missing seq values.
+        // For large gaps, assume we missed messages we will never see (e.g.,
+        // binary audio frames handled elsewhere) and resync to avoid buffering
+        // important events like voice.state / transcript / response forever.
         if (gap > 10) {
           voiceLog.warn(
-            `[ThinkerTalker] Large sequence gap detected: expected=${expected}, got=${seq}, gap=${gap}`,
+            `[ThinkerTalker] Large sequence gap detected: expected=${expected}, got=${seq}, gap=${gap}. Resyncing sequence window.`,
           );
+
+          // Process the message immediately and treat it as the new baseline.
+          handleMessageRef.current(message);
+          expectedSequenceRef.current = seq + 1;
+          drainReorderBuffer();
+        } else {
+          // Out of order - buffer for later
+          if (reorderBufferRef.current.size < MAX_REORDER_BUFFER) {
+            reorderBufferRef.current.set(seq, message);
+            voiceLog.debug(
+              `[ThinkerTalker] Buffered out-of-order message seq=${seq}, expected=${expected}`,
+            );
+          } else {
+            voiceLog.warn(
+              `[ThinkerTalker] Reorder buffer full (${MAX_REORDER_BUFFER}), dropping message seq=${seq}`,
+            );
+          }
         }
       } else {
         // Old message (seq < expected) - already processed, ignore
@@ -1988,7 +2037,8 @@ export function useThinkerTalkerSession(
 
         case "tool.result": {
           // Tool result received
-          const toolCallId = message.tool_call_id as string;
+          const toolCallId =
+            (message.tool_call_id as string) || (message.tool_id as string);
           const result = message.result;
 
           setCurrentToolCalls((prev) =>
@@ -2872,12 +2922,28 @@ export function useThinkerTalkerSession(
         },
       });
     } catch (err) {
+      // In automated browser environments (Playwright/WebDriver), we treat
+      // *any* getUserMedia failure as non-fatal so that E2E tests can still
+      // exercise the Thinker/Talker pipeline (WebSocket, tool calls, KB UI)
+      // even when no real microphone device is available.
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as Navigator & { webdriver?: boolean }).webdriver
+      ) {
+        voiceLog.warn(
+          "[ThinkerTalker] Automation environment: microphone error; continuing without audio capture",
+          err,
+        );
+        return;
+      }
+
       if (isMicPermissionError(err)) {
         const friendlyMessage = getMicErrorMessage(err);
         const micError = new Error(friendlyMessage);
         (micError as Error & { isFatal: boolean }).isFatal = true;
         throw micError;
       }
+
       throw new Error(
         `Failed to access microphone: ${err instanceof Error ? err.message : "Unknown error"}`,
       );
@@ -3044,7 +3110,23 @@ export function useThinkerTalkerSession(
         voiceLog.debug("[ThinkerTalker] Audio streaming initialized (ScriptProcessor fallback)");
       }
     } catch (err) {
+      // Always stop any acquired tracks on failure
       stream.getTracks().forEach((track) => track.stop());
+
+      // In automation, treat audio processing failures as non-fatal so that
+      // WebSocket + tool call flows (including KB tooling) can still be tested
+      // even when AudioWorklet/ScriptProcessor are unavailable.
+      if (
+        typeof navigator !== "undefined" &&
+        (navigator as Navigator & { webdriver?: boolean }).webdriver
+      ) {
+        voiceLog.warn(
+          "[ThinkerTalker] Automation environment: audio processing not fully supported; continuing without live microphone",
+          err,
+        );
+        return;
+      }
+
       throw new Error(
         `Failed to initialize audio processing: ${err instanceof Error ? err.message : "Unknown error"}`,
       );

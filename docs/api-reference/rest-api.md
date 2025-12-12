@@ -5,7 +5,7 @@ summary: Complete REST API documentation with request/response examples.
 status: stable
 stability: production
 owner: backend
-lastUpdated: "2025-11-27"
+lastUpdated: "2025-12-12"
 audience:
   - human
   - agent
@@ -38,9 +38,9 @@ ai_summary: >-
 
 # VoiceAssist REST API Reference
 
-**Version:** 2.0
+**Version:** 2.1
 **Base URL:** `http://localhost:8000/api` (production) or `http://localhost:8000/api` (development)
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-12
 
 > **See Also:** [Auto-generated API Routes](API_ROUTES.md) - Complete route listing from OpenAPI spec
 
@@ -434,13 +434,37 @@ GET /conversations/{conversation_id}
 
 **Headers:** `Authorization: Bearer <access_token>`
 
+**Response (200):**
+
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "title": "Medical Inquiry",
+  "archived": false,
+  "messageCount": 5,
+  "folderId": null,
+  "phiMode": "clinical",
+  "tags": ["cardiology", "follow-up"],
+  "metadata": {
+    "phi_mode": "clinical",
+    "tags": ["cardiology", "follow-up"],
+    "active_document_id": "doc-uuid"
+  },
+  "createdAt": "2025-11-27T10:00:00Z",
+  "updatedAt": "2025-11-27T12:00:00Z"
+}
+```
+
 ---
 
 ### Update Conversation
 
 ```
-PUT /conversations/{conversation_id}
+PATCH /conversations/{conversation_id}
 ```
+
+Update a conversation's metadata including title, archived status, folder, PHI mode, and tags.
 
 **Headers:** `Authorization: Bearer <access_token>`
 
@@ -450,9 +474,73 @@ PUT /conversations/{conversation_id}
 {
   "title": "Updated Title",
   "archived": false,
-  "folder_id": "new-folder-uuid"
+  "folder_id": "new-folder-uuid",
+  "phi_mode": "clinical",
+  "tags": ["cardiology", "urgent"]
 }
 ```
+
+**Field Details:**
+
+| Field       | Type     | Description                                      |
+| ----------- | -------- | ------------------------------------------------ |
+| `title`     | string   | Conversation title                               |
+| `archived`  | boolean  | Whether the conversation is archived             |
+| `folder_id` | string   | UUID of folder to move conversation to           |
+| `phi_mode`  | string   | PHI handling mode: `"clinical"` or `"demo"`      |
+| `tags`      | string[] | User-defined tags (de-duplicated, sorted)        |
+
+**Response (200):**
+
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "title": "Updated Title",
+  "archived": false,
+  "messageCount": 5,
+  "folderId": "new-folder-uuid",
+  "phiMode": "clinical",
+  "tags": ["cardiology", "urgent"],
+  "createdAt": "2025-11-27T10:00:00Z",
+  "updatedAt": "2025-11-27T12:30:00Z"
+}
+```
+
+---
+
+### Auto-Title Conversation
+
+```
+POST /conversations/{conversation_id}/auto-title
+```
+
+Generate and apply an automatic clinical title for a conversation based on its content.
+
+The title is derived from the first 1–2 user turns and the first assistant answer using a PHI-conscious LLM prompt. The model is instructed not to emit identifiers (names, MRNs, DOBs).
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "id": "uuid",
+  "userId": "uuid",
+  "title": "Chest pain evaluation and cardiac workup",
+  "archived": false,
+  "messageCount": 5,
+  "phiMode": "clinical",
+  "createdAt": "2025-11-27T10:00:00Z",
+  "updatedAt": "2025-11-27T12:35:00Z"
+}
+```
+
+**Notes:**
+
+- Falls back to local heuristic-based title if LLM is unavailable
+- Title is truncated to 80 characters maximum
+- PHI-safe: instructed not to include patient names, MRNs, or dates
 
 ---
 
@@ -494,6 +582,93 @@ GET /conversations/{conversation_id}/branches
 ```
 
 **Headers:** `Authorization: Bearer <access_token>`
+
+---
+
+### Get Conversation Events
+
+```
+GET /conversations/{conversation_id}/events
+```
+
+Get structured events logged during conversation/voice sessions for debugging and session replay.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Query Parameters:**
+
+| Parameter     | Type   | Description                                      |
+| ------------- | ------ | ------------------------------------------------ |
+| `event_types` | string | Comma-separated list of event types to filter    |
+| `since`       | string | ISO 8601 timestamp to filter events after        |
+| `limit`       | int    | Max events to return (default: 100, max: 1000)   |
+| `offset`      | int    | Pagination offset                                |
+
+**Response (200):**
+
+```json
+[
+  {
+    "id": "event-uuid",
+    "conversation_id": "conv-uuid",
+    "session_id": "voice-session-id",
+    "branch_id": null,
+    "event_type": "voice_turn_start",
+    "payload": {
+      "vad_triggered": true,
+      "audio_level_db": -22.5
+    },
+    "source": "voice_pipeline",
+    "trace_id": "trace-uuid",
+    "created_at": "2025-11-27T12:00:00Z"
+  }
+]
+```
+
+---
+
+### Get Conversation Settings
+
+```
+GET /conversations/{conversation_id}/settings
+```
+
+Get per-conversation settings for voice, model preferences, etc.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Response (200):**
+
+```json
+{
+  "voice_enabled": true,
+  "preferred_model": "gpt-4",
+  "temperature": 0.7,
+  "max_tokens": 2048
+}
+```
+
+---
+
+### Update Conversation Settings
+
+```
+PUT /conversations/{conversation_id}/settings
+```
+
+Update settings for a specific conversation. Settings are merged with existing values.
+
+**Headers:** `Authorization: Bearer <access_token>`
+
+**Request Body:**
+
+```json
+{
+  "voice_enabled": true,
+  "preferred_model": "gpt-4",
+  "temperature": 0.7
+}
+```
 
 ---
 
@@ -1026,4 +1201,4 @@ Interactive API documentation is available at:
 
 ---
 
-_Last Updated: 2025-11-27_
+_Last Updated: 2025-12-12_

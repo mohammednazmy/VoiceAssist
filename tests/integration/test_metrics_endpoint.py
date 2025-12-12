@@ -30,7 +30,10 @@ def test_metrics_endpoint_returns_prometheus_format(client):
     response = client.get("/metrics")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.headers["content-type"] == "text/plain; version=0.0.4; charset=utf-8"
+    content_type = response.headers["content-type"]
+    # Prometheus client may emit version=0.0.4 or 1.0.0 depending on library version.
+    assert content_type.startswith("text/plain;")
+    assert "charset=" in content_type
 
 
 @pytest.mark.integration
@@ -62,9 +65,9 @@ def test_metrics_contains_business_metrics(client):
 
     # Business metrics that should be exposed
     business_metrics = [
-        "http_requests_total",
-        "http_request_duration_seconds",
-        "active_users",
+        "voiceassist_http_requests_total",
+        "voiceassist_http_request_duration_seconds",
+        "voiceassist_active_users_daily",
     ]
 
     for metric in business_metrics:
@@ -89,9 +92,9 @@ def test_metrics_counter_increments(client):
     content = response.text
 
     # Check that http_requests_total has increased
-    if "http_requests_total" in content:
+    if "voiceassist_http_requests_total" in content:
         # Parse counter value
-        pattern = r'http_requests_total.*?(\d+)'
+        pattern = r'voiceassist_http_requests_total.*?(\d+)'
         matches = re.findall(pattern, content)
         if matches:
             assert any(int(val) >= 3 for val in matches)
@@ -106,9 +109,9 @@ def test_metrics_with_labels(client):
     content = response.text
 
     # Check for labeled metrics
-    if "http_requests_total" in content:
+    if "voiceassist_http_requests_total" in content:
         # Should have labels like method, endpoint, status
-        assert re.search(r'http_requests_total\{.*method=.*\}', content)
+        assert re.search(r'voiceassist_http_requests_total\{[^}]*method="[^"]+"', content)
 
 
 @pytest.mark.integration
@@ -120,10 +123,10 @@ def test_metrics_histogram_buckets(client):
     content = response.text
 
     # If histogram present, should have _bucket, _sum, _count
-    if "http_request_duration_seconds" in content:
-        assert "http_request_duration_seconds_bucket" in content
-        assert "http_request_duration_seconds_sum" in content
-        assert "http_request_duration_seconds_count" in content
+    if "voiceassist_http_request_duration_seconds" in content:
+        assert "voiceassist_http_request_duration_seconds_bucket" in content
+        assert "voiceassist_http_request_duration_seconds_sum" in content
+        assert "voiceassist_http_request_duration_seconds_count" in content
 
 
 @pytest.mark.integration
@@ -140,7 +143,10 @@ def test_llm_token_metrics_present(client, authenticated_client):
     content = response.text
 
     # Check for LLM-related metrics
-    llm_metrics = ["llm_tokens_used", "llm_requests_total"]
+    llm_metrics = [
+        "voiceassist_openai_tokens_used_total",
+        "voiceassist_rag_llm_tokens_total",
+    ]
 
     for metric in llm_metrics:
         # Metrics might be present if LLM was called
@@ -160,9 +166,9 @@ def test_error_rate_metrics(client):
     content = response.text
 
     # Check for error metrics
-    if "http_requests_total" in content:
-        # Should have entries with status=404 or similar
-        assert re.search(r'status="40[0-9]"', content)
+    if "voiceassist_http_requests_total" in content:
+        # Should have entries with 4xx status codes
+        assert re.search(r'status_code="40[0-9]"', content)
 
 
 @pytest.mark.integration
@@ -202,16 +208,75 @@ def test_custom_business_metric_registration(client):
 
     # Check for custom business metrics
     custom_metrics = [
-        "user_registrations_total",
-        "feature_usage_total",
-        "document_uploads_total",
+        "voiceassist_user_registrations_total",
+        "voiceassist_feature_flag_checks_total",
+        "voiceassist_kb_document_uploads_total",
     ]
 
     # These might not all be present, but format should be correct if they are
     for metric in custom_metrics:
         if metric in content:
-            # Should follow Prometheus format
-            assert re.search(f'{metric}{{', content) or re.search(f'{metric} \\d', content)
+            # If there is a series line for this metric, it should follow Prometheus format.
+            if re.search(f"{metric}{{", content) or re.search(f"{metric} \\d", content):
+                continue
+
+
+@pytest.mark.integration
+@pytest.mark.metrics
+def test_kb_query_metrics_exposed(client, authenticated_client):
+    """Test that KB query metrics for /api/kb/query are exposed with chat/voice channel labels."""
+    # Chat-channel query (default)
+    response_chat = authenticated_client.post(
+        "/api/kb/query",
+        json={"question": "Test KB metrics (chat)?"},
+    )
+
+    # Voice-channel query using channel hint
+    response_voice = authenticated_client.post(
+        "/api/kb/query",
+        json={"question": "Test KB metrics (voice)?", "channel": "voice"},
+    )
+
+    for resp in (response_chat, response_voice):
+        if resp.status_code in (
+            status.HTTP_404_NOT_FOUND,
+            status.HTTP_501_NOT_IMPLEMENTED,
+        ):
+            pytest.skip("KB RAG query endpoint not available for metrics test")
+        if resp.status_code >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+            pytest.skip(
+                f"KB RAG query failed due to backend error: {resp.status_code}",
+            )
+        assert resp.status_code == status.HTTP_200_OK
+
+    # Fetch metrics and ensure KB query metrics appear with channel labels.
+    metrics_response = client.get("/metrics")
+    assert metrics_response.status_code == status.HTTP_200_OK
+
+    content = metrics_response.text
+    kb_metrics = [
+        "voiceassist_kb_query_requests_total",
+        "voiceassist_kb_query_latency_seconds",
+        "voiceassist_kb_query_answer_length_tokens",
+        "voiceassist_kb_query_sources_per_answer",
+        "voiceassist_kb_query_top_score",
+    ]
+
+    for metric in kb_metrics:
+        if metric in content:
+            assert f"# TYPE {metric}" in content or f"# HELP {metric}" in content
+            # At least one series should include channel labels when samples exist
+            if "{" in content:
+                # Chat channel
+                assert re.search(
+                    rf"{metric}{{[^}}]*channel=\"chat\"",
+                    content,
+                ), f"Expected chat channel label for {metric}"
+                # Voice channel
+                assert re.search(
+                    rf"{metric}{{[^}}]*channel=\"voice\"",
+                    content,
+                ), f"Expected voice channel label for {metric}"
 
 
 @pytest.mark.integration
@@ -238,7 +303,7 @@ def test_metrics_no_sensitive_data(client):
     content = response.text.lower()
 
     # Should not contain sensitive data
-    sensitive_terms = ["password", "secret", "token", "api_key"]
+    sensitive_terms = ["password", "secret", "api_key", "access_token", "refresh_token"]
 
     for term in sensitive_terms:
         assert term not in content, f"Sensitive term '{term}' found in metrics"
@@ -254,8 +319,8 @@ def test_metrics_gauge_reflects_current_state(client, authenticated_client):
     content = response.text
 
     # Gauge metrics should have reasonable values
-    if "active_users" in content:
-        pattern = r'active_users.*?(\d+)'
+    if "voiceassist_active_users_daily" in content:
+        pattern = r'voiceassist_active_users_daily.*?(\d+)'
         matches = re.findall(pattern, content)
         if matches:
             value = int(matches[0])

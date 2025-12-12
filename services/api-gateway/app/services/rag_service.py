@@ -83,6 +83,14 @@ class QueryRequest(BaseModel):
     session_id: Optional[str] = None
     query: str
     clinical_context_id: Optional[str] = None
+    organization_id: Optional[str] = None
+    exclude_phi: bool = Field(
+        False,
+        description=(
+            "When true, exclude high-risk PHI KB chunks during retrieval. "
+            "Used for PHI-conscious demo and non-clinical flows."
+        ),
+    )
 
 
 class QueryResponse(BaseModel):
@@ -167,6 +175,7 @@ class QueryOrchestrator:
         user_id: str,
         session_id: Optional[str],
         trace_id: Optional[str],
+        organization_id: Optional[str] = None,
     ) -> dict:
         """
         Execute a single tool call and return the result.
@@ -176,6 +185,7 @@ class QueryOrchestrator:
             user_id: User identifier
             session_id: Session identifier
             trace_id: Trace ID for logging
+            organization_id: Organization identifier for multi-tenancy
 
         Returns:
             Dict with tool result to send back to LLM
@@ -193,6 +203,7 @@ class QueryOrchestrator:
                 session_id=session_id,
                 mode="chat",
                 trace_id=trace_id,
+                organization_id=organization_id,
             )
 
             # Execute the tool
@@ -219,7 +230,7 @@ class QueryOrchestrator:
             logging.exception(f"Error executing tool {tool_call.name}: {e}")
             return {"error": str(e)}
 
-    async def _run_retrieval(self, query: str) -> tuple[list, str, List[dict], float]:
+    async def _run_retrieval(self, query: str, exclude_phi: bool = False) -> tuple[list, str, List[dict], float]:
         """Run single or multi-hop retrieval with optional synthesis."""
 
         if not self.enable_rag or not self.search_aggregator:
@@ -236,10 +247,29 @@ class QueryOrchestrator:
         aggregated_results = []
 
         for hop_idx, sub_query in enumerate(sub_queries, start=1):
+            filter_conditions = None
+            if exclude_phi:
+                # Only include chunks where PHI risk is not "high". We expose both
+                # document-level and chunk-level fields for backwards compatibility:
+                #
+                # - phi_risk: legacy document-level risk label
+                # - chunk_phi_risk: duplicated at chunk level for efficient Qdrant filtering
+                #
+                # SearchAggregator implementations can use either key as needed.
+                # For document-level risk we only use explicit labels; for
+                # chunk-level risk we also allow null (older chunks that have
+                # not yet been backfilled with a phi_risk label).
+                allowed_risks = ["none", "low", "medium"]
+                filter_conditions = {
+                    "phi_risk": allowed_risks,
+                    "chunk_phi_risk": [*allowed_risks, None],
+                }
+
             hop_results = await self.search_aggregator.search(
                 query=sub_query,
                 top_k=self.rag_top_k,
                 score_threshold=self.rag_score_threshold,
+                filter_conditions=filter_conditions,
             )
             hop_traces.append({"hop": hop_idx, "query": sub_query, "results": len(hop_results)})
             aggregated_results.extend(hop_results)
@@ -264,7 +294,10 @@ class QueryOrchestrator:
         trace_id: Optional[str],
     ) -> tuple[LLMRequest, list, str, bool, str]:
         """Prepare prompt, RAG context, and LLM request for streaming or non-streaming paths."""
-        search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(request.query)
+        search_results, context, reasoning_path, retrieval_confidence = await self._run_retrieval(
+            request.query,
+            exclude_phi=request.exclude_phi,
+        )
 
         # Get dynamic RAG instructions from prompt service
         try:
@@ -493,6 +526,7 @@ class QueryOrchestrator:
                     user_id=user_id or "anonymous",
                     session_id=request.session_id,
                     trace_id=trace_id,
+                    organization_id=request.organization_id,
                 )
 
                 # Add tool result to conversation

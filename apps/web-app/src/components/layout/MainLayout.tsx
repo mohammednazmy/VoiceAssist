@@ -640,7 +640,7 @@ export function MainLayout() {
         )}
 
         {/* Main content */}
-        <main id="main-content" className="flex-1 overflow-hidden" role="main">
+        <main id="main-content" className="flex-1 overflow-y-auto" role="main">
           <Outlet />
         </main>
       </div>

@@ -239,6 +239,80 @@ class TestVoiceRealtimeSessionAPI:
         assert response.status_code in [200, 500, 503]
 
 
+class TestVoiceRelayPhiConsciousAPI:
+    """Tests for voice relay RAG behavior with PHI-conscious mode."""
+
+    @pytest.fixture
+    def client(self, mock_user):
+        """Create authenticated client with dependency overrides (auth + DB)."""
+        from app.core.database import get_db
+
+        app.dependency_overrides[get_current_user] = lambda: mock_user
+
+        # Provide a lightweight fake DB session for this test block.
+        class _FakeSession:
+            def add(self, _obj):  # pragma: no cover - trivial
+                return None
+
+            def commit(self):  # pragma: no cover - trivial
+                return None
+
+            def refresh(self, _obj):  # pragma: no cover - trivial
+                return None
+
+        app.dependency_overrides[get_db] = lambda: _FakeSession()
+
+        client = TestClient(app)
+        try:
+            yield client
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_voice_relay_exclude_phi_flag_pass_through(self, client):
+        """
+        Verify that VoiceRelayRequest.exclude_phi is passed into QueryRequest.
+
++       This test patches the voice_query_orchestrator to ensure the flag is set correctly
+        without requiring a full RAG stack.
+        """
+
+        with patch("app.api.voice.voice_query_orchestrator") as mock_orchestrator:
+            mock_resp = MagicMock()
+            mock_resp.answer = "test answer"
+            mock_resp.citations = []
+            mock_resp.tokens = 10
+            mock_resp.model = "test-model"
+            mock_resp.finish_reason = "stop"
+            mock_orchestrator.handle_query = AsyncMock(return_value=mock_resp)
+
+            payload = {
+                "conversation_id": "00000000-0000-0000-0000-000000000001",
+                "transcript": "test transcript",
+                "clinical_context_id": None,
+                "exclude_phi": True,
+            }
+
+            # Conversation id doesn't matter for this test; we just care about how
+            # the orchestrator is invoked. Use try/except to ignore validation errors
+            # related to conversation lookup and focus on the flag wiring.
+            with patch("app.api.voice.get_session_or_404") as mock_get_session:
+                mock_session = MagicMock()
+                mock_session.id = "session-id"
+                mock_session.message_count = 0
+                mock_get_session.return_value = mock_session
+
+                # Mock DB session commit operations used in the handler
+                # by patching SessionLocal behavior via dependency overrides
+                response = client.post("/api/voice/relay", json=payload)
+
+        # Even if the endpoint returns an error due to external factors,
+        # we assert that handle_query was called with exclude_phi=True.
+        mock_orchestrator.handle_query.assert_awaited()
+        args, _kwargs = mock_orchestrator.handle_query.await_args
+        query_request = args[0]
+        assert getattr(query_request, "exclude_phi", False) is True
+
+
 @pytest.mark.skip(reason="No /api/voice/health endpoint - health endpoints are in admin routers")
 class TestVoiceHealthAPI:
     """Tests for voice health endpoint."""

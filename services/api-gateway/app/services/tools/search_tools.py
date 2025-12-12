@@ -389,47 +389,185 @@ async def handle_kb_search(arguments: Dict[str, Any], context: ToolExecutionCont
         )
 
     try:
-        # Use the hybrid search service
-        from app.services.hybrid_search_service import HybridSearchService
+        # Prefer the unified KB + RAG surface when available so that voice
+        # flows and chat share the same KB contract. We scope to the current
+        # user implicitly via the auth dependency used by /api/kb/query.
+        from app.services.rag_service import QueryOrchestrator, QueryRequest
 
-        search_service = HybridSearchService()
-
-        # Perform search
-        results = await search_service.search(
+        orchestrator = QueryOrchestrator(enable_rag=False)
+        # ToolExecutionContext exposes conversation/session identifiers and
+        # PHI-conscious flags so that voice-mode RAG calls can share the same
+        # behavior as HTTP-based advanced search.
+        session_id = context.session_id or context.conversation_id
+        req = QueryRequest(
+            session_id=session_id,
             query=query,
-            top_k=max_results,
-            source_types=sources if sources else None,
+            clinical_context_id=context.clinical_context_id,
+            exclude_phi=bool(context.exclude_phi),
         )
 
-        documents = []
-        for doc in results:
-            documents.append(
-                {
-                    "id": doc.id,
-                    "title": doc.title,
-                    "content": (doc.content[:500] + "..." if len(doc.content) > 500 else doc.content),
-                    "source_type": doc.source_type,
-                    "source_name": doc.source_name,
-                    "location": doc.location,
-                    "relevance_score": doc.score,
-                }
-            )
+        rag_result = await orchestrator.run_query(req)
+
+        # Normalize into a ToolResult that contains an answer and sources.
+        # We intentionally keep the shape close to /api/kb/query so that
+        # downstream code can treat voice and HTTP RAG answers uniformly.
+        data = {
+            "query": query,
+            "answer": rag_result.answer if hasattr(rag_result, "answer") else rag_result.content,
+            "sources": getattr(rag_result, "sources", []),
+        }
 
         return ToolResult(
             success=True,
-            data={
-                "query": query,
-                "documents": documents,
-                "count": len(documents),
-            },
-            message=f"Found {len(documents)} relevant documents in the knowledge base.",
+            data=data,
+            message="Knowledge base RAG answer generated via unified KB pipeline.",
         )
 
     except Exception as e:
-        logger.exception(f"Error in KB search: {e}")
+        # Fallback: if the unified RAG path fails for any reason, use the
+        # legacy hybrid search implementation as a best-effort search.
+        logger.exception(f"Error in KB search via RAG pipeline: {e}")
+        try:
+            from app.services.hybrid_search_service import HybridSearchService
+
+            search_service = HybridSearchService()
+
+            # Preserve PHI-conscious filtering in fallback path
+            filters = None
+            if context.exclude_phi:
+                # Only include chunks where PHI risk is not "high"
+                allowed_risks = ["none", "low", "medium"]
+                filters = {"phi_risk": allowed_risks}
+                logger.info(
+                    "KB search fallback using PHI-conscious filters: %s",
+                    allowed_risks,
+                )
+
+            results = await search_service.search(
+                query=query,
+                top_k=max_results,
+                filters=filters,
+            )
+
+            documents = []
+            for doc in results:
+                documents.append(
+                    {
+                        "id": doc.id,
+                        "title": doc.title,
+                        "content": (doc.content[:500] + "..." if len(doc.content) > 500 else doc.content),
+                        "source_type": doc.source_type,
+                        "source_name": doc.source_name,
+                        "location": doc.location,
+                        "relevance_score": doc.score,
+                    }
+                )
+
+            return ToolResult(
+                success=True,
+                data={
+                    "query": query,
+                    "documents": documents,
+                    "count": len(documents),
+                },
+                message=f"Found {len(documents)} relevant documents in the knowledge base (fallback search).",
+            )
+
+        except Exception as inner:
+            logger.exception(f"Fallback KB search failed: {inner}")
+            return ToolResult(
+                success=False,
+                data=None,
+                error=str(inner),
+                error_type=type(inner).__name__,
+            )
+
+
+async def handle_knowledge_base_query(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
+    """
+    Run a RAG-style query over the medical knowledge base.
+
+    This tool mirrors the semantics of the HTTP /api/kb/query endpoint:
+    - Accepts a 'question' plus optional context parameters
+    - Returns a concise answer string and a list of KB sources
+    """
+    question = arguments.get("question")
+    context_documents = arguments.get("context_documents") or 5
+
+    if not question or not isinstance(question, str) or not question.strip():
         return ToolResult(
             success=False,
             data=None,
-            error=str(e),
-            error_type=type(e).__name__,
+            error="Question is required",
+            error_type="ValidationError",
         )
+
+    # Clamp context_documents to a safe range
+    try:
+        context_docs_int = int(context_documents)
+    except (TypeError, ValueError):
+        context_docs_int = 5
+
+    context_docs_int = max(1, min(20, context_docs_int))
+
+    try:
+        from app.services.rag_service import QueryOrchestrator, QueryRequest
+
+        # Prefer full RAG for this tool so that it behaves like the HTTP KB
+        # query surface, but keep it configurable via rag_top_k so callers can
+        # influence how many documents are consulted.
+        orchestrator = QueryOrchestrator(enable_rag=True, rag_top_k=context_docs_int)
+
+        session_id = context.session_id or context.conversation_id
+        req = QueryRequest(
+            session_id=session_id,
+            query=question,
+            clinical_context_id=arguments.get("clinical_context_id") or context.clinical_context_id,
+            exclude_phi=bool(context.exclude_phi),
+        )
+
+        rag_result = await orchestrator.run_query(req)
+
+        # Map RAG citations into the same lightweight source shape used by
+        # /api/kb/query and the frontend KB components.
+        sources: List[Dict[str, Any]] = []
+        for citation in rag_result.citations:
+            sources.append(
+                {
+                    "id": citation.id or citation.source_id,
+                    "title": citation.title,
+                    "category": citation.source_type,
+                    "score": citation.relevance_score,
+                }
+            )
+
+        data = {
+            "question": question,
+            "answer": rag_result.answer,
+            "sources": sources,
+        }
+
+        return ToolResult(
+            success=True,
+            data=data,
+            message="Knowledge base answer generated via unified RAG pipeline.",
+        )
+
+    except Exception as e:
+        logger.exception(f"Error in knowledge_base_query tool: {e}")
+        # Best-effort fallback: reuse kb_search semantics so that the LLM still
+        # receives an answer and sources when possible.
+        try:
+            kb_result = await handle_kb_search(
+                {"query": question, "max_results": context_docs_int},
+                context,
+            )
+            return kb_result
+        except Exception as inner:
+            logger.exception(f"Fallback knowledge_base_query via kb_search failed: {inner}")
+            return ToolResult(
+                success=False,
+                data=None,
+                error=str(inner),
+                error_type=type(inner).__name__,
+            )

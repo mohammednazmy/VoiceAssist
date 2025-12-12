@@ -309,6 +309,8 @@ function generateSyntheticAudio(durationMs: number, sampleRate: number = 16000):
 
 /**
  * Open voice mode and wait for the UI to be ready before collecting WebSocket events.
+ * Uses the unified Chat-with-Voice entry point when available so tests exercise
+ * the same UX path as clinicians (Home → “Chat with Voice” card → unified chat).
  * Relies on the automation-only WS event hook in useThinkerTalkerSession.
  */
 async function openVoiceSession(page: Page): Promise<void> {
@@ -317,27 +319,63 @@ async function openVoiceSession(page: Page): Promise<void> {
     (window as any).__tt_ws_events = [];
   });
 
-  await page.goto("/chat");
+  // Prefer the Home → “Chat with Voice” card flow, which is the canonical
+  // entry for the unified chat + voice UI. This ensures that data-testid
+  // selectors like voice-mode-toggle are present and that the same feature
+  // flags are exercised as in production.
+  await page.goto("/");
   await page.waitForLoadState("networkidle");
 
-  // Wait longer for the page to fully load with all components
-  await page.waitForTimeout(2000);
+  let navigatedViaHome = false;
+  const voiceCard = page.getByTestId("chat-with-voice-card");
+  try {
+    await expect(voiceCard).toBeVisible({ timeout: 15000 });
+    await voiceCard.click();
+    navigatedViaHome = true;
+  } catch {
+    console.log(
+      "[Test] Chat-with-voice card not found or not visible - falling back to /chat route",
+    );
+    await page.goto("/chat");
+    await page.waitForLoadState("networkidle");
+  }
 
-  const ready = await waitForVoiceModeReady(page, 30000);
-  if (!ready) {
-    // Debug: log what's visible on the page
+  // Wait for the main chat UI (unified or legacy) to be present before we
+  // start looking for the voice toggle.
+  const chatRoot = page.locator(
+    '[data-testid="unified-chat-container"], [data-testid="unified-input-area"], [data-testid="message-input"]',
+  );
+  await expect(chatRoot.first()).toBeVisible({ timeout: 20000 });
+
+  // Allow the page a moment to settle (feature flags, WebSocket wiring)
+  await page.waitForTimeout(1000);
+
+  const readyResult = await waitForVoiceModeReady(page, 30000);
+  if (!readyResult.ready) {
+    // Debug: log what's visible on the page to help diagnose selector/flag issues
     const pageContent = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button')).map(b => ({
-        testId: b.getAttribute('data-testid'),
+      const buttons = Array.from(
+        document.querySelectorAll("button"),
+      ).map((b) => ({
+        testId: b.getAttribute("data-testid"),
         text: b.textContent?.substring(0, 50),
-        disabled: b.disabled
+        disabled: b.hasAttribute("disabled"),
       }));
       return { buttons };
     });
-    console.log("[Test] Page buttons:", JSON.stringify(pageContent.buttons, null, 2));
-    console.log("[Test] Voice button not visible - check if user is authenticated");
+    console.log(
+      "[Test] Page buttons when voice mode not ready:",
+      JSON.stringify(pageContent.buttons, null, 2),
+    );
+    console.log(
+      "[Test] Voice button not visible - path:",
+      navigatedViaHome ? "Home → Chat-with-Voice" : "/chat fallback",
+    );
   }
-  expect(ready).toBeTruthy();
+  expect(
+    readyResult.ready,
+    `Voice mode was not ready within timeout: ${readyResult.error || "unknown error"}`,
+  ).toBeTruthy();
 
   const opened = await openVoiceMode(page);
   expect(opened).toBeTruthy();

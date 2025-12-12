@@ -469,9 +469,20 @@ class RerankingService:
 
                 r = results[original_idx]
                 original_score = r.get("score", 0.0)
+                metadata = r.get("metadata", {}) or {}
 
                 # Combine scores
                 final_score = self.config.score_weight * rerank_score + (1 - self.config.score_weight) * original_score
+
+                # Apply small bias for enhanced chunks (e.g., GPT-4 Vision + voice narration)
+                # We use a modest multiplier to avoid overwhelming relevance while
+                # still preferring higher-quality, voice-optimized chunks.
+                try:
+                    if metadata.get("has_voice_narration"):
+                        final_score *= 1.05
+                except Exception:
+                    # Never let metadata issues break reranking
+                    pass
 
                 if final_score < self.config.min_relevance_score:
                     continue
@@ -484,7 +495,7 @@ class RerankingService:
                         original_score=original_score,
                         rerank_score=rerank_score,
                         final_score=final_score,
-                        metadata=r.get("metadata", {}),
+                        metadata=metadata,
                     )
                 )
 
@@ -521,18 +532,33 @@ class RerankingService:
         content_key: str,
     ) -> List[RerankedResult]:
         """Create results without re-ranking (fallback)."""
-        return [
-            RerankedResult(
-                chunk_id=r.get("chunk_id", str(i)),
-                document_id=r.get("document_id", "unknown"),
-                content=r.get(content_key, ""),
-                original_score=r.get("score", 0.0),
-                rerank_score=r.get("score", 0.0),
-                final_score=r.get("score", 0.0),
-                metadata=r.get("metadata", {}),
+        biased_results: List[RerankedResult] = []
+
+        for i, r in enumerate(results[: self.config.top_n]):
+            metadata = r.get("metadata", {}) or {}
+            score = r.get("score", 0.0)
+
+            # Apply the same bias even when reranking is disabled so that
+            # enhanced chunks are still lightly preferred.
+            try:
+                if metadata.get("has_voice_narration"):
+                    score *= 1.05
+            except Exception:
+                pass
+
+            biased_results.append(
+                RerankedResult(
+                    chunk_id=r.get("chunk_id", str(i)),
+                    document_id=r.get("document_id", "unknown"),
+                    content=r.get(content_key, ""),
+                    original_score=r.get("score", 0.0),
+                    rerank_score=r.get("score", 0.0),
+                    final_score=score,
+                    metadata=metadata,
+                )
             )
-            for i, r in enumerate(results[: self.config.top_n])
-        ]
+
+        return biased_results
 
     async def rerank_with_diversity(
         self,

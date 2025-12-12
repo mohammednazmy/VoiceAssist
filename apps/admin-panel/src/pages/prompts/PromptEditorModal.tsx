@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type {
   Prompt,
   PromptCreate,
+  PromptUpdate,
   PromptType,
   IntentCategory,
 } from "../../types";
@@ -9,7 +10,7 @@ import type {
 interface PromptEditorModalProps {
   title: string;
   prompt?: Prompt | null;
-  onSave: (data: PromptCreate | Partial<Prompt>) => Promise<boolean>;
+  onSave: (data: PromptCreate | PromptUpdate) => Promise<boolean>;
   onCancel: () => void;
   isLoading: boolean;
 }

@@ -23,10 +23,12 @@ interface UseIndexingJobsOptions {
   pollingInterval?: number;
   /** Enable auto-polling when jobs are running (default: true) */
   autoPolling?: boolean;
+  /** Enable the jobs feature - set to true when /api/admin/kb/jobs endpoint exists (default: false) */
+  enabled?: boolean;
 }
 
 export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
-  const { pollingInterval = 5000, autoPolling = true } = options;
+  const { pollingInterval = 5000, autoPolling = true, enabled = false } = options;
 
   const [jobs, setJobs] = useState<IndexingJob[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
 
   // Check if there are any active (running/pending) jobs
@@ -45,46 +47,48 @@ export function useIndexingJobs(options: UseIndexingJobsOptions = {}) {
 
   const load = useCallback(
     async (showLoading = true) => {
+      // Skip API call if feature is disabled (endpoint doesn't exist yet)
+      if (!enabled) {
+        setJobs([]);
+        setLoading(false);
+        return;
+      }
+
       if (showLoading) setLoading(true);
       setError(null);
 
       try {
         // API path from ADMIN_PANEL_SPECS.md: GET /api/admin/kb/jobs
         // Returns APIEnvelope<IndexingJob[]> - fetchAPI unwraps to IndexingJob[]
-        const data = await fetchAPI<IndexingJob[]>("/api/admin/kb/jobs");
+        const rawData = await fetchAPI<any[]>("/api/admin/kb/jobs");
+        // Map snake_case API response to camelCase interface
+        const mappedData: IndexingJob[] = (rawData || []).map((job) => ({
+          id: job.id,
+          documentId: job.document_id || job.documentId,
+          state: job.state,
+          attempts: job.attempts || 1,
+          progress: job.progress,
+          errorMessage: job.error_message || job.errorMessage,
+          startedAt: job.started_at || job.startedAt,
+          completedAt: job.completed_at || job.completedAt,
+        }));
         if (isMountedRef.current) {
-          setJobs(data);
+          setJobs(mappedData);
           setLastFetched(new Date());
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
-        console.warn("Falling back to demo indexing jobs:", message);
+        // Jobs endpoint may not exist - this is normal, just return empty list
         if (isMountedRef.current) {
-          setError({ code: "demo", message });
-          // Only set demo data on initial load
-          if (jobs.length === 0) {
-            setJobs([
-              {
-                id: "job-1",
-                documentId: "doc-harrisons-hf",
-                state: "completed",
-                attempts: 1,
-              },
-              {
-                id: "job-2",
-                documentId: "doc-aha-2022-hf",
-                state: "running",
-                attempts: 1,
-                progress: 45,
-              },
-            ]);
-          }
+          setError({ code: "not_available", message });
+          // Don't show demo data - just show empty list
+          setJobs([]);
         }
       } finally {
         if (isMountedRef.current && showLoading) setLoading(false);
       }
     },
-    [jobs.length],
+    [enabled],
   );
 
   // Manual refetch

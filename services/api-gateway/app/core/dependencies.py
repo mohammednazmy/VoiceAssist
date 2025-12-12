@@ -14,7 +14,9 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.logging import get_logger
 from app.core.security import verify_token
+from app.models.organization import Organization
 from app.models.user import User
+from app.services.organization_service import OrganizationService
 from app.services.session_activity import session_activity_service
 from app.services.token_revocation import token_revocation_service
 from app.services.user_api_key_service import user_api_key_service
@@ -355,3 +357,31 @@ async def get_optional_current_user(
             pass
 
     return None
+
+
+def get_current_organization(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Optional[Organization]:
+    """
+    Resolve the current organization context for the authenticated user.
+
+    Uses OrganizationService.get_user_default_organization to select the
+    most appropriate active organization. Returns None if the user is not
+    associated with any organization (single-tenant / personal use).
+    """
+    service = OrganizationService(db)
+    return service.get_user_default_organization(str(current_user.id))
+
+
+def get_current_organization_id(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Optional[str]:
+    """
+    Convenience dependency that returns the current organization ID as a string.
+
+    Returns None when the user has no effective organization.
+    """
+    org = get_current_organization(db=db, current_user=current_user)
+    return str(org.id) if org else None

@@ -330,7 +330,9 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       });
 
       await waitFor(() => {
-        expect(onPipelineStateChange).toHaveBeenCalledWith("processing");
+        // Callback signature is (state, reason?) - reason may be undefined
+        expect(onPipelineStateChange).toHaveBeenCalled();
+        expect(onPipelineStateChange.mock.calls[0][0]).toBe("processing");
       });
     });
 

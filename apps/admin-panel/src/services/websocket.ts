@@ -91,15 +91,19 @@ class WebSocketService {
     this.connect();
   }
 
-  subscribeStatus(listener: StatusListener) {
+  subscribeStatus(listener: StatusListener): () => void {
     this.listeners.add(listener);
     listener(this.status);
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
-  subscribeMessages(listener: MessageListener) {
+  subscribeMessages(listener: MessageListener): () => void {
     this.messageListeners.add(listener);
-    return () => this.messageListeners.delete(listener);
+    return () => {
+      this.messageListeners.delete(listener);
+    };
   }
 
   private updateStatus(status: ConnectionStatus) {

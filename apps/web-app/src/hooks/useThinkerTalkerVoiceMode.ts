@@ -37,11 +37,15 @@ import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
 import { useAECFeedback, type AECQuality } from "./useAECFeedback";
 import { useNetworkQuality } from "./useNetworkQuality";
-import { useUnifiedConversationStore } from "../stores/unifiedConversationStore";
+import {
+  useUnifiedConversationStore,
+  type MessageSource,
+} from "../stores/unifiedConversationStore";
 import { useAuthStore } from "../stores/authStore";
 import {
   VAD_PRESET_OPTIONS,
   useVoiceSettingsStore,
+  type VADPresetType,
 } from "../stores/voiceSettingsStore";
 import { useAuth } from "./useAuth";
 import { useFeatureFlag } from "./useExperiment";
@@ -63,6 +67,14 @@ export interface TTVoiceModeOptions {
   conversation_id?: string;
   /** Voice settings */
   voiceSettings?: TTVoiceSettings;
+  /** Enable long-form document reading mode for this voice session */
+  readingModeEnabled?: boolean;
+  /** Reading speed preference for TTS */
+  readingSpeed?: "slow" | "normal" | "fast";
+  /** Reading detail preference (short summary vs full detail) */
+  readingDetail?: "short" | "full";
+  /** Voice-level PHI policy ("clinical" for normal, "demo" for PHI-conscious) */
+  phiMode?: "clinical" | "demo";
   /** Volume for playback (0-1) */
   volume?: number;
   /** Auto-connect when hook mounts */
@@ -334,6 +346,77 @@ export interface TTVoiceModeReturn {
 }
 
 // ============================================================================
+// Helper Functions (exported for testing)
+// ============================================================================
+
+/**
+ * Maps VAD preset + sensitivity + personalized threshold into Silero-positiveThreshold/minSpeechMs parameters.
+ * Exported for unit testing.
+ */
+export function mapVadPresetAndSensitivityToSileroParams(
+  baseConfig: { positiveThreshold: number; minSpeechMs: number },
+  options: {
+    vadPreset: VADPresetType;
+    vadSensitivity?: number | null;
+    personalizedVadThreshold?: number | null;
+    vadCustomEnergyThresholdDb: number;
+    vadCustomSilenceDurationMs: number;
+  },
+): { positiveThreshold: number; minSpeechMs: number } {
+  const sensitivity = options.vadSensitivity ?? 50;
+  const normalized = (sensitivity - 50) / 50;
+
+  const preset =
+    VAD_PRESET_OPTIONS.find((p) => p.value === options.vadPreset) ??
+    VAD_PRESET_OPTIONS.find((p) => p.value === "balanced")!;
+
+  const presetEnergyDb =
+    options.vadPreset === "custom"
+      ? options.vadCustomEnergyThresholdDb
+      : preset.energyThresholdDb;
+
+  const rawFromPreset = (presetEnergyDb + 50) / 30;
+  const normalizedFromPreset = Math.min(0.9, Math.max(0.1, rawFromPreset));
+
+  const hasPersonalized =
+    typeof options.personalizedVadThreshold === "number" &&
+    Number.isFinite(options.personalizedVadThreshold) &&
+    options.personalizedVadThreshold > 0;
+
+  const baseThresholdRaw = hasPersonalized
+    ? (options.personalizedVadThreshold as number)
+    : normalizedFromPreset || baseConfig.positiveThreshold;
+
+  const baseThreshold = Math.min(0.6, Math.max(0.25, baseThresholdRaw));
+
+  const baseMinSpeechMs =
+    options.vadPreset === "custom"
+      ? Math.max(50, Math.min(500, options.vadCustomSilenceDurationMs))
+      : preset.minSpeechDurationMs || baseConfig.minSpeechMs;
+
+  const maxThresholdDelta = 0.12;
+  const maxMinSpeechDeltaMs = 80;
+
+  const adjustedThreshold = Math.min(
+    0.6,
+    Math.max(0.25, baseThreshold - normalized * maxThresholdDelta),
+  );
+
+  const adjustedMinSpeechMs = Math.min(
+    140,
+    Math.max(
+      50,
+      Math.round(baseMinSpeechMs - normalized * maxMinSpeechDeltaMs),
+    ),
+  );
+
+  return {
+    positiveThreshold: adjustedThreshold,
+    minSpeechMs: adjustedMinSpeechMs,
+  };
+}
+
+// ============================================================================
 // Hook Implementation
 // ============================================================================
 
@@ -345,6 +428,10 @@ export function useThinkerTalkerVoiceMode(
     voiceSettings,
     volume = 1,
     autoConnect = false,
+    readingModeEnabled = false,
+    readingSpeed = "normal",
+    readingDetail = "full",
+    phiMode = "clinical",
     onUserTranscript,
     onAIResponse,
     onToolCall,
@@ -647,11 +734,20 @@ export function useThinkerTalkerVoiceMode(
             ? (qualityRaw.value as SileroFlagConfig["qualityPreset"])
             : defaultSileroConfig.qualityPreset;
 
+        // For the enabled flag, respect local overrides (forceSileroVAD or
+        // sileroVADEnabled prop) even if backend says false. This allows
+        // developers and users to force-enable VAD for testing/debugging.
+        const backendEnabledFlag = parseBooleanFlag(
+          byName["backend.voice_silero_vad_enabled"] ?? null,
+          true, // Default to true if flag not found
+        );
+        // Local override: if forceSileroVAD is set or sileroVADEnabled prop
+        // is explicitly true, always enable VAD regardless of backend flag
+        const effectiveEnabled =
+          defaultSileroConfig.enabled || backendEnabledFlag;
+
         setSileroFlags({
-          enabled: parseBooleanFlag(
-            byName["backend.voice_silero_vad_enabled"] ?? null,
-            defaultSileroConfig.enabled,
-          ),
+          enabled: effectiveEnabled,
           echoSuppressionMode: echoMode,
           positiveThreshold: parseNumberFlag(
             byName["backend.voice_silero_positive_threshold"] ?? null,
@@ -993,78 +1089,8 @@ export function useThinkerTalkerVoiceMode(
     ],
   );
 
-  /**
-   * Pure helper to map VAD preset + sensitivity + personalized threshold
-   * into Silero-positiveThreshold/minSpeechMs parameters.
-   *
-   * NOTE: Declared as a local function (not an exported top-level symbol)
-   * because this file is compiled as part of the React app bundle. Tests
-   * import it via relative path where needed.
-   */
-  function mapVadPresetAndSensitivityToSileroParams(
-    baseConfig: { positiveThreshold: number; minSpeechMs: number },
-    options: {
-      vadPreset: VADPresetType;
-      vadSensitivity?: number | null;
-      personalizedVadThreshold?: number | null;
-      vadCustomEnergyThresholdDb: number;
-      vadCustomSilenceDurationMs: number;
-    },
-  ): { positiveThreshold: number; minSpeechMs: number } {
-    const sensitivity = options.vadSensitivity ?? 50;
-    const normalized = (sensitivity - 50) / 50;
-
-    const preset =
-      VAD_PRESET_OPTIONS.find((p) => p.value === options.vadPreset) ??
-      VAD_PRESET_OPTIONS.find((p) => p.value === "balanced")!;
-
-    const presetEnergyDb =
-      options.vadPreset === "custom"
-        ? options.vadCustomEnergyThresholdDb
-        : preset.energyThresholdDb;
-
-    const rawFromPreset = (presetEnergyDb + 50) / 30;
-    const normalizedFromPreset = Math.min(0.9, Math.max(0.1, rawFromPreset));
-
-    const hasPersonalized =
-      typeof options.personalizedVadThreshold === "number" &&
-      Number.isFinite(options.personalizedVadThreshold) &&
-      options.personalizedVadThreshold > 0;
-
-    const baseThresholdRaw = hasPersonalized
-      ? (options.personalizedVadThreshold as number)
-      : normalizedFromPreset || baseConfig.positiveThreshold;
-
-    const baseThreshold = Math.min(0.6, Math.max(0.25, baseThresholdRaw));
-
-    const baseMinSpeechMs =
-      options.vadPreset === "custom"
-        ? Math.max(50, Math.min(500, options.vadCustomSilenceDurationMs))
-        : preset.minSpeechDurationMs || baseConfig.minSpeechMs;
-
-    const maxThresholdDelta = 0.12;
-    const maxMinSpeechDeltaMs = 80;
-
-    const adjustedThreshold = Math.min(
-      0.6,
-      Math.max(0.25, baseThreshold - normalized * maxThresholdDelta),
-    );
-
-    const adjustedMinSpeechMs = Math.min(
-      140,
-      Math.max(
-        50,
-        Math.round(baseMinSpeechMs - normalized * maxMinSpeechDeltaMs),
-      ),
-    );
-
-    return {
-      positiveThreshold: adjustedThreshold,
-      minSpeechMs: adjustedMinSpeechMs,
-    };
-  }
-
   // Map per-user VAD sensitivity slider (0-100) into safe Silero ranges.
+  // Uses the exported helper function defined at module level.
   //  - Higher sensitivity → lower positive threshold, shorter minSpeechMs
   //  - Lower sensitivity  → higher positive threshold, longer minSpeechMs
   const userAdjustedSileroConfig = useMemo(() => {
@@ -1109,6 +1135,11 @@ export function useThinkerTalkerVoiceMode(
         vadPreset === "custom" ? vadCustomEnergyThresholdDb : null,
       vad_custom_silence_duration_ms:
         vadPreset === "custom" ? vadCustomSilenceDurationMs : null,
+      // Document reading & PHI-conscious voice controls
+      reading_mode_enabled: readingModeEnabled,
+      reading_speed: readingSpeed,
+      reading_detail: readingDetail,
+      phi_mode: phiMode,
     }),
     [
       vadSensitivity,
@@ -1118,6 +1149,10 @@ export function useThinkerTalkerVoiceMode(
       vadPreset,
       vadCustomEnergyThresholdDb,
       vadCustomSilenceDurationMs,
+      readingModeEnabled,
+      readingSpeed,
+      readingDetail,
+      phiMode,
     ],
   );
 
@@ -1250,15 +1285,24 @@ export function useThinkerTalkerVoiceMode(
     // Handle streaming response
     onResponseDelta: (delta: string, messageId: string) => {
       if (messageId !== currentResponseId) {
-        // New response has started. Always reset playback so any
-        // barge-in state from the previous turn is cleared and the
-        // new audio can be heard immediately.
-        voiceLog.debug(
-          "[TTVoiceMode] New response started - resetting playback for fresh stream",
-        );
+        // Reset playback when:
+        // 1. Switching between different responses mid-stream
+        // 2. Starting a NEW response (currentResponseId is null/undefined)
+        //
+        // We ALWAYS reset when starting a new response because:
+        // - If previous turn's audio finished, we need to clear stale scheduling refs
+        // - If audio is still playing from a previous turn, it needs to stop for the new response
+        // - The nextScheduledTimeRef accumulates and causes latency/doubled audio if not reset
+        if (currentResponseId !== null && currentResponseId !== undefined) {
+          voiceLog.debug(
+            `[TTVoiceMode] Switching to new response (${currentResponseId} -> ${messageId}) - resetting playback`,
+          );
+        } else {
+          voiceLog.debug(
+            `[TTVoiceMode] Starting new response ${messageId} - resetting playback to clear stale state`,
+          );
+        }
         audioPlayback.reset();
-
-        voiceLog.debug(`[TTVoiceMode] New response started: ${messageId}`);
         currentResponseId = messageId;
       }
       onAIResponse?.(delta, false);
@@ -1270,6 +1314,56 @@ export function useThinkerTalkerVoiceMode(
     onResponseComplete: (content: string, _messageId: string) => {
       currentResponseId = null;
       onAIResponse?.(content, true);
+    },
+
+    // Surface KB context in unified store when KB tools complete
+    onToolResult: (toolCall: TTToolCall) => {
+      try {
+        if (
+          (toolCall.name === "kb_search" ||
+            toolCall.name === "knowledge_base_query") &&
+          toolCall.status === "completed" &&
+          toolCall.result &&
+          typeof toolCall.result === "object"
+        ) {
+          const result = toolCall.result as {
+            sources?: Array<{
+              id?: string;
+              title?: string;
+              category?: string;
+            }>;
+          };
+          const sources = Array.isArray(result.sources)
+            ? result.sources
+                .filter(
+                  (s) =>
+                    s &&
+                    typeof s.title === "string" &&
+                    s.title.trim().length > 0,
+                )
+                .map((s) => ({
+                  id: s.id,
+                  title: s.title.trim(),
+                  category: s.category,
+                }))
+            : [];
+
+          useUnifiedConversationStore.setState({
+            lastKbContext:
+              sources.length > 0
+                ? {
+                    toolName: toolCall.name,
+                    sources,
+                  }
+                : null,
+          });
+        }
+      } catch (err) {
+        voiceLog.debug(
+          "[TTVoiceMode] Failed to update KB context from tool result",
+          err,
+        );
+      }
     },
 
     // Handle audio chunks

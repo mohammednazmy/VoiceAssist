@@ -12,6 +12,7 @@ export type StatusType =
   | "degraded"
   | "warning"
   | "pending"
+  | "info"
   | "unhealthy"
   | "disconnected"
   | "offline"
@@ -43,6 +44,9 @@ const statusColors: Record<string, string> = {
   degraded: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
   warning: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
   pending: "bg-yellow-900/50 text-yellow-400 border-yellow-800",
+
+  // Blue statuses (informational)
+  info: "bg-blue-900/50 text-blue-400 border-blue-800",
 
   // Red statuses
   unhealthy: "bg-red-900/50 text-red-400 border-red-800",

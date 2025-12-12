@@ -4,6 +4,7 @@ import { usePrompts } from "../../hooks/usePrompts";
 import type {
   Prompt,
   PromptCreate,
+  PromptUpdate,
   PromptType,
   PromptStatus,
   PromptStats,
@@ -33,10 +34,10 @@ const PROMPT_TYPE_LABELS: Record<PromptType, string> = {
   system: "System",
 };
 
-const STATUS_COLORS: Record<PromptStatus, "green" | "yellow" | "purple"> = {
-  draft: "yellow",
-  published: "green",
-  archived: "purple",
+const STATUS_COLORS: Record<PromptStatus, "success" | "warning" | "info"> = {
+  draft: "warning",
+  published: "success",
+  archived: "info",
 };
 
 export function PromptsPage() {
@@ -107,9 +108,10 @@ export function PromptsPage() {
   };
 
   // Handle create
-  const handleCreate = async (data: PromptCreate) => {
+  const handleCreate = async (data: PromptCreate | PromptUpdate) => {
+    // For create, we cast to PromptCreate since the modal provides all required fields
     setUpdating(true);
-    const result = await createPrompt(data);
+    const result = await createPrompt(data as PromptCreate);
     if (result) {
       setShowCreateModal(false);
       await getStats().then(setStats);
@@ -119,7 +121,7 @@ export function PromptsPage() {
   };
 
   // Handle update
-  const handleUpdate = async (data: Partial<Prompt>) => {
+  const handleUpdate = async (data: PromptUpdate) => {
     if (!editingPrompt) return false;
     setUpdating(true);
     const result = await updatePrompt(editingPrompt.id, {
@@ -128,6 +130,7 @@ export function PromptsPage() {
       system_prompt: data.system_prompt,
       intent_category: data.intent_category,
       metadata: data.metadata,
+      change_summary: data.change_summary,
     });
     if (result) {
       setEditingPrompt(null);

@@ -21,6 +21,7 @@ vi.mock("../../lib/apiClient", () => ({
     login: mockLogin,
     getCurrentUser: mockGetCurrentUser,
     refreshToken: mockRefreshToken,
+    getBaseUrl: () => "http://localhost:8000",
   }),
   persistTokens: (...args: unknown[]) => mockPersistTokens(...args),
   persistRole: (...args: unknown[]) => mockPersistRole(...args),
@@ -72,20 +73,22 @@ describe("AuthContext", () => {
     mockLocalStorage = {};
     mockGetStoredRole.mockReturnValue(null);
 
-    // Mock localStorage
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(
-      (key: string) => mockLocalStorage[key] || null,
-    );
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(
-      (key: string, value: string) => {
-        mockLocalStorage[key] = value;
+    // Mock localStorage with a simple in-memory implementation
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: (key: string) => mockLocalStorage[key] || null,
+        setItem: (key: string, value: string) => {
+          mockLocalStorage[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete mockLocalStorage[key];
+        },
+        clear: () => {
+          mockLocalStorage = {};
+        },
       },
-    );
-    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(
-      (key: string) => {
-        delete mockLocalStorage[key];
-      },
-    );
+      writable: true,
+    });
   });
 
   afterEach(() => {
@@ -301,7 +304,7 @@ describe("AuthContext", () => {
         }
       });
 
-      expect(loginError?.message).toBe("Invalid credentials");
+      expect((loginError as Error | null)?.message).toBe("Invalid credentials");
 
       // Wait for error state to be reflected in UI
       await waitFor(() => {

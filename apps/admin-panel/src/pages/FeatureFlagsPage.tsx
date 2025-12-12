@@ -81,7 +81,7 @@ export function FeatureFlagsPage() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formType, setFormType] = useState<
-    "boolean" | "string" | "number" | "json"
+    "boolean" | "string" | "number" | "json" | "multivariate"
   >("boolean");
   const [formEnabled, setFormEnabled] = useState(false);
   const [formValue, setFormValue] = useState("");
@@ -158,7 +158,7 @@ export function FeatureFlagsPage() {
 
   const parseValue = (
     value: string,
-    type: "boolean" | "string" | "number" | "json",
+    type: "boolean" | "string" | "number" | "json" | "multivariate",
   ): unknown => {
     try {
       switch (type) {
@@ -690,16 +690,18 @@ export function FeatureFlagsPage() {
 }
 
 // Form Modal Component
+type FlagType = "boolean" | "string" | "number" | "json" | "multivariate";
+
 interface FlagFormModalProps {
   title: string;
   formName: string;
   formDescription: string;
-  formType: "boolean" | "string" | "number" | "json";
+  formType: FlagType;
   formEnabled: boolean;
   formValue: string;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
-  onTypeChange: (value: "boolean" | "string" | "number" | "json") => void;
+  onTypeChange: (value: FlagType) => void;
   onEnabledChange: (value: boolean) => void;
   onValueChange: (value: string) => void;
   onSubmit: () => void;

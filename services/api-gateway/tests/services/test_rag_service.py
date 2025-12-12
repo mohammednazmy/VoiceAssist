@@ -6,8 +6,9 @@ and query processing pipeline.
 """
 
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.services.rag_service import Citation, QueryOrchestrator, QueryRequest, QueryResponse
 
 
@@ -371,3 +372,48 @@ class TestQueryResponseSerialization:
         )
         assert len(response.reasoning_path) == 3
         assert response.reasoning_path[0]["action"] == "query_expansion"
+
+
+class TestQueryOrchestratorPhiConsciousRetrieval:
+    """Tests for PHI-conscious retrieval behavior in QueryOrchestrator."""
+
+    @pytest.mark.asyncio
+    async def test_run_retrieval_with_exclude_phi_applies_filter(self):
+        """
+        Ensure that when exclude_phi=True, SearchAggregator.search is called with phi_risk filter.
+        """
+        orchestrator = QueryOrchestrator(enable_rag=True)
+        mock_search = AsyncMock(return_value=[])
+        orchestrator.search_aggregator = MagicMock()
+        orchestrator.search_aggregator.search = mock_search
+        orchestrator.search_aggregator.synthesize_across_documents = MagicMock(
+            return_value={"context": "", "documents": []}
+        )
+        orchestrator.search_aggregator.format_context_for_rag = MagicMock(return_value="")
+        orchestrator.search_aggregator.confidence_score = MagicMock(return_value=0.5)
+
+        await orchestrator._run_retrieval("test query", exclude_phi=True)
+
+        assert mock_search.await_count >= 1
+        _args, kwargs = mock_search.await_args
+        filters = kwargs.get("filter_conditions") or {}
+        assert "phi_risk" in filters
+        assert filters["phi_risk"] == ["none", "low", "medium"]
+
+    @pytest.mark.asyncio
+    async def test_prepare_llm_request_threads_exclude_phi_from_query_request(self):
+        """
+        Ensure QueryRequest.exclude_phi is threaded into _run_retrieval.
+        """
+        orchestrator = QueryOrchestrator(enable_rag=True)
+        mock_run_retrieval = AsyncMock(return_value=([], "", [], 0.0))
+        orchestrator._run_retrieval = mock_run_retrieval  # type: ignore[assignment]
+
+        request = QueryRequest(session_id="s", query="q", clinical_context_id=None, exclude_phi=True)
+        await orchestrator._prepare_llm_request(request=request, clinical_context=None, trace_id="trace-1")
+
+        mock_run_retrieval.assert_awaited()
+        args, kwargs = mock_run_retrieval.await_args
+        # First positional arg is query text; exclude_phi should be passed as kwarg
+        assert args[0] == "q"
+        assert kwargs.get("exclude_phi") is True

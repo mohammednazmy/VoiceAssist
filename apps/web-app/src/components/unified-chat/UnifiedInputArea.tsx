@@ -5,7 +5,7 @@
  * Supports automatic input detection, push-to-talk, and always-on voice modes.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Mic,
   MicOff,
@@ -234,6 +234,50 @@ export function UnifiedInputArea({
       stopListening();
     }
   }, [voiceModeActive, settingsVoiceModeType, isListening, stopListening]);
+
+  // -------------------------------------------------------------------------
+  // Automation Debug Hook (E2E Only)
+  // -------------------------------------------------------------------------
+
+  // Detect Playwright/automation context via navigator.webdriver
+  const isAutomation =
+    typeof navigator !== "undefined" &&
+    (navigator as Navigator & { webdriver?: boolean }).webdriver;
+
+  // In automation, expose a small, non-PHI debug surface on window.__voice_debug
+  // so Playwright tests can assert which voice entry path is active and whether
+  // the unified voice toggle is rendered and enabled.
+  useEffect(() => {
+    if (!isAutomation || typeof window === "undefined") {
+      return;
+    }
+
+    const debugState = {
+      hasUnifiedInputArea: true,
+      hasVoiceModeToggle: true,
+      voiceModeActive,
+      isVoicePanelOpen,
+      voiceState,
+      settingsVoiceModeType,
+      disabled,
+    };
+
+    const win = window as Window & {
+      __voice_debug?: Record<string, unknown>;
+    };
+
+    win.__voice_debug = {
+      ...(win.__voice_debug || {}),
+      unifiedInput: debugState,
+    };
+  }, [
+    isAutomation,
+    voiceModeActive,
+    isVoicePanelOpen,
+    voiceState,
+    settingsVoiceModeType,
+    disabled,
+  ]);
 
   // -------------------------------------------------------------------------
   // Render Helpers

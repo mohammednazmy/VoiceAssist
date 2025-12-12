@@ -49,7 +49,7 @@ const mockResources = {
 };
 
 const mockHealth = {
-  status: "healthy",
+  status: "healthy" as const,
   uptime_seconds: 86400,
   services: {
     api: "healthy",
@@ -322,7 +322,9 @@ describe("SystemPage", () => {
 
     render(<SystemPage />);
 
-    const refreshButton = screen.getByRole("button", { name: /refresh/i });
+    const refreshButton = screen.getByRole("button", {
+      name: /^refresh$/i,
+    });
     fireEvent.click(refreshButton);
 
     expect(mockRefresh).toHaveBeenCalled();

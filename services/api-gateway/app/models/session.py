@@ -25,7 +25,13 @@ class Session(Base):
     )
     title = Column(String(255), nullable=True)
 
-    # Organization
+    # Organization / folder
+    organization_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     folder_id = Column(
         UUID(as_uuid=True),
         ForeignKey("conversation_folders.id", ondelete="SET NULL"),
@@ -48,6 +54,7 @@ class Session(Base):
 
     # Relationships
     folder = relationship("ConversationFolder", back_populates="sessions")
+    organization = relationship("Organization", foreign_keys=[organization_id])
 
     def __repr__(self):
         return f"<Session(id={self.id}, user_id={self.user_id})>"

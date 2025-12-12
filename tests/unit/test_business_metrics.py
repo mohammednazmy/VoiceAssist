@@ -22,7 +22,7 @@ class Counter:
     def __init__(self, name: str, description: str, labels: List[str] = None):
         self.name = name
         self.description = description
-        self.labels = labels or []
+        self.label_names = labels or []
         self._values: Dict[tuple, float] = defaultdict(float)
         self._label_values: Dict[str, Any] = {}
 
@@ -33,7 +33,7 @@ class Counter:
 
     def labels(self, **label_values):
         """Set label values for this counter."""
-        new_counter = Counter(self.name, self.description, self.labels)
+        new_counter = Counter(self.name, self.description, self.label_names)
         new_counter._values = self._values
         new_counter._label_values = label_values
         return new_counter
@@ -50,7 +50,7 @@ class Gauge:
     def __init__(self, name: str, description: str, labels: List[str] = None):
         self.name = name
         self.description = description
-        self.labels = labels or []
+        self.label_names = labels or []
         self._values: Dict[tuple, float] = defaultdict(float)
         self._label_values: Dict[str, Any] = {}
 
@@ -71,7 +71,7 @@ class Gauge:
 
     def labels(self, **label_values):
         """Set label values for this gauge."""
-        new_gauge = Gauge(self.name, self.description, self.labels)
+        new_gauge = Gauge(self.name, self.description, self.label_names)
         new_gauge._values = self._values
         new_gauge._label_values = label_values
         return new_gauge
@@ -89,7 +89,7 @@ class Histogram:
         self.name = name
         self.description = description
         self.buckets = buckets or [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-        self.labels = labels or []
+        self.label_names = labels or []
         self._observations: Dict[tuple, List[float]] = defaultdict(list)
         self._label_values: Dict[str, Any] = {}
 
@@ -100,7 +100,7 @@ class Histogram:
 
     def labels(self, **label_values):
         """Set label values for this histogram."""
-        new_histogram = Histogram(self.name, self.description, self.buckets, self.labels)
+        new_histogram = Histogram(self.name, self.description, self.buckets, self.label_names)
         new_histogram._observations = self._observations
         new_histogram._label_values = label_values
         return new_histogram
@@ -237,7 +237,7 @@ def test_register_metric_with_labels():
         labels=["method", "endpoint"]
     )
 
-    assert counter.labels == ["method", "endpoint"]
+    assert counter.label_names == ["method", "endpoint"]
 
 
 # ============================================================================

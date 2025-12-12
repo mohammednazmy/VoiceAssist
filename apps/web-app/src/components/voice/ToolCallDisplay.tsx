@@ -25,6 +25,11 @@ export interface ToolCallDisplayProps {
   showResults?: boolean;
   /** Custom class name */
   className?: string;
+  /**
+   * Optional callback for KB source clicks. When provided, it is called with
+   * the source metadata before the title is copied to clipboard.
+   */
+  onKBSourceClick?: (source: { id?: string; title: string; category?: string }) => void;
 }
 
 // ============================================================================
@@ -153,16 +158,52 @@ function ToolCallItem({
   showResults,
   isExpanded,
   onToggle,
+  onKBSourceClick,
 }: {
   toolCall: TTToolCall;
   showArguments: boolean;
   showResults: boolean;
   isExpanded: boolean;
   onToggle: () => void;
+  onKBSourceClick?: (source: { id?: string; title: string; category?: string }) => void;
 }) {
   const hasDetails =
     (showArguments && Object.keys(toolCall.arguments).length > 0) ||
     (showResults && toolCall.result !== undefined);
+
+  const isKBSearch =
+    toolCall.name === "kb_search" ||
+    toolCall.name === "knowledge_base_query";
+
+  const kbResult =
+    isKBSearch && typeof toolCall.result === "object" && toolCall.result !== null
+      ? (toolCall.result as {
+          answer?: string;
+          sources?: Array<{
+            id?: string;
+            title?: string;
+            category?: string;
+            score?: number;
+          }>;
+        })
+      : null;
+
+  const hasKBAnswer = Boolean(kbResult && kbResult.answer);
+
+  const handleSourceClick = (sourceTitle: string, sourceId?: string, sourceCategory?: string) => {
+    const text = sourceTitle.trim();
+    if (!text) return;
+
+    if (onKBSourceClick) {
+      onKBSourceClick({ id: sourceId, title: text, category: sourceCategory });
+    }
+
+    if (navigator?.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        // Clipboard is a convenience only; ignore failures.
+      });
+    }
+  };
 
   return (
     <div
@@ -185,6 +226,11 @@ function ToolCallItem({
           <span className="font-medium text-sm text-neutral-800">
             {formatToolName(toolCall.name)}
           </span>
+          {isKBSearch && hasKBAnswer && (
+            <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+              KB Answer
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <StatusIndicator status={toolCall.status} />
@@ -221,15 +267,114 @@ function ToolCallItem({
           )}
 
           {showResults && toolCall.result !== undefined && (
-            <div className="mt-2">
-              <div className="text-xs font-medium text-neutral-500 mb-1">
-                Result
-              </div>
-              <div className="text-xs text-neutral-600 bg-neutral-50 rounded p-2 font-mono overflow-x-auto max-h-32 overflow-y-auto">
-                {typeof toolCall.result === "string"
-                  ? truncate(toolCall.result, 200)
-                  : JSON.stringify(toolCall.result, null, 2)}
-              </div>
+            <div className="mt-3 space-y-2" data-testid="tool-call-result">
+              {isKBSearch && hasKBAnswer ? (
+                <div className="rounded border border-emerald-200 bg-emerald-50/60 px-3 py-2">
+                  <div className="text-[11px] font-semibold uppercase text-emerald-700 mb-1">
+                    KB Answer
+                  </div>
+                  <p className="text-xs text-neutral-900 whitespace-pre-line">
+                    {kbResult?.answer}
+                  </p>
+                  {Array.isArray(kbResult?.sources) &&
+                    (kbResult?.sources?.length ?? 0) > 0 && (
+                      <div className="mt-2">
+                        <div className="text-[10px] font-semibold uppercase text-neutral-600 mb-1">
+                          Sources
+                        </div>
+                        <ul className="space-y-1">
+                          {kbResult?.sources?.map((source, index) => {
+                            const key =
+                              source.id ?? `${toolCall.id}-source-${index}`;
+                            const title =
+                              source.title && source.title.trim().length > 0
+                                ? source.title
+                                : "Untitled source";
+                            return (
+                              <li key={key}>
+                                <div className="flex items-center justify-between gap-1">
+                                  <button
+                                    type="button"
+                                    className="inline-flex max-w-full items-center gap-1 rounded px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                    title="Click to copy title for your notes"
+                                    onClick={() =>
+                                      handleSourceClick(
+                                        title,
+                                        source.id,
+                                        source.category,
+                                      )
+                                    }
+                                  >
+                                    <span className="truncate font-medium">
+                                      {title}
+                                    </span>
+                                    {source.category && (
+                                      <span className="truncate text-neutral-500">
+                                        ({source.category})
+                                      </span>
+                                    )}
+                                  </button>
+                                  {onKBSourceClick && source.id && (
+                                    <button
+                                      type="button"
+                                      aria-label="Open document"
+                                      title="Open in documents"
+                                      className="inline-flex flex-shrink-0 items-center rounded-full border border-emerald-200 bg-white p-1 text-[10px] text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                      onClick={() =>
+                                        onKBSourceClick({
+                                          id: source.id,
+                                          title,
+                                          category: source.category,
+                                        })
+                                      }
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth={1.5}
+                                        className="h-3 w-3"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M9.75 6.75h8.5m0 0v8.5m0-8.5L9 16.25M7.5 7.5v10a1 1 0 001 1h10"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  {kbResult?.answer && (
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        className="inline-flex items-center rounded border border-emerald-300 bg-white px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                        onClick={() => handleSourceClick(kbResult.answer || "", undefined, undefined)}
+                      >
+                        Copy answer
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs font-medium text-neutral-500">
+                    Result
+                  </div>
+                  <div className="text-xs text-neutral-600 bg-neutral-50 rounded p-2 font-mono overflow-x-auto max-h-32 overflow-y-auto">
+                    {typeof toolCall.result === "string"
+                      ? truncate(toolCall.result, 200)
+                      : JSON.stringify(toolCall.result, null, 2)}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -248,6 +393,7 @@ export function ToolCallDisplay({
   showArguments = true,
   showResults = true,
   className = "",
+  onKBSourceClick,
 }: ToolCallDisplayProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
@@ -323,6 +469,7 @@ export function ToolCallDisplay({
             showResults={showResults}
             isExpanded={expandedIds.has(toolCall.id)}
             onToggle={() => toggleExpanded(toolCall.id)}
+            onKBSourceClick={onKBSourceClick}
           />
         ))}
       </div>

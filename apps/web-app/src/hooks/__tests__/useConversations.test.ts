@@ -37,7 +37,8 @@ describe("useConversations", () => {
     // Mock getConversations to return empty array by default
     (mockApiClient.getConversations as any).mockResolvedValue({
       items: [],
-      total: 0,
+      totalCount: 0,
+      totalPages: 0,
       page: 1,
       pageSize: 100,
     });
@@ -85,14 +86,16 @@ describe("useConversations", () => {
 
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: [mockConversation],
-        total: 1,
+        totalCount: 1,
+        totalPages: 1,
         page: 1,
         pageSize: 100,
       });
 
       (mockApiClient.getMessages as any).mockResolvedValue({
         items: mockMessages,
-        total: mockMessages.length,
+        totalCount: mockMessages.length,
+        totalPages: 1,
         page: 1,
         pageSize: 50,
       });
@@ -166,14 +169,16 @@ describe("useConversations", () => {
 
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: [mockConversation],
-        total: 1,
+        totalCount: 1,
+        totalPages: 1,
         page: 1,
         pageSize: 100,
       });
 
       (mockApiClient.getMessages as any).mockResolvedValue({
         items: mockMessages,
-        total: mockMessages.length,
+        totalCount: mockMessages.length,
+        totalPages: 1,
         page: 1,
         pageSize: 50,
       });
@@ -213,7 +218,8 @@ describe("useConversations", () => {
     it("should handle export error for non-existent conversation", async () => {
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: [],
-        total: 0,
+        totalCount: 0,
+        totalPages: 0,
         page: 1,
         pageSize: 100,
       });
@@ -248,7 +254,8 @@ describe("useConversations", () => {
 
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: mockConversations,
-        total: 1,
+        totalCount: 1,
+        totalPages: 1,
         page: 1,
         pageSize: 100,
       });
@@ -288,10 +295,10 @@ describe("useConversations", () => {
       await act(async () => {
         resolvePromise!({
           items: [],
-          total: 0,
+          totalCount: 0,
+          totalPages: 1,
           page: 1,
           pageSize: 100,
-          totalPages: 1,
         });
       });
 
@@ -332,7 +339,8 @@ describe("useConversations", () => {
 
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: mockConversations,
-        total: 2,
+        totalCount: 2,
+        totalPages: 1,
         page: 1,
         pageSize: 100,
       });
@@ -375,7 +383,8 @@ describe("useConversations", () => {
 
       (mockApiClient.getConversations as any).mockResolvedValue({
         items: mockConversations,
-        total: 2,
+        totalCount: 2,
+        totalPages: 1,
         page: 1,
         pageSize: 100,
       });

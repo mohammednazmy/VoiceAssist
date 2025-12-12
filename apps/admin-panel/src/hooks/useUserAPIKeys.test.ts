@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
-import { useUserAPIKeys } from "./useUserAPIKeys";
+import { useUserAPIKeys, UserAPIKeyCreated } from "./useUserAPIKeys";
 
 // Mock the api module
 vi.mock("../lib/api", () => ({
@@ -180,7 +180,7 @@ describe("useUserAPIKeys", () => {
           keys: [...mockKeys, mockCreatedKey],
         });
 
-      let createdKey;
+      let createdKey: UserAPIKeyCreated | undefined;
       await act(async () => {
         createdKey = await result.current.createKey("New API Key");
       });
@@ -193,7 +193,7 @@ describe("useUserAPIKeys", () => {
         }),
       });
       expect(createdKey).toEqual(mockCreatedKey);
-      expect(createdKey?.key).toBe("vak_new_abcdef123456789"); // Full key returned
+      expect(createdKey!.key).toBe("vak_new_abcdef123456789"); // Full key returned
     });
 
     it("should create a new API key with expiration", async () => {
@@ -212,7 +212,7 @@ describe("useUserAPIKeys", () => {
         .mockResolvedValueOnce(keyWithExpiry)
         .mockResolvedValueOnce(mockKeysResponse);
 
-      let createdKey;
+      let createdKey: UserAPIKeyCreated | undefined;
       await act(async () => {
         createdKey = await result.current.createKey("Expiring Key", 90);
       });
@@ -224,7 +224,7 @@ describe("useUserAPIKeys", () => {
           expires_in_days: 90,
         }),
       });
-      expect(createdKey?.expires_at).toBe("2024-04-16T10:00:00Z");
+      expect(createdKey!.expires_at).toBe("2024-04-16T10:00:00Z");
     });
 
     it("should refresh keys after creation", async () => {

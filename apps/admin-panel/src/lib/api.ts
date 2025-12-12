@@ -1,6 +1,14 @@
-import type { AxiosRequestConfig, Method } from "axios";
 import { getApiClient } from "./apiClient";
 import type { APIEnvelope } from "../types";
+
+// Local types to match axios config structure (avoids axios dependency)
+type Method = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+interface RequestConfig {
+  url: string;
+  method: Method;
+  headers?: Record<string, string>;
+  data?: unknown;
+}
 
 export class APIError extends Error {
   code: string;
@@ -31,7 +39,7 @@ export async function fetchAPI<T>(
     ...(options?.headers || {}),
   } as Record<string, string>;
 
-  const config: AxiosRequestConfig = {
+  const config: RequestConfig = {
     url: path,
     method: (options?.method as Method) || "GET",
     headers,

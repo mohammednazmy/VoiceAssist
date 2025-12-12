@@ -51,6 +51,10 @@ import type {
   PHIStats,
   PHIEventsResponse,
   PHIHealthStatus,
+  KBDocumentSummary,
+  KBPagination,
+  KBSearchResult,
+  KBRAGAnswer,
   // Sprint 4: Medical AI & System types
   ModelInfo,
   ModelUsageMetrics,
@@ -165,6 +169,127 @@ export interface AdminKBUploadResponse {
   status: string;
   chunks_indexed: number;
   message: string;
+}
+
+// =========================================================================
+// User Document Types (Voice Navigation)
+// =========================================================================
+
+/** User document with structure information */
+export interface UserDocument {
+  document_id: string;
+  title: string;
+  source_type: string;
+  filename: string | null;
+  file_type: string | null;
+  total_pages: number | null;
+  has_toc: boolean;
+  has_figures: boolean;
+  is_public: boolean;
+  chunks_indexed: number;
+  indexing_status: "processing" | "indexed" | "failed";
+  indexing_error: string | null;
+  created_at: string;
+  updated_at: string;
+  doc_metadata?: Record<string, unknown>;
+}
+
+/** Response after user document upload */
+export interface UserDocumentUploadResponse {
+  document_id: string;
+  title: string;
+  status: string;
+  message: string;
+}
+
+/** Document processing status response */
+export interface UserDocumentStatusResponse {
+  document_id: string;
+  status: string;
+  chunks_indexed: number;
+  error: string | null;
+  progress_percent: number | null;
+  total_pages: number | null;
+  has_toc: boolean;
+  has_figures: boolean;
+}
+
+/** Document structure (pages, TOC, sections, figures) */
+export interface DocumentStructure {
+  pages?: Array<{
+    page_number: number;
+    text: string;
+    word_count: number;
+    has_figures: boolean;
+  }>;
+  toc?: Array<{
+    title: string;
+    level: number;
+    page_number: number;
+    section_id: string;
+  }>;
+  sections?: Array<{
+    section_id: string;
+    title: string;
+    level: number;
+    start_page: number;
+    end_page: number;
+  }>;
+  figures?: Array<{
+    figure_id: string;
+    page_number: number;
+    caption: string | null;
+    description: string | null;
+  }>;
+}
+
+/** Voice document session state */
+export interface VoiceDocumentSession {
+  session_id: string;
+  document_id: string;
+  document_title: string;
+  total_pages: number | null;
+  has_toc: boolean;
+  has_figures: boolean;
+  current_page: number;
+  current_section_id: string | null;
+  current_section_title?: string | null;
+  is_active: boolean;
+  conversation_id: string;
+}
+
+/** Response for inactive voice document session */
+export interface InactiveVoiceDocumentSession {
+  active: false;
+  conversation_id: string;
+}
+
+/** Page content from voice document session */
+export interface VoiceDocumentPageContent {
+  page_number: number;
+  total_pages: number;
+  content: string;
+  word_count: number;
+  has_figures: boolean;
+  figures: Array<{
+    figure_id: string;
+    page_number: number;
+    caption: string | null;
+    description: string | null;
+  }>;
+}
+
+/** TOC response from voice document session */
+export interface VoiceDocumentTOC {
+  has_toc: boolean;
+  toc: Array<{
+    title: string;
+    level: number;
+    page_number: number;
+    section_id: string;
+  }>;
+  document_title?: string;
+  message?: string;
 }
 
 /** Feature Flag configuration */
@@ -774,6 +899,19 @@ export class VoiceAssistApiClient {
     return response.data.data!;
   }
 
+  /**
+   * Generate an automatic clinical title for a conversation.
+   *
+   * Uses backend heuristics + optional LLM summarization to produce
+   * a concise, PHI-conscious title based on the first few turns.
+   */
+  async autoTitleConversation(id: string): Promise<Conversation> {
+    const response = await this.client.post<ApiResponse<Conversation>>(
+      `/api/conversations/${id}/auto-title`,
+    );
+    return response.data.data!;
+  }
+
   async archiveConversation(id: string): Promise<Conversation> {
     return this.updateConversation(id, { archived: true });
   }
@@ -1149,6 +1287,427 @@ export class VoiceAssistApiClient {
     const response = await this.client.delete<
       ApiResponse<{ document_id: string; status: string; message: string }>
     >(`/admin/kb/documents/${documentId}`);
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // User Documents (Voice Navigation)
+  // =========================================================================
+
+  /**
+   * Upload a document into the user-facing KB surface.
+   * Wraps /api/kb/documents and behaves similarly to uploadUserDocument,
+   * while allowing optional metadata to be attached.
+   */
+  async uploadKBDocument(
+    file: File,
+    options?: {
+      title?: string;
+      category?: string;
+      metadata?: Record<string, unknown>;
+    },
+    onProgress?: (progress: number) => void,
+  ): Promise<UserDocumentUploadResponse & { metadata?: Record<string, unknown> }> {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (options?.title) formData.append("title", options.title);
+    if (options?.category) {
+      formData.append("category", options.category);
+    }
+    if (options?.metadata) {
+      formData.append("metadata", JSON.stringify(options.metadata));
+    }
+
+    const response = await this.client.post<
+      ApiResponse<UserDocumentUploadResponse & { metadata?: Record<string, unknown> }>
+    >("/api/kb/documents", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total,
+          );
+          onProgress(percentCompleted);
+        }
+      },
+    });
+
+    return response.data.data!;
+  }
+
+  /**
+   * List KB documents for the current user via /api/kb/documents.
+   */
+  async listKBDocuments(
+    page = 1,
+    pageSize = 20,
+    category?: string,
+  ): Promise<{ documents: KBDocumentSummary[]; pagination: KBPagination }> {
+    const params: Record<string, unknown> = {
+      page,
+      page_size: pageSize,
+    };
+    if (category) {
+      params.category = category;
+    }
+
+    const response = await this.client.get<
+      ApiResponse<{ documents: KBDocumentSummary[]; pagination: KBPagination }>
+    >("/api/kb/documents", { params });
+
+    return response.data.data!;
+  }
+
+  /**
+   * Retrieve a single KB document by ID.
+   */
+  async getKBDocument(documentId: string): Promise<KBDocumentSummary> {
+    const response = await this.client.get<ApiResponse<KBDocumentSummary>>(
+      `/api/kb/documents/${documentId}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Delete a KB document by ID.
+   */
+  async deleteKBDocument(documentId: string): Promise<{ document_id: string; status: string }> {
+    const response = await this.client.delete<
+      ApiResponse<{ document_id: string; status: string }>
+    >(`/api/kb/documents/${documentId}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Search KB documents via /api/kb/documents/search.
+   */
+  async searchKBDocuments(params: {
+    query: string;
+    searchType?: "keyword" | "semantic";
+    filters?: Record<string, unknown>;
+    limit?: number;
+  }): Promise<KBSearchResult[]> {
+    const payload: Record<string, unknown> = {
+      query: params.query,
+      search_type: params.searchType ?? "keyword",
+      filters: params.filters ?? {},
+      limit: params.limit ?? 10,
+    };
+
+    const response = await this.client.post<ApiResponse<{ results: KBSearchResult[] }>>(
+      "/api/kb/documents/search",
+      payload,
+    );
+    return response.data.data?.results ?? [];
+  }
+
+  /**
+   * Run a KB-backed RAG query via /api/kb/query.
+   */
+  async queryKB(options: {
+    question: string;
+    contextDocuments?: number;
+    filters?: Record<string, unknown>;
+    conversationHistory?: Array<{ role: string; content: string }>;
+    clinicalContextId?: string | null;
+  }): Promise<KBRAGAnswer> {
+    const payload: Record<string, unknown> = {
+      question: options.question,
+    };
+
+    if (options.contextDocuments != null) {
+      payload.context_documents = options.contextDocuments;
+    }
+    if (options.filters) {
+      payload.filters = options.filters;
+    }
+    if (options.conversationHistory) {
+      payload.conversation_history = options.conversationHistory;
+    }
+    if (options.clinicalContextId) {
+      payload.clinical_context_id = options.clinicalContextId;
+    }
+
+    const response = await this.client.post<ApiResponse<KBRAGAnswer>>("/api/kb/query", payload);
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // User Documents (Voice Navigation)
+  // =========================================================================
+
+  /**
+   * Upload a document to the user's knowledge base
+   * Document is processed asynchronously - poll status with getUserDocumentStatus()
+   * @param file - File to upload (PDF, TXT, DOCX, MD)
+   * @param title - Optional document title (defaults to filename)
+   * @param category - Document category (default: "general")
+   * @param isPublic - Whether document is visible to all users (default: false)
+   * @param onProgress - Optional upload progress callback
+   */
+  async uploadUserDocument(
+    file: File,
+    title?: string,
+    category: string = "general",
+    isPublic: boolean = false,
+    onProgress?: (progress: number) => void,
+  ): Promise<UserDocumentUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (title) formData.append("title", title);
+    formData.append("category", category);
+    formData.append("is_public", String(isPublic));
+
+    const response = await this.client.post<ApiResponse<UserDocumentUploadResponse>>(
+      "/api/documents/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress(percentCompleted);
+          }
+        },
+      },
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * List documents accessible to the current user
+   * Includes user's own documents and optionally public documents
+   * @param skip - Pagination offset
+   * @param limit - Maximum documents to return (max 100)
+   * @param category - Filter by category
+   * @param includePublic - Include public documents from other users
+   */
+  async getUserDocuments(
+    skip: number = 0,
+    limit: number = 50,
+    category?: string,
+    includePublic: boolean = true,
+  ): Promise<{ documents: UserDocument[]; total: number; skip: number; limit: number }> {
+    const params: Record<string, unknown> = { skip, limit, include_public: includePublic };
+    if (category) params.category = category;
+
+    const response = await this.client.get<
+      ApiResponse<{ documents: UserDocument[]; total: number; skip: number; limit: number }>
+    >("/api/documents", { params });
+    return response.data.data!;
+  }
+
+  /**
+   * Get document details
+   * User must own the document or it must be public
+   * @param documentId - Document ID
+   */
+  async getUserDocument(documentId: string): Promise<UserDocument> {
+    const response = await this.client.get<ApiResponse<UserDocument>>(
+      `/api/documents/${documentId}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get document processing status
+   * Use this to poll for completion after upload
+   * @param documentId - Document ID
+   */
+  async getUserDocumentStatus(documentId: string): Promise<UserDocumentStatusResponse> {
+    const response = await this.client.get<ApiResponse<UserDocumentStatusResponse>>(
+      `/api/documents/${documentId}/status`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get document structure (pages, TOC, sections, figures)
+   * Only available for indexed documents
+   * @param documentId - Document ID
+   */
+  async getUserDocumentStructure(documentId: string): Promise<{
+    document_id: string;
+    title: string;
+    total_pages: number | null;
+    has_toc: boolean;
+    has_figures: boolean;
+    structure: DocumentStructure | null;
+  }> {
+    const response = await this.client.get<
+      ApiResponse<{
+        document_id: string;
+        title: string;
+        total_pages: number | null;
+        has_toc: boolean;
+        has_figures: boolean;
+        structure: DocumentStructure | null;
+      }>
+    >(`/api/documents/${documentId}/structure`);
+    return response.data.data!;
+  }
+
+  /**
+   * Delete a user's document
+   * Only document owner can delete
+   * @param documentId - Document ID to delete
+   */
+  async deleteUserDocument(documentId: string): Promise<{ document_id: string; message: string }> {
+    const response = await this.client.delete<
+      ApiResponse<{ document_id: string; message: string }>
+    >(`/api/documents/${documentId}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Update document visibility (public/private)
+   * Only document owner can change visibility
+   * @param documentId - Document ID
+   * @param isPublic - New visibility setting
+   */
+  async updateUserDocumentVisibility(
+    documentId: string,
+    isPublic: boolean,
+  ): Promise<{ document_id: string; is_public: boolean; message: string }> {
+    const formData = new FormData();
+    formData.append("is_public", String(isPublic));
+
+    const response = await this.client.patch<
+      ApiResponse<{ document_id: string; is_public: boolean; message: string }>
+    >(`/api/documents/${documentId}/visibility`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.data!;
+  }
+
+  // =========================================================================
+  // Voice Document Sessions
+  // =========================================================================
+
+  /**
+   * Start a voice document session
+   * Sets the active document for voice navigation in a conversation
+   * @param documentId - Document to activate
+   * @param conversationId - Conversation ID for this session
+   */
+  async startVoiceDocumentSession(
+    documentId: string,
+    conversationId: string,
+  ): Promise<VoiceDocumentSession> {
+    const formData = new FormData();
+    formData.append("document_id", documentId);
+    formData.append("conversation_id", conversationId);
+
+    const response = await this.client.post<ApiResponse<VoiceDocumentSession>>(
+      "/api/voice/documents/session",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get current voice document session state
+   * Returns the active document and current position for a conversation
+   * @param conversationId - Conversation ID
+   */
+  async getVoiceDocumentSession(
+    conversationId: string,
+  ): Promise<VoiceDocumentSession | InactiveVoiceDocumentSession> {
+    const response = await this.client.get<
+      ApiResponse<VoiceDocumentSession | InactiveVoiceDocumentSession>
+    >(`/api/voice/documents/session/${conversationId}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Update current position in document
+   * Used by navigation to track position after navigation commands
+   * @param conversationId - Conversation ID
+   * @param page - New page number
+   * @param sectionId - New section ID
+   * @param lastReadPosition - Character position in document
+   */
+  async updateVoiceDocumentPosition(
+    conversationId: string,
+    page?: number,
+    sectionId?: string,
+    lastReadPosition?: number,
+  ): Promise<{
+    session_id: string;
+    current_page: number;
+    current_section_id: string | null;
+    last_read_position: number;
+  }> {
+    const formData = new FormData();
+    if (page !== undefined) formData.append("page", String(page));
+    if (sectionId !== undefined) formData.append("section_id", sectionId);
+    if (lastReadPosition !== undefined) formData.append("last_read_position", String(lastReadPosition));
+
+    const response = await this.client.patch<
+      ApiResponse<{
+        session_id: string;
+        current_page: number;
+        current_section_id: string | null;
+        last_read_position: number;
+      }>
+    >(`/api/voice/documents/session/${conversationId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.data!;
+  }
+
+  /**
+   * End the voice document session for a conversation
+   * Deactivates the session, removing the active document context
+   * @param conversationId - Conversation ID
+   */
+  async endVoiceDocumentSession(
+    conversationId: string,
+  ): Promise<{ message: string; session_id?: string; conversation_id: string }> {
+    const response = await this.client.delete<
+      ApiResponse<{ message: string; session_id?: string; conversation_id: string }>
+    >(`/api/voice/documents/session/${conversationId}`);
+    return response.data.data!;
+  }
+
+  /**
+   * Get content of a specific page from the active document
+   * @param conversationId - Conversation ID
+   * @param pageNumber - Page number to retrieve
+   */
+  async getVoiceDocumentPage(
+    conversationId: string,
+    pageNumber: number,
+  ): Promise<VoiceDocumentPageContent> {
+    const response = await this.client.get<ApiResponse<VoiceDocumentPageContent>>(
+      `/api/voice/documents/session/${conversationId}/page/${pageNumber}`,
+    );
+    return response.data.data!;
+  }
+
+  /**
+   * Get table of contents for the active document
+   * @param conversationId - Conversation ID
+   */
+  async getVoiceDocumentToc(conversationId: string): Promise<VoiceDocumentTOC> {
+    const response = await this.client.get<ApiResponse<VoiceDocumentTOC>>(
+      `/api/voice/documents/session/${conversationId}/toc`,
+    );
     return response.data.data!;
   }
 
@@ -2166,6 +2725,73 @@ export class VoiceAssistApiClient {
    */
   async getAdminTTAnalytics(): Promise<any> {
     const response = await this.client.get("/api/admin/voice/analytics/tools");
+    return response.data;
+  }
+
+  /**
+   * Get narration summary and cached narrations for a KB document.
+   */
+  async getNarrationSummary(documentId: string): Promise<{
+    summary: {
+      document_id: string;
+      total_pages: number;
+      ready: number;
+      generating: number;
+      pending: number;
+      failed: number;
+      coverage_percent: number;
+      total_duration_seconds: number;
+      total_duration_formatted: string;
+    };
+    narrations: any[];
+  }> {
+    const response = await this.client.get(
+      `/api/audio/documents/${documentId}/narrations`,
+    );
+    return response.data;
+  }
+
+  /**
+   * Get narration summaries for multiple KB documents in a single request.
+   * More efficient than calling getNarrationSummary for each document individually.
+   */
+  async getBatchNarrationSummaries(documentIds: string[]): Promise<{
+    summaries: Record<
+      string,
+      {
+        document_id: string;
+        total_pages: number;
+        ready: number;
+        generating: number;
+        pending: number;
+        failed: number;
+        coverage_percent: number;
+        total_duration_seconds: number;
+        total_duration_formatted: string;
+      }
+    >;
+    requested: number;
+    returned: number;
+  }> {
+    const response = await this.client.post(
+      "/api/audio/documents/narration-summaries/batch",
+      { document_ids: documentIds },
+    );
+    return response.data;
+  }
+
+  /**
+   * Get background job statistics (admin only)
+   *
+   * Mirrors /api/jobs/admin/stats and is useful for monitoring
+   * document_processing and enhanced_extraction queues.
+   */
+  async getAdminJobStats(): Promise<{
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+    recent_failures: any[];
+  }> {
+    const response = await this.client.get("/api/jobs/admin/stats");
     return response.data;
   }
 

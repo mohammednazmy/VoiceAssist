@@ -211,6 +211,8 @@ export interface AdminApiClient {
   invalidateCachePattern(
     pattern: string,
   ): Promise<{ status: string; keys_invalidated: number }>;
+  // Voice / PHI-conscious analytics
+  getVoicePhiAnalytics(): Promise<VoicePhiAnalyticsResponse>;
 }
 
 export interface OpenAIHealthResponse {
@@ -221,6 +223,15 @@ export interface OpenAIHealthResponse {
   models_accessible?: number;
   error?: string;
   timestamp: number;
+}
+
+export interface VoicePhiAnalyticsResponse {
+  active_sessions_total: number;
+  active_sessions_clinical: number;
+  active_sessions_demo: number;
+  phi_conscious_sessions: number;
+  phi_conscious_rate: number;
+  timestamp: string;
 }
 
 /**
@@ -461,6 +472,12 @@ export function createAdminApi(
       return fetchWithAuthPost<{ status: string; keys_invalidated: number }>(
         `/api/admin/cache/invalidate?pattern=${encodeURIComponent(pattern)}`,
         null,
+      );
+    },
+
+    async getVoicePhiAnalytics(): Promise<VoicePhiAnalyticsResponse> {
+      return fetchWithAuth<VoicePhiAnalyticsResponse>(
+        "/api/admin/voice/analytics/phi",
       );
     },
   };

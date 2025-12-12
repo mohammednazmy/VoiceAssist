@@ -11,15 +11,24 @@ consider using specialized medical NLP services like:
 - Custom NER models trained on medical data
 
 See SECURITY_COMPLIANCE.md for full HIPAA requirements.
+
+Performance Optimizations:
+- Batch processing for large documents (chunks of 50KB)
+- Pre-compiled regex patterns (at init)
+- Early exit when PHI detected (optional)
 """
 
 from __future__ import annotations
 
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Generator
 
 logger = logging.getLogger(__name__)
+
+# Constants for batch processing
+BATCH_SIZE = 50000  # 50KB chunks for large document processing
+EARLY_EXIT_THRESHOLD = 5  # Stop after finding this many PHI types (optional)
 
 
 class PHIDetectionResult:
@@ -178,3 +187,124 @@ class PHIDetector:
         sanitized = self.name_pattern.sub("[NAME_REDACTED]", sanitized)
 
         return sanitized
+
+    def _chunk_text(self, text: str, chunk_size: int = BATCH_SIZE) -> Generator[str, None, None]:
+        """Split large text into chunks for batch processing.
+
+        Args:
+            text: Text to chunk
+            chunk_size: Size of each chunk in characters
+
+        Yields:
+            Text chunks
+        """
+        for i in range(0, len(text), chunk_size):
+            yield text[i:i + chunk_size]
+
+    def detect_batch(
+        self,
+        text: str,
+        clinical_context: Optional[Dict] = None,
+        early_exit: bool = True,
+    ) -> PHIDetectionResult:
+        """Detect PHI in large text using batch processing.
+
+        Optimized for large documents - processes in chunks and can
+        optionally exit early once PHI is confirmed.
+
+        Args:
+            text: Large text to analyze (e.g., entire document)
+            clinical_context: Optional clinical context dict
+            early_exit: If True, stop after finding PHI (faster for large docs)
+
+        Returns:
+            PHIDetectionResult with detection results
+        """
+        if not text:
+            return PHIDetectionResult(contains_phi=False, phi_types=[])
+
+        # For small texts, use regular detection
+        if len(text) < BATCH_SIZE:
+            return self.detect(text, clinical_context)
+
+        logger.debug(f"Starting batch PHI detection on {len(text)} characters")
+
+        all_phi_types = set()
+        all_details: Dict = {}
+        chunks_processed = 0
+
+        for chunk in self._chunk_text(text):
+            chunks_processed += 1
+
+            # Check patterns in this chunk
+            for phi_type, pattern in self.patterns.items():
+                matches = pattern.findall(chunk)
+                if matches:
+                    all_phi_types.add(phi_type)
+                    all_details[phi_type] = all_details.get(phi_type, 0) + len(matches)
+
+            # Check for names in this chunk
+            name_matches = self.name_pattern.findall(chunk)
+            if name_matches:
+                actual_names = [name for name in name_matches if name.lower() not in self.medical_terms]
+                if actual_names:
+                    all_phi_types.add("name")
+                    all_details["name"] = all_details.get("name", 0) + len(actual_names)
+
+            # Early exit if we've found enough PHI types
+            if early_exit and len(all_phi_types) >= EARLY_EXIT_THRESHOLD:
+                logger.info(
+                    f"PHI detection early exit after {chunks_processed} chunks, "
+                    f"found {len(all_phi_types)} PHI types"
+                )
+                break
+
+        # Also check clinical context
+        if clinical_context:
+            phi_fields = ["patient_name", "patient_id", "ssn", "mrn", "dob"]
+            for field in phi_fields:
+                if clinical_context.get(field):
+                    all_phi_types.add(field)
+                    all_details[f"clinical_context_{field}"] = True
+
+        phi_types_list = list(all_phi_types)
+        contains_phi = len(phi_types_list) > 0
+
+        if contains_phi:
+            logger.warning(
+                f"PHI detected in batch processing: types={phi_types_list}, "
+                f"chunks_processed={chunks_processed}, details={all_details}"
+            )
+
+        return PHIDetectionResult(
+            contains_phi=contains_phi,
+            phi_types=phi_types_list,
+            confidence=0.8,
+            details=all_details,
+        )
+
+    def count_phi_occurrences(self, text: str) -> Dict[str, int]:
+        """Count occurrences of each PHI type in text.
+
+        Useful for generating reports on PHI density in documents.
+
+        Args:
+            text: Text to analyze
+
+        Returns:
+            Dictionary mapping PHI type to count
+        """
+        counts: Dict[str, int] = {}
+
+        for phi_type, pattern in self.patterns.items():
+            matches = pattern.findall(text)
+            if matches:
+                counts[phi_type] = len(matches)
+
+        # Count names
+        name_matches = self.name_pattern.findall(text)
+        actual_names = [name for name in name_matches if name.lower() not in self.medical_terms]
+        if actual_names:
+            counts["name"] = len(actual_names)
+
+        return counts

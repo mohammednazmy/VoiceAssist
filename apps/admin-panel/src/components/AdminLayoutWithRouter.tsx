@@ -188,6 +188,12 @@ export function AdminLayoutWithRouter({ children }: LayoutProps) {
           <NavLink to="/troubleshooting" className={navLinkClass}>
             🔍 {t("nav.troubleshooting", "Troubleshooting")}
           </NavLink>
+          <NavLink to="/organizations" className={navLinkClass}>
+            🏢 {t("nav.organizations", "Organizations")}
+          </NavLink>
+          <NavLink to="/learning" className={navLinkClass}>
+            🎓 {t("nav.learning", "Learning")}
+          </NavLink>
         </nav>
 
         <div className="border-t border-slate-800 p-4 space-y-2">

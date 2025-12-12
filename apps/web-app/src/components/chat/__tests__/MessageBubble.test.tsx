@@ -313,6 +313,79 @@ describe("MessageBubble", () => {
     });
   });
 
+  describe("KB sources chip", () => {
+    it("renders KB sources chip when metadata includes KB tool result", () => {
+      const message: Message = {
+        ...baseMessage,
+        role: "assistant",
+        metadata: {
+          toolCalls: [
+            {
+              id: "tool-1",
+              name: "knowledge_base_query",
+              arguments: {},
+              result: {
+                answer: "KB answer text",
+                sources: [
+                  { id: "doc-1", title: "Hospital DKA protocol" },
+                  { id: "doc-2", title: "Insulin titration quick guide" },
+                  { id: "doc-3", title: "Additional note" },
+                ],
+              },
+            },
+          ],
+        },
+      } as any;
+
+      render(<MessageBubble message={message} />);
+
+      const chip = screen.getByTestId("kb-sources-chip");
+      expect(chip).toBeInTheDocument();
+      expect(chip).toHaveTextContent("KB sources:");
+    });
+
+    it("fires voiceassist:kbdrawer_open when KB sources chip is clicked", () => {
+      const message: Message = {
+        ...baseMessage,
+        id: "msg-kb-1",
+        role: "assistant",
+        metadata: {
+          toolCalls: [
+            {
+              id: "tool-1",
+              name: "knowledge_base_query",
+              arguments: {},
+              result: {
+                answer: "KB answer text",
+                sources: [
+                  { id: "doc-1", title: "Hospital DKA protocol" },
+                ],
+              },
+            },
+          ],
+        },
+      } as any;
+
+      const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+
+      render(<MessageBubble message={message} />);
+
+      const chip = screen.getByTestId("kb-sources-chip");
+      chip.click();
+
+      expect(dispatchSpy).toHaveBeenCalled();
+      const event = dispatchSpy.mock.calls[0][0] as Event;
+      expect(event.type).toBe("voiceassist:kbdrawer_open");
+      if ("detail" in (event as CustomEvent)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const detail = (event as CustomEvent<any>).detail;
+        expect(detail).toMatchObject({ messageId: "msg-kb-1" });
+      }
+
+      dispatchSpy.mockRestore();
+    });
+  });
+
   describe("timestamp", () => {
     it("should display formatted timestamp", () => {
       const now = new Date("2024-01-15T14:30:00").getTime();

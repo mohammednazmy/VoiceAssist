@@ -29,19 +29,21 @@ const mockSessions = [
     session_id: "session-123-abc",
     user_id: "user-1",
     user_email: "user1@example.com",
-    session_type: "voice",
+    session_type: "voice" as const,
     connected_at: "2024-01-15T12:00:00Z",
     last_activity: "2024-01-15T12:30:00Z",
     messages_count: 15,
+    client_info: { user_agent: "Mozilla/5.0", ip: "192.168.1.1" },
   },
   {
     session_id: "session-456-def",
     user_id: "user-2",
     user_email: "user2@example.com",
-    session_type: "realtime",
+    session_type: "realtime" as const,
     connected_at: "2024-01-15T11:00:00Z",
     last_activity: "2024-01-15T12:25:00Z",
     messages_count: 8,
+    client_info: { user_agent: "Mozilla/5.0", ip: "192.168.1.2" },
   },
 ];
 
@@ -56,13 +58,17 @@ const mockMetrics = {
     voice: 1,
     realtime: 1,
   },
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockHealth = {
-  status: "healthy",
+  status: "healthy" as const,
   realtime_api_enabled: true,
   openai_api_configured: true,
   redis_connected: true,
+  active_connections: 2,
+  details: { api: "ok", redis: "ok" },
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockConfig = {
@@ -74,6 +80,7 @@ const mockConfig = {
   vad_enabled: true,
   vad_threshold: 0.5,
   max_session_duration_sec: 1800,
+  timestamp: "2024-01-15T12:00:00Z",
 };
 
 const mockTTSessions = [
@@ -86,6 +93,8 @@ const mockTTSessions = [
     talker_voice: "alloy",
     messages_processed: 10,
     avg_response_time_ms: 250,
+    connected_at: "2024-01-15T12:00:00Z",
+    last_activity: "2024-01-15T12:30:00Z",
   },
 ];
 
@@ -93,8 +102,11 @@ const mockTTContexts = [
   {
     context_id: "ctx-123456789012",
     user_id: "user-1",
+    session_id: "tt-session-1",
     message_count: 20,
     token_count: 4500,
+    created_at: "2024-01-15T12:00:00Z",
+    last_accessed: "2024-01-15T12:30:00Z",
     expires_at: new Date(Date.now() + 1000 * 60 * 30).toISOString(), // 30 min from now
   },
 ];
@@ -142,8 +154,11 @@ const defaultVoiceMonitorReturn = {
   ttAnalytics: mockTTAnalytics,
   loading: false,
   error: null,
-  lastUpdated: new Date(),
+  lastUpdated: "2024-01-15T12:00:00Z",
   refreshAll: vi.fn(),
+  refreshSessions: vi.fn(),
+  refreshMetrics: vi.fn(),
+  refreshHealth: vi.fn(),
   refreshTTPipeline: vi.fn(),
   disconnectSession: vi.fn().mockResolvedValue(true),
   cleanupContexts: vi.fn().mockResolvedValue(3),

@@ -7,9 +7,10 @@ allowing users to fork conversations at any message point and navigate between b
 Note: Pydantic schemas are now defined in app/api/conversations/schemas.py
 """
 
+import time
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from app.api.conversation_schemas.schemas import (
     BranchInfo,
@@ -28,17 +29,90 @@ from app.api.conversation_schemas.schemas import (
 )
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db, transaction
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_organization, get_current_user
 from app.core.logging import get_logger
+from app.core.metrics import record_instrumented_api_call
 from app.models.message import Message
+from app.models.organization import Organization
 from app.models.session import Session as ChatSession
 from app.models.user import User
+from app.services.analytics_service import analytics_service
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 logger = get_logger(__name__)
+
+
+def _generate_fallback_title(raw_text: str, max_length: int = 80) -> str:
+    """
+    Generate a simple, local fallback title from raw text.
+
+    This is used when LLM-based titling is unavailable. It performs basic
+    cleaning and truncation without sending any PHI-bearing content externally.
+    """
+    if not raw_text:
+        return "New Conversation"
+
+    cleaned = " ".join(raw_text.split())
+    if len(cleaned) <= max_length:
+        return cleaned
+
+    truncated = cleaned[:max_length]
+    last_space = truncated.rfind(" ")
+    if last_space > max_length * 0.5:
+        truncated = truncated[:last_space]
+    return truncated.rstrip() + "…"
+
+
+async def _generate_llm_title(combined_text: str, trace_id: Optional[str] = None) -> Optional[str]:
+    """
+    Generate a PHI-conscious title using the LLM client.
+
+    The prompt instructs the model to avoid emitting PHI (names, MRNs, DOBs,
+    exact dates). We also mark phi_present=True so llm_client will prefer the
+    configured local/PHI-safe model path when available.
+    """
+    combined = combined_text.strip()
+    if not combined:
+        return None
+
+    # Truncate to a reasonable length for cost/safety – we only need a high-level idea.
+    excerpt = combined[:1200]
+
+    client = LLMClient()
+    prompt = (
+        "You are a medical assistant. Based on the brief conversation excerpt below, "
+        "generate a concise, clinician-facing title (max 60 characters).\n\n"
+        "Requirements:\n"
+        "- Capture the main clinical topic or task.\n"
+        "- Do NOT include PHI such as patient names, MRNs, DOBs, or exact dates.\n"
+        "- Do NOT include facility names or other direct identifiers.\n"
+        "- Return ONLY the title text, with no quotes or additional commentary.\n\n"
+        f"Conversation excerpt:\n{excerpt}"
+    )
+
+    try:
+        response = await client.generate(
+            LLMRequest(
+                prompt=prompt,
+                intent="summary",
+                temperature=0.2,
+                max_tokens=32,
+                phi_present=True,
+                trace_id=trace_id,
+            )
+        )
+    except Exception as e:
+        logger.warning("Auto-title LLM call failed: %s", e)
+        return None
+
+    if not response.text:
+        return None
+
+    line = response.text.strip().split("\n")[0].strip().strip('"')
+    return line[:80] if line else None
 
 
 # Helper Functions
@@ -49,18 +123,25 @@ def generate_branch_id() -> str:
     return f"branch-{timestamp}-{short_uuid}"
 
 
-def get_session_or_404(db: Session, session_id: uuid.UUID, user: User) -> ChatSession:
-    """Get session by ID or raise 404 if not found or not owned by user"""
-    session = (
-        db.query(ChatSession)
-        .filter(
-            and_(
-                ChatSession.id == session_id,
-                ChatSession.user_id == user.id,
-            )
-        )
-        .first()
-    )
+def get_session_or_404(
+    db: Session,
+    session_id: uuid.UUID,
+    user: User,
+    current_org: Organization | None = None,
+) -> ChatSession:
+    """Get session by ID or raise 404 if not found or not owned by user.
+
+    When a current organization is provided, sessions are additionally scoped
+    to that organization to enforce tenant isolation.
+    """
+    filters = [
+        ChatSession.id == session_id,
+        ChatSession.user_id == user.id,
+    ]
+    if current_org is not None:
+        filters.append(ChatSession.organization_id == current_org.id)
+
+    session = db.query(ChatSession).filter(and_(*filters)).first()
 
     if not session:
         raise HTTPException(
@@ -100,6 +181,7 @@ async def list_conversations(
     pageSize: int = 20,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     List all conversations for the current user.
@@ -115,11 +197,18 @@ async def list_conversations(
     Returns:
         PaginatedResponse with conversations
     """
+    start_time = time.time()
+
     # Calculate offset
     offset = (page - 1) * pageSize
 
+    # Build base filters
+    filters = [ChatSession.user_id == current_user.id]
+    if current_org is not None:
+        filters.append(ChatSession.organization_id == current_org.id)
+
     # Query total count
-    total = db.query(func.count(ChatSession.id)).filter(ChatSession.user_id == current_user.id).scalar()
+    total = db.query(func.count(ChatSession.id)).filter(and_(*filters)).scalar()
 
     # Query sessions with message counts
     sessions = (
@@ -128,7 +217,7 @@ async def list_conversations(
             func.count(Message.id).label("message_count"),
         )
         .outerjoin(Message, Message.session_id == ChatSession.id)
-        .filter(ChatSession.user_id == current_user.id)
+        .filter(and_(*filters))
         .group_by(ChatSession.id)
         .order_by(ChatSession.updated_at.desc())
         .offset(offset)
@@ -136,21 +225,30 @@ async def list_conversations(
         .all()
     )
 
-    conversations = [
-        ConversationResponse(
-            id=str(session.id),
-            userId=str(session.user_id),
-            title=session.title or "New Conversation",
-            archived=bool(session.archived),  # Convert int to bool
-            messageCount=message_count,
-            folderId=str(session.folder_id) if session.folder_id else None,
-            createdAt=session.created_at.isoformat() + "Z",
-            updatedAt=session.updated_at.isoformat() + "Z",
-        )
-        for session, message_count in sessions
-    ]
+    conversations = []
+    for session, message_count in sessions:
+        context = session.context or {}
+        # Conversation-level PHI mode and tags are stored in context for now to avoid schema changes
+        phi_mode = context.get("phi_mode")
+        tags = context.get("tags")
 
-    return success_response(
+        conversations.append(
+            ConversationResponse(
+                id=str(session.id),
+                userId=str(session.user_id),
+                title=session.title or "New Conversation",
+                archived=bool(session.archived),  # Convert int to bool
+                messageCount=message_count,
+                folderId=str(session.folder_id) if session.folder_id else None,
+                createdAt=session.created_at.isoformat() + "Z",
+                updatedAt=session.updated_at.isoformat() + "Z",
+                phiMode=phi_mode,
+                tags=tags,
+                metadata=context if isinstance(context, dict) else None,
+            )
+        )
+
+    response = success_response(
         data=ConversationsListResponse(
             items=conversations,
             total=total,
@@ -159,12 +257,29 @@ async def list_conversations(
         )
     )
 
+    # Record analytics (best-effort)
+    elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+    org_id = current_org.id if current_org else None
+    record_instrumented_api_call(
+        analytics_service=analytics_service,
+        db=db,
+        endpoint="/api/conversations",
+        duration_ms=float(elapsed_ms),
+        success=True,
+        user_id=current_user.id,
+        organization_id=org_id,
+        endpoint_category="chat",
+    )
+
+    return response
+
 
 @router.post("")
 async def create_conversation(
     request: CreateConversationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Create a new conversation.
@@ -177,6 +292,8 @@ async def create_conversation(
     Returns:
         ConversationResponse with new conversation details
     """
+    start_time = time.time()
+
     # Validate folder_id if provided
     folder_uuid = None
     if request.folder_id:
@@ -210,10 +327,12 @@ async def create_conversation(
             )
 
     # Create new session with transaction management
+    organization_id = current_org.id if current_org else None
     new_session = ChatSession(
         user_id=current_user.id,
         title=request.title,
         folder_id=folder_uuid,
+        organization_id=organization_id,
         archived=0,  # 0 = not archived, 1 = archived (Integer column)
     )
 
@@ -224,7 +343,7 @@ async def create_conversation(
     db.refresh(new_session)
     logger.info(f"Created conversation {new_session.id} for user {current_user.id}")
 
-    return success_response(
+    response = success_response(
         data=ConversationResponse(
             id=str(new_session.id),
             userId=str(new_session.user_id),
@@ -237,12 +356,41 @@ async def create_conversation(
         )
     )
 
+    # Record analytics and user activity (best-effort)
+    try:
+        elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+        org_id = current_org.id if current_org else None
+
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/conversations",
+            duration_ms=float(elapsed_ms),
+            success=True,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="chat",
+        )
+
+        analytics_service.record_user_activity(
+            db=db,
+            user_id=current_user.id,
+            activity_type="session",
+            organization_id=org_id,
+            feature="chat",
+        )
+    except Exception as exc:  # pragma: no cover - analytics must not break API
+        logger.warning("create_conversation_analytics_failed", extra={"error": str(exc)})
+
+    return response
+
 
 @router.get("/{conversation_id}")
 async def get_conversation(
     conversation_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Get a specific conversation by ID.
@@ -259,6 +407,8 @@ async def get_conversation(
         404: Conversation not found
         403: User doesn't own the conversation
     """
+    start_time = time.time()
+
     try:
         conv_uuid = uuid.UUID(conversation_id)
     except ValueError:
@@ -267,12 +417,16 @@ async def get_conversation(
             detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Get message count
     message_count = db.query(func.count(Message.id)).filter(Message.session_id == session.id).scalar()
 
-    return success_response(
+    context = session.context or {}
+    phi_mode = context.get("phi_mode")
+    tags = context.get("tags")
+
+    response = success_response(
         data=ConversationResponse(
             id=str(session.id),
             userId=str(session.user_id),
@@ -282,8 +436,27 @@ async def get_conversation(
             folderId=str(session.folder_id) if session.folder_id else None,
             createdAt=session.created_at.isoformat() + "Z",
             updatedAt=session.updated_at.isoformat() + "Z",
+            phiMode=phi_mode,
+            tags=tags,
+            metadata=context if isinstance(context, dict) else None,
         )
     )
+
+    # Record analytics (best-effort)
+    elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+    org_id = current_org.id if current_org else None
+    record_instrumented_api_call(
+        analytics_service=analytics_service,
+        db=db,
+        endpoint="/api/conversations/{conversation_id}",
+        duration_ms=float(elapsed_ms),
+        success=True,
+        user_id=current_user.id,
+        organization_id=org_id,
+        endpoint_category="chat",
+    )
+
+    return response
 
 
 @router.patch("/{conversation_id}")
@@ -292,6 +465,7 @@ async def update_conversation(
     request: UpdateConversationRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Update a conversation's metadata.
@@ -317,7 +491,7 @@ async def update_conversation(
             detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Update fields if provided
     if request.title is not None:
@@ -358,13 +532,40 @@ async def update_conversation(
         else:
             session.folder_id = None
 
+    # Conversation-level metadata stored in context JSONB
+    if request.phi_mode is not None or request.tags is not None:
+        ctx = dict(session.context or {})
+        if request.phi_mode is not None:
+            # Normalize phi_mode to expected values ("clinical" | "demo")
+            mode_value = str(request.phi_mode).lower()
+            if mode_value not in {"clinical", "demo"}:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=error_response(
+                        error_code=ErrorCodes.VALIDATION_ERROR,
+                        message="phiMode must be 'clinical' or 'demo'",
+                    ),
+                )
+            ctx["phi_mode"] = mode_value
+        if request.tags is not None:
+            # Ensure tags is a list of strings and de-duplicate
+            normalized_tags = sorted({str(t).strip() for t in request.tags if str(t).strip()})
+            ctx["tags"] = normalized_tags
+        session.context = ctx
+
+    # Explicitly mark session as modified to ensure JSONB changes are persisted
+    db.add(session)
     with transaction(db):
-        pass  # Changes tracked by session, committed by transaction
+        logger.debug(f"Updated conversation metadata for {session.id}")
 
     db.refresh(session)
 
     # Get message count
     message_count = db.query(func.count(Message.id)).filter(Message.session_id == session.id).scalar()
+
+    context = session.context or {}
+    phi_mode = context.get("phi_mode")
+    tags = context.get("tags")
 
     logger.info(f"Updated conversation {session.id}")
 
@@ -378,6 +579,9 @@ async def update_conversation(
             folderId=str(session.folder_id) if session.folder_id else None,
             createdAt=session.created_at.isoformat() + "Z",
             updatedAt=session.updated_at.isoformat() + "Z",
+            phiMode=phi_mode,
+            tags=tags,
+            metadata=context if isinstance(context, dict) else None,
         )
     )
 
@@ -386,6 +590,7 @@ async def update_conversation(
 async def delete_all_conversations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Delete ALL conversations for the current user.
@@ -400,8 +605,11 @@ async def delete_all_conversations(
     Returns:
         Success response with count of deleted conversations
     """
-    # Get all user's conversations
-    user_sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).all()
+    # Get all user's conversations (optionally scoped to current org)
+    query = db.query(ChatSession).filter(ChatSession.user_id == current_user.id)
+    if current_org is not None:
+        query = query.filter(ChatSession.organization_id == current_org.id)
+    user_sessions = query.all()
 
     session_ids = [s.id for s in user_sessions]
 
@@ -435,6 +643,7 @@ async def delete_conversation(
     conversation_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Delete a conversation and all its messages.
@@ -459,7 +668,7 @@ async def delete_conversation(
             detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
         )
 
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Delete all messages and session atomically
     with transaction(db):
@@ -471,6 +680,104 @@ async def delete_conversation(
     return success_response(data={"message": "Conversation deleted successfully"})
 
 
+@router.post("/{conversation_id}/auto-title")
+async def auto_title_conversation(
+    conversation_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
+):
+    """
+    Generate and apply an automatic clinical title for a conversation.
+
+    The title is derived from the first 1–2 user turns and the first assistant
+    answer, using a local heuristic with optional LLM refinement. The LLM call,
+    when enabled, is PHI-conscious and instructed not to emit identifiers.
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_response(error_code=ErrorCodes.VALIDATION_ERROR, message="Invalid UUID format"),
+        )
+
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
+
+    # Load a small slice of the earliest messages on the main branch
+    messages = (
+        db.query(Message)
+        .filter(
+            and_(
+                Message.session_id == session.id,
+                Message.branch_id.is_(None),
+            )
+        )
+        .order_by(Message.created_at.asc())
+        .limit(10)
+        .all()
+    )
+
+    # Build combined text from first 1–2 user turns and first assistant answer
+    pieces = []
+    user_count = 0
+    assistant_added = False
+    for msg in messages:
+        if msg.role == "user":
+            if user_count < 2:
+                pieces.append(f"User: {msg.content}")
+                user_count += 1
+        elif msg.role == "assistant" and not assistant_added:
+            pieces.append(f"Assistant: {msg.content}")
+            assistant_added = True
+        if user_count >= 2 and assistant_added:
+            break
+
+    if not pieces and messages:
+        # Fallback to very first message content if roles are unexpected
+        pieces.append(messages[0].content or "")
+
+    combined_text = " ".join(pieces).strip()
+    if not combined_text:
+        combined_text = session.title or "New Conversation"
+
+    # Local fallback title first (no external calls)
+    fallback_title = _generate_fallback_title(combined_text)
+
+    # Optional LLM-based refinement – PHI-aware and best-effort only
+    trace_id: Optional[str] = None
+    llm_title = await _generate_llm_title(combined_text, trace_id=trace_id)
+    final_title = llm_title or fallback_title
+
+    # Persist the new title
+    session.title = final_title
+    db.add(session)  # Explicitly mark as modified for JSONB/attribute detection
+    with transaction(db):
+        logger.debug(f"Auto-titled conversation {conversation_id} to: {final_title}")
+
+    db.refresh(session)
+
+    # Recompute message count for response
+    message_count = db.query(func.count(Message.id)).filter(Message.session_id == session.id).scalar()
+    context = session.context or {}
+
+    return success_response(
+        data=ConversationResponse(
+            id=str(session.id),
+            userId=str(session.user_id),
+            title=session.title or "New Conversation",
+            archived=bool(session.archived),
+            messageCount=message_count,
+            folderId=str(session.folder_id) if session.folder_id else None,
+            createdAt=session.created_at.isoformat() + "Z",
+            updatedAt=session.updated_at.isoformat() + "Z",
+            phiMode=context.get("phi_mode"),
+            tags=context.get("tags"),
+            metadata=context if isinstance(context, dict) else None,
+        )
+    )
+
+
 # API Endpoints - Messages
 @router.get("/{conversation_id}/messages")
 async def get_messages(
@@ -479,6 +786,7 @@ async def get_messages(
     pageSize: int = 50,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Get all messages in a conversation (main branch).
@@ -499,6 +807,8 @@ async def get_messages(
         404: Conversation not found
         403: User doesn't own the conversation
     """
+    start_time = time.time()
+
     try:
         conv_uuid = uuid.UUID(conversation_id)
     except ValueError:
@@ -508,7 +818,7 @@ async def get_messages(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Calculate offset
     offset = (page - 1) * pageSize
@@ -555,7 +865,7 @@ async def get_messages(
         for msg in messages
     ]
 
-    return success_response(
+    response = success_response(
         data=MessagesListResponse(
             items=message_responses,
             total=total,
@@ -564,6 +874,22 @@ async def get_messages(
         )
     )
 
+    # Record analytics (best-effort)
+    elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+    org_id = session.organization_id
+    record_instrumented_api_call(
+        analytics_service=analytics_service,
+        db=db,
+        endpoint="/api/conversations/{conversation_id}/messages",
+        duration_ms=float(elapsed_ms),
+        success=True,
+        user_id=current_user.id,
+        organization_id=org_id,
+        endpoint_category="chat",
+    )
+
+    return response
+
 
 @router.post("/{conversation_id}/messages")
 async def create_message(
@@ -571,6 +897,7 @@ async def create_message(
     request: CreateMessageRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Create a new message in a conversation with optional idempotency.
@@ -594,6 +921,8 @@ async def create_message(
         403: User doesn't own the conversation
         400: Invalid request (e.g., invalid UUIDs)
     """
+    start_time = time.time()
+
     try:
         conv_uuid = uuid.UUID(conversation_id)
     except ValueError:
@@ -603,7 +932,7 @@ async def create_message(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Parse optional parent_message_id
     parent_message_uuid = None
@@ -620,6 +949,8 @@ async def create_message(
                     message="Invalid parent_message_id UUID format",
                 ),
             )
+
+    message_created = False
 
     # Check for idempotent request
     if request.client_message_id:
@@ -641,7 +972,7 @@ async def create_message(
                 f"Idempotent message creation: returning existing message "
                 f"{existing_message.id} for client_message_id={request.client_message_id}"
             )
-            return success_response(
+            response = success_response(
                 data=MessageResponse(
                     id=str(existing_message.id),
                     session_id=str(existing_message.session_id),
@@ -658,6 +989,20 @@ async def create_message(
                     is_duplicate=True,
                 )
             )
+            # Still record API call analytics but do not increment message counters
+            elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+            record_instrumented_api_call(
+                analytics_service=analytics_service,
+                db=db,
+                endpoint="/api/conversations/{conversation_id}/messages",
+                duration_ms=float(elapsed_ms),
+                success=True,
+                user_id=current_user.id,
+                organization_id=session.organization_id,
+                endpoint_category="chat",
+            )
+
+            return response
 
     # Create new message
     new_message = Message(
@@ -673,13 +1018,14 @@ async def create_message(
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
+    message_created = True
 
     logger.info(
         f"Created message {new_message.id} in conversation {conversation_id}"
         + (f" with client_message_id={request.client_message_id}" if request.client_message_id else "")
     )
 
-    return success_response(
+    response = success_response(
         data=MessageResponse(
             id=str(new_message.id),
             session_id=str(new_message.session_id),
@@ -695,6 +1041,34 @@ async def create_message(
         )
     )
 
+    # Record analytics and user activity (best-effort)
+    try:
+        elapsed_ms = int(max(time.time() - start_time, 0.0) * 1000)
+        org_id = session.organization_id
+        record_instrumented_api_call(
+            analytics_service=analytics_service,
+            db=db,
+            endpoint="/api/conversations/{conversation_id}/messages",
+            duration_ms=float(elapsed_ms),
+            success=True,
+            user_id=current_user.id,
+            organization_id=org_id,
+            endpoint_category="chat",
+        )
+        if message_created:
+            analytics_service.record_user_activity(
+                db=db,
+                user_id=current_user.id,
+                activity_type="message",
+                organization_id=org_id,
+                count=1,
+                feature="chat",
+            )
+    except Exception as exc:  # pragma: no cover
+        logger.warning("create_message_analytics_failed", extra={"error": str(exc)})
+
+    return response
+
 
 @router.patch("/{conversation_id}/messages/{message_id}")
 async def edit_message(
@@ -703,6 +1077,7 @@ async def edit_message(
     request: EditMessageRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Edit a message's content.
@@ -731,7 +1106,7 @@ async def edit_message(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Get message
     message = get_message_or_404(db, msg_uuid, session)
@@ -764,6 +1139,7 @@ async def delete_message(
     message_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Delete a message.
@@ -791,7 +1167,7 @@ async def delete_message(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Get message
     message = get_message_or_404(db, msg_uuid, session)
@@ -812,6 +1188,7 @@ async def create_branch(
     request: CreateBranchRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Create a new conversation branch from a specific message.
@@ -842,7 +1219,7 @@ async def create_branch(
         )
 
     # Verify session exists and belongs to user
-    session = get_session_or_404(db, session_uuid, current_user)
+    session = get_session_or_404(db, session_uuid, current_user, current_org=current_org)
 
     # Verify parent message exists and belongs to session
     parent_message = get_message_or_404(db, parent_message_uuid, session)
@@ -882,6 +1259,7 @@ async def list_branches(
     session_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     List all branches in a conversation.
@@ -909,7 +1287,7 @@ async def list_branches(
         )
 
     # Verify session exists and belongs to user
-    session = get_session_or_404(db, session_uuid, current_user)
+    session = get_session_or_404(db, session_uuid, current_user, current_org=current_org)
 
     # Query all unique branch_ids with metadata
     branch_data = (
@@ -988,6 +1366,7 @@ async def get_branch_messages(
     branch_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Get all messages in a specific branch.
@@ -1016,7 +1395,7 @@ async def get_branch_messages(
         )
 
     # Verify session exists and belongs to user
-    session = get_session_or_404(db, session_uuid, current_user)
+    session = get_session_or_404(db, session_uuid, current_user, current_org=current_org)
 
     # Build query based on branch_id
     if branch_id == "main":
@@ -1070,6 +1449,7 @@ async def get_conversation_events(
     offset: int = 0,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Get events for a conversation (for session inspection/debugging).
@@ -1102,7 +1482,7 @@ async def get_conversation_events(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Import here to avoid circular imports
     from app.models.session_event import SessionEvent
@@ -1162,6 +1542,7 @@ async def get_conversation_settings(
     conversation_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Get settings for a conversation.
@@ -1187,7 +1568,7 @@ async def get_conversation_settings(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Return settings (or empty dict if none)
     settings = session.settings or {}
@@ -1201,6 +1582,7 @@ async def update_conversation_settings(
     settings: ConversationSettingsSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Update settings for a conversation.
@@ -1227,7 +1609,7 @@ async def update_conversation_settings(
         )
 
     # Verify conversation exists and belongs to user
-    session = get_session_or_404(db, conv_uuid, current_user)
+    session = get_session_or_404(db, conv_uuid, current_user, current_org=current_org)
 
     # Merge new settings with existing (exclude None values)
     current_settings = session.settings or {}
@@ -1250,6 +1632,7 @@ async def patch_conversation_settings(
     settings: ConversationSettingsSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    current_org: Organization | None = Depends(get_current_organization),
 ):
     """
     Partially update settings for a conversation (same as PUT for this use case).
@@ -1267,4 +1650,4 @@ async def patch_conversation_settings(
         404: Conversation not found
         403: User doesn't own the conversation
     """
-    return await update_conversation_settings(conversation_id, settings, db, current_user)
+    return await update_conversation_settings(conversation_id, settings, db, current_user, current_org)

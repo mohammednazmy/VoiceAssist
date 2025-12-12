@@ -5,11 +5,25 @@ import { ReactNode } from "react";
 
 type ColorVariant = "blue" | "green" | "purple" | "yellow" | "red" | "slate";
 
+/** Maps variant names to color names for backwards compatibility */
+type VariantType = "default" | "success" | "warning" | "info" | "danger";
+const variantToColor: Record<VariantType, ColorVariant> = {
+  default: "slate",
+  success: "green",
+  warning: "yellow",
+  info: "blue",
+  danger: "red",
+};
+
 interface StatCardProps {
-  title: string;
+  title?: string;
+  /** @deprecated Use title instead */
+  label?: string;
   value: string | number;
   icon?: string | ReactNode;
   color?: ColorVariant;
+  /** @deprecated Use color instead */
+  variant?: VariantType;
   subtitle?: string;
   trend?: {
     value: number;
@@ -40,16 +54,23 @@ const borderColorClasses: Record<ColorVariant, string> = {
 
 export function StatCard({
   title,
+  label,
   value,
   icon,
-  color = "slate",
+  color,
+  variant,
   subtitle,
   trend,
   onClick,
   className = "",
 }: StatCardProps) {
-  const valueColor = colorClasses[color];
-  const borderColor = borderColorClasses[color];
+  // Support 'label' as alias for 'title' for backwards compatibility
+  const resolvedTitle = title ?? label ?? "";
+  // Support 'variant' as alias for 'color' for backwards compatibility
+  const resolvedColor: ColorVariant =
+    color ?? (variant ? variantToColor[variant] : "slate");
+  const valueColor = colorClasses[resolvedColor];
+  const borderColor = borderColorClasses[resolvedColor];
   const isClickable = !!onClick;
 
   const formatValue = (v: string | number) => {
@@ -76,7 +97,7 @@ export function StatCard({
     <>
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-slate-400 truncate">
-          {title}
+          {resolvedTitle}
         </span>
         {icon && (
           <span className="text-lg flex-shrink-0" aria-hidden="true">

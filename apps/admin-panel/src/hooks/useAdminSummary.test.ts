@@ -26,9 +26,14 @@ describe("useAdminSummary", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
+    it("should return loading true initially", async () => {
       const { result } = renderHook(() => useAdminSummary());
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch admin summary on mount", async () => {

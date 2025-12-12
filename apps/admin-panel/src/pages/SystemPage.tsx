@@ -3,11 +3,12 @@
  * Features: Resource monitoring, backup controls, maintenance mode, cache management
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HelpButton } from "@voiceassist/ui";
 import { AskAIButton } from "../components/shared";
 import { featureFlags } from "../config/env";
 import { useSystem } from "../hooks/useSystem";
+import { getApiClient } from "../lib/apiClient";
 
 type TabId = "overview" | "backups" | "maintenance" | "cache" | "config";
 
@@ -39,6 +40,34 @@ export function SystemPage() {
     disableMaintenance,
     invalidateCacheNamespace,
   } = useSystem({ autoRefresh: true, refreshInterval: 30000 });
+  const [jobStats, setJobStats] = useState<{
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+    recent_failures: any[];
+  } | null>(null);
+  const [jobStatsError, setJobStatsError] = useState<string | null>(null);
+
+  // Lightweight background jobs stats for admin/dev view
+  const loadJobStats = async () => {
+    try {
+      const client = getApiClient();
+      const stats = await client.getAdminJobStats();
+      setJobStats(stats);
+      setJobStatsError(null);
+    } catch (err) {
+      // Keep system page usable even if jobs API is unavailable
+      if (import.meta.env.MODE === "development") {
+        // eslint-disable-next-line no-console
+        console.warn("Failed to load job stats", err);
+      }
+      setJobStatsError("Job stats unavailable");
+    }
+  };
+
+  // Initial load (best-effort)
+  useEffect(() => {
+    void loadJobStats();
+  }, []);
 
   const tabs: { id: TabId; label: string }[] = [
     { id: "overview", label: "Overview" },
@@ -119,6 +148,9 @@ export function SystemPage() {
           resources={resources}
           health={health}
           resourcesLoading={resourcesLoading}
+          jobStats={jobStats}
+          onRefreshJobStats={loadJobStats}
+          jobStatsError={jobStatsError}
         />
       )}
       {activeTab === "backups" && (
@@ -156,12 +188,22 @@ interface OverviewTabProps {
   resources: ReturnType<typeof useSystem>["resources"];
   health: ReturnType<typeof useSystem>["health"];
   resourcesLoading: boolean;
+  jobStats: {
+    by_status: Record<string, number>;
+    by_type: Record<string, number>;
+    recent_failures: any[];
+  } | null;
+  onRefreshJobStats: () => Promise<void>;
+  jobStatsError: string | null;
 }
 
 function OverviewTab({
   resources,
   health,
   resourcesLoading,
+  jobStats,
+  onRefreshJobStats,
+  jobStatsError,
 }: OverviewTabProps) {
   return (
     <div className="space-y-6">
@@ -242,6 +284,108 @@ function OverviewTab({
           criticalThreshold={85}
           showAsPercentOnly
         />
+      </div>
+
+      {/* Background Jobs (Developer View) */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-200">
+              Background Jobs (Dev)
+            </h2>
+            <p className="text-xs text-slate-500">
+              Lightweight view of document_processing and enhanced_extraction
+              queues. Intended for staging and admin diagnostics.
+            </p>
+          </div>
+          <button
+            onClick={onRefreshJobStats}
+            className="px-3 py-1.5 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700"
+          >
+            Refresh Jobs
+          </button>
+        </div>
+        {jobStatsError && (
+          <div className="text-xs text-amber-400 mb-2">
+            {jobStatsError}
+          </div>
+        )}
+        {jobStats ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <div className="text-xs font-semibold text-slate-400 mb-1">
+                By Status
+              </div>
+              <ul className="space-y-1 text-slate-200">
+                {Object.entries(jobStats.by_status).map(([status, count]) => (
+                  <li key={status} className="flex justify-between">
+                    <span className="capitalize text-slate-400">
+                      {status}
+                    </span>
+                    <span className="font-medium">{count}</span>
+                  </li>
+                ))}
+                {Object.keys(jobStats.by_status).length === 0 && (
+                  <li className="text-xs text-slate-500">
+                    No jobs recorded yet.
+                  </li>
+                )}
+              </ul>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-400 mb-1">
+                By Type
+              </div>
+              <ul className="space-y-1 text-slate-200">
+                {Object.entries(jobStats.by_type).map(([type, count]) => (
+                  <li key={type} className="flex justify-between">
+                    <span className="text-slate-400">{type}</span>
+                    <span className="font-medium">{count}</span>
+                  </li>
+                ))}
+                {Object.keys(jobStats.by_type).length === 0 && (
+                  <li className="text-xs text-slate-500">
+                    No jobs recorded yet.
+                  </li>
+                )}
+              </ul>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-400 mb-1">
+                Recent Failures
+              </div>
+              {jobStats.recent_failures.length === 0 ? (
+                <div className="text-xs text-emerald-400">
+                  No recent failures.
+                </div>
+              ) : (
+                <ul className="space-y-1 text-xs text-rose-300 max-h-32 overflow-y-auto">
+                  {jobStats.recent_failures.slice(0, 5).map((job) => (
+                    <li key={job.id} className="border border-rose-900/60 rounded px-2 py-1 bg-rose-950/40">
+                      <div className="flex justify-between">
+                        <span className="truncate max-w-[8rem]">
+                          {job.job_type}
+                        </span>
+                        <span className="text-rose-400">
+                          {job.status}
+                        </span>
+                      </div>
+                      {job.error_message && (
+                        <div className="mt-0.5 truncate text-rose-200">
+                          {job.error_message}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs text-slate-500">
+            Job statistics are loading or unavailable. Try refreshing.
+          </div>
+        )}
       </div>
 
       {/* Load Average */}

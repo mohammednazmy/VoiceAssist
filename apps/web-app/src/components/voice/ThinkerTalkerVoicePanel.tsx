@@ -10,13 +10,15 @@
  * - Barge-in support
  * - Compact mode (~80px) that doesn't obscure chat
  * - Expandable drawer for detailed metrics and tool calls
+ * - Document navigation with page/section tracking
  *
  * Phase: Thinker/Talker Voice Pipeline Migration
  * Phase 11: Compact Voice Mode UI
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useThinkerTalkerVoiceMode } from "../../hooks/useThinkerTalkerVoiceMode";
+import { useVoiceDocumentSession } from "../../hooks/useVoiceDocumentSession";
 import type {
   TTToolCall,
   TTVoiceMetrics,
@@ -26,6 +28,10 @@ import { VoiceExpandedDrawer } from "./VoiceExpandedDrawer";
 import { VoiceModeSettings } from "./VoiceModeSettings";
 import { EmotionIndicator } from "./EmotionIndicator";
 import { ThinkingFeedbackPanel } from "./ThinkingFeedbackPanel";
+import {
+  DocumentContextIndicator,
+  DocumentNavigationHints,
+} from "./DocumentContextIndicator";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 import { DEFAULT_VOICE_ID } from "../../lib/voiceConstants";
 
@@ -36,6 +42,10 @@ import { DEFAULT_VOICE_ID } from "../../lib/voiceConstants";
 export interface ThinkerTalkerVoicePanelProps {
   /** Conversation ID for context */
   conversationId?: string;
+  /** Document ID to start a document session (from URL params) */
+  documentId?: string;
+  /** Document title (from URL params) */
+  documentTitle?: string;
   /** Called when panel should close */
   onClose?: () => void;
   /** Called when user transcript is received */
@@ -52,6 +62,8 @@ export interface ThinkerTalkerVoicePanelProps {
 
 export function ThinkerTalkerVoicePanel({
   conversationId,
+  documentId,
+  documentTitle,
   onClose,
   onUserMessage,
   onAssistantMessage,
@@ -59,10 +71,68 @@ export function ThinkerTalkerVoicePanel({
 }: ThinkerTalkerVoicePanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [followDocument, setFollowDocument] = useState<boolean>(
+    Boolean(documentId),
+  );
+  const [readingModeEnabled, setReadingModeEnabled] = useState<boolean>(false);
+  const [readingSpeed, setReadingSpeed] = useState<"slow" | "normal" | "fast">(
+    "normal",
+  );
+  const [readingDetail, setReadingDetail] = useState<"short" | "full">("full");
+  const [phiMode, setPhiMode] = useState<"clinical" | "demo">("clinical");
+
+  // Track "awaiting LLM response" state for reliable thinking indicator
+  // This persists even if the backend's "processing" state is brief
+  const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
+  const lastTranscriptRef = useRef<string>("");
 
   // Voice settings from store
   const { elevenlabsVoiceId, language, vadSensitivity, setVoiceModeType } =
     useVoiceSettingsStore();
+
+  // Document session hook for voice document navigation
+  const documentSession = useVoiceDocumentSession({
+    conversationId: conversationId || "",
+    autoLoad: Boolean(conversationId),
+  });
+
+  // Start or end document session based on "Follow this document" toggle
+  useEffect(() => {
+    if (!conversationId || !documentId) return;
+
+    if (
+      followDocument &&
+      !documentSession.isActive &&
+      !documentSession.isLoading
+    ) {
+      documentSession.startSession(documentId).catch((err) => {
+        console.error(
+          "[ThinkerTalkerVoicePanel] Failed to start document session:",
+          err,
+        );
+      });
+    }
+
+    if (
+      !followDocument &&
+      documentSession.isActive &&
+      !documentSession.isLoading
+    ) {
+      documentSession.endSession().catch((err) => {
+        console.error(
+          "[ThinkerTalkerVoicePanel] Failed to end document session:",
+          err,
+        );
+      });
+    }
+  }, [
+    conversationId,
+    documentId,
+    followDocument,
+    documentSession.isActive,
+    documentSession.isLoading,
+    documentSession,
+  ]);
 
   // T/T Voice Mode hook
   const voiceMode = useThinkerTalkerVoiceMode({
@@ -73,12 +143,22 @@ export function ThinkerTalkerVoicePanel({
       barge_in_enabled: true,
       vad_sensitivity: vadSensitivity, // 0-100 from settings
     },
+    // Long-form document reading + PHI-conscious controls
+    readingModeEnabled,
+    readingSpeed,
+    readingDetail,
+    phiMode,
     onUserTranscript: (text, isFinal) => {
       if (isFinal) {
+        // Track that we're awaiting LLM response (for thinking indicator)
+        lastTranscriptRef.current = text;
+        setIsAwaitingResponse(true);
         onUserMessage?.(text);
       }
     },
     onAIResponse: (text, isFinal) => {
+      // Clear "awaiting response" state when we receive any AI response
+      setIsAwaitingResponse(false);
       if (isFinal) {
         onAssistantMessage?.(text);
       }
@@ -90,6 +170,36 @@ export function ThinkerTalkerVoicePanel({
       onMetricsUpdate?.(metrics);
     },
   });
+
+  // Clear "awaiting response" state when AI starts playing audio or speaking
+  // This is a backup in case onAIResponse callback isn't called in time
+  useEffect(() => {
+    if (voiceMode.isPlaying || voiceMode.pipelineState === "speaking") {
+      setIsAwaitingResponse(false);
+    }
+  }, [voiceMode.isPlaying, voiceMode.pipelineState]);
+
+  // Clear "awaiting response" state on disconnect
+  useEffect(() => {
+    if (!voiceMode.isConnected) {
+      setIsAwaitingResponse(false);
+      lastTranscriptRef.current = "";
+    }
+  }, [voiceMode.isConnected]);
+
+  // When KB source chips in the chat timeline are clicked, open the
+  // expanded drawer so clinicians can see full KB details without
+  // hunting for the voice controls.
+  useEffect(() => {
+    const handler = () => {
+      setIsExpanded(true);
+    };
+
+    window.addEventListener("voiceassist:kbdrawer_open", handler);
+    return () => {
+      window.removeEventListener("voiceassist:kbdrawer_open", handler);
+    };
+  }, []);
 
   // Map metrics to VoiceMetrics format for the drawer
   const mappedMetrics = {
@@ -120,10 +230,6 @@ export function ThinkerTalkerVoicePanel({
       hasAutoConnected.current = true;
       connectRef.current();
     }
-    // Note: We intentionally exclude voiceMode.connect from dependencies
-    // because the ref ensures we always use the latest function,
-    // and we only want this effect to run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voiceMode.isConnected, voiceMode.isConnecting]);
 
   // Handle close - disconnect if connected
@@ -176,8 +282,13 @@ export function ThinkerTalkerVoicePanel({
           <div className="absolute bottom-24 left-4 z-10">
             <ThinkingFeedbackPanel
               isThinking={
+                // Backend is in processing state
                 voiceMode.pipelineState === "processing" ||
-                voiceMode.currentToolCalls.length > 0
+                // Tool calls are active
+                voiceMode.currentToolCalls.length > 0 ||
+                // Awaiting LLM response: set after final transcript, cleared when AI responds
+                // This reliably tracks the "thinking" gap even if backend state is brief
+                isAwaitingResponse
               }
               isTTSPlaying={voiceMode.isPlaying}
               size="sm"
@@ -189,6 +300,110 @@ export function ThinkerTalkerVoicePanel({
               }
               thinkingSource={voiceMode.thinkingSource}
             />
+          </div>
+        )}
+
+        {/* Document context indicator - shows when a document session is active */}
+        {(documentSession.isActive || documentSession.isLoading) && (
+          <div className="mb-2 mt-2 space-y-2">
+            {/* Document binding, reading mode, and PHI-conscious controls */}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300">
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 rounded border-slate-600 bg-slate-900 text-blue-500"
+                    checked={followDocument}
+                    onChange={(e) => setFollowDocument(e.target.checked)}
+                  />
+                  <span className="font-medium text-slate-200">
+                    Follow this document
+                  </span>
+                </label>
+                {documentTitle && (
+                  <span className="max-w-[180px] truncate text-slate-500">
+                    {documentTitle}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Reading mode toggle */}
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 rounded border-slate-600 bg-slate-900 text-blue-500"
+                    checked={readingModeEnabled}
+                    onChange={(e) =>
+                      setReadingModeEnabled(e.target.checked)
+                    }
+                  />
+                  <span className="text-slate-400">Reading mode</span>
+                </label>
+                {/* Reading pacing: speed */}
+                <label className="inline-flex items-center gap-1.5">
+                  <span className="text-slate-400">Speed</span>
+                  <select
+                    className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[11px] text-slate-200"
+                    value={readingSpeed}
+                    onChange={(e) =>
+                      setReadingSpeed(
+                        e.target.value as "slow" | "normal" | "fast",
+                      )
+                    }
+                  >
+                    <option value="slow">Slower</option>
+                    <option value="normal">Normal</option>
+                    <option value="fast">Faster</option>
+                  </select>
+                </label>
+                {/* Reading detail: summary vs full */}
+                <label className="inline-flex items-center gap-1.5">
+                  <span className="text-slate-400">Detail</span>
+                  <select
+                    className="rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-[11px] text-slate-200"
+                    value={readingDetail}
+                    onChange={(e) =>
+                      setReadingDetail(
+                        e.target.value as "short" | "full",
+                      )
+                    }
+                  >
+                    <option value="short">Summary</option>
+                    <option value="full">Full text</option>
+                  </select>
+                </label>
+                {/* PHI-conscious demo mode toggle */}
+                <label className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    className="h-3 w-3 rounded border-slate-600 bg-slate-900 text-amber-500"
+                    checked={phiMode === "demo"}
+                    onChange={(e) =>
+                      setPhiMode(e.target.checked ? "demo" : "clinical")
+                    }
+                  />
+                  <span className="text-amber-300">PHI-conscious demo</span>
+                </label>
+              </div>
+            </div>
+
+            <DocumentContextIndicator
+              session={documentSession.session}
+              isLoading={documentSession.isLoading}
+              onEndSession={() => setFollowDocument(false)}
+              size="sm"
+            />
+
+            {/* Document navigation voice hints */}
+            {documentSession.session && (
+              <DocumentNavigationHints
+                visible
+                currentPage={documentSession.session.current_page}
+                totalPages={documentSession.session.total_pages}
+                hasToc={documentSession.session.has_toc}
+                hasFigures={documentSession.session.has_figures}
+              />
+            )}
           </div>
         )}
 

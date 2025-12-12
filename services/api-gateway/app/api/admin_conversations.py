@@ -11,20 +11,22 @@ import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from app.api.admin.utils import log_audit_event
 from app.core.api_envelope import ErrorCodes, error_response, success_response
-from app.core.database import get_db
+from app.core.database import get_db, transaction
 from app.core.dependencies import get_current_admin_or_viewer, get_current_admin_user
 from app.models.attachment import MessageAttachment
 from app.models.message import Message
 from app.models.session import Session as ChatSession
+from app.models.voice_document_session import VoiceDocumentSession
+from app.models.document import Document
 from app.models.user import User
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, func, or_, and_, String, cast
 from sqlalchemy.orm import Session, joinedload
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,19 @@ class ConversationAdminResponse(BaseModel):
     created_at: str
     updated_at: str
     last_message_at: Optional[str] = None
+    phi_mode: Optional[str] = Field(
+        default=None, description="Conversation PHI mode (clinical or demo)"
+    )
+    tags: List[str] = Field(default_factory=list, description="Conversation tags")
+    active_document_id: Optional[str] = Field(
+        default=None, description="Currently active document ID for this conversation (voice mode)"
+    )
+    active_document_title: Optional[str] = Field(
+        default=None, description="Title of currently active document (if any)"
+    )
+    active_document_page: Optional[int] = Field(
+        default=None, description="Current page in active document (if any)"
+    )
 
 
 class MessageAdminResponse(BaseModel):
@@ -102,8 +117,19 @@ async def list_admin_conversations(
     limit: int = Query(20, ge=1, le=100),
     user_id: Optional[str] = Query(None, description="Filter by user ID"),
     search: Optional[str] = Query(None, description="Search in title or content"),
+    title_search: Optional[str] = Query(
+        None, description="Alias for search - search in title (for frontend compatibility)"
+    ),
     archived: Optional[bool] = Query(None, description="Filter by archived status"),
     has_phi: Optional[bool] = Query(None, description="Filter conversations containing PHI"),
+    phi_mode: Optional[str] = Query(
+        None,
+        description="Filter by conversation PHI mode ('clinical' or 'demo')",
+    ),
+    has_active_doc: Optional[str] = Query(
+        None,
+        description="Filter by whether conversation has an active voice document session ('yes' or 'no')",
+    ),
     start_date: Optional[str] = Query(None, description="Filter by start date (ISO 8601)"),
     end_date: Optional[str] = Query(None, description="Filter by end date (ISO 8601)"),
 ) -> Dict:
@@ -123,10 +149,25 @@ async def list_admin_conversations(
                 func.bool_or(Message.contains_phi).label("has_phi"),
                 User.email.label("user_email"),
                 User.full_name.label("user_name"),
+                func.max(Document.document_id).label("active_document_id"),
+                func.max(Document.title).label("active_document_title"),
+                func.max(VoiceDocumentSession.current_page).label("active_document_page"),
             )
             .join(User, User.id == ChatSession.user_id)
             .outerjoin(Message, Message.session_id == ChatSession.id)
-            .group_by(ChatSession.id, User.email, User.full_name)
+            .outerjoin(
+                VoiceDocumentSession,
+                and_(
+                    VoiceDocumentSession.conversation_id == cast(ChatSession.id, String),
+                    VoiceDocumentSession.is_active == True,  # noqa: E712
+                ),
+            )
+            .outerjoin(Document, Document.document_id == VoiceDocumentSession.document_id)
+            .group_by(
+                ChatSession.id,
+                User.email,
+                User.full_name,
+            )
         )
 
         # Apply filters
@@ -141,8 +182,10 @@ async def list_admin_conversations(
                     trace_id=getattr(request.state, "trace_id", None),
                 )
 
-        if search:
-            search_term = f"%{search}%"
+        # Support both 'search' and 'title_search' parameters (frontend compatibility)
+        effective_search = search or title_search
+        if effective_search:
+            search_term = f"%{effective_search}%"
             query = query.filter(
                 or_(
                     ChatSession.title.ilike(search_term),
@@ -167,9 +210,25 @@ async def list_admin_conversations(
             except ValueError:
                 pass
 
+        # Apply PHI mode filter after base query
+        if phi_mode:
+            mode_val = phi_mode.lower()
+            if mode_val in {"clinical", "demo"}:
+                query = query.filter(
+                    ChatSession.context.op("->>")("phi_mode") == mode_val  # type: ignore[attr-defined]
+                )
+
         # Get total count (before pagination)
         total_query = query.with_entities(func.count(func.distinct(ChatSession.id)))
         total = total_query.scalar() or 0
+
+        # Apply has_active_doc filter AFTER joins, using aggregated Document info
+        if has_active_doc in {"yes", "no"}:
+            # We treat conversations with a non-null active_document_id as "yes"
+            if has_active_doc == "yes":
+                query = query.having(func.max(Document.document_id).isnot(None))
+            else:
+                query = query.having(func.max(Document.document_id).is_(None))
 
         # Apply ordering and pagination
         results = query.order_by(desc(ChatSession.updated_at)).offset(offset).limit(limit).all()
@@ -194,6 +253,13 @@ async def list_admin_conversations(
             session_has_phi = row[4] or False
             user_email = row[5]
             user_name = row[6]
+            active_document_id = row[7]
+            active_document_title = row[8]
+            active_document_page = row[9]
+
+            context = session.context or {}
+            phi_mode = context.get("phi_mode")
+            tags = context.get("tags") or []
 
             # Apply PHI filter if specified
             if has_phi is not None and session_has_phi != has_phi:
@@ -214,6 +280,11 @@ async def list_admin_conversations(
                     created_at=(session.created_at.isoformat() + "Z" if session.created_at else ""),
                     updated_at=(session.updated_at.isoformat() + "Z" if session.updated_at else ""),
                     last_message_at=(last_message_at.isoformat() + "Z" if last_message_at else None),
+                    phi_mode=phi_mode,
+                    tags=tags,
+                    active_document_id=active_document_id,
+                    active_document_title=active_document_title,
+                    active_document_page=active_document_page,
                 ).model_dump()
             )
 
@@ -332,6 +403,10 @@ async def get_admin_conversation(
             ).model_dump()
         )
 
+    context = session.context or {}
+    phi_mode = context.get("phi_mode")
+    tags = context.get("tags") or []
+
     conversation = ConversationAdminResponse(
         id=str(session.id),
         user_id=str(session.user_id),
@@ -346,6 +421,8 @@ async def get_admin_conversation(
         created_at=session.created_at.isoformat() + "Z" if session.created_at else "",
         updated_at=session.updated_at.isoformat() + "Z" if session.updated_at else "",
         last_message_at=messages[-1].created_at.isoformat() + "Z" if messages else None,
+        phi_mode=phi_mode,
+        tags=tags,
     )
 
     # Log audit event for viewing conversation
@@ -364,6 +441,101 @@ async def get_admin_conversation(
             "conversation": conversation.model_dump(),
             "messages": message_responses,
             "total_messages": len(messages),
+        },
+        trace_id=trace_id,
+    )
+
+
+@router.patch("/{conversation_id}/metadata")
+async def update_admin_conversation_metadata(
+    conversation_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user),
+) -> Dict:
+    """
+    Update conversation-level metadata (phi_mode, tags) as an admin.
+
+    This is a minimal admin-only endpoint used by tooling to adjust PHI mode
+    and tags for compliance and workflow organization. It does not expose or
+    modify message content.
+    """
+    try:
+        conv_uuid = uuid.UUID(conversation_id)
+    except ValueError:
+        return error_response(
+            error_code=ErrorCodes.VALIDATION_ERROR,
+            message="Invalid conversation ID format",
+            trace_id=getattr(request.state, "trace_id", None),
+        )
+
+    session = db.query(ChatSession).filter(ChatSession.id == conv_uuid).first()
+    if not session:
+        return error_response(
+            error_code=ErrorCodes.NOT_FOUND,
+            message="Conversation not found",
+            trace_id=getattr(request.state, "trace_id", None),
+        )
+
+    body = await request.json()
+    phi_mode = body.get("phi_mode")
+    tags = body.get("tags")
+
+    ctx = dict(session.context or {})
+
+    if phi_mode is not None:
+        if phi_mode == "":
+            ctx.pop("phi_mode", None)
+        else:
+            mode_val = str(phi_mode).lower()
+            if mode_val not in {"clinical", "demo"}:
+                return error_response(
+                    error_code=ErrorCodes.VALIDATION_ERROR,
+                    message="phi_mode must be 'clinical' or 'demo' when provided",
+                    trace_id=getattr(request.state, "trace_id", None),
+                )
+            ctx["phi_mode"] = mode_val
+
+    if tags is not None:
+        if not isinstance(tags, list):
+          return error_response(
+              error_code=ErrorCodes.VALIDATION_ERROR,
+              message="tags must be an array of strings when provided",
+              trace_id=getattr(request.state, "trace_id", None),
+          )
+        normalized = sorted(
+            {str(t).strip() for t in tags if str(t).strip()}
+        )
+        ctx["tags"] = normalized
+
+    session.context = ctx
+
+    # Explicitly mark session as modified to ensure JSONB changes are persisted
+    db.add(session)
+    with transaction(db):
+        logger.info(
+            "Admin updated conversation metadata for %s: phi_mode=%s, tags=%s",
+            conversation_id,
+            ctx.get("phi_mode"),
+            ctx.get("tags", []),
+        )
+
+    await log_audit_event(
+        db=db,
+        admin_user=current_admin,
+        action="update_conversation_metadata",
+        resource_type="conversation",
+        resource_id=conversation_id,
+        details={"phi_mode": ctx.get("phi_mode"), "tags": ctx.get("tags", [])},
+        request=request,
+    )
+
+    trace_id = getattr(request.state, "trace_id", None)
+    return success_response(
+        {
+            "message": "Conversation metadata updated",
+            "phi_mode": ctx.get("phi_mode"),
+            "tags": ctx.get("tags", []),
         },
         trace_id=trace_id,
     )

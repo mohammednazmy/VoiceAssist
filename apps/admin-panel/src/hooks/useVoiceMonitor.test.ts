@@ -89,9 +89,14 @@ describe("useVoiceMonitor", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
+    it("should return loading true initially", async () => {
       const { result } = renderHook(() => useVoiceMonitor());
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch all voice data on mount", async () => {

@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { useChatSession } from "../hooks/useChatSession";
 import { useToolConfirmation } from "../hooks/useToolConfirmation";
 import { ToolConfirmationDialog } from "./ToolConfirmationDialog";
+import { KnowledgeBasePanel } from "./knowledge/KnowledgeBasePanel";
 
 export function Chat() {
   const [input, setInput] = useState("");
@@ -94,23 +95,12 @@ export function Chat() {
           onCancel={tool.cancel}
         />
       </div>
-      <aside className="border-l border-slate-800 bg-slate-950/60 flex flex-col">
-        <div className="px-4 py-3 border-b border-slate-800">
-          <div className="text-xs uppercase tracking-wide text-slate-500">
-            Evidence
-          </div>
-          <div className="text-xs text-slate-400">
-            Sources and tools will appear here as the system is implemented.
-          </div>
-        </div>
-        <div className="flex-1 px-4 py-3 text-xs text-slate-500 space-y-2 overflow-y-auto">
-          <div className="font-semibold text-slate-300 text-sm">Demo notes</div>
-          <p>
-            This UI is wired to the stubbed QueryOrchestrator at{" "}
-            <code>/api/chat/message</code>. As the backend RAG pipeline is built
-            out, this panel will show citations and tool activity.
-          </p>
-        </div>
+      <aside className="border-l border-slate-800 bg-slate-950/60 flex flex-col p-3">
+        <KnowledgeBasePanel
+          title="Knowledge Base (KB)"
+          description="Run KB-backed queries alongside the chat."
+          onInsertAnswer={(answer) => setInput(answer)}
+        />
       </aside>
     </section>
   );

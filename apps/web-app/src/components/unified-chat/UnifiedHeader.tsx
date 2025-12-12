@@ -24,6 +24,8 @@ import {
 } from "../../stores/unifiedConversationStore";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import type { Conversation } from "@voiceassist/types";
+import { useVoiceDocumentSession } from "../../hooks/useVoiceDocumentSession";
+import { useBranching } from "../../hooks/useBranching";
 
 interface UnifiedHeaderProps {
   conversation: Conversation | null;
@@ -57,6 +59,7 @@ export function UnifiedHeader({
   // Get unified connection status
   const connectionStatus = useUnifiedConversationStore(selectConnectionStatus);
   const voiceModeActive = useUnifiedConversationStore((s) => s.voiceModeActive);
+  const activeConversationId = useUnifiedConversationStore((s) => s.conversationId);
 
   const handleStartEdit = useCallback(() => {
     setEditedTitle(conversation?.title || "New Conversation");
@@ -147,6 +150,16 @@ export function UnifiedHeader({
     }
   };
 
+  // Voice document session state for active conversation, when any.
+  const documentSession = useVoiceDocumentSession({
+    conversationId: activeConversationId || "",
+    autoLoad: Boolean(activeConversationId),
+  });
+
+  // Branching state for breadcrumb indicator in header
+  const { branches, currentBranchId } = useBranching(activeConversationId);
+  const activeBranch = branches.find((b) => b.branchId === currentBranchId);
+
   return (
     <header
       className="flex items-center justify-between px-4 py-3 border-b border-neutral-200 bg-white"
@@ -227,6 +240,79 @@ export function UnifiedHeader({
               </button>
             )}
           </div>
+
+          {/* Conversation tags (e.g., dictation, consult) */}
+          {conversation?.tags && conversation.tags.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {conversation.tags.slice(0, 4).map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-neutral-100 text-[10px] text-neutral-600 border border-neutral-200"
+                >
+                  {tag}
+                </span>
+              ))}
+              {conversation.tags.length > 4 && (
+                <span className="text-[10px] text-neutral-500">
+                  +{conversation.tags.length - 4} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* PHI mode badge when conversations carry phiMode metadata */}
+          {conversation?.phiMode && (
+            <div className="mt-1">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                  conversation.phiMode === "demo"
+                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                }`}
+                title={
+                  conversation.phiMode === "demo"
+                    ? "Demo (PHI-conscious) conversation – safer for screen sharing"
+                    : "Clinical conversation – may contain PHI"
+                }
+              >
+                {conversation.phiMode === "demo" ? "Demo" : "Clinical"}
+              </span>
+            </div>
+          )}
+
+          {/* Active document indicator when following a document in voice mode */}
+          {documentSession.session && (
+            <div className="mt-1 text-xs text-neutral-500 flex items-center gap-1">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                Reading:{" "}
+                <span className="ml-1 font-medium text-blue-800 truncate max-w-[220px]">
+                  {documentSession.session.document_title}
+                </span>
+              </span>
+              <span className="text-neutral-500">
+                Page {documentSession.session.current_page}
+                {documentSession.session.total_pages &&
+                  ` / ${documentSession.session.total_pages}`}
+              </span>
+            </div>
+          )}
+
+          {/* Branch breadcrumb (main vs branch) */}
+          {activeConversationId && (
+            <div className="mt-1 text-[11px] text-neutral-500 flex items-center gap-1">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-neutral-50 border border-neutral-200">
+                {currentBranchId === "main"
+                  ? "Main thread"
+                  : `Branch ${activeBranch ? activeBranch.branchId.slice(0, 8) : currentBranchId.slice(0, 8)}`}
+              </span>
+              {activeBranch && (
+                <span>
+                  · {activeBranch.messageCount} message
+                  {activeBranch.messageCount === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Title Error */}
           {titleError && (

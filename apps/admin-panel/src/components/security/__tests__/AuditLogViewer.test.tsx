@@ -23,6 +23,7 @@ const mockLogs = [
   {
     id: "log-1",
     timestamp: "2024-01-15T12:00:00Z",
+    level: "info",
     action: "auth.login_success",
     user_id: "user-123",
     user_email: "admin@example.com",
@@ -36,6 +37,7 @@ const mockLogs = [
   {
     id: "log-2",
     timestamp: "2024-01-15T11:55:00Z",
+    level: "info",
     action: "auth.2fa_enabled",
     user_id: "user-456",
     user_email: "user@example.com",
@@ -49,6 +51,7 @@ const mockLogs = [
   {
     id: "log-3",
     timestamp: "2024-01-15T11:50:00Z",
+    level: "warning",
     action: "auth.login_failed",
     user_id: null,
     user_email: null,

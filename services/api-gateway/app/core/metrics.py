@@ -2,6 +2,10 @@
 
 from prometheus_client import Counter, Gauge, Histogram, Info
 
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 # Create a simple wrapper that catches duplicate registration errors
 class SafeMetric:
@@ -65,6 +69,37 @@ def _safe_gauge(*args, **kwargs):
                 pass
 
         return DummyMetric()
+
+
+def record_instrumented_api_call(
+    analytics_service,
+    db,
+    endpoint: str,
+    duration_ms: float,
+    success: bool,
+    user_id,
+    organization_id,
+    endpoint_category: str,
+) -> None:
+    """
+    Small helper to record a tenant-aware API call and Prometheus metric.
+
+    This wraps AnalyticsService.record_api_call and centralizes the
+    organization-aware Prometheus labeling to reduce boilerplate.
+    """
+    try:
+        analytics_service.record_api_call(
+            db=db,
+            endpoint=endpoint,
+            duration_ms=duration_ms,
+            success=success,
+            user_id=user_id,
+            organization_id=organization_id,
+            endpoint_category=endpoint_category,
+        )
+    except Exception as exc:  # pragma: no cover
+        # Analytics must never break main request handling
+        logger.warning("instrumented_api_call_failed", extra={"endpoint": endpoint, "error": str(exc)})
 
 
 # Application info
@@ -637,4 +672,366 @@ flag_override_resolutions_total = _safe_counter(
     "voiceassist_flag_override_resolutions_total",
     "Total flag resolutions by source",
     ["flag_name", "source"],  # source: "override", "segmentation", "scheduled", "default"
+)
+
+# ====================================================================
+# Analytics Dashboard Metrics (Phase 4 - Multi-Tenancy Analytics)
+# ====================================================================
+
+# Real-time metrics collection
+analytics_metrics_recorded_total = _safe_counter(
+    "voiceassist_analytics_metrics_recorded_total",
+    "Total analytics metrics recorded",
+    ["metric_type", "organization_id"],  # metric_type: conversations, tokens, api_calls, errors
+)
+
+# Aggregation job metrics
+analytics_aggregation_jobs_total = _safe_counter(
+    "voiceassist_analytics_aggregation_jobs_total",
+    "Total analytics aggregation jobs",
+    ["status", "job_type"],  # status: success, failure; job_type: hourly, daily
+)
+
+analytics_aggregation_duration_seconds = _safe_histogram(
+    "voiceassist_analytics_aggregation_duration_seconds",
+    "Duration of analytics aggregation jobs",
+    ["job_type"],  # hourly, daily
+    buckets=[0.5, 1, 2, 5, 10, 30, 60, 120, 300],
+)
+
+analytics_records_aggregated_total = _safe_counter(
+    "voiceassist_analytics_records_aggregated_total",
+    "Total records processed during aggregation",
+    ["job_type", "metric_type"],
+)
+
+# Cost tracking metrics
+analytics_cost_cents = _safe_counter(
+    "voiceassist_analytics_cost_cents_total",
+    "Total cost tracked in cents (hundredths of USD)",
+    ["service", "organization_id"],  # service: openai_gpt4, openai_whisper, openai_tts, etc.
+)
+
+analytics_tokens_used_total = _safe_counter(
+    "voiceassist_analytics_tokens_used_total",
+    "Total tokens used by service",
+    ["service", "token_type", "organization_id"],  # token_type: input, output
+)
+
+# Query analytics
+analytics_query_duration_seconds = _safe_histogram(
+    "voiceassist_analytics_query_duration_seconds",
+    "Duration of analytics dashboard queries",
+    ["query_type"],  # summary, timeseries, breakdown, export
+    buckets=[0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+)
+
+# Active analytics dashboards
+analytics_active_dashboards = _safe_gauge(
+    "voiceassist_analytics_active_dashboards",
+    "Number of active analytics dashboard sessions",
+)
+
+# ====================================================================
+# Organization & Multi-Tenancy Metrics (Phase 4)
+# ====================================================================
+
+# Organization operations
+organization_operations_total = _safe_counter(
+    "voiceassist_organization_operations_total",
+    "Total organization operations",
+    ["operation", "status"],  # operation: create, update, delete, suspend; status: success, failure
+)
+
+# Active organizations
+organization_active_total = _safe_gauge(
+    "voiceassist_organization_active_total",
+    "Number of active organizations",
+    ["plan"],  # plan: starter, professional, enterprise
+)
+
+# Members per organization
+organization_members_total = _safe_gauge(
+    "voiceassist_organization_members_total",
+    "Total members across all organizations",
+    ["role"],  # role: owner, admin, member, viewer
+)
+
+organization_member_operations_total = _safe_counter(
+    "voiceassist_organization_member_operations_total",
+    "Total organization member operations",
+    ["operation", "status"],  # operation: invite, accept, remove, update_role
+)
+
+# Quota tracking
+organization_quota_usage_percent = _safe_gauge(
+    "voiceassist_organization_quota_usage_percent",
+    "Organization quota usage percentage",
+    ["organization_id", "quota_type"],  # quota_type: users, storage, api_calls, documents
+)
+
+organization_quota_exceeded_total = _safe_counter(
+    "voiceassist_organization_quota_exceeded_total",
+    "Total quota exceeded events",
+    ["organization_id", "quota_type"],
+)
+
+# Tenant isolation checks
+organization_tenant_isolation_checks_total = _safe_counter(
+    "voiceassist_organization_tenant_isolation_checks_total",
+    "Total tenant isolation checks performed",
+    ["result"],  # result: allowed, denied, error
+)
+
+# Billing events
+organization_billing_events_total = _safe_counter(
+    "voiceassist_organization_billing_events_total",
+    "Total billing events",
+    ["event_type", "plan"],  # event_type: subscription, upgrade, downgrade, payment, invoice
+)
+
+# API usage by organization
+organization_api_calls_total = _safe_counter(
+    "voiceassist_organization_api_calls_total",
+    "Total API calls by organization",
+    ["organization_id", "endpoint_category"],  # endpoint_category: voice, knowledge, chat, admin
+)
+
+# ====================================================================
+# Learning & Flashcard Metrics (Phase 4)
+# ====================================================================
+
+# Deck operations
+learning_deck_operations_total = _safe_counter(
+    "voiceassist_learning_deck_operations_total",
+    "Total learning deck operations",
+    ["operation", "status"],  # operation: create, update, delete, clone; status: success, failure
+)
+
+learning_decks_total = _safe_gauge(
+    "voiceassist_learning_decks_total",
+    "Total number of learning decks",
+    ["organization_id"],
+)
+
+# Card operations
+learning_card_operations_total = _safe_counter(
+    "voiceassist_learning_card_operations_total",
+    "Total flashcard operations",
+    ["operation", "status"],  # operation: create, update, delete, import, export
+)
+
+learning_cards_total = _safe_gauge(
+    "voiceassist_learning_cards_total",
+    "Total number of flashcards",
+    ["status"],  # status: new, learning, review, mastered, suspended
+)
+
+# Spaced repetition metrics
+learning_review_sessions_total = _safe_counter(
+    "voiceassist_learning_review_sessions_total",
+    "Total spaced repetition review sessions",
+    ["user_id"],
+)
+
+learning_reviews_total = _safe_counter(
+    "voiceassist_learning_reviews_total",
+    "Total individual card reviews",
+    ["rating", "organization_id"],  # rating: again, hard, good, easy
+)
+
+learning_review_duration_seconds = _safe_histogram(
+    "voiceassist_learning_review_duration_seconds",
+    "Duration of individual card reviews",
+    buckets=[1, 2, 5, 10, 20, 30, 60, 120, 300],
+)
+
+# Card state transitions
+learning_card_state_transitions_total = _safe_counter(
+    "voiceassist_learning_card_state_transitions_total",
+    "Total card state transitions",
+    ["from_state", "to_state"],  # states: new, learning, review, mastered, suspended, relearning
+)
+
+# Mastery metrics
+learning_cards_mastered_total = _safe_counter(
+    "voiceassist_learning_cards_mastered_total",
+    "Total cards that reached mastery",
+    ["organization_id"],
+)
+
+learning_average_ease_factor = _safe_gauge(
+    "voiceassist_learning_average_ease_factor",
+    "Average ease factor across all cards",
+    ["organization_id"],
+)
+
+# Voice-based learning
+learning_voice_reviews_total = _safe_counter(
+    "voiceassist_learning_voice_reviews_total",
+    "Total voice-based card reviews",
+    ["result"],  # result: correct, incorrect, skipped
+)
+
+# Import/Export operations
+learning_import_operations_total = _safe_counter(
+    "voiceassist_learning_import_operations_total",
+    "Total deck/card import operations",
+    ["format", "status"],  # format: anki, csv, json; status: success, partial, failure
+)
+
+learning_cards_imported_total = _safe_counter(
+    "voiceassist_learning_cards_imported_total",
+    "Total cards imported",
+    ["format"],
+)
+
+# ====================================================================
+# Enhanced PDF Processing Metrics (Phase 4 - GPT-4 Vision)
+# ====================================================================
+
+# Document processing stages
+pdf_processing_stage_duration_seconds = _safe_histogram(
+    "voiceassist_pdf_processing_stage_duration_seconds",
+    "Duration of each PDF processing stage",
+    ["stage"],  # stage: pdfplumber_extract, image_render, gpt4_vision_analyze, merge, store
+    buckets=[0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600],
+)
+
+pdf_processing_jobs_total = _safe_counter(
+    "voiceassist_pdf_processing_jobs_total",
+    "Total PDF processing jobs",
+    ["status"],  # status: pending, extracting, analyzing, complete, failed
+)
+
+pdf_processing_progress_percent = _safe_gauge(
+    "voiceassist_pdf_processing_progress_percent",
+    "Current PDF processing progress",
+    ["document_id"],
+)
+
+# Page-level metrics
+pdf_pages_processed_total = _safe_counter(
+    "voiceassist_pdf_pages_processed_total",
+    "Total PDF pages processed",
+    ["stage"],  # stage: rendered, analyzed, indexed
+)
+
+pdf_page_analysis_duration_seconds = _safe_histogram(
+    "voiceassist_pdf_page_analysis_duration_seconds",
+    "Duration of GPT-4 Vision page analysis",
+    buckets=[0.5, 1, 2, 3, 5, 7, 10, 15, 20, 30],
+)
+
+# GPT-4 Vision specific metrics
+gpt4_vision_requests_total = _safe_counter(
+    "voiceassist_gpt4_vision_requests_total",
+    "Total GPT-4 Vision API requests",
+    ["status", "resolution"],  # status: success, failure; resolution: high, low
+)
+
+gpt4_vision_tokens_used_total = _safe_counter(
+    "voiceassist_gpt4_vision_tokens_used_total",
+    "Total tokens used by GPT-4 Vision",
+    ["token_type"],  # token_type: input, output
+)
+
+gpt4_vision_cost_cents = _safe_counter(
+    "voiceassist_gpt4_vision_cost_cents_total",
+    "Total GPT-4 Vision cost in cents",
+)
+
+gpt4_vision_latency_seconds = _safe_histogram(
+    "voiceassist_gpt4_vision_latency_seconds",
+    "GPT-4 Vision API latency",
+    buckets=[0.5, 1, 2, 3, 5, 7, 10, 15, 20, 30, 45, 60],
+)
+
+# Content extraction metrics
+pdf_tables_extracted_total = _safe_counter(
+    "voiceassist_pdf_tables_extracted_total",
+    "Total tables extracted from PDFs",
+)
+
+pdf_figures_extracted_total = _safe_counter(
+    "voiceassist_pdf_figures_extracted_total",
+    "Total figures detected in PDFs",
+)
+
+pdf_content_blocks_total = _safe_counter(
+    "voiceassist_pdf_content_blocks_total",
+    "Total content blocks extracted",
+    ["block_type"],  # block_type: text, heading, table, figure
+)
+
+# OCR correction metrics
+pdf_ocr_corrections_total = _safe_counter(
+    "voiceassist_pdf_ocr_corrections_total",
+    "Total OCR corrections made by GPT-4 Vision",
+)
+
+# Page image storage
+pdf_page_images_stored_total = _safe_counter(
+    "voiceassist_pdf_page_images_stored_total",
+    "Total PDF page images stored",
+)
+
+pdf_page_images_storage_bytes = _safe_gauge(
+    "voiceassist_pdf_page_images_storage_bytes",
+    "Total storage used by PDF page images",
+)
+
+# Admin content editing
+pdf_content_edits_total = _safe_counter(
+    "voiceassist_pdf_content_edits_total",
+    "Total admin content edits",
+    ["edit_type"],  # edit_type: text, table, figure, narration
+)
+
+pdf_page_regeneration_total = _safe_counter(
+    "voiceassist_pdf_page_regeneration_total",
+    "Total page re-analysis requests",
+)
+
+# Voice narration generation
+pdf_voice_narration_generated_total = _safe_counter(
+    "voiceassist_pdf_voice_narration_generated_total",
+    "Total voice narrations generated for pages",
+)
+
+# ====================================================================
+# Scheduled Job Metrics (Phase 5 - Background Schedulers)
+# ====================================================================
+
+# Cron job execution
+cron_job_executions_total = _safe_counter(
+    "voiceassist_cron_job_executions_total",
+    "Total cron job executions",
+    ["job_name", "status"],  # status: success, failure, timeout
+)
+
+cron_job_duration_seconds = _safe_histogram(
+    "voiceassist_cron_job_duration_seconds",
+    "Duration of cron job executions",
+    ["job_name"],
+    buckets=[1, 5, 10, 30, 60, 120, 300, 600, 1800, 3600],
+)
+
+cron_job_last_run_timestamp = _safe_gauge(
+    "voiceassist_cron_job_last_run_timestamp",
+    "Unix timestamp of last cron job run",
+    ["job_name"],
+)
+
+# Data cleanup metrics
+cleanup_records_deleted_total = _safe_counter(
+    "voiceassist_cleanup_records_deleted_total",
+    "Total records deleted by cleanup jobs",
+    ["table", "reason"],  # reason: expired, stale, orphaned
+)
+
+cleanup_storage_freed_bytes = _safe_counter(
+    "voiceassist_cleanup_storage_freed_bytes_total",
+    "Total storage freed by cleanup jobs",
+    ["storage_type"],  # storage_type: database, redis, files
 )

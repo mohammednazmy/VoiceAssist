@@ -1,0 +1,328 @@
+# Prometheus Alert Rules for Phase 4 Features
+# Analytics Dashboard, Multi-Tenancy, Learning, Enhanced PDF Processing
+
+groups:
+  # ====================================================================
+  # Analytics Dashboard Alerts
+  # ====================================================================
+  - name: voiceassist_analytics
+    interval: 1m
+    rules:
+      # Analytics aggregation job failures
+      - alert: AnalyticsAggregationJobFailed
+        expr: increase(voiceassist_analytics_aggregation_jobs_total{status="failure"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: analytics
+        annotations:
+          summary: "Analytics aggregation jobs failing"
+          description: "{{ $value }} aggregation job failures in the last hour. Job type: {{ $labels.job_type }}"
+
+      # Analytics aggregation taking too long
+      - alert: AnalyticsAggregationSlow
+        expr: histogram_quantile(0.95, rate(voiceassist_analytics_aggregation_duration_seconds_bucket[30m])) > 300
+        for: 15m
+        labels:
+          severity: warning
+          component: analytics
+        annotations:
+          summary: "Analytics aggregation is slow"
+          description: "95th percentile aggregation duration is {{ $value }}s for {{ $labels.job_type }}"
+
+      # High cost growth rate (cost anomaly detection)
+      - alert: HighCostGrowthRate
+        expr: |
+          (sum(increase(voiceassist_analytics_cost_cents_total[1h]))
+          / sum(increase(voiceassist_analytics_cost_cents_total[1h] offset 1d))) > 2
+        for: 30m
+        labels:
+          severity: warning
+          component: analytics
+          category: cost
+        annotations:
+          summary: "Unusual cost growth detected"
+          description: "Cost growth rate is {{ $value }}x compared to same hour yesterday"
+
+      # GPT-4 Vision cost spike
+      - alert: GPT4VisionCostSpike
+        expr: increase(voiceassist_gpt4_vision_cost_cents_total[1h]) > 10000
+        for: 5m
+        labels:
+          severity: warning
+          component: analytics
+          category: cost
+        annotations:
+          summary: "High GPT-4 Vision costs"
+          description: "GPT-4 Vision cost in last hour: ${{ $value | humanize }}. Review PDF processing activity."
+
+  # ====================================================================
+  # Organization & Multi-Tenancy Alerts
+  # ====================================================================
+  - name: voiceassist_organizations
+    interval: 1m
+    rules:
+      # Organization quota exceeded
+      - alert: OrganizationQuotaExceeded
+        expr: increase(voiceassist_organization_quota_exceeded_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: organization
+        annotations:
+          summary: "Organization quota exceeded"
+          description: "Organization {{ $labels.organization_id }} exceeded {{ $labels.quota_type }} quota"
+
+      # Organization quota nearing limit (>90%)
+      - alert: OrganizationQuotaNearLimit
+        expr: voiceassist_organization_quota_usage_percent > 90
+        for: 10m
+        labels:
+          severity: info
+          component: organization
+        annotations:
+          summary: "Organization quota near limit"
+          description: "Organization {{ $labels.organization_id }} at {{ $value }}% of {{ $labels.quota_type }} quota"
+
+      # Tenant isolation violation (security critical)
+      - alert: TenantIsolationViolation
+        expr: increase(voiceassist_organization_tenant_isolation_checks_total{result="denied"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: organization
+          category: security
+        annotations:
+          summary: "Potential tenant isolation breach"
+          description: "{{ $value }} tenant isolation denials in 5 minutes. Investigate cross-tenant access attempts."
+
+      # High rate of organization operation failures
+      - alert: OrganizationOperationFailures
+        expr: |
+          sum(rate(voiceassist_organization_operations_total{status="failure"}[5m]))
+          / sum(rate(voiceassist_organization_operations_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: organization
+        annotations:
+          summary: "High organization operation failure rate"
+          description: "{{ $value | humanizePercentage }} of organization operations are failing"
+
+      # Billing event failures
+      - alert: BillingEventFailures
+        expr: increase(voiceassist_organization_billing_events_total{event_type="payment",status="failure"}[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: organization
+          category: billing
+        annotations:
+          summary: "Payment processing failures"
+          description: "{{ $value }} payment failures in the last hour"
+
+  # ====================================================================
+  # Learning & Flashcard Alerts
+  # ====================================================================
+  - name: voiceassist_learning
+    interval: 1m
+    rules:
+      # Learning deck operation failures
+      - alert: LearningOperationFailures
+        expr: |
+          sum(rate(voiceassist_learning_deck_operations_total{status="failure"}[5m])
+          + rate(voiceassist_learning_card_operations_total{status="failure"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: learning
+        annotations:
+          summary: "Learning module operation failures"
+          description: "High rate of learning operation failures detected"
+
+      # Slow review sessions (user experience)
+      - alert: SlowLearningReviews
+        expr: histogram_quantile(0.95, rate(voiceassist_learning_review_duration_seconds_bucket[10m])) > 120
+        for: 15m
+        labels:
+          severity: info
+          component: learning
+        annotations:
+          summary: "Slow learning review sessions"
+          description: "95th percentile review duration is {{ $value }}s. May indicate performance issues."
+
+      # Import failures
+      - alert: LearningImportFailures
+        expr: increase(voiceassist_learning_import_operations_total{status="failure"}[1h]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: learning
+        annotations:
+          summary: "Learning content import failures"
+          description: "{{ $value }} import failures in the last hour. Format: {{ $labels.format }}"
+
+      # No learning activity (potential system issue)
+      - alert: NoLearningActivity
+        expr: sum(increase(voiceassist_learning_reviews_total[6h])) == 0
+        for: 1h
+        labels:
+          severity: info
+          component: learning
+        annotations:
+          summary: "No learning activity detected"
+          description: "No flashcard reviews in the last 6 hours. Verify learning module is functioning."
+
+  # ====================================================================
+  # Enhanced PDF Processing Alerts
+  # ====================================================================
+  - name: voiceassist_pdf_processing
+    interval: 1m
+    rules:
+      # PDF processing failures
+      - alert: PDFProcessingFailures
+        expr: increase(voiceassist_pdf_processing_jobs_total{status="failed"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: pdf-processing
+        annotations:
+          summary: "PDF processing failures"
+          description: "{{ $value }} PDF processing failures in the last hour"
+
+      # PDF processing stuck (no progress)
+      - alert: PDFProcessingStuck
+        expr: |
+          voiceassist_pdf_processing_progress_percent > 0
+          and voiceassist_pdf_processing_progress_percent < 100
+          and changes(voiceassist_pdf_processing_progress_percent[30m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: pdf-processing
+        annotations:
+          summary: "PDF processing appears stuck"
+          description: "Document {{ $labels.document_id }} at {{ $value }}% with no progress for 30 minutes"
+
+      # GPT-4 Vision API failures
+      - alert: GPT4VisionAPIFailures
+        expr: |
+          sum(rate(voiceassist_gpt4_vision_requests_total{status="failure"}[5m]))
+          / sum(rate(voiceassist_gpt4_vision_requests_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: pdf-processing
+          category: external-api
+        annotations:
+          summary: "High GPT-4 Vision API failure rate"
+          description: "{{ $value | humanizePercentage }} of GPT-4 Vision requests are failing"
+
+      # GPT-4 Vision latency SLO breach
+      - alert: GPT4VisionSlowResponses
+        expr: histogram_quantile(0.95, rate(voiceassist_gpt4_vision_latency_seconds_bucket[10m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          component: pdf-processing
+        annotations:
+          summary: "GPT-4 Vision responses are slow"
+          description: "95th percentile latency is {{ $value }}s. Expected <30s."
+
+      # Page image storage growing rapidly
+      - alert: PageImageStorageGrowth
+        expr: increase(voiceassist_pdf_page_images_storage_bytes[1h]) > 1073741824
+        for: 5m
+        labels:
+          severity: info
+          component: pdf-processing
+          category: storage
+        annotations:
+          summary: "Rapid page image storage growth"
+          description: "{{ $value | humanize1024 }}B of page images stored in the last hour"
+
+      # PDF processing queue backlog
+      - alert: PDFProcessingBacklog
+        expr: sum(voiceassist_pdf_processing_jobs_total{status="pending"}) > 50
+        for: 15m
+        labels:
+          severity: warning
+          component: pdf-processing
+        annotations:
+          summary: "PDF processing backlog"
+          description: "{{ $value }} PDFs pending processing. Consider scaling workers."
+
+  # ====================================================================
+  # Scheduled Job Alerts
+  # ====================================================================
+  - name: voiceassist_scheduled_jobs
+    interval: 1m
+    rules:
+      # Cron job failures
+      - alert: CronJobFailed
+        expr: increase(voiceassist_cron_job_executions_total{status="failure"}[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "Scheduled job failed"
+          description: "Job {{ $labels.job_name }} failed. Check worker logs."
+
+      # Cron job not running (missed schedule)
+      - alert: CronJobMissedSchedule
+        expr: |
+          time() - voiceassist_cron_job_last_run_timestamp{job_name="aggregate_hourly_metrics"} > 7200
+        for: 5m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "Hourly metrics aggregation missed"
+          description: "aggregate_hourly_metrics hasn't run in {{ $value | humanizeDuration }}"
+
+      - alert: DailyAggregationMissed
+        expr: |
+          time() - voiceassist_cron_job_last_run_timestamp{job_name="aggregate_daily_costs"} > 90000
+        for: 5m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "Daily cost aggregation missed"
+          description: "aggregate_daily_costs hasn't run in {{ $value | humanizeDuration }}"
+
+      - alert: WeeklyCleanupMissed
+        expr: |
+          time() - voiceassist_cron_job_last_run_timestamp{job_name="cleanup_stale_data"} > 691200
+        for: 1h
+        labels:
+          severity: info
+          component: scheduler
+        annotations:
+          summary: "Weekly cleanup missed"
+          description: "cleanup_stale_data hasn't run in {{ $value | humanizeDuration }}"
+
+      # Cron job taking too long
+      - alert: CronJobSlow
+        expr: histogram_quantile(0.95, rate(voiceassist_cron_job_duration_seconds_bucket[1h])) > 1800
+        for: 10m
+        labels:
+          severity: warning
+          component: scheduler
+        annotations:
+          summary: "Scheduled job running slow"
+          description: "Job {{ $labels.job_name }} 95th percentile duration is {{ $value }}s"
+
+      # Data cleanup not deleting expected records
+      - alert: CleanupNotEffective
+        expr: |
+          sum(increase(voiceassist_cleanup_records_deleted_total[7d])) == 0
+          and voiceassist_cron_job_executions_total{job_name="cleanup_stale_data",status="success"} > 0
+        for: 1h
+        labels:
+          severity: info
+          component: scheduler
+        annotations:
+          summary: "Data cleanup not deleting records"
+          description: "Cleanup job ran but deleted no records in 7 days. Verify cleanup logic."

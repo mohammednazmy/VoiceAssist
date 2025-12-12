@@ -18,6 +18,7 @@ const mockDocument = {
   type: "pdf",
   version: "1.0",
   indexed: true,
+  indexingStatus: "indexed" as const,
 };
 
 const mockAuditEvents = [
@@ -68,6 +69,11 @@ describe("AuditDrawer", () => {
       );
 
       expect(screen.getByText("Audit Trail")).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("indexed")).toBeInTheDocument();
+      });
     });
   });
 
@@ -78,9 +84,14 @@ describe("AuditDrawer", () => {
       );
 
       expect(screen.getByText("Medical Guidelines 2024")).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("indexed")).toBeInTheDocument();
+      });
     });
 
-    it("shows loading state while fetching", () => {
+    it("shows loading state while fetching", async () => {
       vi.mocked(fetchAPI).mockImplementation(
         () => new Promise(() => {}), // Never resolves
       );
@@ -90,6 +101,8 @@ describe("AuditDrawer", () => {
       );
 
       expect(screen.getByText("Loading audit events…")).toBeInTheDocument();
+
+      // No waitFor needed since the promise never resolves - test ends immediately
     });
 
     it("displays audit events after loading", async () => {
@@ -138,12 +151,22 @@ describe("AuditDrawer", () => {
       );
 
       expect(screen.getByLabelText("Close audit drawer")).toBeInTheDocument();
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(screen.getByText("indexed")).toBeInTheDocument();
+      });
     });
 
     it("calls onClose when close button clicked", async () => {
       render(
         <AuditDrawer open={true} document={mockDocument} onClose={onClose} />,
       );
+
+      // Wait for data to load first
+      await waitFor(() => {
+        expect(screen.getByText("indexed")).toBeInTheDocument();
+      });
 
       fireEvent.click(screen.getByLabelText("Close audit drawer"));
 

@@ -1,41 +1,170 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { HelpButton } from "@voiceassist/ui";
 import { AskAIButton } from "../components/shared";
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
 import { useKBUpload } from "../hooks/useKBUpload";
+import { useIndexingJobs } from "../hooks/useIndexingJobs";
 import { useAuth } from "../contexts/AuthContext";
+import { getApiClient } from "../lib/apiClient";
 import {
   DocumentTable,
   type DocumentRow,
 } from "../components/knowledge/DocumentTable";
 import { UploadDialog } from "../components/knowledge/UploadDialog";
 import { AuditDrawer } from "../components/knowledge/AuditDrawer";
+import { ProcessingProgress } from "../components/knowledge/ProcessingProgress";
+import { DocumentPreviewDrawer } from "../components/knowledge/DocumentPreviewDrawer";
 
 const MAX_UPLOAD_MB = 50; // VoiceAssist backend supports up to 50 MB for PDFs
 
 export function KnowledgeBasePage() {
-  const { docs, loading, error, refetch } = useKnowledgeDocuments();
+  const { docs, loading, error, refetch, deleteDocument, deleteError } = useKnowledgeDocuments();
   const {
     uploadDocument,
     isUploading,
     error: uploadHookError,
     clearError,
   } = useKBUpload();
+  const { jobs, loading: jobsLoading, hasActiveJobs: _hasActiveJobs } = useIndexingJobs({
+    pollingInterval: 3000, // Poll every 3 seconds when there are active jobs
+    autoPolling: true,
+    enabled: true, // Jobs endpoint is now implemented
+  });
   const { isViewer } = useAuth();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [auditDoc, setAuditDoc] = useState<DocumentRow | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<DocumentRow | null>(null);
+  const [deepLinkDocId, setDeepLinkDocId] = useState<string | null>(null);
+  const location = useLocation();
+  const [narrationCoverage, setNarrationCoverage] = useState<
+    Record<string, { coverage_percent: number; ready: number; total_pages: number }>
+  >({});
 
   useEffect(() => {
     setDocuments(
-      docs.map((doc) => ({
-        ...doc,
-        status: doc.indexed ? "indexed" : "pending",
-        sizeMb: undefined,
-      })),
+      docs.map((doc) => {
+        // Map indexingStatus to UI status
+        let status: DocumentRow["status"] = "pending";
+        if (doc.indexingStatus === "indexed") {
+          status = "indexed";
+        } else if (doc.indexingStatus === "processing") {
+          status = "reindexing"; // Use reindexing to show processing state
+        } else if (doc.indexingStatus === "failed") {
+          status = "pending"; // Failed shows as pending for retry
+        }
+
+        return {
+          ...doc,
+          status,
+          sizeMb: undefined,
+          // Structure fields from API
+          totalPages: doc.totalPages ?? null,
+          hasToc: doc.hasToc ?? false,
+          hasFigures: doc.hasFigures ?? false,
+          chunksIndexed: doc.chunksIndexed ?? 0,
+          // Ownership fields from API
+          ownerId: doc.ownerId ?? null,
+          ownerName: doc.ownerName ?? null,
+          isPublic: doc.isPublic ?? false,
+          sourceType: doc.sourceType ?? "system",
+        };
+      }),
     );
   }, [docs]);
+
+  // Load narration coverage summaries for KB documents that have enhanced structure.
+  // Uses batch endpoint for efficiency instead of individual calls per document.
+  useEffect(() => {
+    const loadCoverage = async () => {
+      const client = getApiClient();
+
+      // Filter to only docs with enhanced structure
+      const enhancedDocIds = docs
+        .filter((doc) => doc.hasEnhancedStructure)
+        .map((doc) => doc.id);
+
+      if (enhancedDocIds.length === 0) return;
+
+      try {
+        // Use batch endpoint for efficiency
+        const response = await client.getBatchNarrationSummaries(enhancedDocIds);
+
+        if (response?.summaries) {
+          const updated: Record<
+            string,
+            { coverage_percent: number; ready: number; total_pages: number }
+          > = {};
+
+          for (const [docId, summary] of Object.entries(response.summaries)) {
+            if (
+              summary &&
+              typeof summary.coverage_percent === "number" &&
+              typeof summary.ready === "number"
+            ) {
+              updated[docId] = {
+                coverage_percent: summary.coverage_percent,
+                ready: summary.ready,
+                total_pages: summary.total_pages ?? 0,
+              };
+            }
+          }
+
+          if (Object.keys(updated).length > 0) {
+            setNarrationCoverage(updated);
+          }
+        }
+      } catch {
+        // Fallback to individual calls if batch fails (e.g., older backend)
+        const updated: Record<
+          string,
+          { coverage_percent: number; ready: number; total_pages: number }
+        > = {};
+
+        await Promise.all(
+          enhancedDocIds.map(async (docId) => {
+            try {
+              const result = await client.getNarrationSummary(docId);
+              const summary = result?.summary;
+              if (
+                summary &&
+                typeof summary.coverage_percent === "number" &&
+                typeof summary.ready === "number"
+              ) {
+                updated[docId] = {
+                  coverage_percent: summary.coverage_percent,
+                  ready: summary.ready,
+                  total_pages: summary.total_pages ?? 0,
+                };
+              }
+            } catch {
+              // Ignore individual failures
+            }
+          }),
+        );
+
+        if (Object.keys(updated).length > 0) {
+          setNarrationCoverage(updated);
+        }
+      }
+    };
+
+    if (docs.length > 0) {
+      void loadCoverage();
+    }
+  }, [docs]);
+
+  // Capture deep-link documentId from query string (e.g. ?documentId=doc-123)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const docId =
+      params.get("documentId") ?? params.get("docId") ?? params.get("doc");
+    if (docId) {
+      setDeepLinkDocId(docId);
+    }
+  }, [location.search]);
 
   // Sync upload hook error with local state
   useEffect(() => {
@@ -43,6 +172,24 @@ export function KnowledgeBasePage() {
       setUploadError(uploadHookError);
     }
   }, [uploadHookError]);
+
+  // Refetch documents when indexing jobs complete
+  useEffect(() => {
+    const completedJobs = jobs.filter((j) => j.state === "completed");
+    if (completedJobs.length > 0) {
+      // Refetch to get updated document status
+      refetch?.();
+    }
+  }, [jobs, refetch]);
+
+  // When documents are loaded and a deep-link id is present, open preview
+  useEffect(() => {
+    if (!deepLinkDocId || previewDoc) return;
+    const target = documents.find((d) => d.id === deepLinkDocId);
+    if (target) {
+      setPreviewDoc(target);
+    }
+  }, [deepLinkDocId, documents, previewDoc]);
 
   const handleUpload = useCallback(
     async (file: File, onProgress: (value: number) => void) => {
@@ -69,10 +216,21 @@ export function KnowledgeBasePage() {
           name: result.title,
           type: file.type?.includes("pdf") ? "pdf" : "note",
           indexed: result.chunks > 0,
+          indexingStatus: result.chunks > 0 ? "indexed" : "processing",
           status: result.chunks > 0 ? "indexed" : "pending",
           version: "v1",
           lastIndexedAt: now,
           sizeMb: file.size / (1024 * 1024),
+          // Structure fields - will be populated after processing
+          totalPages: null,
+          hasToc: false,
+          hasFigures: false,
+          chunksIndexed: result.chunks ?? 0,
+          // Ownership fields
+          ownerId: null, // Admin uploads are system docs
+          ownerName: null,
+          isPublic: true, // Admin uploads default to public
+          sourceType: "system",
         };
         setDocuments((prev) => [newDoc, ...prev]);
 
@@ -110,7 +268,15 @@ export function KnowledgeBasePage() {
 
   const handleDelete = async (ids: string[]) => {
     if (isViewer) return;
-    setDocuments((prev) => prev.filter((doc) => !ids.includes(doc.id)));
+
+    // Delete each document via API (with optimistic UI update handled by the hook)
+    const results = await Promise.all(ids.map((id) => deleteDocument(id)));
+
+    // Check for any failures
+    const failures = results.filter((r) => !r.success);
+    if (failures.length > 0) {
+      console.error(`Failed to delete ${failures.length} document(s)`);
+    }
   };
 
   const handleReindex = async (ids: string[]) => {
@@ -126,13 +292,16 @@ export function KnowledgeBasePage() {
     const reindexing = documents.filter(
       (d) => d.status === "reindexing",
     ).length;
+    // Include active indexing jobs in processing count
+    const activeJobs = jobs.filter((j) => j.state === "running" || j.state === "pending").length;
     return {
       total,
       indexed,
       pending,
       reindexing,
+      processing: activeJobs,
     };
-  }, [documents]);
+  }, [documents, jobs]);
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -188,6 +357,12 @@ export function KnowledgeBasePage() {
         </div>
       )}
 
+      {deleteError && (
+        <div className="p-3 bg-rose-950/40 border border-rose-900 rounded-md text-rose-200 text-sm">
+          Delete failed: {deleteError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           label="Total Documents"
@@ -208,12 +383,15 @@ export function KnowledgeBasePage() {
           subtitle="Waiting to index"
         />
         <StatCard
-          label="Reindexing"
-          value={stats.reindexing}
+          label="Processing"
+          value={stats.reindexing + stats.processing}
           color="blue"
-          subtitle="Queued"
+          subtitle={stats.processing > 0 ? `${stats.processing} indexing` : "Queued"}
         />
       </div>
+
+      {/* Processing Progress Indicator */}
+      <ProcessingProgress jobs={jobs} loading={jobsLoading} />
 
       <DocumentTable
         documents={documents}
@@ -221,6 +399,8 @@ export function KnowledgeBasePage() {
         onDelete={handleDelete}
         onReindex={handleReindex}
         onOpenAudit={(doc) => setAuditDoc(doc)}
+        onOpenPreview={(doc) => setPreviewDoc(doc)}
+        narrationCoverage={narrationCoverage}
       />
 
       <UploadDialog
@@ -235,6 +415,35 @@ export function KnowledgeBasePage() {
         open={Boolean(auditDoc)}
         document={auditDoc}
         onClose={() => setAuditDoc(null)}
+      />
+
+      <DocumentPreviewDrawer
+        open={Boolean(previewDoc)}
+        document={previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        onNarrationUpdated={async (docId) => {
+          try {
+            const client = getApiClient();
+            const resp = await client.getNarrationSummary(docId);
+            const summary = resp.summary;
+            if (
+              summary &&
+              typeof summary.coverage_percent === "number" &&
+              typeof summary.ready === "number"
+            ) {
+              setNarrationCoverage((prev) => ({
+                ...prev,
+                [docId]: {
+                  coverage_percent: summary.coverage_percent,
+                  ready: summary.ready,
+                  total_pages: summary.total_pages ?? 0,
+                },
+              }));
+            }
+          } catch {
+            // Ignore refresh failures; UI will remain consistent with last known state
+          }
+        }}
       />
     </div>
   );

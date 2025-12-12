@@ -92,6 +92,8 @@ export const MessageBubble = memo(function MessageBubble({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isBranching, setIsBranching] = useState(false);
 
+  const isAssistant = message.role === "assistant";
+
   // Save handler
   const handleSave = async () => {
     if (editedContent === message.content) {
@@ -381,6 +383,53 @@ export const MessageBubble = memo(function MessageBubble({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
+
+  // Derive compact KB sources summary from tool call metadata (if present)
+  const kbToolCalls =
+    (message.metadata && Array.isArray(message.metadata.toolCalls)
+      ? message.metadata.toolCalls
+      : []) || [];
+
+  let kbSourceTitles: string[] = [];
+  if (isAssistant && kbToolCalls.length > 0) {
+    const kbTool =
+      kbToolCalls.find(
+        (tc) =>
+          tc.name === "knowledge_base_query" || tc.name === "kb_search",
+      ) || kbToolCalls[kbToolCalls.length - 1];
+
+    if (kbTool && kbTool.result && typeof kbTool.result === "object") {
+      const rawResult = kbTool.result as any;
+      const payload = rawResult && rawResult.data ? rawResult.data : rawResult;
+      const sources = Array.isArray(payload?.sources) ? payload.sources : [];
+      kbSourceTitles = sources
+        .map((s: any) => (s?.title as string | undefined)?.trim())
+        .filter((title: string | undefined): title is string => Boolean(title));
+    }
+  }
+
+  const kbSummaryText = (() => {
+    if (!kbSourceTitles.length) return "";
+    const primary = kbSourceTitles.slice(0, 2);
+    const extra = kbSourceTitles.length - primary.length;
+    const parts = primary.map((t) => `[${t}]`);
+    if (extra > 0) {
+      parts.push(`[+${extra} more]`);
+    }
+    return parts.join(" ");
+  })();
+
+  const handleKBChipClick = useCallback(() => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("voiceassist:kbdrawer_open", {
+          detail: { messageId: message.id },
+        }),
+      );
+    } catch {
+      // Ignore event dispatch failures in non-browser environments
+    }
+  }, [message.id]);
 
   return (
     <div
@@ -889,6 +938,20 @@ export const MessageBubble = memo(function MessageBubble({
                 isUser ? "text-primary-100" : "text-neutral-500"
               }`}
             >
+              {/* KB Sources Chip (assistant messages that used KB tools) */}
+              {!isUser && kbSummaryText && (
+                <button
+                  type="button"
+                  onClick={handleKBChipClick}
+                  className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-800 hover:bg-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  title="KB sources: click to open knowledge base details"
+                  data-testid="kb-sources-chip"
+                >
+                  <span className="uppercase tracking-wide">KB sources:</span>
+                  <span className="truncate max-w-[160px]">{kbSummaryText}</span>
+                </button>
+              )}
+
               {/* Voice Source Indicator */}
               {source === "voice" && (
                 <span

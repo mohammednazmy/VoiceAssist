@@ -16,9 +16,11 @@ import { useCreateUser } from "../../../hooks/useCreateUser";
 
 const mockCreateUser = vi.fn();
 const mockCheckEmailExists = vi.fn();
+const mockInviteUser = vi.fn();
 
 const defaultMockHook = {
   createUser: mockCreateUser,
+  inviteUser: mockInviteUser,
   isLoading: false,
   error: null,
   checkEmailExists: mockCheckEmailExists,
@@ -355,7 +357,7 @@ describe("CreateUserDialog", () => {
 
       vi.mocked(useCreateUser).mockReturnValue({
         ...defaultMockHook,
-        error: "Failed to create user",
+        error: "Failed to create user" as string | null,
       });
 
       render(<CreateUserDialog {...defaultProps} />);

@@ -37,10 +37,15 @@ describe("useKnowledgeDocuments", () => {
   });
 
   describe("initial load", () => {
-    it("should return loading true initially", () => {
+    it("should return loading true initially", async () => {
       vi.mocked(fetchAPI).mockResolvedValue({ documents: mockDocs, total: 2 });
       const { result } = renderHook(() => useKnowledgeDocuments());
       expect(result.current.loading).toBe(true);
+
+      // Wait for async operations to complete to avoid act() warnings
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
     });
 
     it("should fetch documents on mount", async () => {
@@ -62,8 +67,12 @@ describe("useKnowledgeDocuments", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.docs).toEqual(mockDocs);
       expect(result.current.docs).toHaveLength(2);
+      expect(result.current.docs[0]).toMatchObject({
+        id: "doc-1",
+        name: "Medical Guidelines 2024",
+        type: "guideline",
+      });
     });
 
     it("should have no error on success", async () => {
@@ -87,7 +96,8 @@ describe("useKnowledgeDocuments", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.docs).toEqual(mockDocs);
+      expect(result.current.docs).toHaveLength(2);
+      expect(result.current.docs[0].name).toBe("Medical Guidelines 2024");
     });
 
     it("should handle array response for backwards compatibility", async () => {
@@ -98,7 +108,8 @@ describe("useKnowledgeDocuments", () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(result.current.docs).toEqual(mockDocs);
+      expect(result.current.docs).toHaveLength(2);
+      expect(result.current.docs[1].name).toBe("Clinical Notes Template");
     });
   });
 

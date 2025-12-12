@@ -200,6 +200,9 @@ class ErrorCodes:
     # Rate limiting (429)
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
 
+    # Precondition errors (412)
+    PRECONDITION_FAILED = "PRECONDITION_FAILED"
+
     # Server errors (500)
     INTERNAL_ERROR = "INTERNAL_ERROR"
     DATABASE_ERROR = "DATABASE_ERROR"

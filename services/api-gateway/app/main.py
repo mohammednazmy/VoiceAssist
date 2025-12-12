@@ -18,6 +18,7 @@ except ImportError:
 # Import business metrics to register them with Prometheus (P3.3)
 import uvicorn
 from app.api import (
+    admin_analytics,
     admin_attachments,
     admin_cache,
     admin_calendar_connections,
@@ -37,12 +38,20 @@ from app.api import (
     admin_user_flag_overrides,
     admin_voice,
     attachments,
+    audio,
     auth,
     auth_2fa,
     auth_oauth,
+    validations,
+    document_versions,
+    knowledge_graph,
+    multimodal_search,
+    learning,
+    organizations,
     calendar_connections,
     clinical_context,
     conversations,
+    documents,
     experiments,
     export,
     external_medical,
@@ -50,6 +59,8 @@ from app.api import (
     folders,
     health,
     integrations,
+    jobs,
+    kb,
     medical_ai,
     metrics,
     realtime,
@@ -57,6 +68,7 @@ from app.api import (
     user_api_keys,
     users,
     voice,
+    voice_documents,
 )
 
 # This import registers business metrics with Prometheus  # noqa: F401
@@ -66,6 +78,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import MetricsMiddleware, RequestTracingMiddleware, SecurityHeadersMiddleware
 from app.core.sentry import init_sentry
 from app.middleware.voice_auth import VoiceAuthMiddleware
+from app.services.admin_bootstrap import bootstrap_default_admin
 from app.services.external_connectors import ExternalSyncScheduler, OpenEvidenceConnector, PubMedConnector
 from app.services.session_activity import session_activity_service
 from app.services.token_revocation import token_revocation_service
@@ -197,6 +210,18 @@ app.include_router(sharing.router, prefix="/api")  # Phase 8: Conversation shari
 app.include_router(external_medical.router, prefix="/api")  # Phase 3: External medical integrations
 app.include_router(medical_ai.router)  # Phase 2 Deferred: Medical AI services
 app.include_router(user_api_keys.router)  # User API key management
+app.include_router(documents.router)  # User document upload and management
+app.include_router(kb.router)  # User-facing Knowledge Base API
+app.include_router(voice_documents.router)  # Voice document session API
+app.include_router(jobs.router)  # Background Jobs API
+app.include_router(audio.router)  # Audio Narration & TTS API
+app.include_router(validations.router)  # Answer Validation & Citation API
+app.include_router(document_versions.router)  # Document Versioning & Freshness API
+app.include_router(knowledge_graph.router)  # Knowledge Graph & Entity Extraction API
+app.include_router(multimodal_search.router)  # Multi-Modal Search with CLIP API
+app.include_router(learning.router)  # Learning Mode / Spaced Repetition API
+app.include_router(organizations.router)  # Multi-Tenancy & Organizations API
+app.include_router(admin_analytics.router)  # Analytics Dashboard API
 
 
 @app.on_event("startup")
@@ -320,6 +345,10 @@ async def startup_event():
         jwt_algorithm=settings.JWT_ALGORITHM,
         token_expiry_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
     )
+
+    # In local/test environments, ensure we have a usable admin account
+    # for admin workflows and smoke tests. This is a no-op in production.
+    bootstrap_default_admin()
 
     # Start periodic sync for external evidence sources when enabled
     if settings.EXTERNAL_SYNC_ENABLED and settings.ENVIRONMENT != "test":

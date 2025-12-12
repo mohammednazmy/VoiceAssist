@@ -1,6 +1,14 @@
 import { useState, useCallback, useRef } from "react";
 import { getApiClient } from "../lib/apiClient";
-import type { AxiosError } from "axios";
+
+// Local type to match the axios error shape we need (avoids axios dependency)
+interface HTTPError<T = unknown> {
+  response?: {
+    status: number;
+    data?: T;
+  };
+  message?: string;
+}
 
 export interface UploadResult {
   ok: boolean;
@@ -165,10 +173,10 @@ export function useKBUpload(
 
           return result;
         } catch (err) {
-          const axiosError = err as AxiosError<{ detail?: string }>;
+          const httpError = err as HTTPError<{ detail?: string }>;
 
           // Check if we should retry
-          const status = axiosError.response?.status;
+          const status = httpError.response?.status;
           const shouldRetry =
             attempt < maxRetries &&
             !isCancelledRef.current &&
@@ -178,8 +186,8 @@ export function useKBUpload(
             // Final error - extract message
             let message = "Upload failed";
 
-            if (axiosError.response) {
-              const detail = axiosError.response.data?.detail;
+            if (httpError.response) {
+              const detail = httpError.response.data?.detail;
 
               if (status === 415) {
                 message =

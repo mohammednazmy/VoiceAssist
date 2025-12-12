@@ -35,6 +35,8 @@ interface ConversationDetail {
   model?: string;
   branch_count: number;
   folder_name?: string;
+   phi_mode?: "clinical" | "demo";
+   tags?: string[];
 }
 
 interface MessagesResponse {
@@ -57,6 +59,12 @@ export function ConversationDetailPage() {
   const [page, setPage] = useState(0);
   const [pageSize] = useState(50);
   const [totalMessages, setTotalMessages] = useState(0);
+  const [updatingMeta, setUpdatingMeta] = useState(false);
+  const [phiModeDraft, setPhiModeDraft] = useState<"" | "clinical" | "demo">(
+    "",
+  );
+  const [tagsDraft, setTagsDraft] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   useEffect(() => {
     if (conversationId) {
@@ -78,6 +86,10 @@ export function ConversationDetailPage() {
         `/api/admin/conversations/${conversationId}`,
       );
       setConversation(data.conversation);
+      setPhiModeDraft(
+        (data.conversation.phi_mode as "clinical" | "demo" | undefined) || "",
+      );
+      setTagsDraft(data.conversation.tags || []);
       setError(null);
     } catch (err: unknown) {
       const message =
@@ -86,6 +98,47 @@ export function ConversationDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateMeta = async (
+    phi_mode: "clinical" | "demo" | "",
+    tags: string[],
+  ) => {
+    if (!conversationId) return;
+    setUpdatingMeta(true);
+    try {
+      await fetchAPI(`/api/admin/conversations/${conversationId}/metadata`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          phi_mode: phi_mode || null,
+          tags,
+        }),
+      });
+      await loadConversation();
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to update conversation metadata",
+      );
+    } finally {
+      setUpdatingMeta(false);
+    }
+  };
+
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (!trimmed) return;
+    if (tagsDraft.includes(trimmed)) {
+      setTagInput("");
+      return;
+    }
+    setTagsDraft((prev) => [...prev, trimmed]);
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTagsDraft((prev) => prev.filter((t) => t !== tag));
   };
 
   const loadMessages = async () => {
@@ -206,6 +259,31 @@ export function ConversationDetailPage() {
           <p className="text-sm text-slate-400 mt-1">
             Created {formatDate(conversation.created_at)}
           </p>
+          <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+            <span>PHI Mode:</span>
+            <span className="font-medium text-slate-200">
+              {phiModeDraft
+                ? phiModeDraft === "demo"
+                  ? "Demo (PHI-conscious)"
+                  : "Clinical"
+                : "Not set"}
+            </span>
+            {tagsDraft.length > 0 && (
+              <>
+                <span className="ml-4">Tags:</span>
+                <span className="flex flex-wrap gap-1">
+                  {tagsDraft.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-slate-800 text-[11px] text-slate-200 border border-slate-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </span>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -256,6 +334,124 @@ export function ConversationDetailPage() {
           <div className="text-lg font-semibold text-slate-200 mt-1">
             {conversation.model || "-"}
           </div>
+        </div>
+      </div>
+
+      {/* PHI Mode & Tags editor */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-100">
+            PHI Mode & Tags
+          </h2>
+          {updatingMeta && (
+            <span className="text-xs text-slate-400">Saving…</span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-xs text-slate-400">
+              PHI Mode
+            </label>
+            <select
+              value={phiModeDraft}
+              onChange={(e) =>
+                setPhiModeDraft(
+                  e.target.value as "" | "clinical" | "demo",
+                )
+              }
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+              disabled={updatingMeta}
+            >
+              <option value="">Not set</option>
+              <option value="clinical">Clinical</option>
+              <option value="demo">Demo (PHI-conscious)</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Demo mode is safer for demos and screen sharing; clinical
+              mode may include PHI in retrieval and responses.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="block text-xs text-slate-400">
+              Tags
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {tagsDraft.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-800 text-[11px] text-slate-200 border border-slate-700"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="text-slate-400 hover:text-slate-200"
+                    aria-label={`Remove tag ${tag}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              {tagsDraft.length === 0 && (
+                <span className="text-xs text-slate-500">
+                  No tags yet. Use tags like{" "}
+                  <span className="italic">dictation</span>,{" "}
+                  <span className="italic">consult</span>,{" "}
+                  <span className="italic">billing</span>.
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+                placeholder="Add tag and press Enter"
+                disabled={updatingMeta}
+              />
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-md text-sm border border-slate-700 disabled:opacity-50"
+                disabled={updatingMeta || !tagInput.trim()}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => handleUpdateMeta(phiModeDraft, tagsDraft)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+            disabled={updatingMeta}
+          >
+            Save Changes
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!conversation) return;
+              setPhiModeDraft(
+                (conversation.phi_mode as "clinical" | "demo" | undefined) ||
+                  "",
+              );
+              setTagsDraft(conversation.tags || []);
+              setTagInput("");
+            }}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-md text-sm border border-slate-700 disabled:opacity-50"
+            disabled={updatingMeta}
+          >
+            Reset
+          </button>
         </div>
       </div>
 

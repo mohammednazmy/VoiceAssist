@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  within,
+} from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { KnowledgeBasePage } from "./KnowledgeBasePage";
 
 // Mock hooks
@@ -17,6 +24,20 @@ vi.mock("../hooks/useKBUpload", () => ({
 
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: vi.fn(),
+}));
+
+vi.mock("../hooks/useIndexingJobs", () => ({
+  useIndexingJobs: vi.fn(),
+}));
+
+// Mock ProcessingProgress component
+vi.mock("../components/knowledge/ProcessingProgress", () => ({
+  ProcessingProgress: ({ jobs, loading }: { jobs: unknown[]; loading: boolean }) => (
+    <div data-testid="processing-progress">
+      {loading && <div>Loading jobs...</div>}
+      <div data-testid="jobs-count">{(jobs as unknown[]).length} jobs</div>
+    </div>
+  ),
 }));
 
 // Mock @voiceassist/ui
@@ -83,6 +104,7 @@ vi.mock("../components/knowledge/AuditDrawer", () => ({
 import { useKnowledgeDocuments } from "../hooks/useKnowledgeDocuments";
 import { useKBUpload } from "../hooks/useKBUpload";
 import { useAuth } from "../contexts/AuthContext";
+import { useIndexingJobs } from "../hooks/useIndexingJobs";
 
 const mockDocuments = [
   {
@@ -90,6 +112,7 @@ const mockDocuments = [
     name: "Harrison's Heart Failure",
     type: "textbook",
     indexed: true,
+    indexingStatus: "indexed" as const,
     version: "v1",
     lastIndexedAt: "2024-01-15T12:00:00Z",
   },
@@ -98,8 +121,9 @@ const mockDocuments = [
     name: "AHA Guidelines 2022",
     type: "guideline",
     indexed: false,
+    indexingStatus: "processing" as const,
     version: "v1",
-    lastIndexedAt: null,
+    lastIndexedAt: undefined,
   },
 ];
 
@@ -108,7 +132,10 @@ const defaultKnowledgeDocsReturn = {
   loading: false,
   error: null,
   refetch: vi.fn(),
-  deleteDocument: vi.fn(),
+  deleteDocument: vi.fn().mockResolvedValue({
+    success: true,
+    documentId: "doc-1",
+  }),
   deleteDocuments: vi.fn(),
   deleteError: null,
   clearDeleteError: vi.fn(),
@@ -140,6 +167,28 @@ const defaultAuthReturn = {
   user: { email: "admin@example.com" },
 };
 
+const defaultIndexingJobsReturn = {
+  jobs: [],
+  loading: false,
+  error: null,
+  hasActiveJobs: false,
+  refetch: vi.fn(),
+  silentRefresh: vi.fn(),
+  lastFetched: null,
+  isPolling: false,
+  cancelJob: vi.fn(),
+  retryJob: vi.fn(),
+  actionError: null,
+  clearActionError: vi.fn(),
+  isActionLoading: vi.fn().mockReturnValue(false),
+  getJob: vi.fn().mockReturnValue(undefined),
+  getJobsByDocument: vi.fn().mockReturnValue([]),
+  activeJobs: [],
+  completedJobs: [],
+  failedJobs: [],
+  stats: { total: 0, active: 0, completed: 0, failed: 0 },
+};
+
 describe("KnowledgeBasePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -150,11 +199,18 @@ describe("KnowledgeBasePage", () => {
     vi.mocked(useAuth).mockReturnValue(
       defaultAuthReturn as ReturnType<typeof useAuth>,
     );
+    vi.mocked(useIndexingJobs).mockReturnValue(
+      defaultIndexingJobsReturn as ReturnType<typeof useIndexingJobs>,
+    );
   });
 
   describe("rendering", () => {
     it("should render page title and description", () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByText("Knowledge Base")).toBeInTheDocument();
       expect(
@@ -165,7 +221,11 @@ describe("KnowledgeBasePage", () => {
     });
 
     it("should render upload button", () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(
         screen.getByRole("button", { name: /upload/i }),
@@ -173,25 +233,40 @@ describe("KnowledgeBasePage", () => {
     });
 
     it("should render stat cards", () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByText("Total Documents")).toBeInTheDocument();
       expect(screen.getByText("Indexed")).toBeInTheDocument();
       expect(screen.getByText("Pending")).toBeInTheDocument();
-      expect(screen.getByText("Reindexing")).toBeInTheDocument();
+      expect(screen.getByText("Processing")).toBeInTheDocument();
     });
 
     it("should render document table", () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByTestId("document-table")).toBeInTheDocument();
     });
 
     it("should show document count from stats", () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
-      // Should show 2 total documents (from mockDocuments)
-      expect(screen.getByText("2")).toBeInTheDocument();
+      // Should show 2 total documents (from mockDocuments) in the Total Documents stat card
+      const totalCard = screen.getByText("Total Documents").parentElement
+        ?.parentElement as HTMLElement;
+      expect(totalCard).toBeTruthy();
+      expect(within(totalCard).getByText("2")).toBeInTheDocument();
     });
   });
 
@@ -202,7 +277,11 @@ describe("KnowledgeBasePage", () => {
         loading: true,
       });
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByText("Loading documents...")).toBeInTheDocument();
     });
@@ -215,7 +294,11 @@ describe("KnowledgeBasePage", () => {
         error: { code: "demo", message: "Failed to load" },
       });
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(
         screen.getByText("Failed to load documents. Showing demo data."),
@@ -228,7 +311,11 @@ describe("KnowledgeBasePage", () => {
         error: "Upload failed: File too large",
       });
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(
         screen.getByText("Upload failed: File too large"),
@@ -243,7 +330,11 @@ describe("KnowledgeBasePage", () => {
         isViewer: true,
       } as ReturnType<typeof useAuth>);
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       const uploadButton = screen.getByRole("button", { name: /upload/i });
       expect(uploadButton).toBeDisabled();
@@ -255,7 +346,11 @@ describe("KnowledgeBasePage", () => {
         isViewer: true,
       } as ReturnType<typeof useAuth>);
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByText(/viewer role is read-only/i)).toBeInTheDocument();
     });
@@ -263,7 +358,11 @@ describe("KnowledgeBasePage", () => {
 
   describe("upload functionality", () => {
     it("should open upload dialog when upload button clicked", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       const uploadButton = screen.getByRole("button", { name: /upload/i });
       fireEvent.click(uploadButton);
@@ -274,7 +373,11 @@ describe("KnowledgeBasePage", () => {
     });
 
     it("should close upload dialog", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /upload/i }));
 
@@ -295,7 +398,11 @@ describe("KnowledgeBasePage", () => {
         isUploading: true,
       });
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       expect(screen.getByText("Uploading…")).toBeInTheDocument();
     });
@@ -314,7 +421,11 @@ describe("KnowledgeBasePage", () => {
         uploadDocument: mockUpload,
       });
 
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /upload/i }));
 
@@ -334,7 +445,11 @@ describe("KnowledgeBasePage", () => {
 
   describe("document operations", () => {
     it("should handle delete operation", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /delete doc-1/i }));
 
@@ -344,7 +459,11 @@ describe("KnowledgeBasePage", () => {
     });
 
     it("should handle reindex operation", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       fireEvent.click(screen.getByRole("button", { name: /reindex doc-1/i }));
 
@@ -355,19 +474,25 @@ describe("KnowledgeBasePage", () => {
 
   describe("stats calculation", () => {
     it("should calculate correct indexed count", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
-      // Wait for documents to load and stats to calculate
-      // 1 document is indexed in mockDocuments
+      // Wait for documents to load and stats to calculate.
+      // The "Total Documents" card renders a helper line "1 indexed".
       await waitFor(() => {
-        // The indexed value "1" should appear in the stats section
-        const statValues = screen.getAllByText("1");
-        expect(statValues.length).toBeGreaterThan(0);
+        expect(screen.getByText(/1 indexed/)).toBeInTheDocument();
       });
     });
 
     it("should calculate correct pending count", async () => {
-      render(<KnowledgeBasePage />);
+      render(
+        <MemoryRouter>
+          <KnowledgeBasePage />
+        </MemoryRouter>,
+      );
 
       // Wait for documents to load and stats to calculate
       // 1 document is pending (not indexed) in mockDocuments

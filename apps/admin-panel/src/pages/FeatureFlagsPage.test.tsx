@@ -36,6 +36,7 @@ const mockFlags = [
     flag_type: "string" as const,
     enabled: true,
     value: "responsive",
+    created_at: "2024-01-01T10:00:00Z",
     updated_at: "2024-01-15T10:00:00Z",
   },
   {
@@ -43,7 +44,7 @@ const mockFlags = [
     description: "Enable server-side audio processing pipeline",
     flag_type: "boolean" as const,
     enabled: true,
-    value: undefined,
+    created_at: "2024-01-01T11:00:00Z",
     updated_at: "2024-01-15T11:00:00Z",
   },
   {
@@ -51,7 +52,7 @@ const mockFlags = [
     description: "Enable AEC capability-aware tuning",
     flag_type: "boolean" as const,
     enabled: false,
-    value: undefined,
+    created_at: "2024-01-01T12:00:00Z",
     updated_at: "2024-01-15T12:00:00Z",
   },
   {
@@ -59,7 +60,7 @@ const mockFlags = [
     description: "Use PHI detection v2 algorithm",
     flag_type: "boolean" as const,
     enabled: false,
-    value: undefined,
+    created_at: "2024-01-01T15:00:00Z",
     updated_at: "2024-01-14T15:00:00Z",
   },
   {
@@ -68,6 +69,7 @@ const mockFlags = [
     flag_type: "number" as const,
     enabled: true,
     value: 5,
+    created_at: "2024-01-01T09:00:00Z",
     updated_at: "2024-01-13T09:00:00Z",
   },
   {
@@ -76,6 +78,7 @@ const mockFlags = [
     flag_type: "string" as const,
     enabled: true,
     value: "Welcome to VoiceAssist!",
+    created_at: "2024-01-01T12:00:00Z",
     updated_at: "2024-01-12T12:00:00Z",
   },
   {
@@ -84,6 +87,7 @@ const mockFlags = [
     flag_type: "json" as const,
     enabled: true,
     value: { requests_per_minute: 60, burst: 10 },
+    created_at: "2024-01-01T08:00:00Z",
     updated_at: "2024-01-11T08:00:00Z",
   },
 ];
@@ -116,7 +120,14 @@ const defaultScheduledChangesReturn = {
   scheduledChanges: [],
   loading: false,
   error: null,
+  lastUpdated: null,
   refreshChanges: vi.fn(),
+  getChangesForFlag: vi.fn().mockResolvedValue([]),
+  createChange: vi.fn().mockResolvedValue(true),
+  updateChange: vi.fn().mockResolvedValue(true),
+  cancelChange: vi.fn().mockResolvedValue(true),
+  deleteChange: vi.fn().mockResolvedValue(true),
+  previewChange: vi.fn().mockResolvedValue(null),
 };
 
 describe("FeatureFlagsPage", () => {
@@ -212,7 +223,8 @@ describe("FeatureFlagsPage", () => {
       const totalCard = screen.getByText("Total Flags").parentElement
         ?.parentElement as HTMLElement;
       expect(totalCard).toBeTruthy();
-      expect(within(totalCard).getByText("5")).toBeInTheDocument();
+      // We currently have 7 flags in the fixture
+      expect(within(totalCard).getByText("7")).toBeInTheDocument();
     });
 
     it("should display enabled flags count", () => {
@@ -222,28 +234,37 @@ describe("FeatureFlagsPage", () => {
       const enabledCard = enabledLabel.parentElement
         ?.parentElement as HTMLElement;
       expect(enabledCard).toBeTruthy();
-      expect(within(enabledCard).getByText("4")).toBeInTheDocument();
+      // 5 of the 7 flags in the fixture are enabled
+      expect(within(enabledCard).getByText("5")).toBeInTheDocument();
     });
 
     it("should display disabled flags count", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("Disabled")).toBeInTheDocument();
-      expect(screen.getByText("1")).toBeInTheDocument();
+      const disabledLabel = screen.getByText("Disabled");
+      const disabledCard = disabledLabel.parentElement
+        ?.parentElement as HTMLElement;
+      expect(disabledCard).toBeTruthy();
+      // 2 disabled flags in the current fixture
+      expect(within(disabledCard).getByText("2")).toBeInTheDocument();
     });
 
     it("should display boolean flags count", () => {
       render(<FeatureFlagsPage />);
 
-      expect(screen.getByText("Boolean")).toBeInTheDocument();
-      expect(screen.getByText("2")).toBeInTheDocument();
+      const booleanCard = screen.getByText("Boolean").parentElement
+        ?.parentElement as HTMLElement;
+      expect(booleanCard).toBeTruthy();
+      // Three boolean flags in the fixture
+      expect(within(booleanCard).getByText("3")).toBeInTheDocument();
     });
 
     it("should show voice flags count", () => {
       render(<FeatureFlagsPage />);
 
-      const voiceCard = screen.getByText("Voice Flags").parentElement
-        ?.parentElement as HTMLElement;
+      // There are two "Voice Flags" labels (button + stat card); use the card.
+      const [, cardLabel] = screen.getAllByText("Voice Flags");
+      const voiceCard = cardLabel.parentElement?.parentElement as HTMLElement;
       expect(voiceCard).toBeTruthy();
       // Three backend.voice_* flags plus no ui.voice_/backend.ws_ in this fixture
       expect(within(voiceCard).getByText("3")).toBeInTheDocument();
@@ -273,7 +294,7 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       expect(
-        screen.getByText("Enable new voice mode features"),
+        screen.getByText("Barge-in quality preset"),
       ).toBeInTheDocument();
       expect(
         screen.getByText("Maximum concurrent sessions per user"),
@@ -285,9 +306,9 @@ describe("FeatureFlagsPage", () => {
 
       const booleanBadges = screen.getAllByText("boolean");
       expect(booleanBadges.length).toBe(3);
-      expect(screen.getByText("number")).toBeInTheDocument();
-      expect(screen.getByText("string")).toBeInTheDocument();
-      expect(screen.getByText("json")).toBeInTheDocument();
+      expect(screen.getAllByText("number").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("string").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("json").length).toBeGreaterThanOrEqual(1);
     });
 
     it("should display values for non-boolean flags", () => {
@@ -359,14 +380,16 @@ describe("FeatureFlagsPage", () => {
 
       render(<FeatureFlagsPage />);
 
-      // Find the first toggle switch (for new_voice_mode)
-      const toggles = document.querySelectorAll(
-        'button[class*="rounded-full"][class*="w-11"]',
-      );
-      fireEvent.click(toggles[0]);
+      // Toggle the first boolean flag (backend.voice_v4_audio_processing)
+      const toggleButton = screen.getByRole("button", {
+        name: /Toggle backend\.voice_v4_audio_processing/i,
+      });
+      fireEvent.click(toggleButton);
 
       await waitFor(() => {
-        expect(mockToggle).toHaveBeenCalledWith("new_voice_mode");
+        expect(mockToggle).toHaveBeenCalledWith(
+          "backend.voice_v4_audio_processing",
+        );
       });
     });
 
@@ -475,7 +498,8 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       const editButtons = screen.getAllByRole("button", { name: /edit/i });
-      expect(editButtons.length).toBe(6);
+      // One edit button per flag
+      expect(editButtons.length).toBe(7);
     });
 
     it("should not show edit button for non-admins", () => {
@@ -497,7 +521,9 @@ describe("FeatureFlagsPage", () => {
       fireEvent.click(editButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getByText(/Edit: new_voice_mode/)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Edit: backend\.voice_barge_in_quality_preset/),
+        ).toBeInTheDocument();
       });
     });
 
@@ -508,10 +534,12 @@ describe("FeatureFlagsPage", () => {
       fireEvent.click(editButtons[0]);
 
       await waitFor(() => {
-        const nameInput = screen.getByDisplayValue("new_voice_mode");
+        const nameInput = screen.getByDisplayValue(
+          "backend.voice_barge_in_quality_preset",
+        );
         expect(nameInput).toBeDisabled();
         expect(
-          screen.getByDisplayValue("Enable new voice mode features"),
+          screen.getByDisplayValue("Barge-in quality preset"),
         ).toBeInTheDocument();
       });
     });
@@ -529,11 +557,13 @@ describe("FeatureFlagsPage", () => {
       fireEvent.click(editButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getByText(/Edit: new_voice_mode/)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Edit: backend\.voice_barge_in_quality_preset/),
+        ).toBeInTheDocument();
       });
 
       const descInput = screen.getByDisplayValue(
-        "Enable new voice mode features",
+        "Barge-in quality preset",
       );
       fireEvent.change(descInput, { target: { value: "Updated description" } });
 
@@ -541,7 +571,7 @@ describe("FeatureFlagsPage", () => {
 
       await waitFor(() => {
         expect(mockUpdate).toHaveBeenCalledWith(
-          "new_voice_mode",
+          "backend.voice_barge_in_quality_preset",
           expect.objectContaining({
             description: "Updated description",
           }),
@@ -555,7 +585,7 @@ describe("FeatureFlagsPage", () => {
       render(<FeatureFlagsPage />);
 
       const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-      expect(deleteButtons.length).toBe(6);
+      expect(deleteButtons.length).toBe(7);
     });
 
     it("should not show delete button for non-admins", () => {
@@ -611,7 +641,9 @@ describe("FeatureFlagsPage", () => {
       fireEvent.click(confirmButton);
 
       await waitFor(() => {
-        expect(mockDelete).toHaveBeenCalledWith("new_voice_mode");
+        expect(mockDelete).toHaveBeenCalledWith(
+          "backend.voice_barge_in_quality_preset",
+        );
       });
     });
 

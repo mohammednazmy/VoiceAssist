@@ -279,7 +279,7 @@ export function VersionHistoryDrawer({
                           </span>
                           {isCurrent && (
                             <StatusBadge
-                              status="green"
+                              status="success"
                               label="Current"
                               size="sm"
                               showDot={false}
@@ -288,10 +288,10 @@ export function VersionHistoryDrawer({
                           <StatusBadge
                             status={
                               version.status === "published"
-                                ? "green"
+                                ? "success"
                                 : version.status === "draft"
-                                  ? "yellow"
-                                  : "purple"
+                                  ? "warning"
+                                  : "info"
                             }
                             label={version.status}
                             size="sm"

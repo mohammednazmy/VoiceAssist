@@ -56,7 +56,9 @@ async def register(request: Request, user_data: UserRegister, db: Session = Depe
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        # Use 409 CONFLICT for duplicate email to match integration tests
+        # and standard HTTP semantics.
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
 
     # Create new user
     hashed_password = get_password_hash(user_data.password)

@@ -14,6 +14,11 @@ interface Conversation {
   model?: string;
   branch_count: number;
   folder_name?: string;
+  phi_mode?: "clinical" | "demo";
+  tags?: string[];
+  active_document_id?: string | null;
+  active_document_title?: string | null;
+  active_document_page?: number | null;
 }
 
 interface ConversationsResponse {
@@ -32,13 +37,19 @@ export function ConversationsPage() {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [userIdFilter, setUserIdFilter] = useState("");
+  const [phiModeFilter, setPhiModeFilter] = useState<"" | "clinical" | "demo">(
+    "",
+  );
+  const [hasActiveDocFilter, setHasActiveDocFilter] = useState<
+    "" | "yes" | "no"
+  >("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { isViewer: _isViewer } = useAuth();
 
   useEffect(() => {
     loadConversations();
-  }, [page, searchTerm, userIdFilter]);
+  }, [page, searchTerm, userIdFilter, phiModeFilter, hasActiveDocFilter]);
 
   const loadConversations = async () => {
     setLoading(true);
@@ -52,6 +63,12 @@ export function ConversationsPage() {
       if (userIdFilter) {
         url += `&user_id=${encodeURIComponent(userIdFilter)}`;
       }
+       if (phiModeFilter) {
+         url += `&phi_mode=${encodeURIComponent(phiModeFilter)}`;
+       }
+       if (hasActiveDocFilter) {
+         url += `&has_active_doc=${encodeURIComponent(hasActiveDocFilter)}`;
+       }
 
       const data = await fetchAPI<ConversationsResponse>(url);
       setConversations(data.conversations);
@@ -141,6 +158,49 @@ export function ConversationsPage() {
         <td className="px-4 py-3 text-sm text-slate-400 text-center">
           {conv.branch_count}
         </td>
+        <td className="px-4 py-3 text-sm text-slate-400">
+          {conv.phi_mode && (
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                conv.phi_mode === "demo"
+                  ? "bg-amber-950/40 text-amber-300 border-amber-700"
+                  : "bg-emerald-950/40 text-emerald-300 border-emerald-700"
+              }`}
+            >
+              {conv.phi_mode === "demo" ? "Demo" : "Clinical"}
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-3 text-sm text-slate-400 max-w-[220px] truncate">
+          {conv.active_document_title && conv.active_document_id ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(
+                  `/knowledge-base?documentId=${encodeURIComponent(
+                    conv.active_document_id!,
+                  )}`,
+                );
+              }}
+              className="text-left hover:text-blue-300 transition-colors"
+              title={`View document: ${conv.active_document_title}`}
+            >
+              <span className="inline-flex flex-col">
+                <span className="truncate">
+                  {conv.active_document_title}
+                </span>
+                {typeof conv.active_document_page === "number" && (
+                  <span className="text-xs text-slate-500">
+                    Page {conv.active_document_page}
+                  </span>
+                )}
+              </span>
+            </button>
+          ) : (
+            <span className="text-slate-600">None</span>
+          )}
+        </td>
         <td className="px-4 py-3 text-sm text-slate-500">
           {conv.model || "-"}
         </td>
@@ -218,6 +278,42 @@ export function ConversationsPage() {
             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
           />
         </div>
+        <div className="w-48">
+          <label className="block text-[11px] text-slate-500 mb-1">
+            PHI Mode
+          </label>
+          <select
+            value={phiModeFilter}
+            onChange={(e) => {
+              setPhiModeFilter(e.target.value as "" | "clinical" | "demo");
+              setPage(0);
+            }}
+            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+          >
+            <option value="">All</option>
+            <option value="clinical">Clinical</option>
+            <option value="demo">Demo (PHI-conscious)</option>
+          </select>
+        </div>
+        <div className="w-52">
+          <label className="block text-[11px] text-slate-500 mb-1">
+            Active Document
+          </label>
+          <select
+            value={hasActiveDocFilter}
+            onChange={(e) => {
+              setHasActiveDocFilter(
+                e.target.value as "" | "yes" | "no",
+              );
+              setPage(0);
+            }}
+            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+          >
+            <option value="">All</option>
+            <option value="yes">Has active document</option>
+            <option value="no">No active document</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -248,6 +344,12 @@ export function ConversationsPage() {
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Branches
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                PHI Mode
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                Active Document
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 Model
@@ -349,6 +451,16 @@ export function ConversationsPage() {
               <span className="text-slate-500">Model:</span>
               <span className="ml-2 text-slate-300">
                 {selectedConversation.model || "-"}
+              </span>
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <span className="text-slate-500">PHI Mode:</span>
+              <span className="ml-2 text-slate-300">
+                {selectedConversation.phi_mode
+                  ? selectedConversation.phi_mode === "demo"
+                    ? "Demo (PHI-conscious)"
+                    : "Clinical"
+                  : "-"}
               </span>
             </div>
           </div>

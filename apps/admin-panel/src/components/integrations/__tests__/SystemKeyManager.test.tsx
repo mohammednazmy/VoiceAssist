@@ -84,7 +84,13 @@ const defaultMockHook = {
 const defaultMockAuth = {
   isAdmin: true,
   isAuthenticated: true,
-  user: { id: "user-1", email: "admin@example.com" },
+  isViewer: false,
+  loading: false,
+  error: null,
+  login: vi.fn(),
+  logout: vi.fn(),
+  role: "admin" as const,
+  user: { id: "user-1", email: "admin@example.com", is_admin: true, is_active: true, role: "admin" as const },
 };
 
 describe("SystemKeyManager", () => {
@@ -283,6 +289,9 @@ describe("SystemKeyManager", () => {
       vi.mocked(useAuth).mockReturnValue({
         ...defaultMockAuth,
         isAdmin: false,
+        isViewer: true,
+        role: "viewer" as const,
+        user: { ...defaultMockAuth.user, is_admin: false, role: "viewer" as const },
       });
 
       render(<SystemKeyManager />);

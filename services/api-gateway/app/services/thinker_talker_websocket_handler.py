@@ -166,6 +166,19 @@ class TTSessionConfig:
     message_recovery_enabled: bool = False
     audio_checkpointing_enabled: bool = False
 
+    # Reading mode and PHI-conscious controls (document-centric voice flows)
+    # When enabled, the assistant optimizes TTS for long-form document reading
+    # and can bias RAG/tooling away from PHI-heavy content in demo contexts.
+    reading_mode_enabled: bool = False
+    reading_speed: str = "normal"  # "slow" | "normal" | "fast"
+    reading_detail: str = "full"  # "short" | "full"
+
+    # Voice-level PHI policy for this session.
+    # - "clinical": full KB access with PHI where appropriate
+    # - "demo": PHI-conscious mode; RAG prefers non-PHI content
+    phi_mode: str = "clinical"
+    exclude_phi: bool = False
+
     # Sequence tracking for binary protocol (internal, not part of init)
     _audio_sequence_in: int = field(default=0, init=False, repr=False)
     _audio_sequence_out: int = field(default=0, init=False, repr=False)
@@ -359,6 +372,12 @@ class ThinkerTalkerWebSocketHandler:
                 enable_continuation_detection=False,
                 enable_utterance_aggregation=False,
                 utterance_aggregation_window_ms=int(aggregation_window_ms),
+                # Document-aware reading & PHI-conscious configuration
+                reading_mode_enabled=self.config.reading_mode_enabled,
+                reading_speed=self.config.reading_speed,
+                reading_detail=self.config.reading_detail,
+                phi_mode=self.config.phi_mode,
+                exclude_phi=self.config.exclude_phi,
             )
 
             self._pipeline_session = await self._pipeline_service.create_session(
@@ -852,6 +871,59 @@ class ThinkerTalkerWebSocketHandler:
                     self.config.enable_discourse_analysis = advanced_settings["enable_discourse_analysis"]
                 if "enable_response_recommendations" in advanced_settings:
                     self.config.enable_response_recommendations = advanced_settings["enable_response_recommendations"]
+
+                # Document reading mode controls (for long-form KB reading)
+                if "reading_mode_enabled" in advanced_settings:
+                    try:
+                        self.config.reading_mode_enabled = bool(advanced_settings["reading_mode_enabled"])
+                    except Exception:
+                        self.config.reading_mode_enabled = False
+                    if self._pipeline_session is not None:
+                        self._pipeline_session.config.reading_mode_enabled = self.config.reading_mode_enabled
+
+                if "reading_speed" in advanced_settings:
+                    speed = str(advanced_settings["reading_speed"]).lower()
+                    if speed in ("slow", "normal", "fast"):
+                        self.config.reading_speed = speed
+                        if self._pipeline_session is not None:
+                            self._pipeline_session.config.reading_speed = speed
+                    else:
+                        logger.warning(
+                            f"[WS] Invalid reading_speed '{advanced_settings['reading_speed']}' "
+                            f"for session {self.config.session_id}, ignoring (valid: slow, normal, fast)"
+                        )
+
+                if "reading_detail" in advanced_settings:
+                    detail = str(advanced_settings["reading_detail"]).lower()
+                    if detail in ("short", "full"):
+                        self.config.reading_detail = detail
+                        if self._pipeline_session is not None:
+                            self._pipeline_session.config.reading_detail = detail
+                    else:
+                        logger.warning(
+                            f"[WS] Invalid reading_detail '{advanced_settings['reading_detail']}' "
+                            f"for session {self.config.session_id}, ignoring (valid: short, full)"
+                        )
+
+                # PHI-conscious voice mode controls
+                if "phi_mode" in advanced_settings:
+                    mode_val = str(advanced_settings["phi_mode"]).lower()
+                    if mode_val in ("clinical", "demo"):
+                        self.config.phi_mode = mode_val
+                        # Demo mode is PHI-conscious: prefer non-PHI KB chunks
+                        self.config.exclude_phi = mode_val == "demo"
+                        if self._pipeline_session is not None:
+                            self._pipeline_session.config.phi_mode = self.config.phi_mode
+                            self._pipeline_session.config.exclude_phi = self.config.exclude_phi
+                        logger.info(
+                            f"[WS] PHI mode set to '{mode_val}' for session {self.config.session_id}, "
+                            f"exclude_phi={self.config.exclude_phi}"
+                        )
+                    else:
+                        logger.warning(
+                            f"[WS] Invalid phi_mode '{advanced_settings['phi_mode']}' "
+                            f"for session {self.config.session_id}, ignoring (valid: clinical, demo)"
+                        )
 
                 # Privacy settings (maps from frontend VoicePrivacySettings)
                 # When disabled, transcripts/responses are not persisted for recovery.

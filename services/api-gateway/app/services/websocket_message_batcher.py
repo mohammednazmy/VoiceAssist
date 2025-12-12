@@ -58,6 +58,10 @@ class BatcherConfig:
             "error",
             "session.ready",
             "session.init.ack",
+            # Heartbeat messages must be sent immediately for connection health
+            "pong",
+            "heartbeat",
+            "ping",
         }
     )
 

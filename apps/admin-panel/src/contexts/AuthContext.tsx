@@ -14,6 +14,7 @@ import {
   clearTokens,
   getStoredRole,
 } from "../lib/apiClient";
+import { isTwoFactorRequired } from "@voiceassist/api-client";
 import type { User as ApiUser } from "@voiceassist/types";
 
 type UserRole = "admin" | "viewer";
@@ -187,8 +188,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       setLoading(true);
 
-      const tokens = await apiClient.login({ email, password });
-      persistTokens(tokens.accessToken, tokens.refreshToken);
+      const response = await apiClient.login({ email, password });
+
+      // Check if 2FA is required
+      if (isTwoFactorRequired(response)) {
+        // TODO: Handle 2FA flow - redirect to 2FA verification page
+        setError("Two-factor authentication required");
+        throw new Error("Two-factor authentication required");
+      }
+
+      // response is now narrowed to AuthTokens
+      persistTokens(response.accessToken, response.refreshToken);
 
       const profile = await apiClient.getCurrentUser();
       const role = deriveRole(profile.role);
@@ -203,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
       });
 
-      scheduleRefresh(tokens.accessToken);
+      scheduleRefresh(response.accessToken);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);

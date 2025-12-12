@@ -84,7 +84,7 @@ export function UserOverridesPanel({
 
   // Focus management refs
   const createButtonRef = useRef<HTMLButtonElement>(null);
-  const modalFirstFocusRef = useRef<HTMLInputElement>(null);
+  const modalFirstFocusRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   // Filter overrides based on search
   const filteredOverrides = overrides.filter((override) => {
@@ -673,7 +673,7 @@ interface OverrideFormModalProps {
   isEdit: boolean;
   showUserIdField: boolean;
   showFlagNameField: boolean;
-  firstFocusRef: React.RefObject<HTMLInputElement>;
+  firstFocusRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>;
 }
 
 function OverrideFormModal({
@@ -748,7 +748,7 @@ function OverrideFormModal({
                 User ID
               </label>
               <input
-                ref={firstFocusRef}
+                ref={firstFocusRef as React.RefObject<HTMLInputElement>}
                 id="user-id"
                 type="text"
                 value={formUserId}
@@ -771,7 +771,7 @@ function OverrideFormModal({
                 Flag Name
               </label>
               <input
-                ref={showUserIdField ? undefined : firstFocusRef}
+                ref={showUserIdField ? undefined : (firstFocusRef as React.RefObject<HTMLInputElement>)}
                 id="flag-name"
                 type="text"
                 value={formFlagName}
@@ -798,7 +798,7 @@ function OverrideFormModal({
             <textarea
               ref={
                 !showUserIdField && !showFlagNameField
-                  ? firstFocusRef
+                  ? (firstFocusRef as React.RefObject<HTMLTextAreaElement>)
                   : undefined
               }
               id="value"
