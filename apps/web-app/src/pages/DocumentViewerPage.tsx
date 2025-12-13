@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import type {
-  KBDocumentSummary,
-  UserDocument,
-} from "@voiceassist/api-client";
+import type { KBDocumentSummary } from "@voiceassist/types";
+import type { UserDocument } from "@voiceassist/api-client";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@voiceassist/ui";
 
 type ViewerDocument = {

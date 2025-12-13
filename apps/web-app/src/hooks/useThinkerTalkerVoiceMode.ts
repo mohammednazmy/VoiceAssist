@@ -31,7 +31,11 @@ import {
   type TTAdvancedSettings,
   type TTBargeInClassification,
 } from "./useThinkerTalkerSession";
-import { useTTAudioPlayback, type TTPlaybackState } from "./useTTAudioPlayback";
+import {
+  useTTAudioPlayback,
+  type TTPlaybackState,
+  type AudioChunkData,
+} from "./useTTAudioPlayback";
 import { useBackchannelAudio } from "./useBackchannelAudio";
 import { useBargeInPromptAudio } from "./useBargeInPromptAudio";
 import { useSileroVAD } from "./useSileroVAD";
@@ -167,6 +171,11 @@ interface EchoPolicy {
   playbackThresholdBoost: number;
   playbackMinSpeechMs: number;
 }
+
+// Grace period after playback starts during which speech detection
+// events are likely to be TTS echo and should not trigger barge-in.
+// Kept short to preserve responsiveness while avoiding early misfires.
+const PLAYBACK_ECHO_GRACE_MS = 350;
 
 function getEchoPolicyForAecQuality(
   basePlaybackThresholdBoost: number,
@@ -439,36 +448,15 @@ export function useThinkerTalkerVoiceMode(
     onEmotionDetected,
     enableBackchannel = true,
     onBackchannelPlay,
-    // Silero VAD Feature Flag Options (with tuned defaults for fast, dictation-friendly barge-in)
+    // Silero VAD Feature Flag Options (sane defaults).
+    // Note: overly aggressive local VAD tuning can cause echo-triggered barge-ins
+    // that prematurely cancel AI playback (truncated/choppy responses).
     sileroVADEnabled = true,
     sileroEchoSuppressionMode = "threshold_boost",
-    // Make VAD highly responsive for dictation-style speech while still
-    // robust to echo and background noise.
-    //
-    // Previous Phase 2 defaults:
-    //   positive threshold: 0.45 → 0.42
-    //   playback boost:    0.05 → 0.03 (effective ≈ 0.45 during playback)
-    //   minSpeechMs:       120  → 100
-    //   playbackMinMs:      90  → 70
-    //
-    // Dictation-optimized tuning (this change):
-    //   positive threshold: 0.42 → 0.38
-    //   playback boost:    0.03 → 0.02 (effective ≈ 0.40 during playback)
-    //   minSpeechMs:       100  → 80
-    //   playbackMinMs:      70  → 60
-    //
-    // Rationale: reduce the amount of speech needed to register a barge-in
-    // and lower the confidence bar slightly, while still relying on:
-    //   - echo-aware threshold boosts during playback
-    //   - backend Deepgram confidence checks and misfire rollback
-    // to prevent pathological echo loops.
-    // Make base thresholds aggressively low for fast barge-in; we rely on
-    // backend HybridVAD misfire rollback and echo-aware handling to recover
-    // from occasional false positives rather than missing real speech.
-    sileroPositiveThreshold = 0.32,
-    sileroPlaybackThresholdBoost = 0.02,
-    sileroMinSpeechMs = 60,
-    sileroPlaybackMinSpeechMs = 50,
+    sileroPositiveThreshold = 0.45,
+    sileroPlaybackThresholdBoost = 0.2,
+    sileroMinSpeechMs = 160,
+    sileroPlaybackMinSpeechMs = 200,
   } = options;
 
   // Detect automated browser environments (Playwright/WebDriver) to dial down noisy hooks
@@ -503,6 +491,7 @@ export function useThinkerTalkerVoiceMode(
       minSpeechMs: sileroMinSpeechMs,
       playbackMinSpeechMs: sileroPlaybackMinSpeechMs,
       confidenceSharing: true,
+      qualityPreset: "balanced",
     }),
     [
       sileroEchoSuppressionMode,
@@ -572,11 +561,24 @@ export function useThinkerTalkerVoiceMode(
   // with backend HybridVAD thresholds.
   const BASE_BARGE_IN_DEBOUNCE_MS = 200;
 
+  // Deduplication guard for final AI responses. Tracks the most recent
+  // normalized response text so that duplicate completions do not show
+  // up twice in the chat UI. Normalization is intentionally aggressive
+  // (case/punctuation/whitespace), and this state is in-memory only.
+  const lastFinalResponseRef = useRef<{
+    normalizedText: string;
+    timestamp: number;
+  } | null>(null);
+
   // Ref to track "natural completion" mode - when backend has finished TTS generation
   // but local audio buffer is still draining. In this state, any speech_started events
   // from backend VAD are likely speaker echo (the AI's own audio being picked up by mic)
   // and should NOT trigger barge-in.
   const naturalCompletionModeRef = useRef<boolean>(false);
+
+  // Track when playback most recently started for echo-aware barge-in.
+  // Used to ignore very early speech_start events that are likely TTS echo.
+  const lastPlaybackStartAtRef = useRef<number | null>(null);
 
   // Ref to track previous pipeline state for detecting speaking -> listening transitions
   const previousPipelineStateRef = useRef<PipelineState | null>(null);
@@ -585,6 +587,7 @@ export function useThinkerTalkerVoiceMode(
   // Declared early so it can be used in audioPlayback callbacks
   const sileroVADRef = useRef<ReturnType<typeof useSileroVAD> | null>(null);
   const sileroRollbackTimeoutRef = useRef<number | null>(null);
+  const localBargeInConfirmTimeoutRef = useRef<number | null>(null);
   // Track if we've started VAD to avoid multiple starts
   const vadStartedRef = useRef(false);
   const [sileroUnavailable, setSileroUnavailable] = useState(false);
@@ -595,6 +598,12 @@ export function useThinkerTalkerVoiceMode(
     if (sileroRollbackTimeoutRef.current) {
       clearTimeout(sileroRollbackTimeoutRef.current);
       sileroRollbackTimeoutRef.current = null;
+    }
+  }, []);
+  const clearLocalBargeInConfirmTimeout = useCallback(() => {
+    if (localBargeInConfirmTimeoutRef.current) {
+      clearTimeout(localBargeInConfirmTimeoutRef.current);
+      localBargeInConfirmTimeoutRef.current = null;
     }
   }, []);
 
@@ -711,7 +720,7 @@ export function useThinkerTalkerVoiceMode(
 
         const byName = Object.fromEntries(
           responses
-            .filter((f): f is { name: string } & Record<string, unknown> => !!f)
+            .filter((f): f is NonNullable<typeof f> => f !== null && typeof f === "object" && "name" in f)
             .map((flag) => [flag.name, flag]),
         );
 
@@ -792,9 +801,6 @@ export function useThinkerTalkerVoiceMode(
       cancelled = true;
     };
   }, [apiClient, defaultSileroConfig]);
-
-  // Track current response for streaming
-  let currentResponseId: string | null = null;
 
   // Phase 2: Backchannel audio hook
   const backchannelAudio = useBackchannelAudio({
@@ -923,16 +929,45 @@ export function useThinkerTalkerVoiceMode(
     "backend.voice_adaptive_prebuffer",
   );
 
+  // Local debug flag: simple TTS playback mode.
+  // To avoid accidentally degrading audio quality in normal dev usage,
+  // this lab mode now requires TWO localStorage flags:
+  //   - voiceassist_enable_tts_lab_mode === "true"
+  //   - voiceassist_simple_tts_playback === "true"
+  //
+  // This ensures previous one-off debugging sessions that set only
+  // voiceassist_simple_tts_playback no longer force simple playback.
+  const simplePlaybackDebug =
+    typeof window !== "undefined" &&
+    window.localStorage?.getItem("voiceassist_enable_tts_lab_mode") ===
+      "true" &&
+    window.localStorage?.getItem("voiceassist_simple_tts_playback") ===
+      "true";
+
   // Audio playback hook
   const audioPlayback = useTTAudioPlayback({
     volume,
+    // Enable prebuffering for smoother audio playback - prevents choppy audio
+    // by buffering chunks before starting playback. In simple debug mode we
+    // let the scheduler run with minimal buffering to better observe raw PCM.
+    enablePrebuffering: !simplePlaybackDebug,
+    // Use a smaller prebuffer to reduce perceived latency while still
+    // avoiding gaps from network jitter. In simple debug mode, fall back to
+    // the hook's default chunk count.
+    prebufferChunks: simplePlaybackDebug ? undefined : 2,
+    // Disable crossfade while we debug choppiness; this trades a tiny click
+    // risk for more predictable audio scheduling.
+    enableCrossfade: false,
     // Natural Conversation Flow: Phase 6 - Network-Adaptive Prebuffering
-    enableAdaptivePrebuffer: adaptivePrebufferEnabled,
+    enableAdaptivePrebuffer: adaptivePrebufferEnabled && !simplePlaybackDebug,
     networkQuality: networkQuality.metrics.quality,
+    // Debug: clamp scheduler in simple playback mode
+    simpleMode: simplePlaybackDebug,
     onPlaybackStart: () => {
       voiceLog.info(
         "[TTVoiceMode] Playback started - enabling echo suppression",
       );
+      lastPlaybackStartAtRef.current = Date.now();
       startSpeaking();
       // Phase 1: Use echo-aware VAD API instead of pausing entirely.
       // Also ensure Silero VAD is actively listening so local barge-in
@@ -1048,22 +1083,33 @@ export function useThinkerTalkerVoiceMode(
           break;
       }
 
-      // Clamp to dictation-optimized ceilings for instant barge-in paths.
-      // This ensures that even if backend flags are conservative, the
-      // effective Silero config used for barge-in cannot become too
-      // insensitive when we explicitly request responsive/instant behavior.
-      const isDictationOptimized =
-        sileroFlags.qualityPreset === "responsive" || forceInstantBargeIn;
-      if (isDictationOptimized) {
+      // Safety floors: keep local VAD echo-robust during playback.
+      // Extremely low thresholds/short durations create echo-triggered
+      // barge-ins that prematurely cancel AI playback.
+      //
+      // In explicit E2E test mode we allow more aggressive tuning so tests can
+      // force instant barge-in behavior.
+      const MIN_POSITIVE_THRESHOLD = 0.35;
+      const MIN_MIN_SPEECH_MS = 120;
+      const MIN_PLAYBACK_THRESHOLD_BOOST = 0.12;
+      const MIN_PLAYBACK_MIN_SPEECH_MS = 140;
+
+      if (!forceInstantBargeIn) {
         config = {
           ...config,
-          positiveThreshold: Math.min(config.positiveThreshold, 0.38),
-          minSpeechMs: Math.min(config.minSpeechMs, 80),
-          playbackThresholdBoost: Math.min(
-            config.playbackThresholdBoost,
-            0.02,
+          positiveThreshold: Math.max(
+            config.positiveThreshold,
+            MIN_POSITIVE_THRESHOLD,
           ),
-          playbackMinSpeechMs: Math.min(config.playbackMinSpeechMs, 60),
+          minSpeechMs: Math.max(config.minSpeechMs, MIN_MIN_SPEECH_MS),
+          playbackThresholdBoost: Math.max(
+            config.playbackThresholdBoost,
+            MIN_PLAYBACK_THRESHOLD_BOOST,
+          ),
+          playbackMinSpeechMs: Math.max(
+            config.playbackMinSpeechMs,
+            MIN_PLAYBACK_MIN_SPEECH_MS,
+          ),
         };
       }
 
@@ -1176,21 +1222,21 @@ export function useThinkerTalkerVoiceMode(
           playbackMinSpeechMs: baseMinSpeech,
         };
 
-    // Hard cap echo-related tuning so that even on "poor" AEC devices we
-    // still get fast barge-in. Larger boosts/long durations are handled
-    // on the backend via HybridVAD misfire rollback instead of over-
-    // suppressing the local detector.
-    const MAX_PLAYBACK_THRESHOLD_BOOST = 0.06;
-    const MAX_PLAYBACK_MIN_SPEECH_MS = 120;
+    // Clamp echo-related tuning so local VAD stays responsive but
+    // doesn't become so permissive that speaker echo triggers barge-in.
+    const MIN_PLAYBACK_THRESHOLD_BOOST = 0.12;
+    const MAX_PLAYBACK_THRESHOLD_BOOST = 0.5;
+    const MIN_PLAYBACK_MIN_SPEECH_MS = 140;
+    const MAX_PLAYBACK_MIN_SPEECH_MS = 500;
 
     return {
-      playbackThresholdBoost: Math.min(
-        policy.playbackThresholdBoost,
-        MAX_PLAYBACK_THRESHOLD_BOOST,
+      playbackThresholdBoost: Math.max(
+        MIN_PLAYBACK_THRESHOLD_BOOST,
+        Math.min(policy.playbackThresholdBoost, MAX_PLAYBACK_THRESHOLD_BOOST),
       ),
-      playbackMinSpeechMs: Math.min(
-        policy.playbackMinSpeechMs,
-        MAX_PLAYBACK_MIN_SPEECH_MS,
+      playbackMinSpeechMs: Math.max(
+        MIN_PLAYBACK_MIN_SPEECH_MS,
+        Math.min(policy.playbackMinSpeechMs, MAX_PLAYBACK_MIN_SPEECH_MS),
       ),
     };
   }, [
@@ -1283,36 +1329,54 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Handle streaming response
-    onResponseDelta: (delta: string, messageId: string) => {
-      if (messageId !== currentResponseId) {
-        // Reset playback when:
-        // 1. Switching between different responses mid-stream
-        // 2. Starting a NEW response (currentResponseId is null/undefined)
-        //
-        // We ALWAYS reset when starting a new response because:
-        // - If previous turn's audio finished, we need to clear stale scheduling refs
-        // - If audio is still playing from a previous turn, it needs to stop for the new response
-        // - The nextScheduledTimeRef accumulates and causes latency/doubled audio if not reset
-        if (currentResponseId !== null && currentResponseId !== undefined) {
-          voiceLog.debug(
-            `[TTVoiceMode] Switching to new response (${currentResponseId} -> ${messageId}) - resetting playback`,
-          );
-        } else {
-          voiceLog.debug(
-            `[TTVoiceMode] Starting new response ${messageId} - resetting playback to clear stale state`,
-          );
-        }
-        audioPlayback.reset();
-        currentResponseId = messageId;
-      }
+    // IMPORTANT: Do NOT reset audio playback on each response.delta. Audio
+    // streams are driven by audio.output/meta / binary frames, and resetting
+    // here on every token (especially when message_id is missing) can cause
+    // choppy or truncated audio. We rely on audio-level signals such as
+    // onNewAudioStream and pipeline state transitions to reset playback.
+    onResponseDelta: (delta: string, _messageId: string) => {
       onAIResponse?.(delta, false);
     },
 
     // Handle complete response
     // NOTE: Message addition is handled by parent component via onAIResponse callback
-    // to avoid duplicate messages in the chat
+    // to avoid duplicate messages in the chat. We also apply an in-memory
+    // dedup guard here to suppress duplicate final responses that can occur
+    // due to backend race conditions.
     onResponseComplete: (content: string, _messageId: string) => {
-      currentResponseId = null;
+      // Normalize text for deduplication (lowercase, strip punctuation, collapse spaces)
+      const raw = content || "";
+      const lowered = raw.trim().toLowerCase();
+      let cleanedChars = "";
+      for (let i = 0; i < lowered.length; i++) {
+        const ch = lowered[i]!;
+        if (/[a-z0-9]/.test(ch)) {
+          cleanedChars += ch;
+        } else if (/\s/.test(ch)) {
+          cleanedChars += " ";
+        }
+        // Ignore punctuation/symbols for dedup purposes
+      }
+      const normalized = cleanedChars.split(/\s+/).filter(Boolean).join(" ");
+      const now = Date.now();
+
+      const last = lastFinalResponseRef.current;
+      if (
+        last &&
+        last.normalizedText === normalized &&
+        now - last.timestamp < 8000
+      ) {
+        voiceLog.warn(
+          "[TTVoiceMode] Duplicate final response detected, suppressing duplicate chat entry",
+        );
+        return;
+      }
+
+      lastFinalResponseRef.current = {
+        normalizedText: normalized,
+        timestamp: now,
+      };
+
       onAIResponse?.(content, true);
     },
 
@@ -1336,8 +1400,9 @@ export function useThinkerTalkerVoiceMode(
           const sources = Array.isArray(result.sources)
             ? result.sources
                 .filter(
-                  (s) =>
-                    s &&
+                  (s): s is { id?: string; title: string; category?: string } =>
+                    s !== null &&
+                    s !== undefined &&
                     typeof s.title === "string" &&
                     s.title.trim().length > 0,
                 )
@@ -1367,9 +1432,12 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Handle audio chunks
-    onAudioChunk: (audioBase64: string) => {
+    onAudioChunk: (audioData: AudioChunkData) => {
+      const isBinary = audioData instanceof Uint8Array;
+      const audioLength = isBinary ? audioData.byteLength : audioData.length;
       voiceLog.debug("[TTVoiceMode] Audio chunk received", {
-        audioLength: audioBase64.length,
+        dataType: isBinary ? "binary" : "base64",
+        audioLength,
       });
       // E2E Debug: Track audio chunk flow
       if (typeof window !== "undefined") {
@@ -1388,17 +1456,26 @@ export function useThinkerTalkerVoiceMode(
         win.__tt_audio_debug.push({
           timestamp: Date.now(),
           event: "onAudioChunk_called",
-          length: audioBase64.length,
+          length: audioLength,
           playbackState: audioPlayback.playbackState,
           isPlaying: audioPlayback.isPlaying,
         });
         console.log("[TTVoiceMode] onAudioChunk called", {
-          audioLength: audioBase64.length,
+          dataType: isBinary ? "binary" : "base64",
+          audioLength,
           playbackState: audioPlayback.playbackState,
           isPlaying: audioPlayback.isPlaying,
         });
       }
-      audioPlayback.queueAudioChunk(audioBase64);
+      audioPlayback.queueAudioChunk(audioData);
+    },
+
+    // Handle new audio stream detection (duplicate response protection)
+    onNewAudioStream: () => {
+      voiceLog.warn(
+        "[TTVoiceMode] New audio stream detected - resetting playback to prevent overlapping voices",
+      );
+      audioPlayback.reset();
     },
 
     // Handle tool calls
@@ -1518,6 +1595,22 @@ export function useThinkerTalkerVoiceMode(
       voiceLog.info("[TTVoiceMode] Backend VAD: User speech detected");
       startListening();
 
+      // Ignore very-early speech_start events that fire immediately after
+      // playback begins; these are likely the AI's own audio leaking into
+      // the mic rather than true user speech.
+      const nowMs = Date.now();
+      const lastPlaybackStartAt = lastPlaybackStartAtRef.current;
+      if (
+        lastPlaybackStartAt &&
+        nowMs - lastPlaybackStartAt < PLAYBACK_ECHO_GRACE_MS
+      ) {
+        voiceLog.debug(
+          `[TTVoiceMode] Backend VAD speech_start ignored ` +
+            `(${nowMs - lastPlaybackStartAt}ms since playback start < ${PLAYBACK_ECHO_GRACE_MS}ms grace window)`,
+        );
+        return;
+      }
+
       // CRITICAL: Skip barge-in if in natural completion mode
       // During natural completion (backend finished TTS, local audio draining),
       // speech_started events are likely speaker echo (AI's TTS picked up by mic)
@@ -1567,13 +1660,19 @@ export function useThinkerTalkerVoiceMode(
           `sileroConfirmsSpeech=${sileroConfirmsSpeech}`,
       );
 
-      // Always trust backend VAD when audio is actually playing.
-      // Silero confirmation is used for observability but should not
-      // block fade-out; backend misfire rollback will resume audio if
-      // this was a false positive.
+      // IMPORTANT: During AI playback, backend speech_start can be triggered
+      // by TTS leakage/echo. Require local Silero confirmation before we
+      // treat this as a real barge-in.
       if (!isActuallyPlaying) {
         voiceLog.debug(
           "[TTVoiceMode] Backend VAD speech_start ignored - audio not actually playing",
+        );
+        return;
+      }
+
+      if (!sileroConfirmsSpeech) {
+        voiceLog.info(
+          "[TTVoiceMode] Backend VAD ignored: no local Silero confirmation during playback (likely echo)",
         );
         return;
       }
@@ -1611,6 +1710,23 @@ export function useThinkerTalkerVoiceMode(
     // This provides instant barge-in when the backend's Deepgram VAD doesn't fire
     // (e.g., due to TTS echo or continuous speech mode)
     onLocalVoiceActivity: (rmsLevel: number) => {
+      const nowMs = Date.now();
+      const lastPlaybackStartAt = lastPlaybackStartAtRef.current;
+      if (
+        lastPlaybackStartAt &&
+        nowMs - lastPlaybackStartAt < PLAYBACK_ECHO_GRACE_MS
+      ) {
+        voiceLog.debug(
+          `[TTVoiceMode] Local VAD speech ignored ` +
+            `(${nowMs - lastPlaybackStartAt}ms since playback start < ${PLAYBACK_ECHO_GRACE_MS}ms grace window)`,
+        );
+        return;
+      }
+
+      if (naturalCompletionModeRef.current) {
+        return;
+      }
+
       // Only trigger barge-in if audio is currently playing.
       // Use debugState so we don't miss very recent playback starts that
       // haven't updated the React state yet.
@@ -1621,6 +1737,12 @@ export function useThinkerTalkerVoiceMode(
         debugState.queueLength > 0;
 
       if (isActuallyPlaying) {
+        const now = Date.now();
+        if (now - lastBargeInTimeRef.current < bargeInDebounceMs) {
+          return;
+        }
+        lastBargeInTimeRef.current = now;
+
         voiceLog.info(
           `[TTVoiceMode] Local VAD barge-in: rms=${rmsLevel.toFixed(
             3,
@@ -1636,8 +1758,11 @@ export function useThinkerTalkerVoiceMode(
     },
 
     // Enable instant barge-in by default for responsive interruption
-    // This uses both Silero VAD (local) and backend VAD for barge-in detection
-    enableInstantBargeIn: true,
+    // NOTE: Instant barge-in at the low-level session layer has been
+    // causing overly aggressive fade-outs based on backend VAD echo
+    // (see BARGE-IN-DEBUG logs). We now rely on the higher-level
+    // echo-aware barge-in logic in this hook instead.
+    enableInstantBargeIn: false,
 
     // Handle metrics
     onMetricsUpdate: (metrics: TTVoiceMetrics) => {
@@ -1720,9 +1845,34 @@ export function useThinkerTalkerVoiceMode(
     // E2E Test Harness: Record speech detection timestamp
     const speechDetectedAt = performance.now();
 
+    // Ignore very-early speech_start events that fire immediately after
+    // playback begins; these are likely the AI's own audio leaking into
+    // the mic rather than true user speech.
+    const nowMs = Date.now();
+    const lastPlaybackStartAt = lastPlaybackStartAtRef.current;
+    if (
+      lastPlaybackStartAt &&
+      nowMs - lastPlaybackStartAt < PLAYBACK_ECHO_GRACE_MS
+    ) {
+      voiceLog.debug(
+        `[TTVoiceMode] Local VAD speech_start ignored ` +
+          `(${nowMs - lastPlaybackStartAt}ms since playback start < ${PLAYBACK_ECHO_GRACE_MS}ms grace window)`,
+      );
+      return;
+    }
+
+    // During natural completion (backend finished generating TTS but local audio
+    // may still be draining), treat VAD speech_start events as likely echo and
+    // do not trigger barge-in.
+    if (naturalCompletionModeRef.current) {
+      voiceLog.debug(
+        "[TTVoiceMode] Local VAD speech_start ignored: in natural completion mode",
+      );
+      return;
+    }
+
     // Debounce to prevent multiple rapid barge-ins
-    const now = Date.now();
-    if (now - lastBargeInTimeRef.current < bargeInDebounceMs) {
+    if (nowMs - lastBargeInTimeRef.current < bargeInDebounceMs) {
       voiceLog.debug("[TTVoiceMode] Local VAD: Barge-in debounced");
       return;
     }
@@ -1730,7 +1880,9 @@ export function useThinkerTalkerVoiceMode(
     // Use real-time playback refs for accurate state
     const debugState = audioPlaybackRef.current.getDebugState();
     const isActuallyPlaying =
-      debugState.isPlayingRef || debugState.activeSourcesCount > 0;
+      debugState.isPlayingRef ||
+      debugState.activeSourcesCount > 0 ||
+      debugState.queueLength > 0;
 
     // E2E Debug: Always log to console for test visibility
     console.log(
@@ -1741,7 +1893,57 @@ export function useThinkerTalkerVoiceMode(
       `[TTVoiceMode] Local VAD: Checking playback state - isPlayingRef=${debugState.isPlayingRef}, activeSourcesCount=${debugState.activeSourcesCount}, stateIsPlaying=${audioPlaybackRef.current.isPlaying}`,
     );
 
-    if (isActuallyPlaying) {
+    if (!isActuallyPlaying) {
+      return;
+    }
+
+    // Confirm speech briefly to reduce echo-triggered misfires.
+    clearLocalBargeInConfirmTimeout();
+    const CONFIRM_MS = 120;
+    localBargeInConfirmTimeoutRef.current = window.setTimeout(() => {
+      // If another barge-in happened in the interim, skip.
+      const now = Date.now();
+      if (now - lastBargeInTimeRef.current < bargeInDebounceMs) {
+        return;
+      }
+
+      // Re-check playback state (audio may have ended)
+      const playbackNow = audioPlaybackRef.current.getDebugState();
+      const stillPlaying =
+        playbackNow.isPlayingRef ||
+        playbackNow.activeSourcesCount > 0 ||
+        playbackNow.queueLength > 0;
+      if (!stillPlaying) {
+        return;
+      }
+
+      const silero = sileroVADRef.current;
+      const shouldRequireSileroConfirmation =
+        resolvedSileroConfig.enabled && !sileroUnavailable && !!silero;
+
+      if (shouldRequireSileroConfirmation) {
+        const prob = silero.lastSpeechProbability ?? 0;
+        const durationMs = silero.speechDurationMs ?? 0;
+        const threshold = silero.effectiveThreshold ?? 0.5;
+        const requiredDurationMs = silero.isPlaybackActive
+          ? echoPolicy.playbackMinSpeechMs
+          : resolvedSileroConfig.minSpeechMs;
+
+        const confirmsSpeech =
+          silero.isSpeaking &&
+          prob >= threshold &&
+          durationMs >= requiredDurationMs;
+
+        if (!confirmsSpeech) {
+          voiceLog.debug(
+            `[TTVoiceMode] Local VAD barge-in suppressed (echo suspected): ` +
+              `prob=${prob.toFixed(3)}, threshold=${threshold.toFixed(3)}, ` +
+              `durationMs=${durationMs}, requiredMs=${requiredDurationMs}`,
+          );
+          return;
+        }
+      }
+
       console.log(
         "[TTVoiceMode] BARGE_IN_TRIGGERED: user speaking while AI playing",
       );
@@ -1750,7 +1952,7 @@ export function useThinkerTalkerVoiceMode(
       );
       lastBargeInTimeRef.current = now;
 
-      // Start fade immediately (don't wait for speech confirmation)
+      // Start fade immediately
       audioPlaybackRef.current.fadeOut(30);
       // Notify backend to cancel response generation
       sessionRef.current.bargeIn();
@@ -1784,9 +1986,17 @@ export function useThinkerTalkerVoiceMode(
           naturalCompletionModeRef.current = false;
           audioPlaybackRef.current.reset();
         }
-      }, 500);
-    }
-  }, [clearSileroRollbackTimeout]);
+      }, MISFIRE_ROLLBACK_MS);
+    }, CONFIRM_MS);
+  }, [
+    bargeInDebounceMs,
+    clearLocalBargeInConfirmTimeout,
+    clearSileroRollbackTimeout,
+    echoPolicy.playbackMinSpeechMs,
+    resolvedSileroConfig.enabled,
+    resolvedSileroConfig.minSpeechMs,
+    sileroUnavailable,
+  ]);
 
   // Track last mapped connection status to avoid redundant store updates
   const lastVoiceStoreStatusRef = useRef<
@@ -1889,13 +2099,16 @@ export function useThinkerTalkerVoiceMode(
     personalizedVadThreshold,
   ]);
 
-  // RMS-based VAD helper to backstop Silero during playback.
-  // Originally this only ran when Silero was unavailable; we now allow it to
-  // co‑run with Silero (when enableOfflineFallback is true) to provide an
-  // extra-fast local barge-in path based purely on RMS energy. Backend
-  // misfire rollback handles false positives.
+  // RMS-based VAD helper as a fallback when Silero is unavailable.
+  // Running multiple mic VADs concurrently increases echo-misfire risk,
+  // which can prematurely cancel AI playback (truncated responses).
   useEffect(() => {
     if (!session.isConnected || !enableOfflineFallback) {
+      return;
+    }
+
+    // Only run the RMS fallback when Silero is unavailable/disabled.
+    if (!sileroUnavailable && resolvedSileroConfig.enabled) {
       return;
     }
 
@@ -1979,6 +2192,8 @@ export function useThinkerTalkerVoiceMode(
   }, [
     session.isConnected,
     enableOfflineFallback,
+    resolvedSileroConfig.enabled,
+    sileroUnavailable,
     isAutomation,
     vadSensitivity,
     handleLocalVADSpeechStart,

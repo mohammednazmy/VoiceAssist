@@ -161,8 +161,8 @@ class MockAudioContext {
   }
 }
 (
-  globalThis as typeof globalThis & { AudioContext: typeof MockAudioContext }
-).AudioContext = MockAudioContext;
+  globalThis as unknown as { AudioContext: typeof AudioContext }
+).AudioContext = MockAudioContext as unknown as typeof AudioContext;
 
 // Mock WebSocket
 class MockWebSocket {
@@ -181,8 +181,8 @@ class MockWebSocket {
   close() {}
 }
 (
-  globalThis as typeof globalThis & { WebSocket: typeof MockWebSocket }
-).WebSocket = MockWebSocket;
+  globalThis as unknown as { WebSocket: typeof WebSocket }
+).WebSocket = MockWebSocket as unknown as typeof WebSocket;
 
 describe("Voice Mode Navigation", () => {
   beforeEach(() => {

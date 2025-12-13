@@ -140,7 +140,9 @@ export class DuplexAudioPipeline {
       this.aecProcessor.port.onmessage = (event) => {
         if (event.data.type === "state") {
           this.aecState = event.data.state;
-          this.aecStateCallback?.(this.aecState);
+          if (this.aecState) {
+            this.aecStateCallback?.(this.aecState);
+          }
         }
       };
 

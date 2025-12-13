@@ -21,6 +21,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from app.core.event_bus import VoiceEventBus, get_event_bus
@@ -201,6 +202,31 @@ RESPONSE_TIMING: Dict[QueryType, ResponseTimingConfig] = {
         filler_phrases=[],
     ),
 }
+
+
+def _normalize_text_for_dedup(text: str) -> str:
+    """
+    Normalize conversational text for deduplication.
+
+    This is intentionally more aggressive than user-facing normalization:
+    we strip case, punctuation, and collapse whitespace so that small
+    formatting differences do not cause duplicate STT finals to trigger
+    multiple LLM/TTS runs. Operates purely in-memory and does not
+    persist PHI.
+    """
+    raw = (text or "").strip().lower()
+    if not raw:
+        return ""
+
+    cleaned_chars: list[str] = []
+    for ch in raw:
+        if ch.isalnum():
+            cleaned_chars.append(ch)
+        elif ch.isspace():
+            cleaned_chars.append(" ")
+        # Ignore punctuation/symbols for dedup purposes
+    cleaned = "".join(cleaned_chars)
+    return " ".join(cleaned.split())
 
 
 def normalize_conversational_utterance(transcript: str) -> str:
@@ -484,6 +510,10 @@ class PipelineMessage:
 
     type: str
     data: Dict[str, Any] = field(default_factory=dict)
+    # Optional raw/binary payload for non-JSON transports (e.g. binary audio frames).
+    # This is handled internally by the Thinker/Talker WebSocket handler and is not
+    # serialized to JSON directly.
+    binary: Optional[bytes] = None
 
 
 @dataclass
@@ -593,6 +623,13 @@ class VoicePipelineSession:
         self._final_transcript = ""
         self._transcript_confidence = 1.0  # Phase 7: Track STT confidence for repair strategies
 
+        # DEDUPLICATION: Track processed transcript hashes to prevent duplicate responses
+        # This catches cases where the same transcript triggers processing multiple times
+        # (e.g., from multiple STT events, race conditions, or network retries)
+        self._processed_transcript_hashes: set[str] = set()
+        self._dedup_window_s: float = 5.0  # Clear hashes after 5 seconds
+        self._last_dedup_cleanup: float = 0.0
+
         # Current emotion state (for response adaptation)
         self._current_emotion: Optional[EmotionResult] = None
 
@@ -683,6 +720,18 @@ class VoicePipelineSession:
         self._barge_in_interrupted_response: str = ""
         self._barge_in_playback_position_ms: int = 0
         self._misfire_check_task: Optional[asyncio.Task] = None
+
+        # Optional TTS debug recording (development-only)
+        # When enabled via settings and DEBUG is true, raw TTS PCM16 audio
+        # for this voice session is written to a file on disk so that
+        # developers can compare the exact waveform produced by the server
+        # with what the browser played. This may contain PHI and must not
+        # be enabled in production.
+        self._tts_debug_recording_enabled: bool = bool(
+            settings.DEBUG and getattr(settings, "VOICE_TTS_DEBUG_RECORDING_ENABLED", False)
+        )
+        self._tts_debug_file_path: Optional[Path] = None
+        self._tts_debug_file = None
 
     def _tune_hybrid_vad_for_noise_and_user(
         self,
@@ -1259,7 +1308,8 @@ class VoicePipelineSession:
                     "classification": classification.classification,
                     "intent": classification.intent,
                     "confidence": classification.confidence,
-                    "transcript": classification_transcript[:50],
+                    # HIPAA/PHI: never log transcript content
+                    "transcript_chars": len(classification_transcript),
                     "action": classification.action.type,
                 },
             )
@@ -1279,7 +1329,10 @@ class VoicePipelineSession:
                         },
                     )
                 )
-                logger.info(f"[Pipeline] Backchannel detected, AI continues: '{classification_transcript}'")
+                logger.info(
+                    "[Pipeline] Backchannel detected, AI continues",
+                    extra={"session_id": self.session_id, "transcript_chars": len(classification_transcript or "")},
+                )
                 return  # Don't actually barge in
 
             # Handle soft barge - pause AI, wait for user
@@ -1294,7 +1347,8 @@ class VoicePipelineSession:
             extra={
                 "session_id": self.session_id,
                 "state": self._state.value if self._state else "unknown",
-                "transcript": classification_transcript[:50] if classification_transcript else None,
+                # HIPAA/PHI: never log transcript content
+                "transcript_chars": len(classification_transcript) if classification_transcript else 0,
                 "vad_probability": effective_vad_prob,
             }
         )
@@ -1360,7 +1414,10 @@ class VoicePipelineSession:
             preemptive_transcript = ""
             if self._preemptive_listening_active and self._preemptive_transcript_buffer:
                 preemptive_transcript = self._preemptive_transcript_buffer
-                logger.info(f"[Pipeline] Using pre-emptive buffer for barge-in: '{preemptive_transcript}'")
+                logger.info(
+                    "[Pipeline] Using pre-emptive buffer for barge-in",
+                    extra={"session_id": self.session_id, "transcript_chars": len(preemptive_transcript or "")},
+                )
             self._preemptive_listening_active = False
             self._preemptive_transcript_buffer = ""
 
@@ -1400,7 +1457,10 @@ class VoicePipelineSession:
             # and triggers an AI response. Without this, user speech during barge-in is lost.
             barge_in_should_respond = False
             if classification_transcript and classification_transcript.strip():
-                logger.info(f"[Pipeline] Sending barge-in transcript as user message: '{classification_transcript[:50]}'")
+                logger.info(
+                    "[Pipeline] Sending barge-in transcript as user message",
+                    extra={"session_id": self.session_id, "transcript_chars": len(classification_transcript or "")},
+                )
                 await self._on_message(
                     PipelineMessage(
                         type="transcript.complete",
@@ -1443,7 +1503,10 @@ class VoicePipelineSession:
             # This must happen after STT is restarted but we have a valid transcript
             # We use create_task to avoid blocking the barge-in completion
             if barge_in_should_respond:
-                logger.info(f"[Pipeline] Processing barge-in transcript: '{self._final_transcript[:50]}'")
+                logger.info(
+                    "[Pipeline] Processing barge-in transcript",
+                    extra={"session_id": self.session_id, "transcript_chars": len(self._final_transcript or "")},
+                )
                 asyncio.create_task(self._process_transcript())
 
             # Log barge-in completion with timing
@@ -1456,7 +1519,8 @@ class VoicePipelineSession:
                     "session_id": self.session_id,
                     "total_latency_ms": barge_in_latency_ms,
                     "will_respond": barge_in_should_respond,
-                    "transcript": classification_transcript[:50] if classification_transcript else None,
+                    # HIPAA/PHI: never log transcript content
+                    "transcript_chars": len(classification_transcript) if classification_transcript else 0,
                 }
             )
 
@@ -1607,7 +1671,10 @@ class VoicePipelineSession:
         Soft barges occur when the user says something like "wait", "hold on", etc.
         The AI pauses and waits for the user to provide more input.
         """
-        logger.info(f"[Pipeline] Soft barge detected: '{transcript}'")
+        logger.info(
+            "[Pipeline] Soft barge detected",
+            extra={"session_id": self.session_id, "transcript_chars": len(transcript or "")},
+        )
 
         # Send soft_barge notification to frontend
         await self._on_message(
@@ -1662,6 +1729,12 @@ class VoicePipelineSession:
         if not self._audio_processing_enabled or self._audio_processor is None:
             return
 
+        # Never evaluate noise while TTS is playing; speaker leakage/echo
+        # can corrupt SNR estimates and incorrectly recommend push-to-talk.
+        if self._state == PipelineState.SPEAKING:
+            self._poor_noise_since = None
+            return
+
         try:
             metrics = self._audio_processor.get_metrics()
         except Exception as e:  # pragma: no cover - defensive logging
@@ -1672,12 +1745,22 @@ class VoicePipelineSession:
             return
 
         snr = getattr(metrics, "snr_estimate_db", None)
+        rms_dbfs = getattr(metrics, "rms_dbfs", None)
         if snr is None:
+            return
+        if rms_dbfs is None:
             return
 
         POOR_SNR_THRESHOLD_DB = 5.0
+        # Ignore near-silence / zero-filled frames. Low SNR in silence is not
+        # "background noise" and would incorrectly recommend push-to-talk.
+        MIN_RMS_DBFS_FOR_NOISE_CHECK = -45.0
         RECOMMENDATION_WINDOW_SEC = 10.0
         now = time.time()
+
+        if rms_dbfs < MIN_RMS_DBFS_FOR_NOISE_CHECK:
+            self._poor_noise_since = None
+            return
 
         if snr < POOR_SNR_THRESHOLD_DB:
             if self._poor_noise_since is None:
@@ -2055,6 +2138,15 @@ class VoicePipelineSession:
             except Exception:
                 final_snr = None
 
+        # Close TTS debug recording file if it was opened for this session.
+        if self._tts_debug_file is not None:
+            try:
+                self._tts_debug_file.close()
+            except Exception:
+                pass
+            finally:
+                self._tts_debug_file = None
+
         logger.info(
             f"Voice pipeline stopped: {self.session_id}",
             extra={
@@ -2248,12 +2340,18 @@ class VoicePipelineSession:
 
         # Single word that's a noise pattern
         if cleaned in noise_patterns:
-            logger.debug(f"[Pipeline] Ignoring noise transcript: '{text}'")
+            logger.debug(
+                "[Pipeline] Ignoring transcript",
+                extra={"reason": "noise_pattern", "transcript_chars": len(cleaned)},
+            )
             return False
 
         # Too short (less than 3 characters after stripping) - likely noise
         if len(cleaned) < 3:
-            logger.debug(f"[Pipeline] Ignoring too-short transcript: '{text}'")
+            logger.debug(
+                "[Pipeline] Ignoring transcript",
+                extra={"reason": "too_short", "transcript_chars": len(cleaned)},
+            )
             return False
 
         # Require at least 2 words OR a clear command word for barge-in
@@ -2279,7 +2377,10 @@ class VoicePipelineSession:
             return True
 
         # Single word that's not a command - might be noise, don't barge-in
-        logger.debug(f"[Pipeline] Single non-command word, not triggering barge-in: '{text}'")
+        logger.debug(
+            "[Pipeline] Transcript not substantial enough for barge-in",
+            extra={"reason": "single_non_command_word", "transcript_chars": len(cleaned)},
+        )
         return False
 
     def _get_barge_in_confidence_threshold(self) -> float:
@@ -2298,7 +2399,15 @@ class VoicePipelineSession:
 
     async def _handle_partial_transcript(self, text: str, confidence: float) -> None:
         """Handle partial transcript from STT."""
-        logger.info(f"[Pipeline] Partial transcript received: '{text}' (conf={confidence:.2f})")
+        logger.debug(
+            "[Pipeline] Partial transcript received",
+            extra={
+                "session_id": self.session_id,
+                "transcript_chars": len(text or ""),
+                "confidence": round(float(confidence or 0.0), 3),
+                "state": self._state.value if self._state else "unknown",
+            },
+        )
         self._partial_transcript = text
         self._transcript_confidence = confidence  # Phase 7: Track for repair strategies
         self._last_transcript_time = time.time()  # Track for pause detection
@@ -2318,7 +2427,10 @@ class VoicePipelineSession:
         # Buffer transcripts during AI speech for instant availability on barge-in
         if self._preemptive_listening_active and self._state == PipelineState.SPEAKING:
             self._preemptive_transcript_buffer = text
-            logger.debug(f"[Pipeline] Pre-emptive buffer updated: '{text}'")
+            logger.debug(
+                "[Pipeline] Pre-emptive transcript buffer updated",
+                extra={"session_id": self.session_id, "transcript_chars": len(text or "")},
+            )
 
         # Trigger barge-in if AI is speaking and we got substantial speech
         # Requires multiple words or a command word to avoid false positives from noise
@@ -2327,17 +2439,27 @@ class VoicePipelineSession:
             threshold = self._get_barge_in_confidence_threshold()
             if confidence >= threshold:
                 logger.info(
-                    f"[Pipeline] Triggering barge-in (substantial transcript while AI speaking): "
-                    f"'{text}' (conf={confidence:.2f} >= threshold={threshold:.2f}, "
-                    f"vad_sensitivity={self.config.vad_sensitivity})"
+                    "[Pipeline] Triggering barge-in (substantial transcript while AI speaking)",
+                    extra={
+                        "session_id": self.session_id,
+                        "transcript_chars": len(text or ""),
+                        "confidence": round(float(confidence or 0.0), 3),
+                        "threshold": round(float(threshold), 3),
+                        "vad_sensitivity": self.config.vad_sensitivity,
+                    },
                 )
                 await self.barge_in()
                 return  # Don't send transcript delta after barge-in
             else:
-                logger.info(
-                    f"[Pipeline] Skipping barge-in (confidence too low): '{text}' "
-                    f"(conf={confidence:.2f} < threshold={threshold:.2f}, "
-                    f"vad_sensitivity={self.config.vad_sensitivity})"
+                logger.debug(
+                    "[Pipeline] Skipping barge-in (confidence too low)",
+                    extra={
+                        "session_id": self.session_id,
+                        "transcript_chars": len(text or ""),
+                        "confidence": round(float(confidence or 0.0), 3),
+                        "threshold": round(float(threshold), 3),
+                        "vad_sensitivity": self.config.vad_sensitivity,
+                    },
                 )
 
         await self._on_message(
@@ -2353,7 +2475,10 @@ class VoicePipelineSession:
 
     async def _handle_final_transcript(self, text: str) -> None:
         """Handle final transcript segment from STT."""
-        logger.info(f"[Pipeline] Final transcript received: '{text}'")
+        logger.debug(
+            "[Pipeline] Final transcript received",
+            extra={"session_id": self.session_id, "transcript_chars": len(text or ""), "state": self._state.value},
+        )
 
         # Natural Conversation Flow: Phase 2.4 - Cancel misfire timer on final transcript
         if text.strip():
@@ -2361,7 +2486,10 @@ class VoicePipelineSession:
 
         # Trigger barge-in if AI is speaking and we got substantial speech
         if self._state == PipelineState.SPEAKING and self._is_substantial_transcript(text):
-            logger.info(f"[Pipeline] Triggering barge-in (substantial final transcript while AI speaking): '{text}'")
+            logger.info(
+                "[Pipeline] Triggering barge-in (substantial final transcript while AI speaking)",
+                extra={"session_id": self.session_id, "transcript_chars": len(text or "")},
+            )
             await self.barge_in()
             # Store the transcript for the next turn
             self._final_transcript = text
@@ -2451,7 +2579,14 @@ class VoicePipelineSession:
 
     async def _handle_speech_end(self) -> None:
         """Handle speech endpoint detection from STT."""
-        logger.info(f"[Pipeline] Speech end detected: {self.session_id}, accumulated='{self._final_transcript}', state={self._state}")
+        logger.info(
+            "[Pipeline] Speech end detected",
+            extra={
+                "session_id": self.session_id,
+                "accumulated_chars": len(self._final_transcript or ""),
+                "state": self._state.value if self._state else "unknown",
+            },
+        )
         self._deepgram_vad_active = False
         self._last_deepgram_vad_time_ms = time.time() * 1000
 
@@ -2651,9 +2786,17 @@ class VoicePipelineSession:
 
         # Log segment details for debugging
         if utterance.was_merged and len(utterance.segments) > 1:
-            segment_texts = [f"'{s.text}'" for s in utterance.segments]
-            logger.debug(f"[Pipeline] Merged segments: {' + '.join(segment_texts)}")
-            logger.debug(f"[Pipeline] Result: '{utterance.text}'")
+            segment_lengths = [len((s.text or "").strip()) for s in utterance.segments]
+            logger.debug(
+                "[Pipeline] Aggregated utterance merged",
+                extra={
+                    "session_id": self.session_id,
+                    "segments": len(utterance.segments),
+                    "merged_chars": len((utterance.text or "").strip()),
+                    "min_segment_chars": min(segment_lengths) if segment_lengths else 0,
+                    "max_segment_chars": max(segment_lengths) if segment_lengths else 0,
+                },
+            )
 
         # Process the aggregated transcript
         await self._process_transcript()
@@ -2676,6 +2819,31 @@ class VoicePipelineSession:
                 logger.debug("Empty transcript, skipping processing")
                 self._state = PipelineState.LISTENING
                 return
+
+            # DEDUPLICATION: Check if this transcript was recently processed.
+            # Use aggressive normalization so that small punctuation/spacing
+            # changes don't cause multiple LLM/TTS runs for the same utterance.
+            normalized_for_dedup = _normalize_text_for_dedup(self._final_transcript)
+            transcript_hash = hash(normalized_for_dedup)
+            current_time = time.time()
+
+            # Periodic cleanup of old hashes (every 5 seconds) to bound memory.
+            # Sessions are short-lived, so this is mainly defensive.
+            if current_time - self._last_dedup_cleanup > self._dedup_window_s:
+                self._processed_transcript_hashes.clear()
+                self._last_dedup_cleanup = current_time
+                logger.debug("[Pipeline] Cleared transcript deduplication cache")
+
+            if transcript_hash in self._processed_transcript_hashes:
+                logger.warning(
+                    f"[Pipeline] DUPLICATE TRANSCRIPT DETECTED - skipping: '{self._final_transcript[:50]}...' "
+                    f"(hash already in dedup cache)"
+                )
+                self._state = PipelineState.LISTENING
+                return
+
+            # Add hash to dedup cache BEFORE processing to prevent race conditions
+            self._processed_transcript_hashes.add(transcript_hash)
 
             self._state = PipelineState.PROCESSING
             await self._send_state_update()
@@ -3067,7 +3235,10 @@ class VoicePipelineSession:
         4. Apply formatting if configured
         5. Don't send to Thinker (no AI response needed for regular dictation)
         """
-        logger.info(f"[Pipeline] Processing dictation transcript: '{transcript}'")
+        logger.info(
+            "[Pipeline] Processing dictation transcript",
+            extra={"session_id": self.session_id, "transcript_chars": len(transcript or ""), "message_id": message_id},
+        )
 
         # Check for voice commands
         if self.config.dictation_enable_commands:
@@ -3195,16 +3366,81 @@ class VoicePipelineSession:
 
     async def _handle_audio_chunk(self, chunk: AudioChunk) -> None:
         """Handle audio chunk from Talker."""
-        # Debug: Log audio chunk reception
-        logger.info(
-            f"[Pipeline] _handle_audio_chunk called: "
-            f"has_data={bool(chunk.data)}, data_len={len(chunk.data) if chunk.data else 0}, "
-            f"is_final={chunk.is_final}, cancelled={self._cancelled}"
-        )
+        # Avoid per-chunk info logging (extremely high volume); only emit
+        # lightweight DEBUG sampling in development.
+        if settings.DEBUG:
+            try:
+                chunk_index = self._metrics.audio_chunks_sent + 1
+                if chunk.is_final or chunk_index == 1 or chunk_index % 50 == 0:
+                    logger.debug(
+                        "[Pipeline] TTS audio chunk",
+                        extra={
+                            "session_id": self.session_id,
+                            "chunk_index": chunk_index,
+                            "has_data": bool(chunk.data),
+                            "data_len": len(chunk.data) if chunk.data else 0,
+                            "is_final": chunk.is_final,
+                            "cancelled": self._cancelled,
+                        },
+                    )
+            except Exception:
+                # Never let debug logging impact the audio path
+                pass
 
         if self._cancelled:
-            logger.info("[Pipeline] Audio chunk dropped - cancelled=True")
+            logger.debug(
+                "[Pipeline] TTS audio chunk dropped (cancelled)",
+                extra={"session_id": self.session_id, "is_final": chunk.is_final},
+            )
             return
+
+        # Development-only: record raw TTS PCM for this session when enabled.
+        # This writes the synthesized AI audio (not user input) to disk so that
+        # developers can compare the exact waveform produced by the server with
+        # what the browser played. It is gated behind DEBUG and an explicit
+        # VOICE_TTS_DEBUG_RECORDING_ENABLED flag and must not be used in prod.
+        if self._tts_debug_recording_enabled and chunk.data:
+            try:
+                # Lazily open the debug file on first chunk
+                if self._tts_debug_file is None:
+                    base_dir = Path(
+                        getattr(
+                            settings,
+                            "VOICE_TTS_DEBUG_RECORDING_DIR",
+                            "/tmp/voiceassist_tts_debug",
+                        )
+                    )
+                    base_dir.mkdir(parents=True, exist_ok=True)
+                    self._tts_debug_file_path = (
+                        base_dir / f"tts_session_{self.session_id}.pcm"
+                    )
+                    # Overwrite any existing file for this session
+                    self._tts_debug_file = self._tts_debug_file_path.open("wb")
+                    logger.info(
+                        "[Pipeline] TTS debug recording enabled",
+                        extra={
+                            "session_id": self.session_id,
+                            "path": str(self._tts_debug_file_path),
+                        },
+                    )
+
+                # Write raw PCM16 bytes for this chunk
+                # Note: Only PCM16 chunks are expected here for Thinker/Talker.
+                self._tts_debug_file.write(chunk.data)
+                self._tts_debug_file.flush()
+            except Exception as e:
+                # If recording fails, log once and disable for the rest of the session
+                logger.warning(
+                    "[Pipeline] Failed to write TTS debug audio; disabling recording",
+                    extra={"error": str(e), "session_id": self.session_id},
+                )
+                self._tts_debug_recording_enabled = False
+                if self._tts_debug_file is not None:
+                    try:
+                        self._tts_debug_file.close()
+                    except Exception:
+                        pass
+                    self._tts_debug_file = None
 
         # Update playback buffer for server-side AEC when enabled
         if self._audio_processing_enabled and self._audio_context and chunk.data:
@@ -3238,10 +3474,14 @@ class VoicePipelineSession:
             PipelineMessage(
                 type="audio.output",
                 data={
-                    "audio": (base64.b64encode(chunk.data).decode() if chunk.data else ""),
+                    # NOTE: The WebSocket handler will base64-encode this only when
+                    # sending JSON frames. For binary audio protocol, it uses the
+                    # raw bytes from `binary` and avoids any base64 work.
+                    "audio": "",
                     "format": chunk.format,
                     "is_final": chunk.is_final,
                 },
+                binary=(chunk.data if chunk.data else None),
             )
         )
 
@@ -3279,11 +3519,15 @@ class VoicePipelineSession:
             # Approximate answer length and source count for tuning
             answer_text = ""
             sources_count = 0
+            documents_count = 0
             if isinstance(event.result, dict):
-                answer_text = str(event.result.get("answer") or "")
+                answer_text = str(event.result.get("answer") or event.result.get("context") or "")
                 sources = event.result.get("sources") or []
                 if isinstance(sources, list):
                     sources_count = len(sources)
+                documents = event.result.get("documents") or []
+                if isinstance(documents, list):
+                    documents_count = len(documents)
 
             if answer_text:
                 approx_tokens = max(len(answer_text.split()), 1)
@@ -3292,9 +3536,10 @@ class VoicePipelineSession:
             voice_kb_sources_per_answer.labels(tool_name=tool_name).observe(sources_count)
 
             # Increment total calls metric
+            kb_success = bool(answer_text) or sources_count > 0 or documents_count > 0
             voice_kb_tool_calls_total.labels(
                 tool_name=tool_name,
-                success=str(bool(answer_text)),
+                success=str(kb_success),
             ).inc()
 
         await self._on_message(

@@ -1029,7 +1029,7 @@ export function DocumentsPage() {
                     {deleteConfirmId === doc.document_id ? (
                       <div className="flex items-center space-x-1">
                         <Button
-                          variant="destructive"
+                          variant="danger"
                           size="sm"
                           onClick={() => handleDelete(doc.document_id)}
                           disabled={deleteInProgress === doc.document_id}

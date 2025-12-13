@@ -21,7 +21,15 @@ from typing import Any, Dict, List, Optional, Tuple
 from openai import AsyncOpenAI
 from pypdf import PdfReader
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams, Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    FilterSelector,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 
 from app.core.config import settings
 from app.services.pdf_structure_extractor import DocumentStructure, PDFStructureExtractor
@@ -399,10 +407,17 @@ class KBIndexer:
             return False
         try:
             # Delete all points with matching document_id
-            self.qdrant_client.delete(
-                collection_name=self.collection_name,
-                points_selector={"filter": {"must": [{"key": "document_id", "match": {"value": document_id}}]}},
+            points_selector = FilterSelector(
+                filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="document_id",
+                            match=MatchValue(value=document_id),
+                        )
+                    ]
+                )
             )
+            self.qdrant_client.delete(collection_name=self.collection_name, points_selector=points_selector)
             logger.info(f"Deleted document {document_id} from index")
             return True
 
@@ -701,8 +716,8 @@ class KBIndexer:
             else:
                 logger.warning("Failed to render page images")
 
-            # Stage 3: GPT-4 Vision analysis (30-90%)
-            logger.info("Stage 3: Analyzing pages with GPT-4 Vision")
+            # Stage 3: Vision model analysis (30-90%)
+            logger.info("Stage 3: Analyzing pages with vision model %s", analyzer.model)
 
             analyses: List[Any] = []
 
@@ -772,7 +787,11 @@ class KBIndexer:
             # Stage 4: Merge extractions and analyses (90-95%)
             logger.info("Stage 4: Merging extractions and analyses")
             enhanced_structure = self._merge_enhanced_extractions(
-                extractions, analyses, total_pages, analysis_cost
+                extractions,
+                analyses,
+                total_pages,
+                analysis_cost,
+                vision_model=analyzer.model,
             )
 
             if progress_callback:
@@ -860,15 +879,17 @@ class KBIndexer:
         analyses: List,
         total_pages: int,
         analysis_cost: float,
+        vision_model: str,
     ) -> Dict[str, Any]:
         """
-        Merge pdfplumber extractions with GPT-4 Vision analyses.
+        Merge pdfplumber extractions with vision model analyses.
 
         Args:
             extractions: List of PageExtraction from pdfplumber
             analyses: List of PageAnalysisResult from GPT-4 Vision
             total_pages: Total number of pages
-            analysis_cost: Total cost of GPT-4 Vision analysis
+            analysis_cost: Total cost of vision analysis
+            vision_model: OpenAI vision model identifier
 
         Returns:
             Enhanced structure dictionary
@@ -910,7 +931,8 @@ class KBIndexer:
                 "total_pages": total_pages,
                 "processing_cost": analysis_cost,
                 "processed_at": datetime.now(timezone.utc).isoformat(),
-                "extraction_method": "enhanced_gpt4_vision",
+                "extraction_method": "enhanced_openai_vision",
+                "vision_model": vision_model,
             },
         }
 

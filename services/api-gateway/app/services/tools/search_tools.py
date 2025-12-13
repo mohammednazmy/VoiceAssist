@@ -5,12 +5,192 @@ Provides web search (DuckDuckGo), PubMed search, and knowledge base search.
 """
 
 import logging
+import hashlib
+import uuid
 from typing import Any, Dict, List
 
 import httpx
 from app.services.tools.tool_service import ToolExecutionContext, ToolResult
 
 logger = logging.getLogger(__name__)
+
+_KB_RESULT_MAX_DOCS = 20
+_KB_TITLE_MATCH_SCORE = 1.0
+
+
+def _hash_query(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+
+
+def _parse_uuid(value: Any) -> uuid.UUID | None:
+    if not value:
+        return None
+    try:
+        return uuid.UUID(str(value))
+    except Exception:
+        return None
+
+
+def _normalize_source_filters(raw_sources: Any) -> list[str]:
+    if not raw_sources:
+        return []
+    if isinstance(raw_sources, str):
+        raw_sources = [raw_sources]
+    if not isinstance(raw_sources, list):
+        return []
+    normalized: list[str] = []
+    for item in raw_sources:
+        if isinstance(item, str) and item.strip():
+            normalized.append(item.strip())
+    return normalized
+
+
+async def _keyword_search_kb_documents(
+    *,
+    db_session: Any,
+    query: str,
+    user_id: str | None,
+    max_results: int,
+    sources: list[str],
+) -> list[dict[str, Any]]:
+    """Keyword search KB documents by title (Postgres ILIKE).
+
+    This intentionally mirrors `/api/kb/documents/search` semantics so that
+    voice tools and the KB UI see the same documents.
+    """
+    if not db_session:
+        return []
+
+    from sqlalchemy import text
+
+    limit = max(1, min(int(max_results), _KB_RESULT_MAX_DOCS))
+    query_like = f"%{query}%"
+    user_uuid = _parse_uuid(user_id) if user_id else None
+
+    # Apply loose source_type filtering: accept both raw source types and
+    # common `user_{category}` prefixes used by the KB upload pipeline.
+    source_types: list[str] = []
+    if sources:
+        for src in sources:
+            source_types.append(src)
+            if not src.startswith("user_"):
+                source_types.append(f"user_{src}")
+        source_types = sorted(set(source_types))
+
+    # NOTE: we avoid interpolating any user-provided strings into SQL.
+    clauses = ["title ILIKE :query_like"]
+    params: dict[str, Any] = {"query_like": query_like, "limit": limit}
+
+    if user_uuid:
+        clauses.append("(owner_id = :user_id OR is_public = TRUE)")
+        params["user_id"] = user_uuid
+    else:
+        clauses.append("is_public = TRUE")
+
+    if source_types:
+        clauses.append("source_type = ANY(:source_types)")
+        params["source_types"] = source_types
+
+    stmt = text(
+        f"""
+        SELECT
+            document_id,
+            title,
+            source_type,
+            created_at,
+            total_pages,
+            has_toc,
+            has_figures,
+            processing_stage,
+            indexing_status
+        FROM kb_documents
+        WHERE {" AND ".join(clauses)}
+        ORDER BY created_at DESC NULLS LAST
+        LIMIT :limit
+        """
+    )
+
+    result = await db_session.execute(stmt, params)
+    rows = result.mappings().all()
+
+    documents: list[dict[str, Any]] = []
+    for row in rows:
+        documents.append(
+            {
+                "id": row.get("document_id"),
+                "title": row.get("title"),
+                "category": row.get("source_type"),
+                "created_at": row.get("created_at").isoformat() if row.get("created_at") else None,
+                "relevance_score": _KB_TITLE_MATCH_SCORE,
+                "match_type": "title_keyword",
+                "indexing_status": row.get("indexing_status"),
+                "processing_stage": row.get("processing_stage"),
+                "total_pages": row.get("total_pages"),
+                "has_toc": row.get("has_toc"),
+                "has_figures": row.get("has_figures"),
+            }
+        )
+
+    return documents
+
+
+async def _semantic_search_kb_documents(
+    *,
+    query: str,
+    max_results: int,
+    sources: list[str],
+    exclude_phi: bool,
+) -> list[dict[str, Any]]:
+    """Semantic search KB chunks via Qdrant/SearchAggregator.
+
+    Returns one entry per unique document, with best score + short excerpt.
+    """
+    from app.services.search_aggregator import SearchAggregator
+
+    limit = max(1, min(int(max_results), _KB_RESULT_MAX_DOCS))
+    aggregator = SearchAggregator()
+
+    filter_conditions: dict[str, Any] = {}
+    if exclude_phi:
+        allowed_risks = ["none", "low", "medium"]
+        filter_conditions["phi_risk"] = allowed_risks
+        filter_conditions["chunk_phi_risk"] = [*allowed_risks, None]
+    if sources:
+        filter_conditions["source_type"] = sources
+
+    results = await aggregator.search(
+        query=query,
+        top_k=limit,
+        score_threshold=0.65,
+        filter_conditions=filter_conditions or None,
+    )
+
+    by_doc: dict[str, dict[str, Any]] = {}
+    for res in results:
+        doc_id = res.document_id
+        if not doc_id:
+            continue
+        existing = by_doc.get(doc_id)
+        if existing and existing["relevance_score"] >= res.score:
+            continue
+
+        excerpt = (res.content or "").strip()
+        if len(excerpt) > 400:
+            excerpt = excerpt[:400] + "…"
+
+        by_doc[doc_id] = {
+            "id": doc_id,
+            "title": res.metadata.get("title", "Untitled"),
+            "category": res.metadata.get("source_type", "unknown"),
+            "created_at": None,
+            "relevance_score": float(res.score),
+            "match_type": "semantic",
+            "excerpt": excerpt,
+        }
+
+    # Order by score desc
+    ordered = sorted(by_doc.values(), key=lambda d: d.get("relevance_score", 0.0), reverse=True)
+    return ordered[:limit]
 
 
 async def handle_web_search(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
@@ -377,7 +557,7 @@ async def handle_kb_search(arguments: Dict[str, Any], context: ToolExecutionCont
         context: Execution context
     """
     query = arguments.get("query")
-    sources = arguments.get("sources", [])
+    sources = _normalize_source_filters(arguments.get("sources", []))
     max_results = arguments.get("max_results", 5)
 
     if not query:
@@ -388,99 +568,197 @@ async def handle_kb_search(arguments: Dict[str, Any], context: ToolExecutionCont
             error_type="ValidationError",
         )
 
-    try:
-        # Prefer the unified KB + RAG surface when available so that voice
-        # flows and chat share the same KB contract. We scope to the current
-        # user implicitly via the auth dependency used by /api/kb/query.
-        from app.services.rag_service import QueryOrchestrator, QueryRequest
-
-        orchestrator = QueryOrchestrator(enable_rag=False)
-        # ToolExecutionContext exposes conversation/session identifiers and
-        # PHI-conscious flags so that voice-mode RAG calls can share the same
-        # behavior as HTTP-based advanced search.
-        session_id = context.session_id or context.conversation_id
-        req = QueryRequest(
-            session_id=session_id,
-            query=query,
-            clinical_context_id=context.clinical_context_id,
-            exclude_phi=bool(context.exclude_phi),
+    query_str = str(query).strip()
+    if not query_str:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="Search query cannot be empty",
+            error_type="ValidationError",
         )
 
-        rag_result = await orchestrator.run_query(req)
+    try:
+        max_results_int = int(max_results)
+    except (TypeError, ValueError):
+        max_results_int = 5
+    max_results_int = max(1, min(max_results_int, _KB_RESULT_MAX_DOCS))
 
-        # Normalize into a ToolResult that contains an answer and sources.
-        # We intentionally keep the shape close to /api/kb/query so that
-        # downstream code can treat voice and HTTP RAG answers uniformly.
-        data = {
-            "query": query,
-            "answer": rag_result.answer if hasattr(rag_result, "answer") else rag_result.content,
-            "sources": getattr(rag_result, "sources", []),
-        }
+    query_hash = _hash_query(query_str)
+
+    documents: list[dict[str, Any]] = []
+    doc_by_id: dict[str, dict[str, Any]] = {}
+
+    # 1) Keyword title search (DB-backed) for reliable document discovery.
+    keyword_docs: list[dict[str, Any]] = []
+    keyword_sources_widened = False
+    try:
+        keyword_docs = await _keyword_search_kb_documents(
+            db_session=context.db_session,
+            query=query_str,
+            user_id=context.user_id,
+            max_results=max_results_int,
+            sources=sources,
+        )
+        # Tool callers sometimes over-constrain `sources` (e.g. "textbook")
+        # even when searching for a user-uploaded book. If we get zero keyword
+        # matches, retry without the source filter so title lookups succeed.
+        if not keyword_docs and sources:
+            keyword_docs = await _keyword_search_kb_documents(
+                db_session=context.db_session,
+                query=query_str,
+                user_id=context.user_id,
+                max_results=max_results_int,
+                sources=[],
+            )
+            keyword_sources_widened = True
+        for doc in keyword_docs:
+            doc_id = str(doc.get("id") or "")
+            if doc_id:
+                doc_by_id[doc_id] = doc
+    except Exception as exc:
+        logger.warning(
+            "kb_search_keyword_failed",
+            extra={"query_hash": query_hash, "error": str(exc)},
+        )
+
+    # 2) Semantic search (Qdrant) to surface relevant KB content even when the
+    # title does not match exactly. Skip when we already have strong keyword
+    # matches to keep title-based lookups fast (no embedding roundtrip).
+    semantic_docs: list[dict[str, Any]] = []
+    semantic_sources_widened = False
+    try:
+        if not doc_by_id:
+            semantic_docs = await _semantic_search_kb_documents(
+                query=query_str,
+                max_results=max_results_int,
+                sources=sources,
+                exclude_phi=bool(getattr(context, "exclude_phi", False)),
+            )
+            if not semantic_docs and sources:
+                semantic_docs = await _semantic_search_kb_documents(
+                    query=query_str,
+                    max_results=max_results_int,
+                    sources=[],
+                    exclude_phi=bool(getattr(context, "exclude_phi", False)),
+                )
+                semantic_sources_widened = True
+
+            for doc in semantic_docs:
+                doc_id = str(doc.get("id") or "")
+                if not doc_id:
+                    continue
+                if doc_id in doc_by_id:
+                    continue
+                doc_by_id[doc_id] = doc
+    except Exception as exc:
+        logger.warning(
+            "kb_search_semantic_failed",
+            extra={"query_hash": query_hash, "error": str(exc)},
+        )
+
+    documents = sorted(doc_by_id.values(), key=lambda d: d.get("relevance_score", 0.0), reverse=True)[
+        :max_results_int
+    ]
+
+    # Consistent "sources" shape for downstream metrics/UI: one per document.
+    sources_out: list[dict[str, Any]] = []
+    for doc in documents:
+        sources_out.append(
+            {
+                "id": doc.get("id"),
+                "title": doc.get("title"),
+                "category": doc.get("category"),
+                "score": doc.get("relevance_score"),
+            }
+        )
+
+    logger.info(
+        "kb_search_completed",
+        extra={
+            "query_hash": query_hash,
+            "sources_filter": sources,
+            "keyword_sources_widened": keyword_sources_widened,
+            "semantic_sources_widened": semantic_sources_widened,
+            "keyword_hits": len(keyword_docs),
+            "semantic_hits": len(semantic_docs),
+            "returned": len(documents),
+        },
+    )
+
+    if documents:
+        return ToolResult(
+            success=True,
+            data={
+                "query": query_str,
+                "documents": documents,
+                "sources": sources_out,
+                "count": len(documents),
+            },
+            message=f"Found {len(documents)} knowledge base documents matching your query.",
+        )
+
+    # Final fallback: use legacy hybrid search as a best-effort search surface.
+    try:
+        from app.services.hybrid_search_service import HybridSearchService
+
+        search_service = HybridSearchService()
+
+        filters = None
+        if getattr(context, "exclude_phi", False):
+            allowed_risks = ["none", "low", "medium"]
+            filters = {"phi_risk": allowed_risks}
+
+        results = await search_service.search(
+            query=query_str,
+            top_k=max_results_int,
+            filters=filters,
+        )
+
+        legacy_docs: list[dict[str, Any]] = []
+        for doc in results:
+            legacy_docs.append(
+                {
+                    "id": doc.id,
+                    "title": doc.title,
+                    "category": doc.source_type,
+                    "created_at": None,
+                    "relevance_score": doc.score,
+                    "match_type": "hybrid_fallback",
+                    "excerpt": ((doc.content or "")[:400] + "…") if doc.content and len(doc.content) > 400 else doc.content,
+                }
+            )
 
         return ToolResult(
             success=True,
-            data=data,
-            message="Knowledge base RAG answer generated via unified KB pipeline.",
+            data={
+                "query": query_str,
+                "documents": legacy_docs,
+                "sources": [
+                    {
+                        "id": d.get("id"),
+                        "title": d.get("title"),
+                        "category": d.get("category"),
+                        "score": d.get("relevance_score"),
+                    }
+                    for d in legacy_docs
+                ],
+                "count": len(legacy_docs),
+            },
+            message=(
+                f"Found {len(legacy_docs)} relevant documents in the knowledge base via fallback search."
+                if legacy_docs
+                else "No knowledge base documents matched your query."
+            ),
         )
 
-    except Exception as e:
-        # Fallback: if the unified RAG path fails for any reason, use the
-        # legacy hybrid search implementation as a best-effort search.
-        logger.exception(f"Error in KB search via RAG pipeline: {e}")
-        try:
-            from app.services.hybrid_search_service import HybridSearchService
-
-            search_service = HybridSearchService()
-
-            # Preserve PHI-conscious filtering in fallback path
-            filters = None
-            if context.exclude_phi:
-                # Only include chunks where PHI risk is not "high"
-                allowed_risks = ["none", "low", "medium"]
-                filters = {"phi_risk": allowed_risks}
-                logger.info(
-                    "KB search fallback using PHI-conscious filters: %s",
-                    allowed_risks,
-                )
-
-            results = await search_service.search(
-                query=query,
-                top_k=max_results,
-                filters=filters,
-            )
-
-            documents = []
-            for doc in results:
-                documents.append(
-                    {
-                        "id": doc.id,
-                        "title": doc.title,
-                        "content": (doc.content[:500] + "..." if len(doc.content) > 500 else doc.content),
-                        "source_type": doc.source_type,
-                        "source_name": doc.source_name,
-                        "location": doc.location,
-                        "relevance_score": doc.score,
-                    }
-                )
-
-            return ToolResult(
-                success=True,
-                data={
-                    "query": query,
-                    "documents": documents,
-                    "count": len(documents),
-                },
-                message=f"Found {len(documents)} relevant documents in the knowledge base (fallback search).",
-            )
-
-        except Exception as inner:
-            logger.exception(f"Fallback KB search failed: {inner}")
-            return ToolResult(
-                success=False,
-                data=None,
-                error=str(inner),
-                error_type=type(inner).__name__,
-            )
+    except Exception as inner:
+        logger.exception("Fallback KB search failed: %s", inner)
+        return ToolResult(
+            success=False,
+            data=None,
+            error=str(inner),
+            error_type=type(inner).__name__,
+        )
 
 
 async def handle_knowledge_base_query(arguments: Dict[str, Any], context: ToolExecutionContext) -> ToolResult:
@@ -510,61 +788,104 @@ async def handle_knowledge_base_query(arguments: Dict[str, Any], context: ToolEx
 
     context_docs_int = max(1, min(20, context_docs_int))
 
+    question_str = question.strip()
+    query_hash = _hash_query(question_str)
+
     try:
-        from app.services.rag_service import QueryOrchestrator, QueryRequest
+        from app.services.search_aggregator import SearchAggregator
 
-        # Prefer full RAG for this tool so that it behaves like the HTTP KB
-        # query surface, but keep it configurable via rag_top_k so callers can
-        # influence how many documents are consulted.
-        orchestrator = QueryOrchestrator(enable_rag=True, rag_top_k=context_docs_int)
+        aggregator = SearchAggregator()
 
-        session_id = context.session_id or context.conversation_id
-        req = QueryRequest(
-            session_id=session_id,
-            query=question,
-            clinical_context_id=arguments.get("clinical_context_id") or context.clinical_context_id,
-            exclude_phi=bool(context.exclude_phi),
+        filter_conditions: dict[str, Any] | None = None
+        if bool(getattr(context, "exclude_phi", False)):
+            allowed_risks = ["none", "low", "medium"]
+            filter_conditions = {
+                "phi_risk": allowed_risks,
+                "chunk_phi_risk": [*allowed_risks, None],
+            }
+
+        # Pull more chunks than the final source count so citations can
+        # de-duplicate across documents.
+        top_k = max(context_docs_int * 5, 10)
+        results = await aggregator.search(
+            query=question_str,
+            top_k=top_k,
+            score_threshold=0.65,
+            filter_conditions=filter_conditions,
         )
 
-        rag_result = await orchestrator.run_query(req)
+        citations = aggregator.extract_citations(results)
+        synthesis = aggregator.synthesize_across_documents(results)
+        retrieval_confidence = aggregator.confidence_score(results)
 
-        # Map RAG citations into the same lightweight source shape used by
-        # /api/kb/query and the frontend KB components.
-        sources: List[Dict[str, Any]] = []
-        for citation in rag_result.citations:
+        sources: list[dict[str, Any]] = []
+        for cite in citations[:context_docs_int]:
             sources.append(
                 {
-                    "id": citation.id or citation.source_id,
-                    "title": citation.title,
-                    "category": citation.source_type,
-                    "score": citation.relevance_score,
+                    "id": cite.get("id"),
+                    "title": cite.get("title"),
+                    "category": cite.get("source_type"),
+                    "score": cite.get("relevance_score"),
                 }
             )
 
-        data = {
-            "question": question,
-            "answer": rag_result.answer,
-            "sources": sources,
-        }
+        context_text = synthesis.get("context", "") or ""
+        if len(context_text) > 3000:
+            context_text = context_text[:3000] + "…"
+
+        logger.info(
+            "knowledge_base_query_retrieved",
+            extra={
+                "query_hash": query_hash,
+                "chunks": len(results),
+                "sources": len(sources),
+                "confidence": retrieval_confidence,
+            },
+        )
 
         return ToolResult(
             success=True,
-            data=data,
-            message="Knowledge base answer generated via unified RAG pipeline.",
+            data={
+                "question": question_str,
+                "context": context_text,
+                "sources": sources,
+                "documents": synthesis.get("documents", []),
+                "retrieval_confidence": retrieval_confidence,
+            },
+            message=(
+                f"Retrieved {len(sources)} knowledge base sources. "
+                "Use the provided context excerpts to answer the question."
+            ),
         )
 
     except Exception as e:
-        logger.exception(f"Error in knowledge_base_query tool: {e}")
-        # Best-effort fallback: reuse kb_search semantics so that the LLM still
-        # receives an answer and sources when possible.
+        logger.exception("Error in knowledge_base_query tool: %s", e)
+
+        # Best-effort fallback: reuse kb_search semantics so that the assistant
+        # can still surface candidate documents even if Qdrant/embeddings fail.
         try:
             kb_result = await handle_kb_search(
-                {"query": question, "max_results": context_docs_int},
+                {"query": question_str, "max_results": context_docs_int},
                 context,
             )
+            if kb_result.success and isinstance(kb_result.data, dict):
+                data = dict(kb_result.data)
+                data.pop("query", None)
+                return ToolResult(
+                    success=True,
+                    data={
+                        "question": question_str,
+                        "context": "",
+                        "sources": data.get("sources", []),
+                        "documents": data.get("documents", []),
+                        "retrieval_confidence": 0.0,
+                    },
+                    message=kb_result.message
+                    or "Retrieved candidate documents from the knowledge base (fallback).",
+                )
             return kb_result
         except Exception as inner:
-            logger.exception(f"Fallback knowledge_base_query via kb_search failed: {inner}")
+            logger.exception("Fallback knowledge_base_query via kb_search failed: %s", inner)
             return ToolResult(
                 success=False,
                 data=None,

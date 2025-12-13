@@ -248,7 +248,7 @@ export class ProsodicAnalyzer {
     }
 
     // Check for complexity (non-monotonic)
-    const directions = [];
+    const directions: number[] = [];
     for (let i = 1; i < recent.length; i++) {
       directions.push(Math.sign(recent[i] - recent[i - 1]));
     }

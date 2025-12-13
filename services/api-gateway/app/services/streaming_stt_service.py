@@ -123,6 +123,11 @@ class DeepgramStreamingSession:
         self._receive_task: Optional[asyncio.Task] = None
         self._final_transcript = ""
         self._start_time: float = 0
+        # Deduplication: Track last final transcript to prevent duplicate callbacks
+        self._last_final_text: str = ""
+        self._last_final_time: float = 0.0
+        # Deduplication window: ignore identical transcripts within this time window
+        self._dedup_window_ms: float = 500.0
 
     def _build_url(self) -> str:
         """Build WebSocket URL with query parameters."""
@@ -170,6 +175,9 @@ class DeepgramStreamingSession:
                 self._running = True
                 self._start_time = time.time()
                 self._final_transcript = ""
+                # Reset deduplication state for new session
+                self._last_final_text = ""
+                self._last_final_time = 0.0
                 # Reset drop logging flag for new session
                 if hasattr(self, "_drop_logged"):
                     delattr(self, "_drop_logged")
@@ -318,9 +326,16 @@ class DeepgramStreamingSession:
         is_final = data.get("is_final", False)
         words = best.get("words", [])
 
-        # Log all results for debugging
+        # HIPAA/PHI: Never log raw transcript text. If needed for diagnostics,
+        # log only non-content stats (length/confidence/final).
         if transcript:
-            logger.info(f"[Deepgram] TRANSCRIPT: '{transcript}' (final={is_final}, conf={confidence:.2f})")
+            logger.debug(
+                "[Deepgram] Transcript received",
+                final=is_final,
+                confidence=round(float(confidence or 0.0), 3),
+                transcript_chars=len(transcript),
+                words_count=len(words) if isinstance(words, list) else 0,
+            )
         else:
             # Log empty transcripts occasionally
             if not hasattr(self, "_empty_count"):
@@ -335,17 +350,43 @@ class DeepgramStreamingSession:
             await self.on_words(words)
 
         if is_final:
+            # DEDUPLICATION: Check if this is a duplicate final transcript
+            # Deepgram can sometimes send the same final transcript multiple times
+            # (especially on UtteranceEnd or when there are network hiccups)
+            now = time.time() * 1000  # Convert to ms
+            is_duplicate = (
+                transcript == self._last_final_text
+                and (now - self._last_final_time) < self._dedup_window_ms
+            )
+
+            if is_duplicate:
+                logger.warning(
+                    "[Deepgram] Duplicate final transcript detected - skipping",
+                    transcript_chars=len(transcript),
+                    last_seen_ms=int(now - self._last_final_time),
+                    dedup_window_ms=self._dedup_window_ms,
+                )
+                return
+
+            # Update deduplication tracking
+            self._last_final_text = transcript
+            self._last_final_time = now
+
             # Append to final transcript
             if self._final_transcript:
                 self._final_transcript += " " + transcript
             else:
                 self._final_transcript = transcript
 
-            logger.info(f"[Deepgram] Calling on_final callback with: '{transcript}'")
+            logger.debug("[Deepgram] Calling on_final callback", transcript_chars=len(transcript))
             await self.on_final(transcript)
         else:
             # Interim result
-            logger.info(f"[Deepgram] Calling on_partial callback with: '{transcript}'")
+            logger.debug(
+                "[Deepgram] Calling on_partial callback",
+                transcript_chars=len(transcript),
+                confidence=round(float(confidence or 0.0), 3),
+            )
             await self.on_partial(transcript, confidence)
 
 

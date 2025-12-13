@@ -155,26 +155,22 @@ export function useAECFeedback(
           // Look for inbound-rtp stats with AEC info
           if (report.type === "inbound-rtp" && report.kind === "audio") {
             // Some browsers expose echo return loss metrics
-            // @ts-expect-error - Non-standard property
-            if (typeof report.echoReturnLoss === "number") {
-              // @ts-expect-error - Non-standard property
-              erleValue = report.echoReturnLoss;
+            const inboundReport = report as Record<string, unknown>;
+            if (typeof inboundReport.echoReturnLoss === "number") {
+              erleValue = inboundReport.echoReturnLoss;
               aecActive = true;
             }
-            // @ts-expect-error - Non-standard property
-            if (typeof report.echoReturnLossEnhancement === "number") {
-              // @ts-expect-error - Non-standard property
-              erleValue = report.echoReturnLossEnhancement;
+            if (typeof inboundReport.echoReturnLossEnhancement === "number") {
+              erleValue = inboundReport.echoReturnLossEnhancement;
               aecActive = true;
             }
           }
 
           // Look for media-source stats with AEC info
           if (report.type === "media-source" && report.kind === "audio") {
-            // @ts-expect-error - Non-standard property
-            if (typeof report.echoReturnLoss === "number") {
-              // @ts-expect-error - Non-standard property
-              erleValue = report.echoReturnLoss;
+            const mediaReport = report as Record<string, unknown>;
+            if (typeof mediaReport.echoReturnLoss === "number") {
+              erleValue = mediaReport.echoReturnLoss;
               aecActive = true;
             }
           }

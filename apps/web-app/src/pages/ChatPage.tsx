@@ -42,7 +42,7 @@ import type {
   WebSocketErrorCode,
   Conversation,
 } from "@voiceassist/types";
-import type { VoiceMetrics } from "../components/voice/VoiceMetricsDisplay";
+import type { TTVoiceMetrics } from "../hooks/useThinkerTalkerSession";
 
 type LoadingState = "idle" | "creating" | "validating" | "loading-history";
 type ErrorType =
@@ -457,7 +457,7 @@ export function ChatPage() {
    * Only sends in production when VITE_ENABLE_VOICE_METRICS is set
    */
   const handleVoiceMetricsUpdate = useCallback(
-    (metrics: VoiceMetrics) => {
+    (metrics: TTVoiceMetrics) => {
       // Send metrics by default; allow opt-out via VITE_ENABLE_VOICE_METRICS="false"
       const shouldSendMetrics =
         import.meta.env.VITE_ENABLE_VOICE_METRICS !== "false";
@@ -470,11 +470,11 @@ export function ChatPage() {
         const payload = {
           conversation_id: activeConversationId ?? undefined,
           connection_time_ms: metrics.connectionTimeMs,
-          time_to_first_transcript_ms: metrics.timeToFirstTranscriptMs,
-          last_stt_latency_ms: metrics.lastSttLatencyMs,
-          last_response_latency_ms: metrics.lastResponseLatencyMs,
+          time_to_first_transcript_ms: metrics.sttLatencyMs,
+          last_stt_latency_ms: metrics.sttLatencyMs,
+          last_response_latency_ms: metrics.totalLatencyMs,
           session_duration_ms: metrics.sessionDurationMs,
-          user_transcript_count: metrics.userTranscriptCount,
+          user_transcript_count: metrics.userUtteranceCount,
           ai_response_count: metrics.aiResponseCount,
           reconnect_count: metrics.reconnectCount,
           session_started_at: metrics.sessionStartedAt,

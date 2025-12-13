@@ -127,11 +127,14 @@ export function useRealtimeEvents(
 
     updateStatus("connecting");
 
-    // Build WebSocket URL from current origin
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    const wsHost = apiUrl.replace(/^https?:\/\//, "");
-    const wsUrl = `${protocol}//${wsHost}/api/admin/panel/ws`;
+    // Build WebSocket URL from API gateway base URL (prefer admin config)
+    const apiBase =
+      import.meta.env.VITE_ADMIN_API_URL ||
+      import.meta.env.VITE_API_URL ||
+      window.location.origin;
+    const url = new URL(apiBase);
+    const protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${url.host}/api/admin/panel/ws`;
 
     try {
       const ws = new WebSocket(wsUrl);

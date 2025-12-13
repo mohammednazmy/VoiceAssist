@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_TIMEOUT_SEC: int = 30
+    # Vision-capable model used for PDF page/figure analysis (enhanced extraction)
+    OPENAI_VISION_MODEL: str = "gpt-5.2"
 
     # Local LLM (for PHI-safe inference)
     LOCAL_LLM_URL: Optional[str] = None
@@ -90,6 +92,10 @@ class Settings(BaseSettings):
     # Retrieval configuration
     ENABLE_QUERY_DECOMPOSITION: bool = True
     ENABLE_MULTI_HOP_RETRIEVAL: bool = True
+
+    # Knowledge base document ingestion
+    # When enabled, user PDF uploads run the enhanced (vision) extraction pipeline.
+    KB_UPLOADS_USE_ENHANCED_EXTRACTION: bool = False
 
     # Voice/TTS settings (wire-up placeholder)
     TTS_PROVIDER: Optional[str] = None  # e.g., "openai", "elevenlabs", "azure", "gcp"
@@ -159,6 +165,15 @@ class Settings(BaseSettings):
     ELEVENLABS_VOICE_ID: str = DEFAULT_VOICE_ID  # Can be overridden via env var
     ELEVENLABS_OUTPUT_FORMAT: str = "mp3_22050_32"  # Low bandwidth for streaming
 
+    # Voice / TTS debug recording (development only)
+    # When enabled (and DEBUG is true), the backend will write raw TTS PCM
+    # output for each Thinker/Talker voice session to a file on disk so that
+    # developers can compare the exact waveform produced by the server with
+    # what the browser played. This should never be enabled in production,
+    # as synthesized speech may still contain PHI.
+    VOICE_TTS_DEBUG_RECORDING_ENABLED: bool = False
+    VOICE_TTS_DEBUG_RECORDING_DIR: str = "/tmp/voiceassist_tts_debug"
+
     # Deepgram STT tuning
     # Optional comma-separated list of keyword hints to bias recognition
     # toward domain- or app-specific phrases (e.g. "really,okay,sure").
@@ -188,7 +203,20 @@ class Settings(BaseSettings):
     MICROSOFT_OAUTH_REDIRECT_URI: Optional[str] = None
 
     # CORS (comma-separated list of allowed origins)
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost:8080"
+    # NOTE: With `allow_credentials=True`, CORS cannot use "*" as allow_origins.
+    # Keep this list explicit for local dev.
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,"
+        "http://localhost:3001,"
+        "http://localhost:5173,"
+        "http://localhost:5174,"
+        "http://localhost:8080,"
+        "http://127.0.0.1:3000,"
+        "http://127.0.0.1:3001,"
+        "http://127.0.0.1:5173,"
+        "http://127.0.0.1:5174,"
+        "http://127.0.0.1:8080"
+    )
 
     # Frontend URL (used for generating share links and other frontend-facing URLs)
     FRONTEND_URL: str = "http://localhost:5173"

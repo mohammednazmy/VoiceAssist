@@ -127,7 +127,7 @@ export function useWebRTCClient(options: WebRTCOptions) {
             sdp: payload.answer,
           });
         }
-        voiceLog("webrtc:offer:ok", payload);
+        voiceLog.debug("webrtc:offer:ok", payload);
       }
 
       // Setup VAD visualization
@@ -147,7 +147,7 @@ export function useWebRTCClient(options: WebRTCOptions) {
   }, [sessionId, startVadLoop, token, onRemoteTrack]);
 
   const bargeIn = useCallback(() => {
-    voiceLog("webrtc:barge-in");
+    voiceLog.debug("webrtc:barge-in");
     teardown();
     void connect();
   }, [connect, teardown]);

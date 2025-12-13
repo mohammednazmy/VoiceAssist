@@ -43,7 +43,22 @@ export type VoiceState = VoicePipelineState;
 /**
  * Audio playback state
  */
-export type PlaybackState = "idle" | "playing" | "paused";
+export type PlaybackState = "idle" | "playing" | "paused" | "loading" | "error";
+
+/**
+ * Input mode type
+ */
+export type InputMode = "text" | "voice";
+
+/**
+ * Overall connection state for the connection manager
+ */
+export type ConnectionState =
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "error";
 
 /**
  * Extended message with voice metadata
@@ -115,7 +130,7 @@ interface UnifiedConversationState {
   // Input Mode State
   // -------------------------------------------------------------------------
   /** Current input mode */
-  inputMode: "text" | "voice";
+  inputMode: InputMode;
   /** Voice interaction type */
   voiceModeType: VoiceModeType;
   /** Whether voice mode is active */
@@ -161,6 +176,8 @@ interface UnifiedConversationState {
     | "error";
   /** Last chat error */
   chatError: ConnectionError | null;
+  /** Overall connection state (for connection manager) */
+  connectionState: ConnectionState;
 
   // -------------------------------------------------------------------------
   // Actions - Conversation
@@ -190,7 +207,7 @@ interface UnifiedConversationState {
   // Actions - Input Mode
   // -------------------------------------------------------------------------
   /** Set input mode (text or voice) */
-  setInputMode: (mode: "text" | "voice") => void;
+  setInputMode: (mode: InputMode) => void;
   /** Set voice mode type (always-on or push-to-talk) */
   setVoiceModeType: (type: VoiceModeType) => void;
   /** Toggle voice mode on/off */
@@ -227,6 +244,8 @@ interface UnifiedConversationState {
   // -------------------------------------------------------------------------
   /** Set playback state */
   setPlaybackState: (state: PlaybackState) => void;
+  /** Set whether AI is speaking */
+  setIsSpeaking: (isSpeaking: boolean) => void;
   /** Set currently playing message */
   setCurrentlyPlayingMessage: (messageId: string | null) => void;
   /** Add to audio queue */
@@ -254,6 +273,8 @@ interface UnifiedConversationState {
   ) => void;
   /** Set chat error */
   setChatError: (error: ConnectionError | null) => void;
+  /** Set overall connection state */
+  setConnectionState: (state: ConnectionState) => void;
 
   // -------------------------------------------------------------------------
   // Actions - Reset
@@ -297,6 +318,7 @@ const defaultState = {
   // Chat Connection
   chatConnectionStatus: "disconnected" as const,
   chatError: null,
+  connectionState: "disconnected" as ConnectionState,
 };
 
 // ============================================================================
@@ -614,6 +636,10 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
       set({ playbackState });
     },
 
+    setIsSpeaking: (isSpeaking) => {
+      set({ isSpeaking });
+    },
+
     setCurrentlyPlayingMessage: (currentlyPlayingMessageId) => {
       set({ currentlyPlayingMessageId });
     },
@@ -666,6 +692,10 @@ export const useUnifiedConversationStore = create<UnifiedConversationState>()(
 
     setChatError: (chatError) => {
       set({ chatError });
+    },
+
+    setConnectionState: (connectionState) => {
+      set({ connectionState });
     },
 
     // ---------------------------------------------------------------------------

@@ -367,7 +367,7 @@ export class VoiceAssistApiClient {
       const token = this.config.getAccessToken?.();
       if (token && requestConfig.headers) {
         requestConfig.headers.Authorization = `Bearer ${token}`;
-        console.log(`[ApiClient] Request to ${requestConfig.url} with token: ${token.substring(0, 20)}...`);
+        console.log(`[ApiClient] Request to ${requestConfig.url} (auth token present)`);
       } else {
         console.log(`[ApiClient] Request to ${requestConfig.url} WITHOUT token`);
       }
@@ -413,6 +413,42 @@ export class VoiceAssistApiClient {
     const exec = async () => {
       const response = await this.client.request<T>(config);
       return response.data;
+    };
+
+    return this.withRetryIfEnabled(exec);
+  }
+
+  /**
+   * Execute a GET request
+   */
+  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<{ data: T }> {
+    const exec = async () => {
+      const response = await this.client.get<T>(url, config);
+      return { data: response.data };
+    };
+
+    return this.withRetryIfEnabled(exec);
+  }
+
+  /**
+   * Execute a PUT request
+   */
+  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<{ data: T }> {
+    const exec = async () => {
+      const response = await this.client.put<T>(url, data, config);
+      return { data: response.data };
+    };
+
+    return this.withRetryIfEnabled(exec);
+  }
+
+  /**
+   * Execute a POST request
+   */
+  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<{ data: T }> {
+    const exec = async () => {
+      const response = await this.client.post<T>(url, data, config);
+      return { data: response.data };
     };
 
     return this.withRetryIfEnabled(exec);

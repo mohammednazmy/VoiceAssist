@@ -129,11 +129,11 @@ export function useIntelligentBargeIn(
       onAIResponse?.(response);
     },
     onMetricsUpdate: (m) => {
-      // Update VAD latency from underlying metrics
-      if (m.ttfaMs) {
+      // Update VAD latency from underlying metrics (STT latency is closest to VAD latency)
+      if (m.sttLatencyMs) {
         setMetrics((prev) => ({
           ...prev,
-          vadLatencyMs: m.ttfaMs ?? prev.vadLatencyMs,
+          vadLatencyMs: m.sttLatencyMs ?? prev.vadLatencyMs,
         }));
       }
       onMetricsUpdate?.(metrics);

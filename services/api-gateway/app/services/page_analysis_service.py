@@ -1,14 +1,14 @@
 """
 Page Analysis Service
 
-Uses GPT-4 Vision to analyze PDF pages and extract structured content.
+Uses an OpenAI vision-capable model to analyze PDF pages and extract structured content.
 Provides much better extraction than text-only methods, especially for:
 - Tables with complex formatting
 - Figures and diagrams with descriptions
 - Voice-optimized narration of page content
 
 Cost estimation (high resolution):
-- ~$0.01275 per page
+- ~$0.01275 per page (legacy GPT-4o estimate)
 - 47-page document: ~$0.60
 """
 
@@ -24,6 +24,8 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from openai import AsyncOpenAI
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -143,11 +145,11 @@ Return ONLY the JSON object, no additional text."""
         self.total_cost = 0.0
 
         # Initialize async OpenAI client
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = settings.OPENAI_API_KEY
         if openai_api_key:
             self._openai_client = AsyncOpenAI(
                 api_key=openai_api_key,
-                timeout=float(os.getenv("OPENAI_TIMEOUT_SEC", "60")),
+                timeout=float(settings.OPENAI_TIMEOUT_SEC),
             )
         else:
             self._openai_client = None
@@ -186,10 +188,9 @@ Return ONLY the JSON object, no additional text."""
                 if context:
                     user_prompt = f"Document context: {context}\n\n{user_prompt}"
 
-                # Call GPT-4 Vision using async client
-                response = await self._openai_client.chat.completions.create(
-                    model=self.model,
-                    messages=[
+                api_params: Dict[str, Any] = {
+                    "model": self.model,
+                    "messages": [
                         {"role": "system", "content": self.ANALYSIS_SYSTEM_PROMPT},
                         {
                             "role": "user",
@@ -205,9 +206,16 @@ Return ONLY the JSON object, no additional text."""
                             ],
                         },
                     ],
-                    max_tokens=self.max_tokens,
-                    response_format={"type": "json_object"},
-                )
+                    "response_format": {"type": "json_object"},
+                }
+
+                # Newer model families use max_completion_tokens (max_tokens is rejected)
+                if self.model.startswith(("gpt-4o", "gpt-5", "o1", "o3")):
+                    api_params["max_completion_tokens"] = self.max_tokens
+                else:
+                    api_params["max_tokens"] = self.max_tokens
+
+                response = await self._openai_client.chat.completions.create(**api_params)
 
                 # Parse response
                 raw_content = response.choices[0].message.content
@@ -436,8 +444,10 @@ def get_page_analysis_service() -> PageAnalysisService:
     """Get page analysis service instance."""
     global _service
     if _service is None:
+        legacy_model = os.getenv("GPT4_VISION_MODEL")
+        vision_model = legacy_model or settings.OPENAI_VISION_MODEL
         _service = PageAnalysisService(
-            model=os.getenv("GPT4_VISION_MODEL", "gpt-4o"),
+            model=vision_model,
             detail="high",  # Always use high resolution for best quality
         )
     return _service

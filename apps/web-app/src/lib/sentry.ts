@@ -172,7 +172,7 @@ function scrubObject(obj: Record<string, unknown>): Record<string, unknown> {
  * Capture a voice-related error with context
  */
 export function captureVoiceError(
-  error: Error,
+  error: Error | unknown,
   context?: {
     status?: string;
     conversationId?: string;

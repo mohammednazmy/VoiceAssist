@@ -21,7 +21,7 @@ import {
   useVoiceSettingsStore,
   VAD_PRESET_OPTIONS,
 } from "../../stores/voiceSettingsStore";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 // RTL language codes for auto-detection
 const RTL_LANGUAGES = ["ar", "he", "fa", "ur", "yi", "ps", "sd"];

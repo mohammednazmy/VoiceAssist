@@ -9,6 +9,7 @@ import json
 import logging
 import time
 import uuid
+import hashlib
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
@@ -16,6 +17,55 @@ from typing import Any, Callable, Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
+
+_TOOL_ARG_REDACT_KEYS = {
+    # Free-text fields that may contain PHI.
+    "query",
+    "question",
+    "content",
+    "text",
+    "prompt",
+    "transcript",
+    "notes",
+    "description",
+    "message",
+    "instructions",
+    "summary",
+}
+
+
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+
+
+def _sanitize_tool_arguments(value: Any, *, key: Optional[str] = None, depth: int = 0) -> Any:
+    """
+    Sanitize tool arguments for logging/analytics.
+
+    HIPAA/PHI: Tool arguments can include user utterances, patient identifiers,
+    and other sensitive text. We keep structure but redact free-text values.
+    """
+    if depth > 6:
+        return {"_redacted": True, "reason": "max_depth"}
+
+    if isinstance(value, dict):
+        return {str(k): _sanitize_tool_arguments(v, key=str(k), depth=depth + 1) for k, v in value.items()}
+
+    if isinstance(value, list):
+        # Avoid unbounded logs
+        out = [_sanitize_tool_arguments(v, key=key, depth=depth + 1) for v in value[:50]]
+        if len(value) > 50:
+            out.append({"_redacted": True, "reason": "truncated_list", "original_len": len(value)})
+        return out
+
+    if isinstance(value, str):
+        if key and key.lower() in _TOOL_ARG_REDACT_KEYS:
+            stripped = value.strip()
+            return {"_redacted": True, "chars": len(stripped), "sha256_12": _hash_text(stripped) if stripped else None}
+        return value
+
+    return value
 
 
 class ToolCategory(str, Enum):
@@ -365,8 +415,9 @@ class ToolService:
             ToolDefinition(
                 name="kb_search",
                 description=(
-                    "Search the medical knowledge base for relevant information "
-                    "from textbooks, guidelines, and curated content."
+                    "Search the user's knowledge base (including uploaded documents) to find candidate documents. "
+                    "Use this to check whether a specific document exists (by title) or to surface relevant KB documents. "
+                    "Leave 'sources' empty unless the user explicitly asks to filter by category/source type."
                 ),
                 parameters={
                     "type": "object",
@@ -378,7 +429,10 @@ class ToolService:
                         "sources": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Filter by source types (e.g., 'textbook', 'guideline')",
+                            "description": (
+                                "Optional filter by source types/categories (e.g., 'guideline', 'journal'). "
+                                "Leave empty to search across all accessible KB documents, including user uploads."
+                            ),
                         },
                         "max_results": {
                             "type": "integer",
@@ -396,8 +450,8 @@ class ToolService:
             ToolDefinition(
                 name="knowledge_base_query",
                 description=(
-                    "Run a RAG-style query over the medical knowledge base and return a concise answer with sources. "
-                    "Use this for clinical knowledge questions where a KB-backed answer with citations is preferred."
+                    "Retrieve relevant knowledge base excerpts and sources for a clinical question. "
+                    "Use the returned context + sources to synthesize the final answer."
                 ),
                 parameters={
                     "type": "object",
@@ -445,7 +499,8 @@ class ToolService:
                 name="document_select",
                 description=(
                     "Select and open a document from the user's library for reading. "
-                    "Use when user says 'I want to read Harrison's' or 'Open my cardiology textbook'."
+                    "Use when user says 'I want to read Harrison's' or 'Open my cardiology textbook'. "
+                    "The current conversation is inferred; do not invent conversation IDs."
                 ),
                 parameters={
                     "type": "object",
@@ -456,10 +511,10 @@ class ToolService:
                         },
                         "conversation_id": {
                             "type": "string",
-                            "description": "Current conversation ID (provided by system)",
+                            "description": "Optional (legacy). The conversation is inferred by the server.",
                         },
                     },
-                    "required": ["query", "conversation_id"],
+                    "required": ["query"],
                 },
                 category=ToolCategory.DOCUMENT,
             ),
@@ -470,7 +525,8 @@ class ToolService:
                 name="document_read_page",
                 description=(
                     "Read content from a specific page of the open document. "
-                    "Use when user says 'Read page 40' or 'What's on page 100?'."
+                    "Use when user says 'Read page 40' or 'What's on page 100?'. "
+                    "The current conversation is inferred; do not invent conversation IDs."
                 ),
                 parameters={
                     "type": "object",
@@ -481,10 +537,10 @@ class ToolService:
                         },
                         "conversation_id": {
                             "type": "string",
-                            "description": "Current conversation ID (provided by system)",
+                            "description": "Optional (legacy). The conversation is inferred by the server.",
                         },
                     },
-                    "required": ["page_number", "conversation_id"],
+                    "required": ["page_number"],
                 },
                 category=ToolCategory.DOCUMENT,
             ),
@@ -495,7 +551,8 @@ class ToolService:
                 name="document_navigate",
                 description=(
                     "Navigate through the document by pages or sections. "
-                    "Use when user says 'Next page', 'Previous section', or 'Go to chapter 5'."
+                    "Use when user says 'Next page', 'Previous section', or 'Go to chapter 5'. "
+                    "The current conversation is inferred; do not invent conversation IDs."
                 ),
                 parameters={
                     "type": "object",
@@ -516,10 +573,10 @@ class ToolService:
                         },
                         "conversation_id": {
                             "type": "string",
-                            "description": "Current conversation ID (provided by system)",
+                            "description": "Optional (legacy). The conversation is inferred by the server.",
                         },
                     },
-                    "required": ["conversation_id"],
+                    "required": [],
                 },
                 category=ToolCategory.DOCUMENT,
             ),
@@ -530,17 +587,18 @@ class ToolService:
                 name="document_toc",
                 description=(
                     "Get the table of contents for the open document. "
-                    "Use when user asks 'What's in the table of contents?' or 'Show me the chapters'."
+                    "Use when user asks 'What's in the table of contents?' or 'Show me the chapters'. "
+                    "The current conversation is inferred; do not invent conversation IDs."
                 ),
                 parameters={
                     "type": "object",
                     "properties": {
                         "conversation_id": {
                             "type": "string",
-                            "description": "Current conversation ID (provided by system)",
+                            "description": "Optional (legacy). The conversation is inferred by the server.",
                         },
                     },
-                    "required": ["conversation_id"],
+                    "required": [],
                 },
                 category=ToolCategory.DOCUMENT,
             ),
@@ -551,7 +609,8 @@ class ToolService:
                 name="document_describe_figure",
                 description=(
                     "Describe a figure or diagram in the document. "
-                    "Use when user says 'Describe the figure' or 'What does the diagram show?'."
+                    "Use when user says 'Describe the figure' or 'What does the diagram show?'. "
+                    "The current conversation is inferred; do not invent conversation IDs."
                 ),
                 parameters={
                     "type": "object",
@@ -566,10 +625,10 @@ class ToolService:
                         },
                         "conversation_id": {
                             "type": "string",
-                            "description": "Current conversation ID (provided by system)",
+                            "description": "Optional (legacy). The conversation is inferred by the server.",
                         },
                     },
-                    "required": ["conversation_id"],
+                    "required": [],
                 },
                 category=ToolCategory.DOCUMENT,
             ),
@@ -702,15 +761,22 @@ class ToolService:
 
         call_id = str(uuid.uuid4())
         try:
-            # Log tool execution with PHI context for auditing and debugging
-            phi_context_info = (
-                f"exclude_phi={context.exclude_phi}, "
-                f"reading_mode={context.reading_mode_enabled}, "
-                f"clinical_ctx={context.clinical_context_id or 'none'}"
-            )
+            # HIPAA/PHI: Never log raw tool arguments.
+            safe_args = _sanitize_tool_arguments(arguments)
+            arg_keys = sorted(list(arguments.keys())) if isinstance(arguments, dict) else []
             logger.info(
-                f"Executing tool: {name} with args: {json.dumps(arguments)[:500]} "
-                f"[PHI context: {phi_context_info}]"
+                "tool_execute",
+                extra={
+                    "tool_name": name,
+                    "call_id": call_id,
+                    "conversation_id": context.conversation_id,
+                    "session_id": context.session_id,
+                    "user_id": context.user_id,
+                    "arg_keys": arg_keys,
+                    "exclude_phi": context.exclude_phi,
+                    "reading_mode_enabled": context.reading_mode_enabled,
+                    "clinical_context_id": context.clinical_context_id or None,
+                },
             )
             result = await handler(arguments, context)
             duration_ms = int((time.time() - start_time) * 1000)
@@ -731,7 +797,7 @@ class ToolService:
                 user_id=context.user_id,
                 session_id=context.session_id,
                 call_id=call_id,
-                arguments=arguments,
+                arguments=safe_args if isinstance(safe_args, dict) else {},
                 success=result.success,
                 duration_ms=result.duration_ms,
                 error_message=result.error,
@@ -756,7 +822,7 @@ class ToolService:
                 user_id=context.user_id,
                 session_id=context.session_id,
                 call_id=call_id,
-                arguments=arguments,
+                arguments=_sanitize_tool_arguments(arguments) if isinstance(arguments, dict) else {},
                 success=False,
                 duration_ms=duration_ms,
                 error_message=str(e),

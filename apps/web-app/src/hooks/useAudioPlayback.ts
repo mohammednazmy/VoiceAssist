@@ -88,7 +88,7 @@ export function useAudioPlayback(
   // Store state
   const { voiceModeActive, playbackState, setPlaybackState, setIsSpeaking } =
     useUnifiedConversationStore();
-  const { autoPlayInVoiceMode, speechRate, setAutoPlayInVoiceMode } =
+  const { autoPlayInVoiceMode, playbackSpeed, setAutoPlayInVoiceMode } =
     useVoiceSettingsStore();
 
   // Local state
@@ -111,7 +111,7 @@ export function useAudioPlayback(
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
   const isPlaying = playbackState === "playing";
   const isPaused = playbackState === "paused";
-  const isStopped = playbackState === "idle" || playbackState === "stopped";
+  const isStopped = playbackState === "idle";
 
   // Initialize audio element
   const getAudioElement = useCallback(() => {
@@ -159,7 +159,7 @@ export function useAudioPlayback(
 
     const audio = getAudioElement();
     audio.src = nextItem.audioUrl;
-    audio.playbackRate = speechRate;
+    audio.playbackRate = playbackSpeed;
     audio.volume = volume;
 
     setCurrentItem(nextItem);
@@ -183,7 +183,7 @@ export function useAudioPlayback(
   }, [
     queue,
     getAudioElement,
-    speechRate,
+    playbackSpeed,
     volume,
     setPlaybackState,
     setIsSpeaking,
@@ -200,7 +200,7 @@ export function useAudioPlayback(
 
         const audio = getAudioElement();
         audio.src = item.audioUrl;
-        audio.playbackRate = speechRate;
+        audio.playbackRate = playbackSpeed;
         audio.volume = volume;
 
         setCurrentItem(item);
@@ -226,7 +226,7 @@ export function useAudioPlayback(
     },
     [
       getAudioElement,
-      speechRate,
+      playbackSpeed,
       volume,
       setPlaybackState,
       setIsSpeaking,
@@ -277,7 +277,7 @@ export function useAudioPlayback(
     }
 
     cleanupTimeUpdate();
-    setPlaybackState("stopped");
+    setPlaybackState("idle");
     setCurrentItem(null);
     setCurrentTime(0);
     setDuration(0);
@@ -481,9 +481,9 @@ export function useAudioPlayback(
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {
-      audio.playbackRate = speechRate;
+      audio.playbackRate = playbackSpeed;
     }
-  }, [speechRate]);
+  }, [playbackSpeed]);
 
   // Stop playback when voice mode deactivates
   useEffect(() => {

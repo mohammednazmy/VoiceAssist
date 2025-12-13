@@ -38,6 +38,7 @@ from app.core.business_metrics import (
 from app.models.document import Document
 from app.models.organization import Organization
 from app.models.user import User
+from app.models.voice_document_session import VoiceDocumentSession
 from app.services.analytics_service import analytics_service
 from app.services.rag_service import QueryOrchestrator, QueryRequest
 
@@ -243,24 +244,21 @@ async def delete_kb_document(
     current_user: User = Depends(get_current_user),
 ):
     """Delete a KB document owned by the current user."""
-    document = db.query(Document).filter(Document.document_id == document_id).first()
+    result = await documents_api.delete_document(document_id=document_id, db=db, current_user=current_user)
+    if isinstance(result, JSONResponse):
+        return result
 
-    if not document:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content=error_response(code=ErrorCodes.NOT_FOUND, message="Document not found"),
-        )
+    message = None
+    if isinstance(result, dict):
+        message = (result.get("data") or {}).get("message")
 
-    if document.owner_id != current_user.id:
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content=error_response(code=ErrorCodes.FORBIDDEN, message="Only document owner can delete"),
-        )
-
-    db.delete(document)
-    db.commit()
-
-    return success_response(data={"document_id": document_id, "status": "deleted"})
+    return success_response(
+        data={
+            "document_id": document_id,
+            "status": "deleted",
+            "message": message or "Document deleted successfully",
+        }
+    )
 
 
 @router.get("/documents/{document_id}/content", response_model=Dict[str, Any])
@@ -378,17 +376,35 @@ async def bulk_delete_kb_documents(
             detail=error_response(code=ErrorCodes.VALIDATION_ERROR, message="document_ids must be a list"),
         )
 
-    deleted_count = (
-        db.query(Document)
-        .filter(
-            and_(
-                Document.document_id.in_(ids),
-                Document.owner_id == current_user.id,
+    try:
+        owned_ids = [
+            row[0]
+            for row in db.query(Document.document_id)
+            .filter(and_(Document.document_id.in_(ids), Document.owner_id == current_user.id))
+            .all()
+        ]
+        if owned_ids:
+            db.query(VoiceDocumentSession).filter(VoiceDocumentSession.document_id.in_(owned_ids)).delete(
+                synchronize_session=False
             )
+            deleted_count = (
+                db.query(Document)
+                .filter(and_(Document.document_id.in_(owned_ids), Document.owner_id == current_user.id))
+                .delete(synchronize_session=False)
+            )
+        else:
+            deleted_count = 0
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error("bulk_kb_delete_failed", error=str(e), exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=error_response(
+                code=ErrorCodes.INTERNAL_ERROR,
+                message="Failed to delete documents",
+            ),
         )
-        .delete(synchronize_session=False)
-    )
-    db.commit()
 
     return success_response(data={"deleted_count": int(deleted_count)})
 
@@ -564,16 +580,43 @@ async def kb_rag_query(
         )
 
     # Attempt to call full QueryOrchestrator when external services are available.
-    # Tests primarily assert that we return an answer and sources; they do not
-    # depend on the orchestrator side effects.
-    orchestrator = QueryOrchestrator(enable_rag=False)  # Disable heavyweight RAG by default for tests
-    query_req = QueryRequest(session_id=None, query=question, clinical_context_id=request.clinical_context_id)
-    try:
-        _ = await orchestrator.run_query(query_req)  # pragma: no cover - optional path
-        answer = f"Answer for: {question}"
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("kb_rag_query_orchestrator_failed", error=str(exc))
-        kb_query_failures_total.labels(channel=channel, reason="upstream_error").inc()
+    # This is intentionally best-effort: missing OpenAI/Qdrant services should not
+    # break the endpoint contract during local development or tests.
+    if settings.OPENAI_API_KEY:
+        orchestrator = QueryOrchestrator(
+            enable_rag=True,
+            rag_top_k=max_docs,
+            enable_tools=False,
+        )
+        query_req = QueryRequest(
+            session_id=None,
+            query=question,
+            clinical_context_id=request.clinical_context_id,
+        )
+        try:
+            rag_result = await orchestrator.handle_query(
+                query_req,
+                trace_id=None,
+                user_id=str(current_user.id),
+            )
+            answer = rag_result.answer
+
+            if rag_result.citations:
+                sources = [
+                    {
+                        "id": citation.id or citation.source_id,
+                        "title": citation.title,
+                        "category": citation.source_type,
+                        "score": citation.relevance_score,
+                    }
+                    for citation in rag_result.citations
+                ][:max_docs]
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("kb_rag_query_orchestrator_failed", error=str(exc))
+            kb_query_failures_total.labels(channel=channel, reason="upstream_error").inc()
+
+    if not answer:
+        # Fallback stub answer (keeps endpoint resilient when upstream RAG is disabled)
         answer = f"Answer for: {question}"
 
     # Metrics: latency, answer length, sources, and top score

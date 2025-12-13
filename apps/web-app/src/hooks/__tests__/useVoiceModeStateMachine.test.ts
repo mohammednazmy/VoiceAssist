@@ -26,7 +26,7 @@ vi.mock("../../lib/logger", () => ({
 // Mock store state
 const mockStoreState = {
   voiceModeActive: false,
-  voiceState: "idle" as const,
+  voiceState: "idle" as "idle" | "listening" | "processing" | "responding" | "error" | "connecting",
   setVoiceState: vi.fn(),
   startListening: vi.fn(),
   stopListening: vi.fn(),
@@ -324,8 +324,7 @@ describe("useVoiceModeStateMachine", () => {
         callArgs?.onTranscript?.({
           text: "Hello world",
           is_final: true,
-          confidence: 0.95,
-          language: "en",
+          timestamp: Date.now(),
         });
       });
 
@@ -349,8 +348,7 @@ describe("useVoiceModeStateMachine", () => {
         callArgs?.onTranscript?.({
           text: "Hello wor",
           is_final: false,
-          confidence: 0.8,
-          language: "en",
+          timestamp: Date.now(),
         });
       });
 

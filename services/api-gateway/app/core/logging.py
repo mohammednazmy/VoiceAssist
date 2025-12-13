@@ -67,6 +67,22 @@ def configure_logging():
         level=log_level,
     )
 
+    # IMPORTANT (HIPAA/PHI): Suppress verbose third-party HTTP/client logs that
+    # may include full request/response payloads (e.g., LLM prompts, transcripts).
+    # Our application-level logs should use structured, PHI-safe fields instead.
+    for noisy_logger in (
+        "openai",
+        "openai._base_client",
+        "httpx",
+        "httpcore",
+        "urllib3",
+        "stainless",
+    ):
+        try:
+            logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+        except Exception:
+            pass
+
     # Attach streaming handler for WebSocket log subscribers
     streaming_handler = get_log_stream_handler()
     streaming_handler.setLevel(log_level)

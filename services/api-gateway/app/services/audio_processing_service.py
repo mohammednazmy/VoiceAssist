@@ -98,6 +98,9 @@ class ProcessingMetrics:
     echo_cancelled_frames: int = 0
     gain_adjusted_frames: int = 0
     processing_time_ms_avg: float = 0.0
+    # Current frame RMS in dBFS (relative to full-scale [-1, 1]).
+    # Useful for distinguishing true background noise from silence/zeros.
+    rms_dbfs: float = 0.0
     snr_estimate_db: float = 0.0
 
 
@@ -347,6 +350,10 @@ class AudioProcessingService:
         """Estimate signal-to-noise ratio in dB."""
         rms = np.sqrt(np.mean(samples**2) + 1e-10)
         rms_db = 20 * math.log10(rms)
+
+        # Store raw level so downstream heuristics can distinguish silence
+        # (very low RMS) from true background noise.
+        self._metrics.rms_dbfs = rms_db
 
         # SNR estimate relative to noise floor
         snr = rms_db - self._noise_floor_db

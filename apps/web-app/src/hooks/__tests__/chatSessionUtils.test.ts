@@ -30,8 +30,8 @@ describe("chatSessionUtils", () => {
     it("should parse citations from message.citations", () => {
       const message = {
         citations: [
-          { id: "cite-1", source: "kb", reference: "doc-123" },
-          { id: "cite-2", source: "pubmed", reference: "12345678" },
+          { id: "cite-1", source: "kb" as const, reference: "doc-123" },
+          { id: "cite-2", source: "pubmed" as const, reference: "12345678" },
         ],
       };
 
@@ -45,7 +45,7 @@ describe("chatSessionUtils", () => {
     it("should parse citations from message.metadata.citations", () => {
       const message = {
         metadata: {
-          citations: [{ id: "cite-1", source: "kb" }],
+          citations: [{ id: "cite-1", source: "kb" as const }],
           otherField: "value",
         },
       };

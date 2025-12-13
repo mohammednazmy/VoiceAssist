@@ -153,18 +153,21 @@ app.add_middleware(MetricsMiddleware)
 
 # 4. CORS middleware
 # Parse ALLOWED_ORIGINS from environment (comma-separated string)
-allowed_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",")]
+allowed_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
 
-if settings.DEBUG:
-    allowed_origins.append("*")  # Allow all in development
+# Always allow the primary configured frontends, even if ALLOWED_ORIGINS is stale.
+for origin in (settings.FRONTEND_URL, settings.ADMIN_PANEL_URL):
+    if origin and origin not in allowed_origins:
+        allowed_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    # IMPORTANT: OPTIONS is required for CORS preflight requests
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     allow_headers=["*"],
-    expose_headers=["X-Correlation-ID"],
+    expose_headers=["X-Correlation-ID", "Content-Type", "Authorization"],
 )
 
 # 5. Voice auth middleware to validate voice session headers

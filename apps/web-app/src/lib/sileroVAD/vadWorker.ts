@@ -199,7 +199,7 @@ self.onerror = (error) => {
   console.error("[VADWorker] Uncaught error:", error);
   const response: VADWorkerResponse = {
     type: "error",
-    message: error.message || "Uncaught worker error",
+    message: typeof error === "string" ? error : (error as ErrorEvent).message || "Uncaught worker error",
   };
   self.postMessage(response);
 };

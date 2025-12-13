@@ -284,15 +284,15 @@ describe("useOfflineVoiceCapture", () => {
         await result.current.startRecording();
       });
 
-      let recording: OfflineRecording | null = null;
+      const recordingResult: { value: OfflineRecording | null } = { value: null };
       await act(async () => {
-        recording = await result.current.stopRecording();
+        recordingResult.value = await result.current.stopRecording();
       });
 
       expect(result.current.isRecording).toBe(false);
-      expect(recording).not.toBeNull();
-      expect(recording?.conversationId).toBe("test-conv-123");
-      expect(recording?.status).toBe("pending");
+      expect(recordingResult.value).not.toBeNull();
+      expect(recordingResult.value?.conversationId).toBe("test-conv-123");
+      expect(recordingResult.value?.status).toBe("pending");
     });
 
     it("should cancel recording without saving", async () => {

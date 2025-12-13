@@ -799,8 +799,10 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
 
       try {
         await initialize();
-        if (wasListening && vadRef.current && !cleanupRef.current) {
-          vadRef.current.start();
+        // After initialize(), vadRef.current may be populated (TypeScript can't track this across async boundary)
+        const vadAfterInit = vadRef.current as MicVAD | null;
+        if (wasListening && vadAfterInit && !cleanupRef.current) {
+          vadAfterInit.start();
           setIsListening(true);
         }
         voiceLog.info(
@@ -944,7 +946,7 @@ export function useSileroVAD(options: SileroVADOptions = {}): SileroVADReturn {
       // Collect noise samples for the calibration duration
       setTimeout(() => {
         const samples = noiseSamplesRef.current;
-        if (samples.length > 0) {
+        if (samples && samples.length > 0) {
           // Calculate noise floor as average of lowest 50% of samples
           // This filters out any speech that occurred during calibration
           const sortedSamples = [...samples].sort((a, b) => a - b);

@@ -13,8 +13,10 @@ Documents uploaded here are automatically available for:
 - Admin panel knowledge base management
 """
 
+import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Query, UploadFile, status
@@ -31,6 +33,7 @@ from app.core.logging import get_logger
 from app.models.document import Document
 from app.models.organization import Organization
 from app.models.user import User
+from app.models.voice_document_session import VoiceDocumentSession
 from app.services.figure_description_service import FigureDescriptionService
 from app.services.kb_indexer import KBIndexer
 from app.services.phi_detector import PHIDetector
@@ -107,6 +110,7 @@ async def process_document_upload(
     filename: str,
     user_id: str,
     file_type: str,
+    use_enhanced_extraction: bool = False,
 ):
     """
     Process document upload in background.
@@ -208,53 +212,157 @@ async def process_document_upload(
             db.commit()
 
         if file_type == "pdf":
-            # Use structure-aware indexing for PDFs
+            # PDFs can be processed via either structure-aware indexing or
+            # enhanced (vision) extraction.
             phi_risk = (document.doc_metadata or {}).get("phi_risk")
-            result, structure = await kb_indexer.index_pdf_document_with_structure(
-                pdf_bytes=file_content,
-                document_id=document_id,
-                title=document.title,
-                source_type=document.source_type,
-                metadata={
-                    "uploaded_by": user_id,
-                    "filename": filename,
-                    "phi_risk": phi_risk,
-                    "organization_id": str(document.organization_id) if document.organization_id else None,
-                },
-            )
+            base_metadata = {
+                "uploaded_by": user_id,
+                "filename": filename,
+                "phi_risk": phi_risk,
+                "organization_id": str(document.organization_id) if document.organization_id else None,
+                "file_url": (document.doc_metadata or {}).get("file_url"),
+            }
 
-            if structure:
-                # Update document with structure information
-                document.total_pages = structure.total_pages
-                document.has_toc = len(structure.toc) > 0
-                document.has_figures = len(structure.figures) > 0
-                document.structure = structure.to_dict()
+            if use_enhanced_extraction:
+                document.processing_stage = "extracting"
+                document.processing_progress = 0
+                document.indexing_status = "processing"
+                document.indexing_error = None
+                db.commit()
 
-                # Generate figure descriptions if there are figures
-                if structure.figures:
+                # Extract and store navigation structure (TOC/sections/figures)
+                try:
+                    structure = kb_indexer.structure_extractor.extract(file_content)
+                    document.total_pages = structure.total_pages
+                    document.has_toc = len(structure.toc) > 0
+                    document.has_figures = len(structure.figures) > 0
+                    document.structure = structure.to_dict()
+                    db.commit()
+
+                    # Generate figure descriptions for the canonical structure list
+                    if structure.figures:
+                        try:
+                            logger.info(
+                                "Generating descriptions for %s figures (document=%s)",
+                                len(structure.figures),
+                                document_id,
+                            )
+                            descriptions = await figure_service.describe_multiple_figures(
+                                pdf_bytes=file_content,
+                                figures=[
+                                    {
+                                        "page_number": f.page_number,
+                                        "figure_id": f.figure_id,
+                                        "caption": f.caption,
+                                    }
+                                    for f in structure.figures
+                                ],
+                            )
+
+                            for figure_id, description in descriptions.items():
+                                for fig in (document.structure or {}).get("figures", []):
+                                    if fig.get("figure_id") == figure_id:
+                                        fig["description"] = description
+                                        break
+
+                            db.commit()
+                        except Exception as e:
+                            logger.warning(
+                                "Error generating figure descriptions for %s: %s",
+                                document_id,
+                                e,
+                            )
+                except Exception as e:
+                    logger.warning(
+                        "Error extracting PDF structure for %s before enhanced processing: %s",
+                        document_id,
+                        e,
+                    )
+
+                # Progress callback to update processing stage/progress
+                def progress_callback(progress: int) -> None:
+                    if progress < 30:
+                        stage = "extracting"
+                    elif progress < 90:
+                        stage = "analyzing"
+                    else:
+                        stage = "indexing"
+
+                    document.processing_stage = stage
+                    document.processing_progress = max(0, min(100, int(progress)))
+                    document.updated_at = datetime.now(timezone.utc)
                     try:
-                        logger.info(f"Generating descriptions for {len(structure.figures)} figures")
-                        descriptions = await figure_service.describe_multiple_figures(
-                            pdf_bytes=file_content,
-                            figures=[
-                                {
-                                    "page_number": f.page_number,
-                                    "figure_id": f.figure_id,
-                                    "caption": f.caption,
-                                }
-                                for f in structure.figures
-                            ],
+                        db.commit()
+                    except Exception as commit_err:
+                        db.rollback()
+                        logger.warning(
+                            "Failed to update processing progress for %s: %s",
+                            document_id,
+                            commit_err,
                         )
 
-                        # Update figure descriptions in structure
-                        for figure_id, description in descriptions.items():
-                            for fig in document.structure.get("figures", []):
-                                if fig.get("figure_id") == figure_id:
-                                    fig["description"] = description
-                                    break
+                result, enhanced_structure, page_images_path = await kb_indexer.index_document_with_enhanced_extraction(
+                    pdf_bytes=file_content,
+                    document_id=document_id,
+                    title=document.title,
+                    source_type=document.source_type,
+                    metadata=base_metadata,
+                    progress_callback=progress_callback,
+                )
 
-                    except Exception as e:
-                        logger.warning(f"Error generating figure descriptions: {e}")
+                if enhanced_structure:
+                    document.enhanced_structure = enhanced_structure
+
+                if page_images_path:
+                    document.page_images_path = page_images_path
+
+                document.processing_stage = "complete" if result.success else "failed"
+                document.processing_progress = 100 if result.success else document.processing_progress
+            else:
+                # Use structure-aware indexing for PDFs
+                result, structure = await kb_indexer.index_pdf_document_with_structure(
+                    pdf_bytes=file_content,
+                    document_id=document_id,
+                    title=document.title,
+                    source_type=document.source_type,
+                    metadata=base_metadata,
+                )
+
+                if structure:
+                    # Update document with structure information
+                    document.total_pages = structure.total_pages
+                    document.has_toc = len(structure.toc) > 0
+                    document.has_figures = len(structure.figures) > 0
+                    document.structure = structure.to_dict()
+
+                    # Generate figure descriptions if there are figures
+                    if structure.figures:
+                        try:
+                            logger.info(
+                                "Generating descriptions for %s figures (document=%s)",
+                                len(structure.figures),
+                                document_id,
+                            )
+                            descriptions = await figure_service.describe_multiple_figures(
+                                pdf_bytes=file_content,
+                                figures=[
+                                    {
+                                        "page_number": f.page_number,
+                                        "figure_id": f.figure_id,
+                                        "caption": f.caption,
+                                    }
+                                    for f in structure.figures
+                                ],
+                            )
+
+                            for figure_id, description in descriptions.items():
+                                for fig in (document.structure or {}).get("figures", []):
+                                    if fig.get("figure_id") == figure_id:
+                                        fig["description"] = description
+                                        break
+
+                        except Exception as e:
+                            logger.warning(f"Error generating figure descriptions: {e}")
         else:
             # Use basic indexing for text files
             phi_risk = (document.doc_metadata or {}).get("phi_risk")
@@ -310,6 +418,7 @@ async def upload_document(
     title: Optional[str] = Form(None),
     category: str = Form("general"),
     is_public: bool = Form(False),
+    enhanced_extraction: Optional[bool] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     current_org: Organization | None = Depends(get_current_organization),
@@ -397,6 +506,34 @@ async def upload_document(
     # Determine file type
     file_type = detected_type or (file_ext[1:] if file_ext else "txt")
 
+    use_enhanced_extraction = (
+        enhanced_extraction
+        if enhanced_extraction is not None
+        else settings.KB_UPLOADS_USE_ENHANCED_EXTRACTION
+    )
+
+    # Optionally persist original PDF for enhanced processing and auditing
+    pdf_file_url: Optional[str] = None
+    if file_type == "pdf":
+        try:
+            upload_root = Path(os.getenv("UPLOAD_DIR", "./uploads"))
+            user_docs_dir = upload_root / "user_documents" / str(current_user.id)
+            user_docs_dir.mkdir(parents=True, exist_ok=True)
+
+            safe_name = f"{document_id}.pdf"
+            pdf_path = user_docs_dir / safe_name
+
+            with open(pdf_path, "wb") as f:
+                f.write(file_content)
+
+            pdf_file_url = f"/uploads/user_documents/{current_user.id}/{safe_name}"
+        except Exception as e:
+            logger.error(
+                f"Failed to persist original PDF for document {document_id}: {e}",
+                exc_info=True,
+            )
+            pdf_file_url = None
+
     # Create document record with "processing" status
     organization_id = current_org.id if current_org else None
     # Use original_name which includes detected extension if needed
@@ -418,6 +555,8 @@ async def upload_document(
             "original_filename": file.filename,
             "file_size": len(file_content),
             "organization_id": str(organization_id) if organization_id else None,
+            "file_url": pdf_file_url,
+            "enhanced_extraction_requested": bool(use_enhanced_extraction),
         },
     )
 
@@ -431,9 +570,10 @@ async def upload_document(
         process_document_upload,
         document_id=document_id,
         file_content=file_content,
-        filename=file.filename,
+        filename=original_name,
         user_id=str(current_user.id),
         file_type=file_type,
+        use_enhanced_extraction=bool(use_enhanced_extraction),
     )
 
     return success_response(
@@ -559,7 +699,7 @@ async def get_document_status(
     # Calculate progress percentage (rough estimate based on status)
     progress = None
     if document.indexing_status == "processing":
-        progress = 50  # Midway through
+        progress = int(document.processing_progress or 50)
     elif document.indexing_status == "indexed":
         progress = 100
     elif document.indexing_status == "failed":
@@ -572,6 +712,8 @@ async def get_document_status(
             "chunks_indexed": document.chunks_indexed,
             "error": document.indexing_error,
             "progress_percent": progress,
+            "processing_stage": document.processing_stage,
+            "processing_progress": document.processing_progress,
             "total_pages": document.total_pages,
             "has_toc": document.has_toc,
             "has_figures": document.has_figures,
@@ -657,15 +799,63 @@ async def delete_document(
             ),
         )
 
-    # Delete from Qdrant
+    file_url = (document.doc_metadata or {}).get("file_url")
+    page_images_path = document.page_images_path
+
+    # Delete from database first (FK-safe), then best-effort cleanup external resources.
+    try:
+        deleted_sessions = (
+            db.query(VoiceDocumentSession)
+            .filter(VoiceDocumentSession.document_id == document_id)
+            .delete(synchronize_session=False)
+        )
+        if deleted_sessions > 0:
+            logger.info(
+                "Deleted %s voice document sessions for document %s (user=%s)",
+                deleted_sessions,
+                document_id,
+                current_user.id,
+            )
+
+        db.delete(document)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error("Error deleting document %s: %s", document_id, e, exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=error_response(
+                code=ErrorCodes.INTERNAL_ERROR,
+                message="Failed to delete document",
+            ),
+        )
+
+    # Delete from Qdrant (best-effort)
     try:
         kb_indexer.delete_document(document_id)
     except Exception as e:
-        logger.warning(f"Error deleting from Qdrant: {e}")
+        logger.warning("Error deleting document %s from Qdrant: %s", document_id, e)
 
-    # Delete from database
-    db.delete(document)
-    db.commit()
+    # Delete persisted source file (if present)
+    if file_url:
+        try:
+            from app.services.storage_service import get_storage_service
+
+            storage_service = get_storage_service()
+            await storage_service.delete_file(str(file_url))
+        except Exception as e:
+            logger.warning("Error deleting stored file for document %s: %s", document_id, e)
+
+    # Delete rendered page images (enhanced extraction)
+    if page_images_path:
+        try:
+            import shutil
+
+            images_path = Path(page_images_path)
+            if images_path.exists() and images_path.is_dir():
+                shutil.rmtree(images_path)
+        except Exception as e:
+            logger.warning("Error deleting page images for document %s: %s", document_id, e)
 
     logger.info(f"Deleted document {document_id} for user {current_user.id}")
 

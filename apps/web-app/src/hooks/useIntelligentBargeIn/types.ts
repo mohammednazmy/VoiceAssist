@@ -294,15 +294,31 @@ export interface UserBargeInPreferences {
 }
 
 /**
+ * Visual feedback style options
+ */
+export type VisualFeedbackStyle = "pulse" | "border" | "icon" | "minimal";
+
+/**
+ * Haptic intensity levels
+ */
+export type HapticIntensity = "light" | "medium" | "strong";
+
+/**
+ * Audio feedback type options
+ */
+export type AudioFeedbackType = "tone" | "voice" | "none";
+
+/**
  * Feedback customization preferences
  */
 export interface FeedbackPreferences {
   visualFeedbackEnabled: boolean;
-  visualFeedbackStyle: "pulse" | "border" | "icon" | "minimal";
+  visualFeedbackStyle: VisualFeedbackStyle;
   hapticFeedbackEnabled: boolean;
-  hapticIntensity: "light" | "medium" | "strong";
+  hapticIntensity: HapticIntensity;
   audioFeedbackEnabled: boolean;
-  audioFeedbackType: "tone" | "voice" | "none";
+  audioFeedbackType: AudioFeedbackType;
+  audioFeedbackVolume?: number;
   voicePromptAfterHardBarge: boolean;
   voicePromptText?: string;
 }

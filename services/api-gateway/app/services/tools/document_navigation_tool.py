@@ -46,8 +46,10 @@ async def handle_document_select(
             - conversation_id: The current conversation ID
     """
     query = arguments.get("query", "")
-    conversation_id = arguments.get("conversation_id")
-
+    # Prefer server-provided conversation_id from execution context.
+    # LLM callers can hallucinate/guess this (e.g. "1"), which would create
+    # unusable sessions. Keep argument support for backwards compatibility.
+    conversation_id = context.conversation_id or arguments.get("conversation_id")
     if not conversation_id:
         return ToolResult(
             success=False,
@@ -71,10 +73,10 @@ async def handle_document_select(
     result = await db.execute(
         text("""
             SELECT document_id, title, total_pages, has_toc, has_figures,
-                   document_structure, source_type
+                   document_structure, source_type,
+                   processing_stage, processing_progress, indexing_status
             FROM kb_documents
             WHERE (owner_id = :user_id OR is_public = TRUE)
-              AND indexing_status = 'indexed'
               AND (title ILIKE :query OR source_type ILIKE :query)
             ORDER BY title
             LIMIT 5
@@ -94,9 +96,47 @@ async def handle_document_select(
     if len(documents) == 1:
         # Single match - start session automatically
         doc = documents[0]
+        # Voice reading requires base `document_structure` (page text/TOC). The
+        # `processing_stage` column is used by the optional enhanced pipeline
+        # (tables/figures/voice narration) and should not block basic reading.
+        if not doc.document_structure:
+            progress = doc.processing_progress if doc.processing_progress is not None else 0
+            stage = doc.processing_stage or "processing"
+            return ToolResult(
+                success=True,
+                data={
+                    "document_id": doc.document_id,
+                    "document_title": doc.title,
+                    "processing_stage": stage,
+                    "processing_progress": progress,
+                    "indexing_status": doc.indexing_status,
+                    "voice_reading_ready": False,
+                },
+                message=(
+                    f"I found '{doc.title}', but it's still processing for voice reading "
+                    f"(stage: {stage}, {progress}%). Please try again in a moment."
+                ),
+            )
+
         session = await _create_or_update_session(
             db, conversation_id, user_id, doc.document_id
         )
+
+        stage = doc.processing_stage or "pending"
+        progress = doc.processing_progress if doc.processing_progress is not None else 0
+        enhanced_ready = stage == "complete"
+        enhanced_note = ""
+        if not enhanced_ready:
+            if stage == "pending":
+                enhanced_note = (
+                    " Note: enhanced table/figure narration hasn't been generated yet, "
+                    "but I can read the extracted text now."
+                )
+            else:
+                enhanced_note = (
+                    " Note: enhanced table/figure narration is still processing, "
+                    "but I can read the extracted text now."
+                )
 
         return ToolResult(
             success=True,
@@ -108,8 +148,17 @@ async def handle_document_select(
                 "has_toc": doc.has_toc,
                 "has_figures": doc.has_figures,
                 "current_page": 1,
+                "processing_stage": stage,
+                "processing_progress": progress,
+                "indexing_status": doc.indexing_status,
+                "voice_reading_ready": True,
+                "enhanced_reading_ready": enhanced_ready,
             },
-            message=f"I've opened '{doc.title}'. It has {doc.total_pages or 'several'} pages. Would you like me to start reading from the beginning, or go to a specific page?",
+            message=(
+                f"I've opened '{doc.title}'. It has {doc.total_pages or 'several'} pages. "
+                f"Would you like me to start reading from the beginning, or go to a specific page?"
+                f"{enhanced_note}"
+            ),
         )
 
     # Multiple matches - ask user to clarify
@@ -122,6 +171,11 @@ async def handle_document_select(
                     "document_id": d.document_id,
                     "title": d.title,
                     "total_pages": d.total_pages,
+                    "processing_stage": d.processing_stage,
+                    "processing_progress": d.processing_progress,
+                    "indexing_status": d.indexing_status,
+                    "voice_reading_ready": bool(d.document_structure),
+                    "enhanced_reading_ready": bool((d.processing_stage or "") == "complete"),
                 }
                 for d in documents
             ]
@@ -149,7 +203,7 @@ async def handle_document_read_page(
             - conversation_id: The current conversation ID
     """
     page_number = arguments.get("page_number")
-    conversation_id = arguments.get("conversation_id")
+    conversation_id = context.conversation_id or arguments.get("conversation_id")
 
     if not page_number:
         return ToolResult(
@@ -157,6 +211,14 @@ async def handle_document_read_page(
             data=None,
             error="Please specify a page number",
             needs_clarification=True,
+        )
+
+    if not conversation_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="Conversation ID is required to read a document page",
+            error_type="ValidationError",
         )
 
     db: AsyncSession = context.db_session
@@ -338,10 +400,18 @@ async def handle_document_navigate(
     direction = arguments.get("direction", "next")
     target_type = arguments.get("target_type", "page")
     section_name = arguments.get("section_name")
-    conversation_id = arguments.get("conversation_id")
+    conversation_id = context.conversation_id or arguments.get("conversation_id")
 
     db: AsyncSession = context.db_session
     user_id = context.user_id
+
+    if not conversation_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="Conversation ID is required to navigate a document",
+            error_type="ValidationError",
+        )
 
     if not db:
         return ToolResult(
@@ -530,10 +600,18 @@ async def handle_document_toc(
         arguments:
             - conversation_id: The current conversation ID
     """
-    conversation_id = arguments.get("conversation_id")
+    conversation_id = context.conversation_id or arguments.get("conversation_id")
 
     db: AsyncSession = context.db_session
     user_id = context.user_id
+
+    if not conversation_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="Conversation ID is required to read document table of contents",
+            error_type="ValidationError",
+        )
 
     if not db:
         return ToolResult(
@@ -620,10 +698,18 @@ async def handle_document_describe_figure(
     """
     page_number = arguments.get("page_number")
     figure_number = arguments.get("figure_number", 1)
-    conversation_id = arguments.get("conversation_id")
+    conversation_id = context.conversation_id or arguments.get("conversation_id")
 
     db: AsyncSession = context.db_session
     user_id = context.user_id
+
+    if not conversation_id:
+        return ToolResult(
+            success=False,
+            data=None,
+            error="Conversation ID is required to describe a document figure",
+            error_type="ValidationError",
+        )
 
     if not db:
         return ToolResult(

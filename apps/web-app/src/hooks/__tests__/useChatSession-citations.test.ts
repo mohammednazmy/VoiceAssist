@@ -266,7 +266,7 @@ describe("useChatSession - Phase 8 Citation Streaming", () => {
       });
 
       const citations = [
-        { id: "cite-1", title: null, url: undefined, sourceType: "kb" },
+        { id: "cite-1", title: undefined, url: undefined, sourceType: "kb" },
       ];
 
       act(() => {
@@ -281,7 +281,7 @@ describe("useChatSession - Phase 8 Citation Streaming", () => {
 
       expect(result.current.messages[0].citations).toHaveLength(1);
       expect(result.current.messages[0].citations![0].id).toBe("cite-1");
-      expect(result.current.messages[0].citations![0].title).toBeNull();
+      expect(result.current.messages[0].citations![0].title).toBeUndefined();
     });
   });
 

@@ -18,6 +18,7 @@ vi.mock("../../lib/logger", () => ({
     debug: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -74,7 +75,7 @@ class MockAudioBuffer {
 }
 
 class MockAudioContext {
-  state: "suspended" | "running" | "closed" = "running";
+  state: AudioContextState = "running";
   sampleRate = 48000;
   currentTime = 0;
   destination = {};
@@ -105,7 +106,7 @@ beforeEach(() => {
 
   // Mock AudioContext globally
   (
-    globalThis as unknown as { AudioContext: typeof MockAudioContext }
+    globalThis as unknown as { AudioContext: typeof AudioContext }
   ).AudioContext = MockAudioContext as unknown as typeof AudioContext;
 
   // Mock atob for base64 decoding

@@ -189,6 +189,27 @@ class TestKBIndexerChunking:
         assert len(chunks) <= 1
 
 
+class TestKBIndexerDeleteDocument:
+    """Tests for KBIndexer.delete_document."""
+
+    def test_delete_document_uses_filter_selector(self):
+        """Ensure Qdrant deletions use a FilterSelector (not a raw dict)."""
+        with patch("app.services.kb_indexer.QdrantClient") as mock_qdrant:
+            mock_client = MagicMock()
+            mock_client.get_collections.return_value.collections = []
+            mock_qdrant.return_value = mock_client
+
+            indexer = KBIndexer(collection_name="medical_kb")
+            ok = indexer.delete_document("doc-123")
+            assert ok is True
+
+            _args, kwargs = mock_client.delete.call_args
+            points_selector = kwargs.get("points_selector")
+            from qdrant_client.models import FilterSelector
+
+            assert isinstance(points_selector, FilterSelector)
+
+
 class TestKBIndexerPDFExtraction:
     """Tests for KBIndexer PDF text extraction."""
 
@@ -281,7 +302,7 @@ class TestKBIndexerQdrantIntegration:
 
             _indexer = KBIndexer(qdrant_url="http://custom-qdrant:6333")  # noqa: F841
 
-            mock_qdrant.assert_called_with(url="http://custom-qdrant:6333")
+            mock_qdrant.assert_called_with(url="http://custom-qdrant:6333", timeout=5.0)
 
     def test_collection_creation_params(self):
         """Test collection is created with correct vector params."""

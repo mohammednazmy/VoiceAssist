@@ -605,58 +605,61 @@ describe("useThinkerTalkerSession - Message Handling", () => {
     });
 
     it("should buffer out-of-order messages and process when gap fills", async () => {
-      const onResponseDelta = vi.fn();
+      const onToolCall = vi.fn();
       const { result } = renderHook(() =>
-        useThinkerTalkerSession({ onResponseDelta }),
+        useThinkerTalkerSession({ onToolCall }),
       );
       const ws = await connectHook(result);
 
       // Send message seq=1 before seq=0 (out of order)
       await act(async () => {
         ws.receiveMessage({
-          type: "response.delta",
-          delta: "Second",
-          message_id: "msg-2",
+          type: "tool.call",
+          tool_id: "tool-2",
+          tool_name: "test.tool",
+          arguments: {},
           seq: 1,
         });
       });
 
       // Second message should be buffered, not processed yet
       await waitFor(() => {
-        expect(onResponseDelta).not.toHaveBeenCalled();
+        expect(onToolCall).not.toHaveBeenCalled();
       });
 
       // Now send seq=0 to fill the gap
       await act(async () => {
         ws.receiveMessage({
-          type: "response.delta",
-          delta: "First",
-          message_id: "msg-1",
+          type: "tool.call",
+          tool_id: "tool-1",
+          tool_name: "test.tool",
+          arguments: {},
           seq: 0,
         });
       });
 
       // Both messages should now be processed in order
       await waitFor(() => {
-        expect(onResponseDelta).toHaveBeenCalledTimes(2);
-        expect(onResponseDelta).toHaveBeenNthCalledWith(1, "First", "msg-1");
-        expect(onResponseDelta).toHaveBeenNthCalledWith(2, "Second", "msg-2");
+        expect(onToolCall).toHaveBeenCalledTimes(2);
+        expect(onToolCall.mock.calls[0]?.[0]?.id).toBe("tool-1");
+        expect(onToolCall.mock.calls[1]?.[0]?.id).toBe("tool-2");
       });
     });
 
     it("should ignore old/duplicate messages", async () => {
-      const onResponseDelta = vi.fn();
+      const onToolCall = vi.fn();
       const { result } = renderHook(() =>
-        useThinkerTalkerSession({ onResponseDelta }),
+        useThinkerTalkerSession({ onToolCall }),
       );
       const ws = await connectHook(result);
 
       // Process message seq=0
       await act(async () => {
         ws.receiveMessage({
-          type: "response.delta",
-          delta: "First",
-          message_id: "msg-1",
+          type: "tool.call",
+          tool_id: "tool-1",
+          tool_name: "test.tool",
+          arguments: {},
           seq: 0,
         });
       });
@@ -664,9 +667,10 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       // Process message seq=1
       await act(async () => {
         ws.receiveMessage({
-          type: "response.delta",
-          delta: "Second",
-          message_id: "msg-2",
+          type: "tool.call",
+          tool_id: "tool-2",
+          tool_name: "test.tool",
+          arguments: {},
           seq: 1,
         });
       });
@@ -674,16 +678,17 @@ describe("useThinkerTalkerSession - Message Handling", () => {
       // Send duplicate message with seq=0 (already processed)
       await act(async () => {
         ws.receiveMessage({
-          type: "response.delta",
-          delta: "Duplicate",
-          message_id: "msg-1",
+          type: "tool.call",
+          tool_id: "tool-1-duplicate",
+          tool_name: "test.tool",
+          arguments: {},
           seq: 0,
         });
       });
 
       // Only 2 messages should be processed (duplicate ignored)
       await waitFor(() => {
-        expect(onResponseDelta).toHaveBeenCalledTimes(2);
+        expect(onToolCall).toHaveBeenCalledTimes(2);
       });
     });
 

@@ -147,4 +147,4 @@ describe("KnowledgeBasePanel", () => {
       expect(runQueryMock).toHaveBeenCalled();
     });
   });
-}
+});

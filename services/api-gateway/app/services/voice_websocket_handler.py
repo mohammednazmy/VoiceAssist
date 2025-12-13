@@ -522,7 +522,8 @@ Remember: You're SPEAKING, not writing. Keep it brief and natural."""
         elif event_type == "response.audio_transcript.done":
             # Complete AI transcript
             transcript = event.get("transcript", "")
-            logger.debug(f"AI transcript complete: {transcript[:100]}...")
+            # HIPAA/PHI: don't log transcript content; log only length.
+            logger.debug("AI transcript complete", extra={"transcript_chars": len(transcript or "")})
 
         elif event_type == "response.done":
             # Response complete

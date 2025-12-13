@@ -23,6 +23,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { captureVoiceError } from "../lib/sentry";
 import { useAuth } from "./useAuth";
 import { voiceLog } from "../lib/logger";
+import type { AudioChunkData } from "./useTTAudioPlayback";
 
 // Natural Conversation Flow: Phase 3.1 - Prosody Feature Extraction
 import {
@@ -40,6 +41,31 @@ import type { BargeInType as ConversationBargeInType } from "../lib/conversation
 
 import type { BackendPipelineState } from "@voiceassist/types";
 import type { VADPresetType } from "../stores/voiceSettingsStore";
+
+// Global guard to prevent multiple concurrent Thinker/Talker sessions
+// in the same browser tab. Running more than one T/T WebSocket + audio
+// pipeline at once causes duplicate transcripts, duplicate AI responses,
+// and overlapping audio playback. We allow exactly one active instance
+// of useThinkerTalkerSession at a time; additional instances will log
+// a warning and no-op on connect().
+let globalActiveInstanceId: number | null = null;
+let globalInstanceCounter = 0;
+
+const TT_CONNECT_ABORTED_CODE = "TT_CONNECT_ABORTED";
+
+const createTTConnectAbortError = (
+  reason: string,
+): Error & { code: typeof TT_CONNECT_ABORTED_CODE } => {
+  const err = new Error(reason) as Error & { code: typeof TT_CONNECT_ABORTED_CODE };
+  err.code = TT_CONNECT_ABORTED_CODE;
+  return err;
+};
+
+const isTTConnectAbortError = (
+  err: unknown,
+): err is Error & { code?: string } => {
+  return err instanceof Error && (err as { code?: string }).code === TT_CONNECT_ABORTED_CODE;
+};
 
 // ============================================================================
 // Types
@@ -506,7 +532,7 @@ export interface UseThinkerTalkerSessionOptions {
   onTranscriptTruncated?: (truncation: TTTranscriptTruncation) => void;
   onResponseDelta?: (delta: string, messageId: string) => void;
   onResponseComplete?: (content: string, messageId: string) => void;
-  onAudioChunk?: (audioBase64: string) => void;
+  onAudioChunk?: (audioData: AudioChunkData) => void;
   onToolCall?: (toolCall: TTToolCall) => void;
   onToolResult?: (toolCall: TTToolCall) => void;
   onError?: (error: Error) => void;
@@ -524,6 +550,13 @@ export interface UseThinkerTalkerSessionOptions {
    * @param durationMs - Fade duration (default: 50ms)
    */
   onFadeOutPlayback?: (durationMs?: number) => void;
+  /**
+   * Called when a new audio stream is detected (binary audio seq=0 after having
+   * received audio from a previous stream). This handles the case where the backend
+   * sends duplicate responses with overlapping audio - the parent should reset
+   * audio playback before the new stream's chunks are queued.
+   */
+  onNewAudioStream?: () => void;
   /**
    * Called when local voice activity is detected (frontend VAD).
    * This is triggered by analyzing microphone audio levels locally,
@@ -759,6 +792,17 @@ export function useThinkerTalkerSession(
   // Phase 9: Offline VAD fallback
   // Note: networkVADAvailable is updated via effect when status changes
   const [networkVADAvailable, setNetworkVADAvailable] = useState(false);
+  // Unique instance ID for this hook (used with globalActiveInstanceId guard)
+  const instanceIdRef = useRef<number | null>(null);
+
+  // Ensure global active instance marker is cleared if this hook unmounts
+  useEffect(() => {
+    return () => {
+      if (globalActiveInstanceId === instanceIdRef.current) {
+        globalActiveInstanceId = null;
+      }
+    };
+  }, []);
   const offlineVAD = useOfflineVADWithFallback({
     enabled: enableOfflineVAD,
     networkVADAvailable,
@@ -844,6 +888,31 @@ export function useThinkerTalkerSession(
   );
   const intentionalDisconnectRef = useRef(false);
   const fatalErrorRef = useRef(false);
+  // Local tracing toggles (dev only). Keep these OFF by default to avoid
+  // main-thread overhead that can degrade realtime audio playback.
+  const wsTraceEnabledRef = useRef(false);
+  // Ensure Blob -> ArrayBuffer conversions (if any) are processed sequentially
+  // to preserve frame order (out-of-order audio frames can sound "fragmented").
+  const binaryFrameProcessingChainRef = useRef<Promise<void>>(Promise.resolve());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    wsTraceEnabledRef.current =
+      import.meta.env.DEV &&
+      window.localStorage?.getItem("voiceassist_enable_ws_lab_mode") === "true" &&
+      window.localStorage?.getItem("voiceassist_ws_trace") === "true";
+  }, []);
+
+  // Connection generation token used to cancel in-flight connect() attempts.
+  // If disconnect() is called while a socket is still CONNECTING, we must:
+  //  - close the pending socket, and
+  //  - prevent its onopen from "resurrecting" the session later (zombie WS).
+  const connectionGenerationRef = useRef(0);
+  const pendingWebSocketConnectRef = useRef<{
+    generation: number;
+    ws: WebSocket;
+    reject: (err: Error) => void;
+  } | null>(null);
 
   // Binary protocol state (negotiated with server)
   const binaryProtocolEnabledRef = useRef(false);
@@ -1249,7 +1318,7 @@ export function useThinkerTalkerSession(
       const seq = message.seq as number | undefined;
 
       // DEBUG: Log ALL audio-related messages before sequence processing
-      if (msgType?.includes("audio")) {
+      if (wsTraceEnabledRef.current && msgType?.includes("audio")) {
         console.log(
           `[SEQ-DEBUG] audio message: type=${msgType}, seq=${seq}, expected=${expectedSequenceRef.current}`,
         );
@@ -1281,9 +1350,18 @@ export function useThinkerTalkerSession(
         // binary audio frames handled elsewhere) and resync to avoid buffering
         // important events like voice.state / transcript / response forever.
         if (gap > 10) {
-          voiceLog.warn(
-            `[ThinkerTalker] Large sequence gap detected: expected=${expected}, got=${seq}, gap=${gap}. Resyncing sequence window.`,
-          );
+          // When binary protocol is enabled, large gaps are EXPECTED because
+          // binary audio frames don't participate in the JSON message sequence.
+          // Only log at debug level to reduce noise.
+          if (binaryProtocolEnabledRef.current) {
+            voiceLog.debug(
+              `[ThinkerTalker] Sequence gap (binary mode): expected=${expected}, got=${seq}, gap=${gap}. Resyncing.`,
+            );
+          } else {
+            voiceLog.warn(
+              `[ThinkerTalker] Large sequence gap detected: expected=${expected}, got=${seq}, gap=${gap}. Resyncing sequence window.`,
+            );
+          }
 
           // Process the message immediately and treat it as the new baseline.
           handleMessageRef.current(message);
@@ -1319,16 +1397,17 @@ export function useThinkerTalkerSession(
     (message: Record<string, unknown>) => {
       const msgType = message.type as string;
 
-      // Debug: Log ALL message types to trace audio delivery issue
-      console.log(`[ThinkerTalker] RECEIVED type: ${msgType}`);
-
-      // Extra debug: Log speech and state messages with full data
-      if (
-        msgType.includes("speech") ||
-        msgType.includes("state") ||
-        msgType.includes("audio")
-      ) {
-        console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
+      // NOTE: Tracing is gated behind wsTraceEnabledRef to avoid flooding the
+      // console during audio playback (which can cause choppy audio).
+      if (wsTraceEnabledRef.current) {
+        console.log(`[ThinkerTalker] RECEIVED type: ${msgType}`);
+        if (
+          msgType.includes("speech") ||
+          msgType.includes("state") ||
+          msgType.includes("audio")
+        ) {
+          console.log(`[ThinkerTalker] RECEIVED message: ${msgType}`, message);
+        }
       }
 
       switch (msgType) {
@@ -1981,12 +2060,15 @@ export function useThinkerTalkerSession(
           const audioBase64 = message.audio as string;
           const isFinal = message.is_final as boolean;
 
-          console.log("[ThinkerTalkerSession] audio.output received", {
-            hasAudio: !!audioBase64,
-            audioLength: audioBase64?.length || 0,
-            isFinal,
-            hasOnAudioChunk: !!options.onAudioChunk,
-          });
+          const traceWs = wsTraceEnabledRef.current;
+          if (traceWs) {
+            console.log("[ThinkerTalkerSession] audio.output received", {
+              hasAudio: !!audioBase64,
+              audioLength: audioBase64?.length || 0,
+              isFinal,
+              hasOnAudioChunk: !!options.onAudioChunk,
+            });
+          }
 
           // Track time to first audio
           if (speechEndTimeRef.current && !metrics.ttsFirstAudioMs) {
@@ -1998,24 +2080,30 @@ export function useThinkerTalkerSession(
               ttsFirstAudioMs: ttsLatency,
               totalLatencyMs: totalLatency,
             });
-            console.log(
-              `[ThinkerTalkerSession] Total latency: ${totalLatency}ms`,
-            );
+            if (traceWs) {
+              console.log(
+                `[ThinkerTalkerSession] Total latency: ${totalLatency}ms`,
+              );
+            }
             voiceLog.debug(`[ThinkerTalker] Total latency: ${totalLatency}ms`);
           }
 
           if (audioBase64) {
             const now = Date.now();
-            console.log(
-              `[BARGE-IN-DEBUG] Audio chunk received at ${now}, length=${audioBase64.length}`,
-            );
+            if (traceWs) {
+              console.log(
+                `[BARGE-IN-DEBUG] Audio chunk received at ${now}, length=${audioBase64.length}`,
+              );
+            }
             // Track when audio was received (for barge-in detection fallback)
             lastAudioChunkTimeRef.current = now;
             options.onAudioChunk?.(audioBase64);
           } else {
-            console.log(
-              "[ThinkerTalkerSession] No audio data in chunk (is_final marker?)",
-            );
+            if (traceWs) {
+              console.log(
+                "[ThinkerTalkerSession] No audio data in chunk (is_final marker?)",
+              );
+            }
           }
           break;
         }
@@ -2069,9 +2157,11 @@ export function useThinkerTalkerSession(
           const pushToTalkRecommended =
             message.push_to_talk_recommended === true;
           const prevState = pipelineStateRef.current;
-          console.log(
-            `[BARGE-IN-DEBUG] Pipeline state change: ${prevState} -> ${state} (reason=${reason})`,
-          );
+          if (wsTraceEnabledRef.current) {
+            console.log(
+              `[BARGE-IN-DEBUG] Pipeline state change: ${prevState} -> ${state} (reason=${reason})`,
+            );
+          }
           setPipelineState(state);
           pipelineStateRef.current = state; // Update ref for closure access
           options.onPipelineStateChange?.(state, reason);
@@ -2082,6 +2172,9 @@ export function useThinkerTalkerSession(
 
           if (state === "listening") {
             setIsSpeaking(false);
+            // Reset audio sequence tracker so the next response's seq=0 is expected
+            // This prevents false "duplicate response" detection after a natural stream end
+            lastAudioSeqRef.current = 0;
             // Only stop audio playback if this is an actual barge-in (user interrupted)
             // Normal completion (reason !== "barge_in") should let audio finish playing
             if (prevState === "speaking" && reason === "barge_in") {
@@ -2103,9 +2196,11 @@ export function useThinkerTalkerSession(
         case "pipeline.state": {
           const state = message.state as PipelineState;
           const prevState = pipelineStateRef.current;
-          console.log(
-            `[BARGE-IN-DEBUG] Pipeline state (backend): ${prevState} -> ${state}`,
-          );
+          if (wsTraceEnabledRef.current) {
+            console.log(
+              `[BARGE-IN-DEBUG] Pipeline state (backend): ${prevState} -> ${state}`,
+            );
+          }
           pipelineStateRef.current = state;
           setPipelineState(state);
           options.onPipelineStateChange?.(state);
@@ -2114,6 +2209,8 @@ export function useThinkerTalkerSession(
             setIsSpeaking(true);
           } else if (state === "listening") {
             setIsSpeaking(false);
+            // Reset audio sequence tracker so the next response's seq=0 is expected
+            lastAudioSeqRef.current = 0;
           }
           break;
         }
@@ -2151,11 +2248,13 @@ export function useThinkerTalkerSession(
           const audioRecentlyReceived = recentAudioMs < 3000; // 3 second window
 
           // Debug logging for E2E test inspection
-          console.log(
-            `[BARGE-IN-DEBUG] Speech detected - pipelineState=${currentPipelineState}, ` +
-              `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
-              `recentAudioMs=${recentAudioMs}, audioRecentlyReceived=${audioRecentlyReceived}`,
-          );
+          if (wsTraceEnabledRef.current) {
+            console.log(
+              `[BARGE-IN-DEBUG] Speech detected - pipelineState=${currentPipelineState}, ` +
+                `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+                `recentAudioMs=${recentAudioMs}, audioRecentlyReceived=${audioRecentlyReceived}`,
+            );
+          }
           voiceLog.debug(
             `[ThinkerTalker] Speech detected - pipelineState=${currentPipelineState}, ` +
               `enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
@@ -2168,15 +2267,19 @@ export function useThinkerTalkerSession(
             (currentPipelineState === "speaking" || audioRecentlyReceived);
 
           // Always log barge-in evaluation result for debugging
-          console.log(
-            `[BARGE-IN-DEBUG] shouldBargeIn=${shouldBargeIn} (enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
-              `isSpeaking=${currentPipelineState === "speaking"}, audioRecentlyReceived=${audioRecentlyReceived})`,
-          );
+          if (wsTraceEnabledRef.current) {
+            console.log(
+              `[BARGE-IN-DEBUG] shouldBargeIn=${shouldBargeIn} (enableInstantBargeIn=${options.enableInstantBargeIn}, ` +
+                `isSpeaking=${currentPipelineState === "speaking"}, audioRecentlyReceived=${audioRecentlyReceived})`,
+            );
+          }
 
           if (shouldBargeIn) {
-            console.log(
-              `[BARGE-IN-DEBUG] TRIGGERING BARGE-IN: fading out audio (state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
-            );
+            if (wsTraceEnabledRef.current) {
+              console.log(
+                `[BARGE-IN-DEBUG] TRIGGERING BARGE-IN: fading out audio (state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
+              );
+            }
             voiceLog.info(
               `[ThinkerTalker] Instant barge-in: fading out AI audio ` +
                 `(state=${currentPipelineState}, recentAudioMs=${recentAudioMs})`,
@@ -2200,9 +2303,11 @@ export function useThinkerTalkerSession(
             // reflects the interruption immediately, without waiting for the
             // backend's voice.state event.
             const newState: PipelineState = "listening";
-            console.log(
-              `[BARGE-IN-DEBUG] Optimistic pipeline state on speech_started: ${currentPipelineState} -> ${newState}`,
-            );
+            if (wsTraceEnabledRef.current) {
+              console.log(
+                `[BARGE-IN-DEBUG] Optimistic pipeline state on speech_started: ${currentPipelineState} -> ${newState}`,
+              );
+            }
             setPipelineState(newState);
             pipelineStateRef.current = newState;
             setIsSpeaking(false);
@@ -2295,9 +2400,11 @@ export function useThinkerTalkerSession(
           // Optimistically switch pipeline state to listening so the UI reflects
           // the interruption immediately, without waiting for a later voice.state.
           const newState: PipelineState = "listening";
-          console.log(
-            `[BARGE-IN-DEBUG] Optimistic pipeline state on barge_in.initiated: ${pipelineStateRef.current} -> ${newState}`,
-          );
+          if (wsTraceEnabledRef.current) {
+            console.log(
+              `[BARGE-IN-DEBUG] Optimistic pipeline state on barge_in.initiated: ${pipelineStateRef.current} -> ${newState}`,
+            );
+          }
           setPipelineState(newState);
           pipelineStateRef.current = newState;
           setIsSpeaking(false);
@@ -2315,7 +2422,6 @@ export function useThinkerTalkerSession(
           // Phase 3: Intelligent Barge-In Classification Result
           // Backend classifies the interruption as backchannel, soft_barge, or hard_barge
           const classification = message.classification as string;
-          const intent = message.intent as string;
           const confidence = message.confidence as number;
           const action = message.action as string;
           const transcript = message.transcript as string;
@@ -2323,9 +2429,9 @@ export function useThinkerTalkerSession(
 
           voiceLog.info(
             `[ThinkerTalker] Barge-in classified: ${classification} ` +
-              `(intent="${intent}", conf=${confidence?.toFixed(2) ?? "N/A"}, action=${action})` +
+              `(conf=${confidence?.toFixed(2) ?? "N/A"}, action=${action})` +
               (latencyMs ? `, latency=${latencyMs}ms` : "") +
-              (transcript ? `, transcript="${transcript.slice(0, 30)}..."` : ""),
+              (transcript ? `, transcript_chars=${transcript.length}` : ""),
           );
 
           // Handle different classifications
@@ -2618,7 +2724,10 @@ export function useThinkerTalkerSession(
    * Initialize WebSocket connection to T/T pipeline
    */
   const initializeWebSocket = useCallback(
-    (conversationId?: string): Promise<WebSocket> => {
+    (
+      conversationId: string | undefined,
+      connectGeneration: number,
+    ): Promise<WebSocket> => {
       return new Promise((resolve, reject) => {
         // Check for auth token
         const accessToken = tokens?.accessToken;
@@ -2644,8 +2753,63 @@ export function useThinkerTalkerSession(
         );
 
         const ws = new WebSocket(wsUrl);
+        ws.binaryType = "arraybuffer";
+
+        let handshakeSettled = false;
+        let connectionTimeoutId: ReturnType<typeof setTimeout> | null = null;
+        const settleHandshake = (fn: () => void) => {
+          if (handshakeSettled) return;
+          handshakeSettled = true;
+          if (connectionTimeoutId) {
+            clearTimeout(connectionTimeoutId);
+            connectionTimeoutId = null;
+          }
+          if (
+            pendingWebSocketConnectRef.current?.generation === connectGeneration &&
+            pendingWebSocketConnectRef.current?.ws === ws
+          ) {
+            pendingWebSocketConnectRef.current = null;
+          }
+          fn();
+        };
+
+        // Ensure disconnect() can close a CONNECTING socket.
+        // If a prior WS exists (shouldn't in normal flow), close it to avoid duplicates.
+        if (wsRef.current && wsRef.current !== ws) {
+          try {
+            wsRef.current.close(1000, "Replaced by new connection");
+          } catch {
+            // Ignore
+          }
+        }
+        wsRef.current = ws;
+
+        // Allow disconnect() to abort the pending handshake immediately (no 10s timeout hang).
+        pendingWebSocketConnectRef.current = {
+          generation: connectGeneration,
+          ws,
+          reject: (err: Error) => {
+            settleHandshake(() => reject(err));
+          },
+        };
 
         ws.onopen = () => {
+          if (
+            intentionalDisconnectRef.current ||
+            connectionGenerationRef.current !== connectGeneration
+          ) {
+            voiceLog.debug(
+              "[ThinkerTalker] WebSocket opened after connect was aborted; closing socket",
+            );
+            try {
+              ws.close(1000, "Connect aborted");
+            } catch {
+              // Ignore
+            }
+            settleHandshake(() => reject(createTTConnectAbortError("Connect aborted")));
+            return;
+          }
+
           voiceLog.debug("[ThinkerTalker] WebSocket connected");
 
           // Reset binary protocol state
@@ -2655,6 +2819,7 @@ export function useThinkerTalkerSession(
           // Reset sequence validation state
           expectedSequenceRef.current = 0;
           reorderBufferRef.current.clear();
+          binaryFrameProcessingChainRef.current = Promise.resolve();
 
           // Check for recovery state
           const recoveryState = loadRecoveryState();
@@ -2673,39 +2838,104 @@ export function useThinkerTalkerSession(
             ws.send(JSON.stringify(resumeMessage));
           }
 
-        // Send session initialization message with feature negotiation
-        const initMessage = {
-          type: "session.init",
-          protocol_version: "2.0",
-          conversation_id: conversationId || null,
-          voice_settings: options.voiceSettings || {},
-          advanced_settings: options.advancedSettings || {},
-            // Request all WebSocket optimization and reliability features
-            // Server will confirm which ones are enabled via feature flags
-            features: [
+        // Send session initialization message with feature negotiation.
+        // To avoid accidentally disabling important WebSocket optimizations
+        // for all local dev runs, the "disable_ws_optimizations" lab mode
+        // now requires TWO localStorage flags:
+        //   - voiceassist_enable_ws_lab_mode === "true"
+        //   - voiceassist_disable_ws_optimizations === "true"
+        //
+        // This ensures older one-off debugging sessions that set only
+        // voiceassist_disable_ws_optimizations no longer silently run
+        // without batching / adaptive features.
+        const disableWsOptimizations =
+          typeof window !== "undefined" &&
+          window.localStorage?.getItem("voiceassist_enable_ws_lab_mode") ===
+            "true" &&
+          window.localStorage?.getItem(
+            "voiceassist_disable_ws_optimizations",
+          ) === "true";
+
+        const requestedFeatures = disableWsOptimizations
+          ? [
+              // Keep binary audio for efficiency, but skip higher-level
+              // batching/prebuffering while debugging choppy audio.
+              "binary_audio",
+            ]
+          : [
               "binary_audio", // Phase 1 WS Reliability: Binary frames
               "message_batching", // Message batching for efficiency
               "audio_prebuffering", // WS Latency: Jitter buffer
               "adaptive_chunking", // WS Latency: Network-aware chunks
               "session_persistence", // Phase 2 WS Reliability: Redis sessions
               "graceful_degradation", // Phase 3 WS Reliability: Fallback handling
-            ],
-          };
-          ws.send(JSON.stringify(initMessage));
+            ];
+
+        const initMessage = {
+          type: "session.init",
+          protocol_version: "2.0",
+          conversation_id: conversationId || null,
+          voice_settings: options.voiceSettings || {},
+          advanced_settings: options.advancedSettings || {},
+          // Request WebSocket optimization and reliability features.
+          // Server will confirm which ones are enabled via feature flags.
+          features: requestedFeatures,
+        };
+        ws.send(JSON.stringify(initMessage));
 
           updateStatus("connected");
-          resolve(ws);
+          settleHandshake(() => resolve(ws));
         };
 
         ws.onerror = (event) => {
           voiceLog.error("[ThinkerTalker] WebSocket error:", event);
-          reject(new Error("WebSocket connection failed"));
+          if (
+            intentionalDisconnectRef.current ||
+            connectionGenerationRef.current !== connectGeneration
+          ) {
+            settleHandshake(() =>
+              reject(createTTConnectAbortError("Connect aborted")),
+            );
+            return;
+          }
+          settleHandshake(() => reject(new Error("WebSocket connection failed")));
         };
 
         ws.onclose = (event) => {
           voiceLog.debug(
             `[ThinkerTalker] WebSocket closed: ${event.code} ${event.reason}`,
           );
+
+          const isCurrentSocket = wsRef.current === ws;
+
+          // If the socket closed before the handshake completed, fail/abort connect().
+          if (!handshakeSettled) {
+            if (
+              intentionalDisconnectRef.current ||
+              connectionGenerationRef.current !== connectGeneration
+            ) {
+              settleHandshake(() =>
+                reject(createTTConnectAbortError("Connect aborted")),
+              );
+              return;
+            } else {
+              settleHandshake(() =>
+                reject(
+                  new Error(
+                    `WebSocket closed before open: ${event.code} ${event.reason}`,
+                  ),
+                ),
+              );
+            }
+          }
+
+          // Ignore close events from stale sockets (prevents reconnect storms / duplicate sessions).
+          if (!isCurrentSocket) {
+            return;
+          }
+
+          // Clear current ws ref now that it is closed
+          wsRef.current = null;
 
           // Check for auth-related close codes (1008 = Policy Violation, typically auth failure)
           const isAuthError = event.code === 1008;
@@ -2733,131 +2963,157 @@ export function useThinkerTalkerSession(
         };
 
         ws.onmessage = (event) => {
-          // === DIAGNOSTIC: Track ALL WebSocket messages in window arrays ===
-          // This helps diagnose message delivery issues in both browser and Playwright
-          const globalWindow = window as typeof window & {
-            __wsMessageLog?: Array<{
-              timestamp: number;
-              dataType: string;
-              size: number;
-              preview?: string;
-            }>;
-            __wsMessageCount?: number;
-            __wsLastMessageTime?: number;
-          };
-          if (!globalWindow.__wsMessageLog) {
-            globalWindow.__wsMessageLog = [];
-            globalWindow.__wsMessageCount = 0;
-          }
-          globalWindow.__wsMessageCount =
-            (globalWindow.__wsMessageCount || 0) + 1;
-          globalWindow.__wsLastMessageTime = Date.now();
+          const traceWs = wsTraceEnabledRef.current;
 
-          // Debug: Log all incoming message types
-          const isBlob = event.data instanceof Blob;
-          const isArrayBuffer = event.data instanceof ArrayBuffer;
-          const dataType = isBlob
-            ? "Blob"
-            : isArrayBuffer
-              ? "ArrayBuffer"
-              : typeof event.data;
+          const maybeTrackWsMessage = () => {
+            if (!traceWs && !isAutomation) return;
+            if (typeof window === "undefined") return;
 
-          // Add to tracking array (limit to 1000 entries to prevent memory issues)
-          if (globalWindow.__wsMessageLog.length < 1000) {
-            const entry: (typeof globalWindow.__wsMessageLog)[0] = {
-              timestamp: Date.now(),
-              dataType,
-              size: isBlob
-                ? event.data.size
-                : isArrayBuffer
-                  ? (event.data as ArrayBuffer).byteLength
-                  : event.data?.length || 0,
+            // Keep a small rolling buffer (avoid memory growth / perf impact).
+            const globalWindow = window as typeof window & {
+              __wsMessageLog?: Array<{
+                timestamp: number;
+                dataType: string;
+                size: number;
+                preview?: string;
+              }>;
+              __wsMessageCount?: number;
+              __wsLastMessageTime?: number;
             };
-            // For text messages, add a preview of the type
-            if (!isBlob && !isArrayBuffer && typeof event.data === "string") {
-              try {
-                const parsed = JSON.parse(event.data);
-                entry.preview = `type=${parsed.type}, seq=${parsed.seq}`;
-              } catch {
-                entry.preview = event.data.slice(0, 50);
-              }
+            if (!globalWindow.__wsMessageLog) {
+              globalWindow.__wsMessageLog = [];
+              globalWindow.__wsMessageCount = 0;
             }
-            globalWindow.__wsMessageLog.push(entry);
-          }
+            globalWindow.__wsMessageCount =
+              (globalWindow.__wsMessageCount || 0) + 1;
+            globalWindow.__wsLastMessageTime = Date.now();
 
-          // Debug: Track message counts (detailed logging removed to reduce noise)
+            const isBlob = event.data instanceof Blob;
+            const isArrayBuffer = event.data instanceof ArrayBuffer;
+            const dataType = isBlob
+              ? "Blob"
+              : isArrayBuffer
+                ? "ArrayBuffer"
+                : typeof event.data;
 
-          // Handle binary frames (audio data with 5-byte header)
-          if (event.data instanceof Blob) {
-            event.data
-              .arrayBuffer()
-              .then((buffer) => {
-                const data = new Uint8Array(buffer);
-                if (data.length >= 5) {
-                  const frameType = data[0];
-                  const sequence = new DataView(data.buffer).getUint32(
-                    1,
-                    false,
-                  );
-                  const audioData = data.slice(5);
+            if (globalWindow.__wsMessageLog.length < 300) {
+              const entry: (typeof globalWindow.__wsMessageLog)[0] = {
+                timestamp: Date.now(),
+                dataType,
+                size: isBlob
+                  ? event.data.size
+                  : isArrayBuffer
+                    ? (event.data as ArrayBuffer).byteLength
+                    : event.data?.length || 0,
+              };
 
-                  if (frameType === 0x02) {
-                    // AUDIO_OUTPUT binary frame
-                    voiceLog.debug(
-                      `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
-                    );
-
-                    // Convert to base64 using chunked approach to avoid call stack overflow
-                    // String.fromCharCode.apply() can fail on large arrays (>~8KB)
-                    let binaryStr = "";
-                    const chunkSize = 8192;
-                    for (let i = 0; i < audioData.length; i += chunkSize) {
-                      const chunk = audioData.subarray(i, i + chunkSize);
-                      binaryStr += String.fromCharCode.apply(
-                        null,
-                        Array.from(chunk),
-                      );
-                    }
-                    const base64 = btoa(binaryStr);
-                    options.onAudioChunk?.(base64);
-                  } else {
-                    voiceLog.warn(
-                      `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
-                    );
-                  }
-                } else {
-                  voiceLog.warn(
-                    `[ThinkerTalker] Binary frame too short: ${data.length} bytes`,
-                  );
+              if (!isBlob && !isArrayBuffer && typeof event.data === "string") {
+                try {
+                  const parsed = JSON.parse(event.data);
+                  entry.preview = `type=${parsed.type}, seq=${parsed.seq}`;
+                } catch {
+                  entry.preview = event.data.slice(0, 50);
                 }
-              })
-              .catch((err) => {
-                voiceLog.error(
-                  `[ThinkerTalker] Binary frame processing error:`,
-                  err,
+              }
+
+              globalWindow.__wsMessageLog.push(entry);
+            }
+          };
+
+          const handleBinaryFrame = (buffer: ArrayBuffer) => {
+            const data = new Uint8Array(buffer);
+            if (data.length < 5) {
+              voiceLog.warn(
+                `[ThinkerTalker] Binary frame too short: ${data.length} bytes`,
+              );
+              return;
+            }
+
+            const frameType = data[0];
+            const sequence = new DataView(buffer).getUint32(1, false);
+            const audioData = data.subarray(5);
+
+            if (frameType === 0x02) {
+              // AUDIO_OUTPUT binary frame
+              if (traceWs && (sequence === 0 || sequence % 50 === 0)) {
+                voiceLog.debug(
+                  `[ThinkerTalker] Binary audio: seq=${sequence}, ${audioData.length} bytes`,
                 );
-              });
+              }
+
+              // DUPLICATE RESPONSE PROTECTION:
+              // Detect when a new audio stream starts (seq=0) while we've already
+              // received audio from a previous stream. This happens when the backend
+              // sends duplicate responses with overlapping audio.
+              if (sequence === 0 && lastAudioSeqRef.current > 0) {
+                voiceLog.warn(
+                  `[ThinkerTalker] NEW AUDIO STREAM DETECTED: seq=0 while lastAudioSeq=${lastAudioSeqRef.current}. ` +
+                    `Resetting audio playback to prevent overlapping voices.`,
+                );
+                options.onNewAudioStream?.();
+              }
+              lastAudioSeqRef.current = sequence;
+
+              // CRITICAL: Update audio timestamp for barge-in detection
+              // Without this, recentAudioMs stays Infinity and triggers false barge-ins
+              lastAudioChunkTimeRef.current = Date.now();
+
+              // Keep audio as raw bytes (Uint8Array) end-to-end for binary protocol.
+              options.onAudioChunk?.(audioData);
+              return;
+            }
+
+            voiceLog.warn(
+              `[ThinkerTalker] Unknown binary frameType: ${frameType}`,
+            );
+          };
+
+          maybeTrackWsMessage();
+
+          // Handle binary frames. Prefer ArrayBuffer (ws.binaryType="arraybuffer")
+          // to avoid async Blob -> ArrayBuffer conversion overhead/reordering.
+          // If we still receive Blobs (e.g. older browser defaults), process them
+          // sequentially to preserve frame order.
+          if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
+            const binaryData = event.data;
+            binaryFrameProcessingChainRef.current =
+              binaryFrameProcessingChainRef.current
+                .then(async () => {
+                  const buffer =
+                    binaryData instanceof Blob
+                      ? await binaryData.arrayBuffer()
+                      : (binaryData as ArrayBuffer);
+                  handleBinaryFrame(buffer);
+                })
+                .catch((err) => {
+                  voiceLog.error(
+                    `[ThinkerTalker] Binary frame processing error:`,
+                    err,
+                  );
+                });
             return;
           }
 
           // Handle text frames (JSON messages) with sequence validation
           try {
+            if (typeof event.data !== "string") return;
             const message = JSON.parse(event.data);
-            // DEBUG: Log ALL incoming WebSocket messages to trace message delivery
             const msgType = message.type as string;
-            // Log ALL messages for debugging audio delivery
-            console.log(`[ThinkerTalker] WS RAW message: ${msgType}`);
-            if (
-              msgType &&
-              (msgType.includes("speech") ||
-                msgType.includes("state") ||
-                msgType.includes("voice") ||
-                msgType.includes("audio"))
-            ) {
-              console.log(
-                `[ThinkerTalker] WS RAW message DETAIL: ${msgType}`,
-                message,
-              );
+
+            if (traceWs) {
+              console.log(`[ThinkerTalker] WS RAW message: ${msgType}`);
+              if (
+                msgType &&
+                (msgType.includes("speech") ||
+                  msgType.includes("state") ||
+                  msgType.includes("voice") ||
+                  msgType.includes("audio"))
+              ) {
+                console.log(
+                  `[ThinkerTalker] WS RAW message DETAIL: ${msgType}`,
+                  message,
+                );
+              }
             }
 
             // Expose WS events to automation for Playwright integration tests
@@ -2889,10 +3145,23 @@ export function useThinkerTalkerSession(
         };
 
         // Connection timeout
-        setTimeout(() => {
-          if (ws.readyState !== WebSocket.OPEN) {
-            reject(new Error("WebSocket connection timeout"));
+        connectionTimeoutId = setTimeout(() => {
+          if (handshakeSettled) return;
+          if (
+            intentionalDisconnectRef.current ||
+            connectionGenerationRef.current !== connectGeneration
+          ) {
+            settleHandshake(() =>
+              reject(createTTConnectAbortError("Connect aborted")),
+            );
+            return;
           }
+          try {
+            ws.close(4000, "Connection timeout");
+          } catch {
+            // Ignore
+          }
+          settleHandshake(() => reject(new Error("WebSocket connection timeout")));
         }, 10000);
       });
     },
@@ -3137,6 +3406,19 @@ export function useThinkerTalkerSession(
    * Connect to T/T pipeline
    */
   const connect = useCallback(async () => {
+    // Global guard: prevent multiple concurrent T/T sessions in this tab.
+    // If another instance is already active, skip connecting to avoid
+    // duplicate transcripts/responses and overlapping audio playback.
+    if (
+      globalActiveInstanceId !== null &&
+      globalActiveInstanceId !== instanceIdRef.current
+    ) {
+      voiceLog.warn(
+        "[ThinkerTalker] Another Thinker/Talker session is already active in this tab; skipping second connect() to prevent duplicate audio.",
+      );
+      return;
+    }
+
     if (
       statusRef.current === "connected" ||
       statusRef.current === "connecting"
@@ -3151,6 +3433,14 @@ export function useThinkerTalkerSession(
     }
 
     try {
+      const connectGeneration = ++connectionGenerationRef.current;
+
+      // Mark this instance as the active global session
+      if (instanceIdRef.current === null) {
+        instanceIdRef.current = ++globalInstanceCounter;
+      }
+      globalActiveInstanceId = instanceIdRef.current;
+
       updateStatus("connecting");
       setError(null);
       connectStartTimeRef.current = Date.now();
@@ -3170,20 +3460,46 @@ export function useThinkerTalkerSession(
         bargeInCount: 0,
         reconnectCount: reconnectAttempts,
         sessionStartedAt: null,
+        // Phase 7.1 metrics
+        bargeInMuteLatencyMs: null,
+        avgBargeInMuteLatencyMs: null,
+        successfulBargeInCount: 0,
+        misfireBargeInCount: 0,
+        perceivedLatencyMs: null,
+        vadEventCount: 0,
+        truncatedResponseCount: 0,
       });
 
       // Initialize WebSocket
-      const ws = await initializeWebSocket(options.conversation_id);
-      wsRef.current = ws;
+      const ws = await initializeWebSocket(options.conversation_id, connectGeneration);
+
+      // If this connect() was superseded/aborted while awaiting, stop immediately.
+      if (connectionGenerationRef.current !== connectGeneration) {
+        try {
+          ws.close(1000, "Connect superseded");
+        } catch {
+          // Ignore
+        }
+        return;
+      }
 
       // Initialize audio streaming
       await initializeAudioStreaming(ws);
+
+      if (connectionGenerationRef.current !== connectGeneration) {
+        return;
+      }
 
       // Reset reconnect attempts on success
       setReconnectAttempts(0);
 
       voiceLog.debug("[ThinkerTalker] Connected successfully");
     } catch (err) {
+      if (isTTConnectAbortError(err)) {
+        voiceLog.debug("[ThinkerTalker] Connect aborted");
+        return;
+      }
+
       const error = err instanceof Error ? err : new Error("Failed to connect");
 
       if (
@@ -3236,6 +3552,21 @@ export function useThinkerTalkerSession(
     }
 
     voiceLog.debug("[ThinkerTalker] Disconnecting...");
+    // Invalidate any in-flight connect() attempt so it cannot "resurrect" later.
+    connectionGenerationRef.current += 1;
+    const pending = pendingWebSocketConnectRef.current;
+    if (pending) {
+      pendingWebSocketConnectRef.current = null;
+      try {
+        pending.reject(createTTConnectAbortError("Connect aborted by disconnect"));
+      } catch {
+        // Ignore
+      }
+    }
+    // Clear global active instance marker if this session is the owner
+    if (globalActiveInstanceId === instanceIdRef.current) {
+      globalActiveInstanceId = null;
+    }
     intentionalDisconnectRef.current = true;
 
     // For intentional disconnect (user closed voice mode), clear any
@@ -3256,7 +3587,10 @@ export function useThinkerTalkerSession(
       wsRef.current.onerror = null;
       wsRef.current.onmessage = null;
       wsRef.current.onopen = null;
-      if (wsRef.current.readyState === WebSocket.OPEN) {
+      if (
+        wsRef.current.readyState === WebSocket.OPEN ||
+        wsRef.current.readyState === WebSocket.CONNECTING
+      ) {
         wsRef.current.close(1000, "Intentional disconnect");
       }
       wsRef.current = null;
@@ -3316,6 +3650,11 @@ export function useThinkerTalkerSession(
     firstTranscriptTimeRef.current = null;
     firstLLMTokenTimeRef.current = null;
     lastAudioChunkTimeRef.current = null;
+
+    // Reset audio sequence refs to prevent issues with new streams
+    // This ensures seq=0 detection works correctly for new connections
+    audioSequenceRef.current = 0;
+    lastAudioSeqRef.current = 0;
 
     setReconnectAttempts(0);
     updateStatus("disconnected");
@@ -3426,6 +3765,7 @@ export function useThinkerTalkerSession(
       is_playback_active: boolean;
       effective_threshold: number;
       aec_quality?: string;
+      personalized_threshold?: number | null;
     }) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         return;

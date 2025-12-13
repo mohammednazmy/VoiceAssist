@@ -13,7 +13,7 @@
  */
 
 import { vi } from "vitest";
-import type { WebSocketEvent, Message } from "@voiceassist/types";
+import type { WebSocketEvent, Message, WebSocketErrorCode } from "@voiceassist/types";
 
 export interface MockWebSocket {
   url: string;
@@ -110,7 +110,7 @@ export function setupWebSocketMock(): {
   wsConstructorSpy = vi.fn((url: string) => {
     currentMockWs = createMockWebSocket(url);
     return currentMockWs as unknown as WebSocket;
-  });
+  }) as ReturnType<typeof vi.fn>;
 
   global.WebSocket = wsConstructorSpy as unknown as typeof WebSocket;
 
@@ -149,8 +149,8 @@ export function cleanupWebSocketMock(): void {
  * Uses microtask queue to allow React to process pending updates.
  */
 export async function flushMicrotasks(): Promise<void> {
-  await new Promise((resolve) => queueMicrotask(resolve));
-  await new Promise((resolve) => queueMicrotask(resolve));
+  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+  await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
 }
 
 /**
@@ -215,7 +215,7 @@ export function createDeltaEvent(
  * Creates an error event.
  */
 export function createErrorEvent(
-  code: string,
+  code: WebSocketErrorCode,
   message: string,
 ): WebSocketEvent {
   return {

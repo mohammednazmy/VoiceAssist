@@ -435,6 +435,13 @@ describe("ThinkerTalkerVoicePanel", () => {
         bargeInCount: 0,
         reconnectCount: 0,
         sessionStartedAt: Date.now(),
+        bargeInMuteLatencyMs: null,
+        avgBargeInMuteLatencyMs: null,
+        successfulBargeInCount: 0,
+        misfireBargeInCount: 0,
+        perceivedLatencyMs: null,
+        vadEventCount: 0,
+        truncatedResponseCount: 0,
       };
       callArgs?.onMetricsUpdate?.(testMetrics);
 

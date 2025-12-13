@@ -265,9 +265,47 @@ class ThinkerTalkerWebSocketHandler:
         self._partial_transcript: str = ""  # Accumulator for transcript deltas
         self._partial_response: str = ""  # Accumulator for response deltas
         self._is_resumed_session: bool = False  # True if this is a recovered session
+        # Audio checkpointing is extremely high-throughput (per-audio-chunk) and
+        # must be explicitly negotiated by the client; otherwise it can degrade
+        # realtime audio playback by introducing heavy Redis I/O and JSON overhead.
+        self._audio_checkpointing_feature_flag_enabled: bool = False
 
         # Phase 2: VAD Confidence Sharing - store latest frontend VAD state
         self._last_vad_state: Optional[Dict[str, Any]] = None
+
+        # DEDUPLICATION: Track sent message hashes to prevent duplicate messages to client
+        # This catches cases where the pipeline sends the same message multiple times
+        # (e.g., duplicate transcript.complete, duplicate audio chunks)
+        self._sent_message_hashes: Dict[str, float] = {}  # hash -> timestamp
+        self._dedup_window_s: float = 3.0  # Window for deduplication
+        self._last_dedup_cleanup: float = 0.0
+
+    @staticmethod
+    def _normalize_text_for_dedup(text: str) -> str:
+        """
+        Normalize text for deduplication.
+
+        We aggressively normalize whitespace and punctuation so that small
+        variations (extra spaces, different punctuation like "!" vs ".")
+        do not defeat duplicate detection. This operates purely in-memory
+        and does not persist PHI.
+        """
+        raw = (text or "").strip().lower()
+        if not raw:
+            return ""
+
+        # Replace common punctuation with spaces, collapse repeated whitespace.
+        # Keep alphanumerics and spaces only.
+        cleaned_chars: list[str] = []
+        for ch in raw:
+            if ch.isalnum():
+                cleaned_chars.append(ch)
+            elif ch.isspace():
+                cleaned_chars.append(" ")
+            # Ignore punctuation/symbols for dedup purposes
+        cleaned = "".join(cleaned_chars)
+        # Collapse multiple spaces
+        return " ".join(cleaned.split())
 
     @property
     def connection_state(self) -> TTConnectionState:
@@ -444,9 +482,13 @@ class ThinkerTalkerWebSocketHandler:
                 self.config.message_recovery_enabled = await feature_flag_service.is_enabled(
                     FEATURE_FLAG_MESSAGE_RECOVERY, default=False
                 )
-                self.config.audio_checkpointing_enabled = await feature_flag_service.is_enabled(
+                # IMPORTANT: Audio checkpointing is opt-in (client negotiated). We still
+                # check the flag to know whether it is available, but we do not enable it
+                # by default because it can negatively impact realtime playback.
+                self._audio_checkpointing_feature_flag_enabled = await feature_flag_service.is_enabled(
                     FEATURE_FLAG_AUDIO_CHECKPOINTING, default=False
                 )
+                self.config.audio_checkpointing_enabled = False
 
                 # Ensure session state service is connected
                 if not self._session_state_service._connected:
@@ -455,7 +497,8 @@ class ThinkerTalkerWebSocketHandler:
                 logger.info(
                     f"[WS Recovery] Enabled for {self.config.session_id}: "
                     f"message_recovery={self.config.message_recovery_enabled}, "
-                    f"audio_checkpointing={self.config.audio_checkpointing_enabled}"
+                    f"audio_checkpointing_available={self._audio_checkpointing_feature_flag_enabled}, "
+                    f"audio_checkpointing_enabled={self.config.audio_checkpointing_enabled}"
                 )
         except Exception as e:
             logger.warning(f"Failed to check session recovery flags: {e}")
@@ -501,53 +544,82 @@ class ThinkerTalkerWebSocketHandler:
             return self._metrics
 
         self._running = False
+        logger.info(f"[WS] Stopping handler for session {self.config.session_id}")
 
         # Mark session as disconnected for potential recovery
         if self.config.session_recovery_enabled and preserve_for_recovery:
-            await self._save_disconnection_state()
+            try:
+                await asyncio.wait_for(self._save_disconnection_state(), timeout=2.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"[WS] Timeout saving disconnection state for {self.config.session_id}")
+            except Exception as e:
+                logger.warning(f"[WS] Error saving disconnection state: {e}")
 
-        # Cancel tasks
-        if self._receive_task:
+        # Cancel tasks with timeout
+        cleanup_tasks = []
+
+        if self._receive_task and not self._receive_task.done():
             self._receive_task.cancel()
-            try:
-                await self._receive_task
-            except asyncio.CancelledError:
-                pass
+            cleanup_tasks.append(("receive_task", self._receive_task))
 
-        if self._heartbeat_task:
+        if self._heartbeat_task and not self._heartbeat_task.done():
             self._heartbeat_task.cancel()
+            cleanup_tasks.append(("heartbeat_task", self._heartbeat_task))
+
+        # Wait for cancelled tasks with timeout
+        for task_name, task in cleanup_tasks:
             try:
-                await self._heartbeat_task
+                await asyncio.wait_for(asyncio.shield(task), timeout=2.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"[WS] Timeout waiting for {task_name} to cancel")
             except asyncio.CancelledError:
-                pass
+                pass  # Expected
+            except Exception as e:
+                logger.warning(f"[WS] Error cancelling {task_name}: {e}")
 
         # Unsubscribe from event bus events
-        self._unsubscribe_from_event_bus()
+        try:
+            self._unsubscribe_from_event_bus()
+        except Exception as e:
+            logger.warning(f"[WS] Error unsubscribing from event bus: {e}")
 
-        # Stop message batcher
+        # Stop message batcher with timeout
         if self._batcher:
             try:
-                await self._batcher.stop()
+                await asyncio.wait_for(self._batcher.stop(), timeout=2.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"[WS] Timeout stopping message batcher")
             except Exception as e:
-                logger.warning(f"Error stopping message batcher: {e}")
+                logger.warning(f"[WS] Error stopping message batcher: {e}")
+            finally:
+                self._batcher = None
 
-        # Stop pipeline session
+        # Stop pipeline session with timeout
         if self._pipeline_session:
             try:
-                await self._pipeline_session.stop()
+                await asyncio.wait_for(self._pipeline_session.stop(), timeout=5.0)
+            except asyncio.TimeoutError:
+                logger.warning(f"[WS] Timeout stopping pipeline session")
             except Exception as e:
-                logger.warning(f"Error stopping pipeline session: {e}")
+                logger.warning(f"[WS] Error stopping pipeline session: {e}")
+            finally:
+                self._pipeline_session = None
 
         # Close WebSocket
         try:
-            await self.websocket.close()
+            await asyncio.wait_for(self.websocket.close(), timeout=2.0)
+        except asyncio.TimeoutError:
+            logger.warning(f"[WS] Timeout closing WebSocket")
         except Exception:
             pass
+
+        # Clear deduplication caches
+        self._sent_message_hashes.clear()
 
         self._connection_state = TTConnectionState.DISCONNECTED
 
         logger.info(
-            f"T/T WebSocket handler stopped: {self.config.session_id}",
+            f"[WS] Handler stopped: {self.config.session_id}",
             extra={"metrics": self._get_metrics_dict()},
         )
 
@@ -803,6 +875,28 @@ class ThinkerTalkerWebSocketHandler:
                         logger.info(f"[WS] Graceful degradation enabled for {self.config.session_id}")
                 except Exception as e:
                     logger.warning(f"Failed to check graceful degradation flag: {e}")
+
+            # Negotiate audio checkpointing (opt-in; feature flag controlled)
+            # This feature stores recent audio chunks for resume after reconnect.
+            # It is intentionally NOT enabled by default because persisting audio
+            # is both privacy-sensitive (PHI risk) and high-throughput.
+            if "audio_checkpointing" in client_features:
+                if not self.config.session_recovery_enabled:
+                    logger.info(
+                        f"[WS] Client requested audio checkpointing but session recovery is disabled "
+                        f"for {self.config.session_id}; ignoring"
+                    )
+                elif self._audio_checkpointing_feature_flag_enabled:
+                    self.config.audio_checkpointing_enabled = True
+                    negotiated_features.append("audio_checkpointing")
+                    logger.info(
+                        f"[WS] Audio checkpointing enabled for {self.config.session_id}"
+                    )
+                else:
+                    logger.info(
+                        f"[WS] Client requested audio checkpointing but feature flag is disabled "
+                        f"for {self.config.session_id}; ignoring"
+                    )
 
             # Apply voice settings to the pipeline config
             if self._pipeline_session and voice_settings:
@@ -1264,52 +1358,134 @@ class ThinkerTalkerWebSocketHandler:
         For audio.output messages, uses binary protocol if enabled.
         Tracks partial messages for recovery.
         """
+        # DEDUPLICATION: Check for duplicate messages before sending to client.
+        # Certain message types (transcript.complete, response.complete, voice.state) are prone
+        # to duplication from race conditions in the pipeline. Audio chunks are NOT deduplicated
+        # (sequential) and are always forwarded.
+        dedup_types = {"transcript.complete", "response.complete", "voice.state"}
+        if message.type in dedup_types:
+            current_time = time.time()
+
+            # Periodic cleanup of old message hashes
+            if current_time - self._last_dedup_cleanup > self._dedup_window_s:
+                # Remove entries older than dedup window
+                cutoff = current_time - self._dedup_window_s
+                self._sent_message_hashes = {
+                    h: t for h, t in self._sent_message_hashes.items() if t > cutoff
+                }
+                self._last_dedup_cleanup = current_time
+
+            # Create hash of message content for deduplication.
+            # - transcript.complete: hash the normalized text body.
+            # - response.complete: hash the normalized text body (ignoring minor punctuation
+            #   / whitespace differences and message_id) so duplicate responses with the
+            #   same wording are treated as duplicates.
+            # - voice.state: hash both state and reason (and push_to_talk_recommended when
+            #   present) so we don't suppress distinct transitions that share the same state
+            #   value but have different reasons or recommendations.
+            if message.type == "transcript.complete":
+                normalized_text = self._normalize_text_for_dedup(
+                    message.data.get("text") or ""
+                )
+                content_hash = f"{message.type}:{hash(normalized_text)}"
+            elif message.type == "response.complete":
+                # Prefer "text" but fall back to "content" for compatibility.
+                raw_text = (
+                    message.data.get("text")
+                    or message.data.get("content")
+                    or ""
+                )
+                normalized_text = self._normalize_text_for_dedup(raw_text)
+                content_hash = f"{message.type}:{hash(normalized_text)}"
+            elif message.type == "voice.state":
+                state = message.data.get("state", "")
+                reason = message.data.get("reason", "")
+                ptt = message.data.get("push_to_talk_recommended")
+                content_hash = f"{message.type}:{state}:{reason}:{ptt}"
+            else:
+                # Fallback (should not normally be hit for dedup_types)
+                content_hash = f"{message.type}:{hash(str(sorted(message.data.items())))}"
+
+            if content_hash in self._sent_message_hashes:
+                logger.warning(
+                    f"[WS] DUPLICATE MESSAGE DETECTED - skipping: type={message.type} "
+                    f"(sent {current_time - self._sent_message_hashes[content_hash]:.2f}s ago)"
+                )
+                return
+
+            # Track this message
+            self._sent_message_hashes[content_hash] = current_time
+
         # Track partial messages for recovery
         await self._track_partial_messages(message)
 
         # Handle audio output with binary protocol if enabled
         if message.type == "audio.output" and self.config.binary_protocol_enabled:
+            audio_bytes: bytes = b""
             audio_b64 = message.data.get("audio", "")
-            if audio_b64:
+
+            # Prefer raw bytes from the pipeline (avoids base64 encode/decode overhead).
+            if getattr(message, "binary", None):
+                audio_bytes = message.binary or b""
+            elif audio_b64:
                 try:
                     audio_bytes = base64.b64decode(audio_b64)
-                    await self._send_audio_binary(audio_bytes)
-                    # Send metadata separately
-                    await self._send_message(
-                        {
-                            "type": "audio.output.meta",
-                            "format": message.data.get("format"),
-                            "is_final": message.data.get("is_final"),
-                            "sequence": self.config._audio_sequence_out - 1,
-                        }
-                    )
+                except Exception as e:
+                    logger.error(f"Error decoding base64 audio for binary send: {e}")
+                    audio_bytes = b""
 
+            if audio_bytes:
+                try:
+                    await self._send_audio_binary(audio_bytes)
                     # Buffer audio for checkpointing if enabled
                     if self.config.audio_checkpointing_enabled:
-                        await self._buffer_audio_chunk(self.config._audio_sequence_out - 1, audio_b64)
+                        if not audio_b64:
+                            audio_b64 = base64.b64encode(audio_bytes).decode()
+                        await self._buffer_audio_chunk(
+                            self.config._audio_sequence_out - 1, audio_b64
+                        )
                 except Exception as e:
                     logger.error(f"Error sending binary audio: {e}")
-                    # Fallback to JSON
-                    await self._send_message({"type": message.type, **message.data})
+                    # Fallback to JSON (base64 required)
+                    fallback_b64 = audio_b64 or base64.b64encode(audio_bytes).decode()
+                    await self._send_message(
+                        {"type": message.type, **{**message.data, "audio": fallback_b64}}
+                    )
         else:
             # Forward other messages as JSON
+            payload: Dict[str, Any] = {
+                "type": message.type,
+                **message.data,
+            }
+
+            # Ensure JSON audio frames always include base64 audio.
+            if message.type == "audio.output" and not payload.get("audio") and getattr(message, "binary", None):
+                try:
+                    payload["audio"] = base64.b64encode(message.binary or b"").decode()
+                except Exception as e:
+                    logger.error(f"Error encoding audio for JSON send: {e}")
+                    payload["audio"] = ""
+
             await self._send_message(
-                {
-                    "type": message.type,
-                    **message.data,
-                }
+                payload
             )
 
             # Buffer audio for checkpointing if enabled (JSON mode)
-            if message.type == "audio.output" and self.config.audio_checkpointing_enabled and message.data.get("audio"):
-                await self._buffer_audio_chunk(self.config._message_sequence - 1, message.data.get("audio", ""))
+            if (
+                message.type == "audio.output"
+                and self.config.audio_checkpointing_enabled
+                and payload.get("audio")
+            ):
+                await self._buffer_audio_chunk(
+                    self.config._message_sequence - 1, payload.get("audio", "")
+                )
 
         # Track metrics
         if message.type == "transcript.complete":
             self._metrics.user_utterance_count += 1
         elif message.type == "response.complete":
             self._metrics.ai_response_count += 1
-        elif message.type == "audio.output" and message.data.get("audio"):
+        elif message.type == "audio.output" and (getattr(message, "binary", None) or message.data.get("audio")):
             # Track first audio latency
             if self._metrics.first_audio_latency_ms == 0:
                 self._metrics.first_audio_latency_ms = (time.time() - self._metrics.connection_start_time) * 1000
@@ -1539,11 +1715,35 @@ class ThinkerTalkerSessionManager:
             ThinkerTalkerWebSocketHandler instance
 
         Raises:
-            ValueError: If max sessions reached
+            ValueError: If max sessions reached or duplicate session ID
         """
         async with self._lock:
             if len(self._sessions) >= self.max_sessions:
                 raise ValueError("Maximum concurrent sessions reached")
+
+            # DEDUPLICATION: Check if session already exists
+            # If a session with this ID exists, close the old one first
+            # This prevents duplicate WebSocket connections that cause overlapping audio
+            if config.session_id in self._sessions:
+                existing_handler = self._sessions[config.session_id]
+                logger.warning(
+                    f"[SessionManager] DUPLICATE SESSION DETECTED - closing existing: "
+                    f"session_id={config.session_id}, state={existing_handler.connection_state}"
+                )
+                try:
+                    # Stop the existing handler without preserving for recovery
+                    # (the new connection supersedes it)
+                    await asyncio.wait_for(
+                        existing_handler.stop(preserve_for_recovery=False),
+                        timeout=3.0
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"[SessionManager] Timeout closing duplicate session {config.session_id}")
+                except Exception as e:
+                    logger.warning(f"[SessionManager] Error closing duplicate session: {e}")
+                finally:
+                    # Ensure it's removed from the dict
+                    self._sessions.pop(config.session_id, None)
 
             handler = ThinkerTalkerWebSocketHandler(
                 websocket=websocket,
@@ -1551,6 +1751,7 @@ class ThinkerTalkerSessionManager:
             )
 
             self._sessions[config.session_id] = handler
+            logger.info(f"[SessionManager] Created session {config.session_id}, total={len(self._sessions)}")
             return handler
 
     async def get_session(self, session_id: str) -> Optional[ThinkerTalkerWebSocketHandler]:

@@ -27,6 +27,7 @@ from app.api.conversation_schemas.schemas import (
     SessionEventResponse,
     UpdateConversationRequest,
 )
+from app.services.llm_client import LLMClient, LLMRequest
 from app.core.api_envelope import ErrorCodes, error_response, success_response
 from app.core.database import get_db, transaction
 from app.core.dependencies import get_current_organization, get_current_user

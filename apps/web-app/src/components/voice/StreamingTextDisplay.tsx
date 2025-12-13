@@ -17,7 +17,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
 
 // RTL language detection patterns

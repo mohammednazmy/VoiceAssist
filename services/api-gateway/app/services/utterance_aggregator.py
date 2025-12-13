@@ -189,7 +189,10 @@ class UtteranceAggregator:
 
         # Filter low-confidence segments
         if confidence < self.config.min_confidence:
-            logger.debug(f"Skipping low-confidence segment: '{text}' (conf={confidence:.2f})")
+            logger.debug(
+                "Skipping low-confidence segment",
+                extra={"segment_chars": len(text or ""), "confidence": round(float(confidence or 0.0), 3)},
+            )
             return None
 
         now = time.time()
@@ -286,7 +289,7 @@ class UtteranceAggregator:
         # Start window timer
         asyncio.create_task(self._start_window_timer())
 
-        logger.debug(f"Started aggregation window with: '{segment.text}'")
+        logger.debug("Started aggregation window", extra={"segment_chars": len(segment.text or "")})
 
     async def _start_window_timer(self) -> None:
         """Start or restart the window timer."""

@@ -18,8 +18,8 @@ import type {
   ClassificationMetadata,
   AudioFeatures,
   BargeInClassifierConfig,
-  DEFAULT_CLASSIFIER_CONFIG,
 } from "./types";
+import { DEFAULT_CLASSIFIER_CONFIG } from "./types";
 import {
   HARD_BARGE_PATTERNS,
   COMMAND_PATTERNS,

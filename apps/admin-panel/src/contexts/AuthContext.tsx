@@ -15,7 +15,6 @@ import {
   getStoredRole,
 } from "../lib/apiClient";
 import { isTwoFactorRequired } from "@voiceassist/api-client";
-import type { User as ApiUser } from "@voiceassist/types";
 
 type UserRole = "admin" | "viewer";
 
@@ -53,11 +52,24 @@ const decodeToken = (token?: string): DecodedToken | null => {
   if (!token) return null;
   try {
     const [, payload] = token.split(".");
-    return JSON.parse(atob(payload)) as DecodedToken;
+    // JWT payload is base64url encoded (not base64)
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+    return JSON.parse(atob(padded)) as DecodedToken;
   } catch (err) {
     console.warn("Failed to decode token", err);
     return null;
   }
+};
+
+type CurrentUserProfile = {
+  id: string;
+  email: string;
+  full_name?: string;
+  name?: string;
+  is_active?: boolean;
+  is_admin?: boolean;
+  admin_role?: string;
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -67,11 +79,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const refreshTimeout = useRef<number | null>(null);
 
-  const deriveRole = useCallback(
-    (incomingRole?: string): UserRole =>
-      incomingRole === "viewer" ? "viewer" : "admin",
-    [],
-  );
+  const deriveRole = useCallback((input?: {
+    tokenRole?: string;
+    adminRole?: string;
+    isAdmin?: boolean;
+    storedRole?: string | null;
+  }): UserRole => {
+    const normalize = (role?: string | null) => role?.trim().toLowerCase();
+    const tokenRole = normalize(input?.tokenRole);
+    const adminRole = normalize(input?.adminRole);
+    const storedRole = normalize(input?.storedRole);
+
+    const isAdminRole = (role?: string) => role === "admin" || role === "super_admin";
+    const isViewerRole = (role?: string) => role === "viewer";
+
+    if (isAdminRole(tokenRole) || isAdminRole(adminRole) || input?.isAdmin) return "admin";
+    if (isViewerRole(tokenRole) || isViewerRole(adminRole) || isViewerRole(storedRole)) return "viewer";
+    return "viewer";
+  }, []);
 
   console.log("[AuthContext] Getting API client...");
   const apiClient = getApiClient();
@@ -109,9 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("[AuthContext] checkAuth() starting...");
     console.log("[AuthContext] Current URL:", window.location.href);
     try {
-      const storedRole = deriveRole(getStoredRole() || undefined);
+      const storedRole = getStoredRole();
       const token = localStorage.getItem("auth_token");
-      console.log("[AuthContext] Stored role:", storedRole);
+      console.log("[AuthContext] Stored role:", storedRole || "none");
       console.log("[AuthContext] Has token:", !!token);
 
       if (!token) {
@@ -120,54 +145,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const decoded = decodeToken(token);
+      const buildUser = (profile: CurrentUserProfile, role: UserRole): AdminUser => ({
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.full_name || profile.name,
+        is_admin: role === "admin",
+        is_active: profile.is_active ?? true,
+        role,
+      });
 
-      // Check if token is still valid
-      if (decoded?.exp && decoded.exp * 1000 > Date.now()) {
-        const profile: ApiUser = await apiClient.getCurrentUser();
-        const role = deriveRole(profile.role || storedRole);
-        persistRole(role);
-
-        setUser({
-          id: profile.id,
-          email: profile.email,
-          full_name: profile.name,
-          is_admin: role === "admin",
-          is_active: true,
-          role,
+      const fetchAndSetUser = async (accessTokenForRefresh?: string) => {
+        const profile = (await apiClient.getCurrentUser()) as unknown as CurrentUserProfile;
+        const role = deriveRole({
+          tokenRole: decodeToken(accessTokenForRefresh || token)?.role,
+          adminRole: profile.admin_role,
+          isAdmin: profile.is_admin,
+          storedRole,
         });
+        persistRole(role);
+        setUser(buildUser(profile, role));
+        scheduleRefresh(accessTokenForRefresh || token);
+      };
 
-        scheduleRefresh(token);
+      try {
+        await fetchAndSetUser();
         return;
-      }
+      } catch (profileErr) {
+        // Try to refresh if the access token is rejected/expired
+        const refreshToken = localStorage.getItem("auth_refresh_token");
+        if (!refreshToken) throw profileErr;
 
-      // Try to refresh if token expired
-      const refreshToken = localStorage.getItem("auth_refresh_token");
-      if (refreshToken) {
         const tokens = await apiClient.refreshToken(refreshToken);
         persistTokens(tokens.accessToken, tokens.refreshToken);
-
-        const profile = await apiClient.getCurrentUser();
-        const role = deriveRole(profile.role || storedRole);
-        persistRole(role);
-
-        setUser({
-          id: profile.id,
-          email: profile.email,
-          full_name: profile.name,
-          is_admin: role === "admin",
-          is_active: true,
-          role,
-        });
-
-        scheduleRefresh(tokens.accessToken);
+        await fetchAndSetUser(tokens.accessToken);
         return;
       }
-
-      clearTokens();
     } catch (err) {
       console.error("Auth check failed:", err);
       clearTokens();
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -200,16 +216,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // response is now narrowed to AuthTokens
       persistTokens(response.accessToken, response.refreshToken);
 
-      const profile = await apiClient.getCurrentUser();
-      const role = deriveRole(profile.role);
+      const profile = (await apiClient.getCurrentUser()) as unknown as CurrentUserProfile;
+      const role = deriveRole({
+        tokenRole: decodeToken(response.accessToken)?.role,
+        adminRole: profile.admin_role,
+        isAdmin: profile.is_admin,
+        storedRole: null,
+      });
       persistRole(role);
 
       setUser({
         id: profile.id,
         email: profile.email,
-        full_name: profile.name,
+        full_name: profile.full_name || profile.name,
         is_admin: role === "admin",
-        is_active: true,
+        is_active: profile.is_active ?? true,
         role,
       });
 
@@ -243,7 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.is_admin || false,
-        role: user?.role || "admin",
+        role: user?.role || "viewer",
         isViewer: user?.role === "viewer",
       }}
     >

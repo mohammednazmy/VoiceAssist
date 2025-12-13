@@ -44,7 +44,7 @@ function createPaginatedResponse(
 }
 
 describe("useMessagePagination", () => {
-  let mockFetchMessages: ReturnType<typeof vi.fn>;
+  let mockFetchMessages: ReturnType<typeof vi.fn<[number, number], Promise<PaginatedResponse<Message>>>>;
 
   beforeEach(() => {
     vi.clearAllMocks();

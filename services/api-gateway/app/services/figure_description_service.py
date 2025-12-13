@@ -1,7 +1,7 @@
 """
 Figure Description Service
 
-Uses GPT-4 Vision to generate descriptions of figures, diagrams, and images
+Uses an OpenAI vision-capable model to generate descriptions of figures, diagrams, and images
 in PDF documents. These descriptions enable voice narration of visual content.
 
 Features:
@@ -17,8 +17,10 @@ import io
 import logging
 from typing import Any, Dict, List, Optional
 
-import openai
+from openai import AsyncOpenAI
 from PIL import Image
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +56,7 @@ Aim for 2-4 sentences that capture the essential information."""
 
     def __init__(
         self,
-        model: str = "gpt-4o",
+        model: Optional[str] = None,
         max_tokens: int = 500,
         cache_descriptions: bool = True,
     ):
@@ -66,10 +68,17 @@ Aim for 2-4 sentences that capture the essential information."""
             max_tokens: Maximum tokens in description
             cache_descriptions: Whether to cache descriptions in memory
         """
-        self.model = model
+        self.model = model or settings.OPENAI_VISION_MODEL
         self.max_tokens = max_tokens
         self.cache_descriptions = cache_descriptions
         self._description_cache: Dict[str, str] = {}
+        self._openai_client: AsyncOpenAI | None = None
+
+        if settings.OPENAI_API_KEY:
+            self._openai_client = AsyncOpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                timeout=float(settings.OPENAI_TIMEOUT_SEC),
+            )
 
     async def describe_figure(
         self,
@@ -250,7 +259,7 @@ Aim for 2-4 sentences that capture the essential information."""
         caption: Optional[str] = None,
     ) -> str:
         """
-        Generate description using GPT-4 Vision.
+        Generate description using a vision-capable OpenAI model.
 
         Args:
             image_base64: Base64-encoded image
@@ -260,15 +269,17 @@ Aim for 2-4 sentences that capture the essential information."""
             AI-generated description
         """
         try:
+            if self._openai_client is None:
+                raise RuntimeError("OpenAI client is not configured for FigureDescriptionService")
+
             # Build the prompt
             user_prompt = "Describe this figure or diagram from a medical document."
             if caption:
                 user_prompt += f"\n\nThe figure caption reads: \"{caption}\""
 
-            # Call GPT-4 Vision
-            response = await openai.chat.completions.create(
-                model=self.model,
-                messages=[
+            api_params: Dict[str, Any] = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {
                         "role": "user",
@@ -284,14 +295,21 @@ Aim for 2-4 sentences that capture the essential information."""
                         ],
                     },
                 ],
-                max_tokens=self.max_tokens,
-            )
+            }
+
+            # Newer model families use max_completion_tokens (max_tokens is rejected)
+            if self.model.startswith(("gpt-4o", "gpt-5", "o1", "o3")):
+                api_params["max_completion_tokens"] = self.max_tokens
+            else:
+                api_params["max_tokens"] = self.max_tokens
+
+            response = await self._openai_client.chat.completions.create(**api_params)
 
             description = response.choices[0].message.content
             return description.strip()
 
         except Exception as e:
-            logger.error(f"Error calling GPT-4 Vision: {e}", exc_info=True)
+            logger.error(f"Error calling vision model for figure description: {e}", exc_info=True)
             raise
 
     def _generate_cache_key(

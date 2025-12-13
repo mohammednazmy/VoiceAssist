@@ -44,6 +44,9 @@ export interface SileroVADConfig {
   /** Enable adaptive threshold based on ambient noise */
   adaptiveThreshold: boolean;
 
+  /** Duration of calibration period in milliseconds */
+  calibrationDurationMs: number;
+
   /** Callback when speech starts */
   onSpeechStart?: (confidence: number, language?: SupportedLanguage) => void;
 
@@ -70,6 +73,7 @@ export const DEFAULT_SILERO_CONFIG: SileroVADConfig = {
   minSilenceDuration: 100,
   language: "en",
   adaptiveThreshold: true,
+  calibrationDurationMs: 3000,
 };
 
 // ============================================================================

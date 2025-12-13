@@ -7,8 +7,8 @@
  */
 
 import React, { useEffect, useCallback } from "react";
-import { useVoiceSettingsStore } from "@/stores/voiceSettingsStore";
-import { useThinkingTone } from "@/hooks/useThinkingTone";
+import { useVoiceSettingsStore } from "../../stores/voiceSettingsStore";
+import { useThinkingTone } from "../../hooks/useThinkingTone";
 import { ThinkingVisualIndicator } from "./ThinkingVisualIndicator";
 
 interface ThinkingFeedbackPanelProps {

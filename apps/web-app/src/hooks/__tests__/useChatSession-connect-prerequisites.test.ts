@@ -8,7 +8,7 @@
  * These tests ensure we don't spam console logs or attempt futile connections.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useChatSession } from "../useChatSession";
 import { useAuthStore } from "../../stores/authStore";
@@ -73,7 +73,7 @@ class MockWebSocket {
 describe("useChatSession connect prerequisites", () => {
   let mockWebSocket: MockWebSocket;
   let wsConstructorSpy: ReturnType<typeof vi.fn>;
-  let consoleDebugSpy: ReturnType<typeof vi.spyOn>;
+  let consoleDebugSpy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,7 +89,7 @@ describe("useChatSession connect prerequisites", () => {
     wsConstructorSpy = vi.fn((url: string) => {
       mockWebSocket = new MockWebSocket(url);
       return mockWebSocket as unknown as WebSocket;
-    });
+    }) as ReturnType<typeof vi.fn>;
     global.WebSocket = wsConstructorSpy as unknown as typeof WebSocket;
   });
 

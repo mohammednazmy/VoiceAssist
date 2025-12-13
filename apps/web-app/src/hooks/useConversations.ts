@@ -521,10 +521,10 @@ function generateMarkdownExport(
   markdown += `\n---\n\n`;
 
   messages.forEach((message) => {
-    const timestamp = new Date(message.createdAt).toLocaleString();
+    const formattedTimestamp = new Date(message.timestamp).toLocaleString();
     const role = message.role.charAt(0).toUpperCase() + message.role.slice(1);
 
-    markdown += `## ${role} - ${timestamp}\n\n`;
+    markdown += `## ${role} - ${formattedTimestamp}\n\n`;
     markdown += `${message.content}\n\n`;
 
     // Add citations if present
@@ -577,10 +577,10 @@ function generateTextExport(
   text += `\n${"-".repeat(80)}\n\n`;
 
   messages.forEach((message) => {
-    const timestamp = new Date(message.createdAt).toLocaleString();
+    const formattedTimestamp = new Date(message.timestamp).toLocaleString();
     const role = message.role.toUpperCase();
 
-    text += `[${role}] ${timestamp}\n\n`;
+    text += `[${role}] ${formattedTimestamp}\n\n`;
     text += `${message.content}\n\n`;
 
     // Add citations if present

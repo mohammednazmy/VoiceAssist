@@ -368,7 +368,7 @@ export class ContextResumer {
     // Check if we should ask user
     const shouldAskUser =
       this.config.resumptionStyle === "ask-user" ||
-      (this.lastContext && this.lastContext.completionPercentage > 70);
+      !!(this.lastContext && this.lastContext.completionPercentage > 70);
 
     return {
       prefix,

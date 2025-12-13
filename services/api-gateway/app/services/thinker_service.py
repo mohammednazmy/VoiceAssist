@@ -168,8 +168,8 @@ You have access to the following tools - use them when relevant:
 - web_search: Search the web for current information
 - pubmed_search: Search medical literature and research papers
 - medical_calculator: Calculate medical scores (Wells DVT, CHA2DS2-VASc, BMI, eGFR, etc.)
-- kb_search: Search the medical knowledge base for clinical information or to surface candidate documents
-- knowledge_base_query: Run a focused KB-backed RAG query that returns a concise answer with cited sources from the knowledge base
+- kb_search: Search the medical knowledge base to find candidate documents (especially by document title) and return matching documents + metadata
+- knowledge_base_query: Retrieve relevant knowledge base excerpts + sources for a clinical question (you must synthesize the final answer)
 - document_select: Open a document from the user's library for reading
 - document_read_page: Read content from a specific page
 - document_navigate: Move to next/previous page or section
@@ -199,9 +199,11 @@ DOCUMENT READING GUIDELINES:
 - If the user hasn't opened a document, offer to help find one
 
 KB AND RAG USAGE:
-- For general clinical knowledge questions where a KB-backed answer with citations is appropriate, prefer calling knowledge_base_query.
+- For clinical knowledge questions where a KB-backed answer with citations is appropriate, prefer calling knowledge_base_query.
 - Use kb_search when you primarily need to identify or compare relevant documents, or when the user asks to browse what the KB contains.
-- When you receive an answer with sources from knowledge_base_query or kb_search, briefly summarize the answer in your own words and reference the sources naturally in voice (e.g., "based on recent cardiology guidelines").
+- If the user asks whether a specific document/book exists in the knowledge base, ALWAYS call kb_search with the title to verify. Do not guess.
+- When calling kb_search for a specific title, leave any optional source/category filters empty unless the user explicitly requested a category.
+- When you receive KB excerpts/sources from knowledge_base_query or kb_search, synthesize a concise answer and reference sources naturally in voice (e.g., "based on cardiology guidelines").
 
 HANDLING PARTIAL INFORMATION:
 When the user provides incomplete info, DO NOT ask rigid follow-up questions.
@@ -524,6 +526,9 @@ class ThinkerService:
                 conversation_id: Optional[str] = None,
                 clinical_context_id: Optional[str] = None,
                 exclude_phi: bool = False,
+                reading_mode_enabled: bool = False,
+                reading_detail: Optional[str] = None,
+                reading_speed: Optional[str] = None,
                 _tool_name: str = tool_name,  # Capture tool name in closure
             ) -> Any:
                 from app.core.database import AsyncSessionLocal
@@ -954,7 +959,32 @@ class ThinkerSession:
         try:
             # Parse arguments
             arguments = json.loads(tool_call.arguments)
-            logger.info(f"Executing tool: {tool_call.name} with args: {arguments}")
+            # HIPAA/PHI: Do not log raw tool arguments (may contain PHI or transcript text).
+            # Log only a minimal, non-content summary for observability.
+            arg_keys: list[str] = sorted([str(k) for k in arguments.keys()]) if isinstance(arguments, dict) else []
+            query_chars = len(arguments.get("query", "")) if isinstance(arguments, dict) and isinstance(arguments.get("query"), str) else None
+            question_chars = (
+                len(arguments.get("question", "")) if isinstance(arguments, dict) and isinstance(arguments.get("question"), str) else None
+            )
+            sources_count = None
+            if isinstance(arguments, dict):
+                raw_sources = arguments.get("sources")
+                if isinstance(raw_sources, list):
+                    sources_count = len(raw_sources)
+                elif isinstance(raw_sources, str) and raw_sources.strip():
+                    sources_count = 1
+
+            logger.info(
+                "tool_execute_start",
+                tool_name=tool_call.name,
+                tool_id=tool_call.id,
+                conversation_id=self._context.conversation_id,
+                user_id=self._user_id,
+                arg_keys=arg_keys,
+                query_chars=query_chars,
+                question_chars=question_chars,
+                sources_count=sources_count,
+            )
 
             # Notify callback
             if self._on_tool_call:
@@ -1001,7 +1031,15 @@ class ThinkerSession:
                 reading_speed=self._reading_speed,
             )
             result_str = json.dumps(result) if not isinstance(result, str) else result
-            logger.info(f"Tool {tool_call.name} returned (user_id={self._user_id}): {result_str[:200]}...")
+            logger.info(
+                "tool_execute_complete",
+                tool_name=tool_call.name,
+                tool_id=tool_call.id,
+                conversation_id=self._context.conversation_id,
+                user_id=self._user_id,
+                result_type=type(result).__name__,
+                result_chars=len(result_str),
+            )
 
             # Add tool result to context
             self._context.add_message(

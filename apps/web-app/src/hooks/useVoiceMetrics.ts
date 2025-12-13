@@ -178,7 +178,7 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
         sessionId,
         networkQuality: networkQuality.quality,
         effectiveType: networkQuality.effectiveType,
-        memoryUsagePercent: browserPerformance.memoryUsagePercent,
+        memoryUsagePercent: browserPerformance.memoryUsagePercent ?? -1,
       },
     });
 
@@ -247,7 +247,7 @@ export function useVoiceMetrics(): UseVoiceMetricsReturn {
         avgTtsLatency: Math.round(avgTts || 0),
         avgTtfaLatency: Math.round(avgTtfa || 0),
         networkQuality: finalNetworkQuality.quality,
-        memoryUsagePercent: finalBrowserPerformance.memoryUsagePercent,
+        memoryUsagePercent: finalBrowserPerformance.memoryUsagePercent ?? -1,
       },
     });
 

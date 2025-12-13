@@ -10,7 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { VoiceAssistApiClient } from "@voiceassist/api-client";
+import { VoiceAssistApiClient, isTwoFactorRequired } from "@voiceassist/api-client";
 import type { LoginRequest } from "@voiceassist/types";
 import { useAuthStore } from "../stores/authStore";
 import type { AxiosError } from "axios";
@@ -153,8 +153,17 @@ export function useAuth() {
         setError(null);
 
         // Step 1: Get tokens from login endpoint
-        const tokens = await apiClient.login(credentials);
-        setTokens(tokens);
+        const response = await apiClient.login(credentials);
+
+        // Check if 2FA is required
+        if (isTwoFactorRequired(response)) {
+          setLoading(false);
+          // TODO: Handle 2FA flow - navigate to 2FA verification page
+          setError("Two-factor authentication is required");
+          return;
+        }
+
+        setTokens(response);
 
         // Step 2: Fetch user profile using the access token
         const user = await apiClient.getCurrentUser();
